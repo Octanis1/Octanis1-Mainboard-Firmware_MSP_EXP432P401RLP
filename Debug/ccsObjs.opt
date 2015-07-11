@@ -1,0 +1,1 @@
+"./MSP_EXP432P401RLP.o" "./main.o" -Wl,-T"../MSP_EXP432P401RLP.lds" -Wl,-T"./configPkg/linker.cmd" -Wl,--start-group -l":msp432p4xx_driverlib.a" -l"gcc" -l"c" -l"m" -l"rdimon" -Wl,--end-group 

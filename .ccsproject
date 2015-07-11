@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?ccsproject version="1.0"?>
+<projectOptions>
+	<deviceVariant value="MSP432P401R"/>
+	<deviceFamily value="MSP432"/>
+	<deviceEndianness value="little"/>
+	<codegenToolVersion value="GNU_4.8.4:Linaro"/>
+	<isElfFormat value="true"/>
+	<rts value=""/>
+	<createSlaveProjects value=""/>
+	<templateProperties value="id=com_ti_rtsc_tirtosmsp430_example_69.projectspec.uartecho_MSP432P401R,type=rtsc,products=com.ti.rtsc.TIRTOSmsp430,xdcToolsVersion=3.31.00.24,target=gnu.targets.arm.M4F,platform=ti.platforms.msp432:MSP432P401R,buildProfile=release,isHybrid=true,configuroOptions=--compileOptions &quot;${COMPILER_FLAGS} &quot; ,"/>
+</projectOptions>
