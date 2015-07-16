@@ -30,10 +30,6 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- *  ======== uartecho.c ========
- */
-
 /* XDCtools Header files */
 #include <xdc/std.h>
 #include <xdc/cfg/global.h>
@@ -45,6 +41,7 @@
 /* TI-RTOS Header files */
 #include <ti/drivers/GPIO.h>
 #include <ti/drivers/UART.h>
+#include <ti/drivers/I2C.h>
 
 /* Example/Board Header files */
 #include "Board.h"
@@ -57,33 +54,112 @@
  */
 Void echoFxn(UArg arg0, UArg arg1)
 {
-    char input;
-    UART_Handle uart;
-    UART_Params uartParams;
-    const char echoPrompt[] = "\fEchoing characters:\r\n";
+		System_printf("attempting an I2C conn \n");
+		System_flush();
+		I2C_Handle i2c;
 
-    /* Create a UART with data processing off. */
-    UART_Params_init(&uartParams);
-    uartParams.writeDataMode = UART_DATA_BINARY;
-    uartParams.readDataMode = UART_DATA_BINARY;
-    uartParams.readReturnMode = UART_RETURN_FULL;
-    uartParams.readEcho = UART_ECHO_OFF;
-    uartParams.baudRate = 9600;
-    uart = UART_open(Board_UART0, &uartParams);
 
-    if (uart == NULL) {
-        System_abort("Error opening the UART");
-    }
+		UInt peripheralNum = 0;     /* Such as I2C0 */
+		I2C_Params i2cParams;
+		I2C_Params_init(&i2cParams);
+		i2cParams.transferMode = I2C_MODE_BLOCKING;
+		i2cParams.transferCallbackFxn =	NULL;
 
-    UART_write(uart, echoPrompt, sizeof(echoPrompt));
+		i2c = I2C_open(peripheralNum, &i2cParams);
+		if (i2c == NULL) {
+		    /* Error opening I2C */
+		}
 
-    /* Loop forever echoing */
-    while (1) {
-        UART_read(uart, &input, 1);
-        UART_write(uart, &input, 1);
-    }
+	    I2C_Transaction   i2cTransaction;
+	    uint8_t             writeBuffer[1];
+	    uint8_t             readBuffer[1];
+	    Bool              transferOK;
+
+	    writeBuffer[0] = 0x13;
+	    readBuffer[0] = 0;
+
+
+	    i2cTransaction.slaveAddress = 0x29;     /* 7-bit peripheral slave address */
+	    i2cTransaction.writeBuf = writeBuffer;  /* Buffer to be written */
+	    i2cTransaction.writeCount = 1;          /* Number of bytes to be written */
+	    i2cTransaction.readBuf = readBuffer;          /* Buffer to be read */
+	    i2cTransaction.readCount = 1;           /* Number of bytes to be read */
+	    transferOK = I2C_transfer(i2c, &i2cTransaction); /* Perform I2C transfer */
+
+	    if (!transferOK) {
+	        /* I2C bus fault */
+	    	  System_printf("I2C error");
+	    	  System_flush();
+	    }else{
+	    	System_printf("I2C good");
+	    		    	  System_flush();
+	    }
+
+        System_printf("going into while true");
+        System_flush();
+
+	    while (true) {
+
+	        GPIO_write(Board_LED2, Board_LED_ON);
+	        Task_sleep(100);
+	        GPIO_write(Board_LED2, Board_LED_OFF);
+
+	    }
 }
 
+/*
+ *  ======== ledFxn ========
+ *  Task for this function is also created statically. See the project's .cfg file.
+ */
+Void ledFxn(UArg arg0, UArg arg1){
+
+    System_printf("LED task started");
+    System_flush();
+
+	while (true) {
+		GPIO_write(Board_LED0, Board_LED_ON);
+		Task_sleep(300);
+		GPIO_write(Board_LED0, Board_LED_OFF);
+		Task_sleep(300);
+	}
+
+}
+
+
+Void gpsFxn(UArg arg0, UArg arg1){
+
+	unsigned char rxBuffer[140];
+	int ret;
+
+	UART_Handle uart;
+	UART_Params uartParams;
+
+	/* Create a UART with data processing off. */
+	UART_Params_init(&uartParams);
+	uartParams.writeDataMode = UART_DATA_BINARY;
+	uartParams.readDataMode = UART_DATA_BINARY;
+	uartParams.readReturnMode = UART_RETURN_NEWLINE; //one NMEA frame per read
+	uartParams.readEcho = UART_ECHO_OFF;
+	uart = UART_open(Board_UART1, &uartParams); //P3.2 is RX on Launchpad
+
+	if (uart == NULL) {
+		System_printf("UART error \n");
+		System_flush();
+	}
+
+	/* Loop forever echoing */
+	while (1) {
+		ret = UART_read(uart, rxBuffer, sizeof(rxBuffer));
+		System_printf("The UART read %d bytes\n", ret);
+
+		System_printf("NMEA sentence read \n");
+		System_flush();
+
+		Task_sleep(6000);
+	}
+
+
+}
 /*
  *  ======== main ========
  */
@@ -93,20 +169,14 @@ int main(void)
     Board_initGeneral();
     Board_initGPIO();
     Board_initUART();
+    Board_initI2C();
 
     /* Turn on user LED */
+    GPIO_write(Board_LED0, Board_LED_OFF);
+
     GPIO_write(Board_LED0, Board_LED_ON);
 
-    /* This example has logging and many other debug capabilities enabled */
-    System_printf("This example does not attempt to minimize code or data "
-                  "footprint\n");
-    System_flush();
 
-    System_printf("Starting the UART Echo example\nSystem provider is set to "
-                  "SysMin. Halt the target to view any SysMin contents in "
-                  "ROV.\n");
-    /* SysMin will only print to the console when you call flush or exit */
-    System_flush();
 
     /* Start BIOS */
     BIOS_start();

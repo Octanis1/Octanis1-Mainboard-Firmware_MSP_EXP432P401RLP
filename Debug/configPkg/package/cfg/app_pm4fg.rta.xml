@@ -112,7 +112,7 @@
   </modMap>
   <modMap key="ti.sysbios.knl.Clock">
     <id>20</id>
-    <logger>null</logger>
+    <logger>SYSBIOS System Logger</logger>
     <diagsMask>0000110000000000</diagsMask>
   </modMap>
   <modMap key="ti.sysbios.knl.Idle">
@@ -142,7 +142,7 @@
   </modMap>
   <modMap key="ti.sysbios.knl.Swi">
     <id>26</id>
-    <logger>null</logger>
+    <logger>SYSBIOS System Logger</logger>
     <diagsMask>0000110000000000</diagsMask>
   </modMap>
   <modMap key="ti.sysbios.knl.Task">
@@ -152,7 +152,7 @@
   </modMap>
   <modMap key="ti.sysbios.hal.Hwi">
     <id>31</id>
-    <logger>null</logger>
+    <logger>SYSBIOS System Logger</logger>
     <diagsMask>0000110000000000</diagsMask>
   </modMap>
   <modMap key="ti.sysbios.rts.gnu.ReentSupport">
@@ -207,7 +207,7 @@
   </modMap>
   <modMap key="ti.sysbios.family.arm.m3.Hwi">
     <id>44</id>
-    <logger>null</logger>
+    <logger>SYSBIOS System Logger</logger>
     <diagsMask>0000110000000000</diagsMask>
   </modMap>
   <modMap key="ti.sysbios.family.arm.m3.IntrinsicsSupport">

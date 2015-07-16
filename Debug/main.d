@@ -54,6 +54,7 @@ main.d: ../main.c \
  /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/BIOS__epilogue.h \
  /home/vagrant/ti/tirtos_msp43x_2_12_00_24/packages/ti/drivers/GPIO.h \
  /home/vagrant/ti/tirtos_msp43x_2_12_00_24/packages/ti/drivers/UART.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_00_24/packages/ti/drivers/I2C.h \
  ../Board.h ../MSP_EXP432P401RLP.h
 
 /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/std.h:
@@ -165,6 +166,8 @@ main.d: ../main.c \
 /home/vagrant/ti/tirtos_msp43x_2_12_00_24/packages/ti/drivers/GPIO.h:
 
 /home/vagrant/ti/tirtos_msp43x_2_12_00_24/packages/ti/drivers/UART.h:
+
+/home/vagrant/ti/tirtos_msp43x_2_12_00_24/packages/ti/drivers/I2C.h:
 
 ../Board.h:
 

@@ -363,6 +363,9 @@ digraph configuration {
         ti_drivers_GPIO [style=filled,fillcolor=lightgray, label="GPIO"];
         ti_drivers__top -> ti_drivers_GPIO[style=invis];
         ti_drivers_GPIO -> ti_drivers__bot[style=invis];
+        ti_drivers_I2C [style=filled,fillcolor=lightgray, label="I2C"];
+        ti_drivers__top -> ti_drivers_I2C[style=invis];
+        ti_drivers_I2C -> ti_drivers__bot[style=invis];
         ti_drivers_Power [style=filled,fillcolor=lightgray, label="Power"];
         ti_drivers__top -> ti_drivers_Power[style=invis];
         ti_drivers_Power -> ti_drivers__bot[style=invis];
