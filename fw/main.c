@@ -236,7 +236,7 @@ Void gpsFxn(UArg arg0, UArg arg1){
 		}
 
 		UART_close(uart);
-		Task_sleep(600000);
+		Task_setPri(-1); //sets task to be inactive
 
 	}
 
