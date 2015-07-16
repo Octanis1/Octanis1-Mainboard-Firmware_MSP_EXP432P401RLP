@@ -10,16 +10,13 @@ CFG_SRCS += \
 ../app.cfg 
 
 C_SRCS += \
-../MSP_EXP432P401RLP.c \
-../main.c 
+../MSP_EXP432P401RLP.c 
 
 OBJS += \
-./MSP_EXP432P401RLP.o \
-./main.o 
+./MSP_EXP432P401RLP.o 
 
 C_DEPS += \
-./MSP_EXP432P401RLP.d \
-./main.d 
+./MSP_EXP432P401RLP.d 
 
 GEN_MISC_DIRS += \
 ./configPkg/ 
@@ -42,16 +39,13 @@ GEN_MISC_DIRS__QUOTED += \
 "configPkg/" 
 
 C_DEPS__QUOTED += \
-"MSP_EXP432P401RLP.d" \
-"main.d" 
+"MSP_EXP432P401RLP.d" 
 
 OBJS__QUOTED += \
-"MSP_EXP432P401RLP.o" \
-"main.o" 
+"MSP_EXP432P401RLP.o" 
 
 C_SRCS__QUOTED += \
-"../MSP_EXP432P401RLP.c" \
-"../main.c" 
+"../MSP_EXP432P401RLP.c" 
 
 GEN_CMDS__FLAG += \
 -Wl,-T"./configPkg/linker.cmd" 

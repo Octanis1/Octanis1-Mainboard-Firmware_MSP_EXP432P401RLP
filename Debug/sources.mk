@@ -121,4 +121,11 @@ S64_DEPS__QUOTED :=
 # Every subdirectory with source files must be described here
 SUBDIRS := \
 . \
+fw/tests \
+fw/peripherals \
+fw/peripherals/hal \
+fw/nav \
+fw \
+fw/lib/minmea \
+fw/core \
 
