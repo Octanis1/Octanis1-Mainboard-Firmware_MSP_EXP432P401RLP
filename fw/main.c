@@ -130,8 +130,60 @@ Void ledFxn(UArg arg0, UArg arg1){
 
 }
 
+Void gsmFxn(UArg arg0, UArg arg1){
+    GPIO_write(Board_LED2, Board_LED_ON);
+
+	System_printf("entering GSM task and wait \n");
+	System_flush();
+
+	int ret;
+	UART_Handle handle;
+	UART_Params params;
+
+	UART_Params_init(&params);
+	params.baudRate = 115200;
+	params.writeDataMode = UART_DATA_BINARY;
+	params.readDataMode = UART_DATA_BINARY;
+	params.readReturnMode = UART_RETURN_FULL;
+	params.readEcho = UART_ECHO_OFF;
+	params.readMode = UART_MODE_BLOCKING;
+	params.dataLength = UART_LEN_8;
+	params.readTimeout = 8000;
+
+	handle = UART_open(Board_UART2, &params);
+	if (!handle) {
+		System_printf("UART did not open");
+	}else{
+		System_printf("UART opened!");
+	}
+
+
+	const char txBuffer[] = "AT+CBC\r";
+	char rxBuffer[40];
+
+
+	UART_write(handle, txBuffer, sizeof(txBuffer));
+
+	ret = UART_readPolling(handle,rxBuffer,sizeof(rxBuffer));
+		//check buffer
+		System_printf("yes! %d", ret);
+
+
+	System_printf("\n");
+	System_flush();
+
+
+    GPIO_write(Board_LED2, Board_LED_OFF);
+
+	Task_setPri(task3, -1); //sets task to be inactive
+
+}
+
 
 Void gpsFxn(UArg arg0, UArg arg1){
+
+	System_printf("entering GPS task \n");
+	System_flush();
 
 	char rxBuffer[300];
 	int ret;
@@ -172,54 +224,23 @@ Void gpsFxn(UArg arg0, UArg arg1){
 			int minmea_sentence = minmea_sentence_id(nmeaframes, false);
 			nmeaframes = strtok(NULL, "\n");
 
-			/*
-			int i = 0;
-			for(i=0; i<strlen(nmeaframes); i++){
-				System_printf("%c", nmeaframes[i]);
-			}
-			System_printf("%d - \n", minmea_sentence);
-			System_flush();
-			 */
-
 					switch (minmea_sentence) {
-						case MINMEA_SENTENCE_GLL: {
-									System_printf("GLL! \n");
-									System_flush();
-								}break;
+
 						case MINMEA_SENTENCE_GGA: {
-							System_printf("GGA! \n");
-							System_flush();
+
 						}break;
-					      case MINMEA_SENTENCE_GSV: {
 
-				        		System_printf("GSV");
-				        		System_flush();
-
-				        		j++;
-
-					      }break;
-					      case MINMEA_SENTENCE_GST: {
-
-				        		System_printf("GST");
-				        		System_flush();
-
-					      }break;
 
 					      case MINMEA_SENTENCE_RMC: {
-					    	  System_printf("RMC!");
-					    	  System_flush();
+
 					      }break;
 
 			            case MINMEA_INVALID: {
 
-			        		System_printf("invalid \n");
-			         		System_flush();
 			             } break;
 
 			            default: {
 
-			        		System_printf("default \n");
-			        		System_flush();
 			             } break;
 					}
 
@@ -236,7 +257,7 @@ Void gpsFxn(UArg arg0, UArg arg1){
 		}
 
 		UART_close(uart);
-		Task_setPri(-1); //sets task to be inactive
+		Task_setPri(task2, -1); //sets task to be inactive
 
 	}
 
