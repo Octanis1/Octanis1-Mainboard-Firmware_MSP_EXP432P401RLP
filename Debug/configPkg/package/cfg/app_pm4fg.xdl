@@ -7,18 +7,18 @@ __TI_STACK_SIZE = __STACK_SIZE;
 
 INPUT(
     /home/vagrant/workspace_v6_1/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP/Debug/configPkg/package/cfg/app_pm4fg.om4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/uia_2_00_02_39/packages/ti/uia/sysbios/lib/release/ti.uia.sysbios.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/uia_2_00_02_39/packages/ti/uia/loggers/lib/release/ti.uia.loggers.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_00_24/packages/ti/drivers/lib/drivers_MSP432P401R_instrumented.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_00_24/packages/ti/drivers/ports/tirtos/lib/tirtosport.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/fatfs/lib/release/ti.sysbios.fatfs.am4fg
+    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/sysbios/lib/release/ti.uia.sysbios.am4fg
+    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/loggers/lib/release/ti.uia.loggers.am4fg
+    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/lib/drivers_MSP432P401R_instrumented.am4fg
+    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/ports/tirtos/lib/tirtosport.am4fg
+    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/fatfs/lib/release/ti.sysbios.fatfs.am4fg
     /home/vagrant/workspace_v6_1/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP/src/sysbios/sysbios.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/uia_2_00_02_39/packages/ti/uia/services/lib/release/ti.uia.services.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/uia_2_00_02_39/packages/ti/uia/runtime/lib/release/ti.uia.runtime.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/uia_2_00_02_39/packages/ti/uia/events/lib/release/ti.uia.events.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm/rtsv7M/lib/gnu.targets.arm.rtsv7M.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm/rtsv7M/lib/boot.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm/rtsv7M/lib/syscalls.am4fg
+    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/services/lib/release/ti.uia.services.am4fg
+    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/runtime/lib/release/ti.uia.runtime.am4fg
+    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/events/lib/release/ti.uia.events.am4fg
+    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm/rtsv7M/lib/gnu.targets.arm.rtsv7M.am4fg
+    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm/rtsv7M/lib/boot.am4fg
+    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm/rtsv7M/lib/syscalls.am4fg
 )
 
 /*

@@ -172,7 +172,7 @@ all: Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP.out
 Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP.out: $(OBJS) $(LDS_SRCS) $(GEN_CMDS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GNU Linker'
-	"/home/vagrant/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/bin/arm-none-eabi-gcc" -march=armv7e-m -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -D__MSP432P401R__ -DTARGET_IS_FALCON -Dgcc -DMSP432WARE -Dtimegm=mktime -O0 -ffunction-sections -fdata-sections -g -gdwarf-3 -gstrict-dwarf -Wall -Wl,-Map,"Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP.map" -nostartfiles -static -Wl,--gc-sections -L"/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/MSPWare_2_00_00_40a/driverlib/MSP432P4xx/gcc" -L"/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm/libs/install-native/arm-none-eabi/lib/armv7e-m/fpu" -mthumb -g -gstrict-dwarf -Wall -o"Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP.out" $(ORDERED_OBJS)
+	"/home/vagrant/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/bin/arm-none-eabi-gcc" -march=armv7e-m -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -D__MSP432P401R__ -DTARGET_IS_FALCON -Dgcc -DMSP432WARE -Dtimegm=mktime -O0 -ffunction-sections -fdata-sections -g -gdwarf-3 -gstrict-dwarf -Wall -Wl,-Map,"Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP.map" -nostartfiles -static -Wl,--gc-sections -L"/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/MSPWare_2_00_00_40a/driverlib/MSP432P4xx/gcc" -L"/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_03_51/packages/gnu/targets/arm/libs/install-native/arm-none-eabi/lib/armv7e-m/fpu" -mthumb -g -gstrict-dwarf -Wall -o"Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

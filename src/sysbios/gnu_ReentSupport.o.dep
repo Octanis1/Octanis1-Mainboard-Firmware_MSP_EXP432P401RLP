@@ -1,12 +1,12 @@
 gnu_ReentSupport.o: \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/rts/gnu/ReentSupport.c \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/rts/gnu/ReentSupport.c \
  /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/std.h \
  /home/vagrant/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/lib/gcc/arm-none-eabi/4.8.4/include/stdarg.h \
  /home/vagrant/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/lib/gcc/arm-none-eabi/4.8.4/include/stddef.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm/std.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm/M4F.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/std.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/stdint.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm/std.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm/M4F.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/std.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/stdint.h \
  /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/Assert.h \
  /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/xdc.h \
  /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/Types.h \
@@ -29,56 +29,56 @@ gnu_ReentSupport.o: \
  /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/Diags__prologue.h \
  /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/Diags__epilogue.h \
  /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/Assert__epilogue.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/BIOS.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/BIOS__prologue.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/package/package.defs.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/package/BIOS_RtsGateProxy.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/BIOS__epilogue.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/hal/Hwi.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/hal/Hwi__prologue.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/hal/package/package.defs.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/interfaces/IHwi.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/interfaces/package/package.defs.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/hal/package/Hwi_HwiProxy.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/hal/Hwi__epilogue.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/family/arm/m3/Hwi.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/family/arm/m3/Hwi__prologue.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/family/arm/m3/package/package.defs.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/BIOS.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/BIOS__prologue.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/package/package.defs.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/package/BIOS_RtsGateProxy.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/BIOS__epilogue.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/Hwi.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/Hwi__prologue.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/package/package.defs.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/interfaces/IHwi.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/interfaces/package/package.defs.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/package/Hwi_HwiProxy.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/Hwi__epilogue.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/Hwi.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/Hwi__prologue.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/package/package.defs.h \
  /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/Log.h \
  /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/Log__prologue.h \
  /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/Text.h \
  /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/Log__epilogue.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/family/arm/m3/Hwi__epilogue.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/Task.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/Task__prologue.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/package/package.defs.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/Queue.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/interfaces/ITaskSupport.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/Clock.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/interfaces/ITimer.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/Swi.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/package/Clock_TimerProxy.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/package/Task_SupportProxy.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/Task__epilogue.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/rts/gnu/package/internal/ReentSupport.xdc.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/rts/gnu/ReentSupport.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/rts/gnu/package/package.defs.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/Semaphore.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/Event.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/Event__prologue.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/Event__epilogue.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/reent.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/sys/reent.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/_ansi.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/newlib.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/sys/config.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/machine/ieeefp.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/sys/features.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/sys/_types.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/machine/_types.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/machine/_default_types.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/sys/lock.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/machine/types.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/string.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/_ansi.h \
- /home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/sys/string.h
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/Hwi__epilogue.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Task.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Task__prologue.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/package/package.defs.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Queue.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/interfaces/ITaskSupport.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Clock.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/interfaces/ITimer.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Swi.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/package/Clock_TimerProxy.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/package/Task_SupportProxy.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Task__epilogue.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/rts/gnu/package/internal/ReentSupport.xdc.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/rts/gnu/ReentSupport.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/rts/gnu/package/package.defs.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Semaphore.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Event.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Event__prologue.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Event__epilogue.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/reent.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/sys/reent.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/_ansi.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/newlib.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/sys/config.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/machine/ieeefp.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/sys/features.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/sys/_types.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/machine/_types.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/machine/_default_types.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/sys/lock.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/machine/types.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/string.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/_ansi.h \
+ /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm//libs/install-native/arm-none-eabi/include/sys/string.h

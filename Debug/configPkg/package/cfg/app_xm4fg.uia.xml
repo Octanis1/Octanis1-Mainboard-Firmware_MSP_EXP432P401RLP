@@ -831,223 +831,223 @@
    <modIdMap id="20">
       <moduleName>ti.sysbios.knl.Clock</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>Clock.c</cFileName>
    </modIdMap>
    <modIdMap id="21">
       <moduleName>ti.sysbios.knl.Idle</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>Idle.c</cFileName>
    </modIdMap>
    <modIdMap id="22">
       <moduleName>ti.sysbios.knl.Intrinsics</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>Intrinsics.c</cFileName>
    </modIdMap>
    <modIdMap id="23">
       <moduleName>ti.sysbios.knl.Event</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>Event.c</cFileName>
    </modIdMap>
    <modIdMap id="24">
       <moduleName>ti.sysbios.knl.Queue</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>Queue.c</cFileName>
    </modIdMap>
    <modIdMap id="25">
       <moduleName>ti.sysbios.knl.Semaphore</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>Semaphore.c</cFileName>
    </modIdMap>
    <modIdMap id="26">
       <moduleName>ti.sysbios.knl.Swi</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>Swi.c</cFileName>
    </modIdMap>
    <modIdMap id="27">
       <moduleName>ti.sysbios.knl.Task</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>Task.c</cFileName>
    </modIdMap>
    <modIdMap id="28">
       <moduleName>ti.sysbios.knl.Clock_TimerProxy</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="29">
       <moduleName>ti.sysbios.knl.Intrinsics_SupportProxy</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="30">
       <moduleName>ti.sysbios.knl.Task_SupportProxy</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="31">
       <moduleName>ti.sysbios.hal.Hwi</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/hal/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/</packageBase>
       <cFileName>Hwi.c</cFileName>
    </modIdMap>
    <modIdMap id="32">
       <moduleName>ti.sysbios.hal.Hwi_HwiProxy</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/hal/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="33">
       <moduleName>ti.sysbios.rts.gnu.ReentSupport</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/rts/gnu/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/rts/gnu/</packageBase>
       <cFileName>ReentSupport.c</cFileName>
    </modIdMap>
    <modIdMap id="34">
       <moduleName>ti.sysbios.rts.gnu.SemiHostSupport</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/rts/gnu/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/rts/gnu/</packageBase>
       <cFileName>SemiHostSupport.c</cFileName>
    </modIdMap>
    <modIdMap id="35">
       <moduleName>ti.sysbios.BIOS</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/</packageBase>
       <cFileName>BIOS.c</cFileName>
    </modIdMap>
    <modIdMap id="36">
       <moduleName>ti.sysbios.BIOS_RtsGateProxy</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="37">
       <moduleName>ti.sysbios.family.arm.msp432.init.Boot</moduleName>
       <packageVersion>1,0,0,0,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/family/arm/msp432/init/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/msp432/init/</packageBase>
       <cFileName>Boot.c</cFileName>
    </modIdMap>
    <modIdMap id="38">
       <moduleName>ti.uia.events.DvtTypes</moduleName>
       <packageVersion>1,0,0,2,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/uia_2_00_02_39/packages/ti/uia/events/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/events/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="39">
       <moduleName>ti.uia.events.UIAErr</moduleName>
       <packageVersion>1,0,0,2,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/uia_2_00_02_39/packages/ti/uia/events/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/events/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="40">
       <moduleName>ti.uia.events.UIAEvt</moduleName>
       <packageVersion>1,0,0,2,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/uia_2_00_02_39/packages/ti/uia/events/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/events/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="41">
       <moduleName>ti.uia.runtime.EventHdr</moduleName>
       <packageVersion>1,0,0,2,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/uia_2_00_02_39/packages/ti/uia/runtime/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/runtime/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="42">
       <moduleName>ti.uia.runtime.QueueDescriptor</moduleName>
       <packageVersion>1,0,0,2,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/uia_2_00_02_39/packages/ti/uia/runtime/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/runtime/</packageBase>
       <cFileName>QueueDescriptor.c</cFileName>
    </modIdMap>
    <modIdMap id="43">
       <moduleName>ti.uia.runtime.UIAMetaData</moduleName>
       <packageVersion>1,0,0,2,0</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/uia_2_00_02_39/packages/ti/uia/runtime/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/runtime/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="44">
       <moduleName>ti.sysbios.family.arm.m3.Hwi</moduleName>
       <packageVersion>2,0,0,0,1421781441622</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/family/arm/m3/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/</packageBase>
       <cFileName>Hwi.c</cFileName>
    </modIdMap>
    <modIdMap id="45">
       <moduleName>ti.sysbios.family.arm.m3.IntrinsicsSupport</moduleName>
       <packageVersion>2,0,0,0,1421781441622</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/family/arm/m3/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="46">
       <moduleName>ti.sysbios.family.arm.m3.TaskSupport</moduleName>
       <packageVersion>2,0,0,0,1421781441622</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/family/arm/m3/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/</packageBase>
       <cFileName>TaskSupport.c</cFileName>
    </modIdMap>
    <modIdMap id="47">
       <moduleName>ti.sysbios.family.arm.m3.Timer</moduleName>
       <packageVersion>2,0,0,0,1421781441622</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/family/arm/m3/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/</packageBase>
       <cFileName>Timer.c</cFileName>
    </modIdMap>
    <modIdMap id="48">
       <moduleName>ti.sysbios.family.arm.m3.TimestampProvider</moduleName>
       <packageVersion>2,0,0,0,1421781441622</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/family/arm/m3/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/</packageBase>
       <cFileName>TimestampProvider.c</cFileName>
    </modIdMap>
    <modIdMap id="49">
       <moduleName>ti.sysbios.family.arm.msp432.Timer</moduleName>
       <packageVersion>1,0,0,0,1421781441622</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/family/arm/msp432/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/msp432/</packageBase>
       <cFileName>Timer.c</cFileName>
    </modIdMap>
    <modIdMap id="50">
       <moduleName>ti.sysbios.family.arm.msp432.ClockFreqs</moduleName>
       <packageVersion>1,0,0,0,1421781441622</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/family/arm/msp432/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/msp432/</packageBase>
       <cFileName>ClockFreqs.c</cFileName>
    </modIdMap>
    <modIdMap id="51">
       <moduleName>ti.sysbios.gates.GateHwi</moduleName>
       <packageVersion>2,0,0,0,1421781441622</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/gates/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/gates/</packageBase>
       <cFileName>GateHwi.c</cFileName>
    </modIdMap>
    <modIdMap id="52">
       <moduleName>ti.sysbios.gates.GateMutex</moduleName>
       <packageVersion>2,0,0,0,1421781441622</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/gates/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/gates/</packageBase>
       <cFileName>GateMutex.c</cFileName>
    </modIdMap>
    <modIdMap id="53">
       <moduleName>ti.sysbios.heaps.HeapMem</moduleName>
       <packageVersion>2,0,0,0,1421781441622</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/heaps/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/heaps/</packageBase>
       <cFileName>HeapMem.c</cFileName>
    </modIdMap>
    <modIdMap id="54">
       <moduleName>ti.sysbios.heaps.HeapMem_Module_GateProxy</moduleName>
       <packageVersion>2,0,0,0,1421781441622</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/heaps/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/heaps/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="55">
       <moduleName>ti.uia.loggers.LoggerStopMode</moduleName>
       <packageVersion>1,0,0,2,1421781441622</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/uia_2_00_02_39/packages/ti/uia/loggers/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/loggers/</packageBase>
       <cFileName>LoggerStopMode.c</cFileName>
    </modIdMap>
    <modIdMap id="56">
       <moduleName>ti.sysbios.utils.Load</moduleName>
       <packageVersion>2,0,0,0,1421781441622</packageVersion>
-      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_00_24/products/bios_6_41_03_51/packages/ti/sysbios/utils/</packageBase>
+      <packageBase>/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/utils/</packageBase>
       <cFileName>Load.c</cFileName>
    </modIdMap>
    <transport2>
