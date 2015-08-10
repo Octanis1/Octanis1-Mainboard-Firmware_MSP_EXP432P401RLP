@@ -8,10 +8,13 @@
 #include <xdc/std.h>
 
 #include <ti/sysbios/knl/Task.h>
-extern const ti_sysbios_knl_Task_Handle cli_task_Params;
+extern const ti_sysbios_knl_Task_Handle cli_task_xdc;
 
 #include <ti/sysbios/knl/Task.h>
-extern const ti_sysbios_knl_Task_Handle cli_print_task_Params;
+extern const ti_sysbios_knl_Task_Handle cli_print_task_xdc;
+
+#include <ti/sysbios/knl/Task.h>
+extern const ti_sysbios_knl_Task_Handle gps_task_xdc;
 
 #include <ti/sysbios/knl/Event.h>
 extern const ti_sysbios_knl_Event_Handle navEvents;

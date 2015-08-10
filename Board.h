@@ -62,6 +62,9 @@ extern "C" {
 
 #include "MSP_EXP432P401RLP.h"
 
+#include "fw/core/cli.h" //enable CLI printf everywhere
+
+
 #define Board_initGeneral           MSP_EXP432P401RLP_initGeneral
 #define Board_initGPIO              MSP_EXP432P401RLP_initGPIO
 #define Board_initI2C               MSP_EXP432P401RLP_initI2C

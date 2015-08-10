@@ -8,13 +8,14 @@
 #include "../../Board.h"
 
 #include "cli.h"
+#include "../peripherals/gps.h"
 #include "../lib/printf.h"
 
 
 //which uart index to use for the CLI
 #define CLI_UART Board_UART0_DEBUG
 //buffer sizes
-#define CLI_BUFFER 10
+#define CLI_BUFFER 20
 #define PRINTF_BUFFER 20
 
 
@@ -24,6 +25,7 @@ static UART_Handle uart = NULL;
 static UART_Params uartParams;
 
 static char printf_output_buffer[PRINTF_BUFFER];
+
 
 
 void cli_init(){
@@ -101,15 +103,28 @@ void cli_task(){
 	        UART_read(uart, &input, sizeof(input));
 
 
-	        if(strcmp("load\n", input) == 0){
-	           tfp_sprintf(output, "Load %d", 9);
+	        if(strcmp("gps\n", input) == 0){
+	           tfp_sprintf(output, "fq %d", gps_get_fix_quality());
 	           UART_write(uart, output, sizeof(output));
-
-	        }else{
-
+	        }else if(strcmp("lat\n", input) == 0){
+		           ftoa(gps_get_lat(), output, 4);
+		           UART_write(uart, output, sizeof(output));
+	        }else if(strcmp("lon\n", input) == 0){
+		           ftoa(gps_get_lon(), output, 4);
+		           UART_write(uart, output, sizeof(output));
+	        }else if(strcmp("sat\n", input) == 0){
+		           tfp_sprintf(output, "sat %d \n", gps_get_satellites_tracked());
+		           UART_write(uart, output, sizeof(output));
+	        }else if(strcmp("valid\n", input) == 0){
+		           tfp_sprintf(output, "valid %d \n", gps_get_validity());
+		           UART_write(uart, output, sizeof(output));
+	        }else if(strcmp("hdop\n", input) == 0){
+		           tfp_sprintf(output, "hdop %d \n", gps_get_hdop());
+		           UART_write(uart, output, sizeof(output));
+	        }else if(strcmp("lastgps\n", input) == 0){
+		           tfp_sprintf(output, "lu %d \n", gps_get_last_update_time());
+		           UART_write(uart, output, sizeof(output));
 	        }
-
-	        UART_write(uart, input, sizeof(input));
 
 
 	    }
