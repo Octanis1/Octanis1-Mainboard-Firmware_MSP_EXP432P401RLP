@@ -30,24 +30,24 @@ xdc/IPackage.xdc:
 vpath xdc/IPackage.xdc $(XPKGVPATH)
 
 ifneq (clean,$(MAKECMDGOALS))
-/home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/services/global/java/package.jar:
-package/package.xdc.inc: /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/services/global/java/package.jar
-/home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/shelf/java/antlr.jar:
-package/package.xdc.inc: /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/shelf/java/antlr.jar
-/home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/services/spec/java/package.jar:
-package/package.xdc.inc: /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/services/spec/java/package.jar
-/home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/shelf/java/ecj.jar:
-package/package.xdc.inc: /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/shelf/java/ecj.jar
-/home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/shelf/java/js.jar:
-package/package.xdc.inc: /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/shelf/java/js.jar
-/home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/services/intern/cmd/java/package.jar:
-package/package.xdc.inc: /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/services/intern/cmd/java/package.jar
-/home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/services/intern/gen/java/package.jar:
-package/package.xdc.inc: /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/services/intern/gen/java/package.jar
-/home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/services/intern/xsr/java/package.jar:
-package/package.xdc.inc: /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/services/intern/xsr/java/package.jar
-/home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/shelf/java/tar.jar:
-package/package.xdc.inc: /home/vagrant/ti/xdctools_3_31_00_24_core/packages/xdc/shelf/java/tar.jar
+C:/ti/xdctools_3_31_00_24_core/packages/xdc/services/intern/gen/java/package.jar:
+package/package.xdc.inc: C:/ti/xdctools_3_31_00_24_core/packages/xdc/services/intern/gen/java/package.jar
+C:/ti/xdctools_3_31_00_24_core/packages/xdc/services/intern/xsr/java/package.jar:
+package/package.xdc.inc: C:/ti/xdctools_3_31_00_24_core/packages/xdc/services/intern/xsr/java/package.jar
+C:/ti/xdctools_3_31_00_24_core/packages/xdc/shelf/java/ecj.jar:
+package/package.xdc.inc: C:/ti/xdctools_3_31_00_24_core/packages/xdc/shelf/java/ecj.jar
+C:/ti/xdctools_3_31_00_24_core/packages/xdc/services/intern/cmd/java/package.jar:
+package/package.xdc.inc: C:/ti/xdctools_3_31_00_24_core/packages/xdc/services/intern/cmd/java/package.jar
+C:/ti/xdctools_3_31_00_24_core/packages/xdc/shelf/java/js.jar:
+package/package.xdc.inc: C:/ti/xdctools_3_31_00_24_core/packages/xdc/shelf/java/js.jar
+C:/ti/xdctools_3_31_00_24_core/packages/xdc/services/global/java/package.jar:
+package/package.xdc.inc: C:/ti/xdctools_3_31_00_24_core/packages/xdc/services/global/java/package.jar
+C:/ti/xdctools_3_31_00_24_core/packages/xdc/shelf/java/antlr.jar:
+package/package.xdc.inc: C:/ti/xdctools_3_31_00_24_core/packages/xdc/shelf/java/antlr.jar
+C:/ti/xdctools_3_31_00_24_core/packages/xdc/services/spec/java/package.jar:
+package/package.xdc.inc: C:/ti/xdctools_3_31_00_24_core/packages/xdc/services/spec/java/package.jar
+C:/ti/xdctools_3_31_00_24_core/packages/xdc/shelf/java/tar.jar:
+package/package.xdc.inc: C:/ti/xdctools_3_31_00_24_core/packages/xdc/shelf/java/tar.jar
 endif
 # goals for files generated during schema generation but unspecified by schema's pattern rule
 

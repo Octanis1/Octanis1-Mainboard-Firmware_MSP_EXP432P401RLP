@@ -11,7 +11,7 @@ var makeAssembly = false;
 var Executable = xdc.module('xdc.bld.Executable');
 
 var exeOpts = new Executable.Attrs({
-        cfgScript: '/home/vagrant/workspace_v6_1/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP/app.cfg',
+        cfgScript: 'C:/Users/Sam/workspace_v6_1/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP/app.cfg',
         profile: 'release',
         cfgHome: 'configPkg',
 });
@@ -41,7 +41,7 @@ else {
 
 var thisObj = {
     cfg:        '../app.cfg',
-    outputPath: '/home/vagrant/workspace_v6_1/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP/Debug/configPkg',
+    outputPath: 'C:/Users/Sam/workspace_v6_1/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP/Debug/configPkg',
     exeName:    'app' + suffix,
     exeIntName: 'app' + suffix.replace('.', '_'),
     targ:       targ,

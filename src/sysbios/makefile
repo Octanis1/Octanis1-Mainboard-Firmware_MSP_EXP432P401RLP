@@ -1,28 +1,28 @@
-vpath % /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/
-vpath %.c /home/vagrant/ti/xdctools_3_31_00_24_core/packages/
+vpath % C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/
+vpath %.c C:/ti/xdctools_3_31_00_24_core/packages/
 
-CCOPTS    = -mcpu=cortex-m4 -march=armv7e-m -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -D__MSP432P401R__ -DTARGET_IS_FALCON -Dgcc -DMSP432WARE -Dtimegm=mktime -I"/home/vagrant/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/arm-none-eabi/include" -I"/home/vagrant/ti/ccsv6/ccs_base/arm/include" -I"/home/vagrant/ti/ccsv6/ccs_base/arm/include/CMSIS" -I"/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/MSPWare_2_00_00_40a/driverlib/MSP432P4xx" -O0 -ffunction-sections -fdata-sections -g -gdwarf-3 -gstrict-dwarf    -Wunused -Wunknown-pragmas -ffunction-sections -fdata-sections  -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -mabi=aapcs -g  -O3 -I/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm//libs/install-native/$(GCCTARG)/include -Dfar= -D__DYNAMIC_REENT__   -Dti_sysbios_family_arm_m3_Hwi_enableException__D=TRUE -Dti_sysbios_family_arm_m3_Hwi_disablePriority__D=32U -Dti_sysbios_family_arm_m3_Hwi_numSparseInterrupts__D=0U
+CCOPTS    = -mcpu=cortex-m4 -march=armv7e-m -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -D__MSP432P401R__ -DTARGET_IS_FALCON -Dgcc -DMSP432WARE -Dtimegm=mktime -I"C:/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/arm-none-eabi/include" -I"C:/ti/ccsv6/ccs_base/arm/include" -I"C:/ti/ccsv6/ccs_base/arm/include/CMSIS" -I"C:/ti/tirtos_msp43x_2_12_01_33/products/MSPWare_2_00_00_40a/driverlib/MSP432P4xx" -O0 -ffunction-sections -fdata-sections -g -gdwarf-3 -gstrict-dwarf    -Wunused -Wunknown-pragmas -ffunction-sections -fdata-sections  -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -mabi=aapcs -g  -O3 -IC:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm//libs/install-native/$(GCCTARG)/include -Dfar= -D__DYNAMIC_REENT__   -Dti_sysbios_family_arm_m3_Hwi_enableException__D=TRUE -Dti_sysbios_family_arm_m3_Hwi_disablePriority__D=32U -Dti_sysbios_family_arm_m3_Hwi_numSparseInterrupts__D=0U
 
-XDC_ROOT  = /home/vagrant/ti/xdctools_3_31_00_24_core/packages/
+XDC_ROOT  = C:/ti/xdctools_3_31_00_24_core/packages/
 
-BIOS_ROOT = /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/
+BIOS_ROOT = C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/
 
 BIOS_DEFS =  -Dti_sysbios_BIOS_swiEnabled__D=TRUE -Dti_sysbios_BIOS_taskEnabled__D=TRUE -Dti_sysbios_BIOS_clockEnabled__D=TRUE -Dti_sysbios_BIOS_runtimeCreatesEnabled__D=TRUE -Dti_sysbios_hal_Hwi_DISABLE_ALL_HOOKS -Dti_sysbios_knl_Swi_DISABLE_ALL_HOOKS -Dti_sysbios_BIOS_smpEnabled__D=FALSE -Dti_sysbios_Build_useHwiMacros -Dti_sysbios_knl_Swi_numPriorities__D=16 -Dti_sysbios_knl_Task_deleteTerminatedTasks__D=FALSE -Dti_sysbios_knl_Task_numPriorities__D=4 -Dti_sysbios_knl_Task_checkStackFlag__D=TRUE -Dti_sysbios_knl_Clock_TICK_SOURCE=ti_sysbios_knl_Clock_TickSource_TIMER -Dti_sysbios_knl_Clock_TICK_MODE=ti_sysbios_knl_Clock_TickMode_PERIODIC -Dti_sysbios_hal_Core_delegate_getId=ti_sysbios_hal_CoreNull_getId__E -Dti_sysbios_hal_Core_delegate_interruptCore=ti_sysbios_hal_CoreNull_interruptCore__E -Dti_sysbios_hal_Core_delegate_lock=ti_sysbios_hal_CoreNull_lock__E -Dti_sysbios_hal_Core_delegate_unlock=ti_sysbios_hal_CoreNull_unlock__E -Dti_sysbios_hal_Core_numCores__D=1 -Dti_sysbios_hal_CoreNull_numCores__D=1 -Dti_sysbios_utils_Load_taskEnabled__D=FALSE -Dti_sysbios_utils_Load_swiEnabled__D=FALSE -Dti_sysbios_family_arm_m3_Hwi_dispatcherSwiSupport__D=TRUE -Dti_sysbios_family_arm_m3_Hwi_dispatcherTaskSupport__D=TRUE -Dti_sysbios_family_arm_m3_Hwi_dispatcherAutoNestingSupport__D=TRUE -Dti_sysbios_family_arm_m3_Hwi_dispatcherIrpTrackingSupport__D=TRUE -Dti_sysbios_knl_Semaphore_supportsEvents__D=FALSE -Dti_sysbios_knl_Semaphore_supportsPriority__D=TRUE
 
-BIOS_INC  = -I"/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/"
+BIOS_INC  = -I"C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/"
 
-TARGET_INC = -I"/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/"
+TARGET_INC = -I"C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/"
 
-INCS = $(BIOS_INC) $(TARGET_INC)   -I"/home/vagrant/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/arm-none-eabi/include"  -I"/home/vagrant/ti/ccsv6/ccs_base/arm/include"  -I"/home/vagrant/ti/ccsv6/ccs_base/arm/include/CMSIS"  -I"/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/MSPWare_2_00_00_40a/driverlib/MSP432P4xx" 
+INCS = $(BIOS_INC) $(TARGET_INC)   -I"C:/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/arm-none-eabi/include"  -I"C:/ti/ccsv6/ccs_base/arm/include"  -I"C:/ti/ccsv6/ccs_base/arm/include/CMSIS"  -I"C:/ti/tirtos_msp43x_2_12_01_33/products/MSPWare_2_00_00_40a/driverlib/MSP432P4xx" 
 
 GCCTARG = arm-none-eabi
 
-CC = /home/vagrant/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/bin/arm-none-eabi-gcc -c -MD -MF $@.dep $(CCOPTS)
-ASM = /home/vagrant/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/bin/arm-none-eabi-gcc -c -x assembler-with-cpp $(CCOPTS)
-AR = /home/vagrant/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/bin/arm-none-eabi-ar  cr
+CC = C:/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/bin/arm-none-eabi-gcc -c -MD -MF $@.dep $(CCOPTS)
+ASM = C:/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/bin/arm-none-eabi-gcc -c -x assembler-with-cpp $(CCOPTS)
+AR = C:/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/bin/arm-none-eabi-ar  cr
 
-DEL = rm -f
-CP = cp -f
+DEL = cmd.exe /q /c del /f
+CP = cmd.exe /q /c copy /Y
 
 define RM
 	$(if $(wildcard $1),$(DEL) $1,:)
@@ -30,12 +30,12 @@ endef
 
 define ASSEMBLE
 	@echo asmm4fg $< ...
-	@$(ASM) $(BIOS_DEFS) -I "/home/vagrant/ti/xdctools_3_31_00_24_core/packages/" -Dxdc_target_types__=/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm/std.h -Dxdc_target_name__=M4F $(INCS) $<
+	@$(ASM) $(BIOS_DEFS) -I "C:/ti/xdctools_3_31_00_24_core/packages/" -Dxdc_target_types__=C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm/std.h -Dxdc_target_name__=M4F $(INCS) $<
 endef
 
 define COMPILE
 	@echo clm4fg $< ...
-	@$(CC) $(BIOS_DEFS) -I "/home/vagrant/ti/xdctools_3_31_00_24_core/packages/" -Dxdc_target_types__=/home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm/std.h -Dxdc_target_name__=M4F $(INCS) $<
+	@$(CC) $(BIOS_DEFS) -I "C:/ti/xdctools_3_31_00_24_core/packages/" -Dxdc_target_types__=C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm/std.h -Dxdc_target_name__=M4F $(INCS) $<
 endef
 
 

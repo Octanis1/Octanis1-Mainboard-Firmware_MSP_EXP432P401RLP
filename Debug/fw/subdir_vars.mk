@@ -13,10 +13,10 @@ C_DEPS += \
 ./fw/main.d 
 
 C_DEPS__QUOTED += \
-"fw/main.d" 
+"fw\main.d" 
 
 OBJS__QUOTED += \
-"fw/main.o" 
+"fw\main.o" 
 
 C_SRCS__QUOTED += \
 "../fw/main.c" 

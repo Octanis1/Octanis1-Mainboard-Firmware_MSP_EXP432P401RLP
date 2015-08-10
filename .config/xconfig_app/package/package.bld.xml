@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="windows-1252"?>
 <!--  This file conforms to the DTD xdc/bld/build.dtd -->
 <package name="xconfig_app" version="" producerId="undefined">
     <units>
@@ -7,7 +7,7 @@
         <srcFile name="package/cfg/app_pm4fg.c"/>
     </sources>
     <configscripts>
-        <srcFile name="/home/vagrant/workspace_v6_1/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP/app.cfg"/>
+        <srcFile name="C:/Users/Sam/workspace_v6_1/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP/app.cfg"/>
     </configscripts>
     <makefiles>
         <srcFile name="package.mak" src="package.bld"/>
@@ -25,7 +25,7 @@
             platform="ti.platforms.tiva:LM4F232H5QD"
             isa="v7M4"
             suffix="m4fg"
-            rootDir="/home/vagrant/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3"
+            rootDir="C:/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3"
             os="undefined"
             rts="gnu.targets.arm.rtsv7M">
             <model endian="little"
@@ -44,7 +44,7 @@
         isPartial="false"
         xCfgScript="package/cfg/app_pm4fg.cfg"
         xCfgPrefix="package/cfg/app_pm4fg"
-        cfgScript="/home/vagrant/workspace_v6_1/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP/app.cfg"
+        cfgScript="C:/Users/Sam/workspace_v6_1/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP/app.cfg"
         cfgArgs="null"
         />
     </configurations>
@@ -56,7 +56,7 @@
         profile="release"
         xCfgScript="package/cfg/app_pm4fg.cfg"
         xCfgPrefix="package/cfg/app_pm4fg"
-        cfgScript="/home/vagrant/workspace_v6_1/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP/app.cfg"
+        cfgScript="C:/Users/Sam/workspace_v6_1/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP/app.cfg"
         cfgArgs="null"
         />
     </executables>

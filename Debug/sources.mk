@@ -126,6 +126,6 @@ fw/peripherals \
 fw/peripherals/hal \
 fw/nav \
 fw \
-fw/lib/minmea \
+fw/lib \
 fw/core \
 

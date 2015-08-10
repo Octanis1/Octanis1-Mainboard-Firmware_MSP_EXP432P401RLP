@@ -16,12 +16,12 @@ C_DEPS += \
 ./fw/core/log.d 
 
 C_DEPS__QUOTED += \
-"fw/core/cli.d" \
-"fw/core/log.d" 
+"fw\core\cli.d" \
+"fw\core\log.d" 
 
 OBJS__QUOTED += \
-"fw/core/cli.o" \
-"fw/core/log.o" 
+"fw\core\cli.o" \
+"fw\core\log.o" 
 
 C_SRCS__QUOTED += \
 "../fw/core/cli.c" \

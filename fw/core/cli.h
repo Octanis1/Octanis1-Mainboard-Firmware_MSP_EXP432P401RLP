@@ -5,9 +5,6 @@
  */
 
 
-//setup uart, connect with stdin and stdout
-void cli_init();
-
 //register a command line command here. will be called when "commandstring [argument]" was typed into cli.
 void cli_register_command(void (*command_cb)(char*), char* commandstring);
 
@@ -15,4 +12,7 @@ void cli_register_command(void (*command_cb)(char*), char* commandstring);
 void cli_task();
 
 //allows sending log messages to the console
-void cli_print();
+void cli_printf(char *print_format, int number);
+
+//swi to process print requests from other modules
+void cli_print_swi();

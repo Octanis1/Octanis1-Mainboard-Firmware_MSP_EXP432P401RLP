@@ -13,10 +13,10 @@ C_DEPS += \
 ./fw/tests/minunit.d 
 
 C_DEPS__QUOTED += \
-"fw/tests/minunit.d" 
+"fw\tests\minunit.d" 
 
 OBJS__QUOTED += \
-"fw/tests/minunit.o" 
+"fw\tests\minunit.o" 
 
 C_SRCS__QUOTED += \
 "../fw/tests/minunit.c" 

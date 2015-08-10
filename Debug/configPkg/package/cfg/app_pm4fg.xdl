@@ -6,19 +6,19 @@ __STACK_SIZE = 0x600;
 __TI_STACK_SIZE = __STACK_SIZE;
 
 INPUT(
-    /home/vagrant/workspace_v6_1/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP/Debug/configPkg/package/cfg/app_pm4fg.om4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/sysbios/lib/release/ti.uia.sysbios.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/loggers/lib/release/ti.uia.loggers.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/lib/drivers_MSP432P401R_instrumented.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/ports/tirtos/lib/tirtosport.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/fatfs/lib/release/ti.sysbios.fatfs.am4fg
-    /home/vagrant/workspace_v6_1/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP/src/sysbios/sysbios.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/services/lib/release/ti.uia.services.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/runtime/lib/release/ti.uia.runtime.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/events/lib/release/ti.uia.events.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm/rtsv7M/lib/gnu.targets.arm.rtsv7M.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm/rtsv7M/lib/boot.am4fg
-    /home/vagrant/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/gnu/targets/arm/rtsv7M/lib/syscalls.am4fg
+    C:\Users\Sam\workspace_v6_1\Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP\Debug\configPkg\package\cfg\app_pm4fg.om4fg
+    C:\ti\tirtos_msp43x_2_12_01_33\products\uia_2_00_02_39\packages\ti\uia\sysbios\lib\release\ti.uia.sysbios.am4fg
+    C:\ti\tirtos_msp43x_2_12_01_33\products\uia_2_00_02_39\packages\ti\uia\loggers\lib\release\ti.uia.loggers.am4fg
+    C:/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/lib/drivers_MSP432P401R_instrumented.am4fg
+    C:/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/ports/tirtos/lib/tirtosport.am4fg
+    C:\ti\tirtos_msp43x_2_12_01_33\products\bios_6_41_04_54\packages\ti\sysbios\fatfs\lib\release\ti.sysbios.fatfs.am4fg
+    C:\Users\Sam\workspace_v6_1\Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP\src\sysbios\sysbios.am4fg
+    C:\ti\tirtos_msp43x_2_12_01_33\products\uia_2_00_02_39\packages\ti\uia\services\lib\release\ti.uia.services.am4fg
+    C:\ti\tirtos_msp43x_2_12_01_33\products\uia_2_00_02_39\packages\ti\uia\runtime\lib\release\ti.uia.runtime.am4fg
+    C:\ti\tirtos_msp43x_2_12_01_33\products\uia_2_00_02_39\packages\ti\uia\events\lib\release\ti.uia.events.am4fg
+    C:\ti\tirtos_msp43x_2_12_01_33\products\bios_6_41_04_54\packages\gnu\targets\arm\rtsv7M\lib\gnu.targets.arm.rtsv7M.am4fg
+    C:\ti\tirtos_msp43x_2_12_01_33\products\bios_6_41_04_54\packages\gnu\targets\arm\rtsv7M\lib\boot.am4fg
+    C:\ti\tirtos_msp43x_2_12_01_33\products\bios_6_41_04_54\packages\gnu\targets\arm\rtsv7M\lib\syscalls.am4fg
 )
 
 /*
@@ -26,7 +26,7 @@ INPUT(
  */
 xdc_runtime_Startup__EXECFXN__C = 1;
 xdc_runtime_Startup__RESETFXN__C = 1;
-TSK_idle = ti_sysbios_knl_Task_Object__table__V + 304;
+TSK_idle = ti_sysbios_knl_Task_Object__table__V + 152;
 
 
 SECTIONS {

@@ -37,6 +37,29 @@
 extern "C" {
 #endif
 
+
+/* XDCtools Header files */
+#include <xdc/std.h>
+#include <xdc/cfg/global.h>
+#include <xdc/runtime/System.h>
+
+/* BIOS Header files */
+#include <ti/sysbios/BIOS.h>
+#include <ti/sysbios/utils/Load.h>
+#include <ti/sysbios/knl/Semaphore.h>
+#include <ti/sysbios/knl/Swi.h>
+#include <ti/sysbios/knl/Task.h>
+
+/* TI-RTOS Header files */
+#include <ti/drivers/GPIO.h>
+#include <ti/drivers/UART.h>
+#include <ti/drivers/I2C.h>
+#include <ti/drivers/PWM.h>
+
+#include <stdint.h>
+#include <string.h>
+#include <ctype.h>
+
 #include "MSP_EXP432P401RLP.h"
 
 #define Board_initGeneral           MSP_EXP432P401RLP_initGeneral
@@ -58,35 +81,20 @@ extern "C" {
 #define Board_LED1                  MSP_EXP432P401RLP_LED_RED
 #define Board_LED2                  MSP_EXP432P401RLP_LED_RED
 
-/*
- * MSP_EXP432P401RLP_LED_GREEN & MSP_EXP432P401RLP_LED_BLUE are used for
- * PWM examples.  Uncomment the following lines if you would like to control
- * the LEDs with the GPIO driver.
- */
-//#define Board_LED2                  MSP_EXP432P401RLP_LED_GREEN
-//#define Board_LED3                  MSP_EXP432P401RLP_LED_BLUE
-
 #define Board_I2C0                  MSP_EXP432P401RLP_I2CB0
-#define Board_I2C_TMP               MSP_EXP432P401RLP_I2CB0
-#define Board_I2C_NFC               MSP_EXP432P401RLP_I2CB0
-#define Board_I2C_TPL0401           MSP_EXP432P401RLP_I2CB0
 
 #define Board_PWM0                  MSP_EXP432P401RLP_PWM_TA1_1
 #define Board_PWM1                  MSP_EXP432P401RLP_PWM_TA1_2
 
-#define Board_SDSPI0                MSP_EXP432P401RLP_SDSPIB0
-
 #define Board_SPI0                  MSP_EXP432P401RLP_SPIB0
 #define Board_SPI1                  MSP_EXP432P401RLP_SPIB2
-#define Board_SPI_CC3100            MSP_EXP432P401RLP_SPIB0
 
-#define Board_UART0                 MSP_EXP432P401RLP_UARTA0
-#define Board_UART1                 MSP_EXP432P401RLP_UARTA2
-#define Board_UART2					MSP_EXP432P401RLP_UARTA3
+#define Board_UART0_DEBUG           MSP_EXP432P401RLP_UARTA0 //"backchannel UART"
+#define Board_UART1_GPS             MSP_EXP432P401RLP_UARTA3 //P9.6,9.7
+#define Board_UART2_COMM  			MSP_EXP432P401RLP_UARTA2 //P3.2,3.3
 
 #define Board_WATCHDOG0             MSP_EXP432P401RLP_WATCHDOG
 
-#define Board_WIFI                  MSP_EXP432P401RLP_WIFI
 
 /* Board specific I2C addresses */
 #define Board_TMP006_ADDR           (0x40)

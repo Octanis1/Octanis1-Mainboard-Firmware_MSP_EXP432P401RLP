@@ -8,16 +8,19 @@
 #include <xdc/std.h>
 
 #include <ti/sysbios/knl/Task.h>
-extern const ti_sysbios_knl_Task_Handle task0;
+extern const ti_sysbios_knl_Task_Handle cli_task_Params;
 
 #include <ti/sysbios/knl/Task.h>
-extern const ti_sysbios_knl_Task_Handle task1;
+extern const ti_sysbios_knl_Task_Handle cli_print_task_Params;
 
-#include <ti/sysbios/knl/Task.h>
-extern const ti_sysbios_knl_Task_Handle task2;
+#include <ti/sysbios/knl/Event.h>
+extern const ti_sysbios_knl_Event_Handle navEvents;
 
-#include <ti/sysbios/knl/Task.h>
-extern const ti_sysbios_knl_Task_Handle task3;
+#include <ti/sysbios/knl/Event.h>
+extern const ti_sysbios_knl_Event_Handle commEvents;
+
+#include <ti/sysbios/knl/Clock.h>
+extern const ti_sysbios_knl_Clock_Handle clockInst0;
 
 #define TI_DRIVERS_WIFI_INCLUDED 0
 

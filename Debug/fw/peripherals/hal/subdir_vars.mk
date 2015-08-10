@@ -13,10 +13,10 @@ C_DEPS += \
 ./fw/peripherals/hal/mpu6050.d 
 
 C_DEPS__QUOTED += \
-"fw/peripherals/hal/mpu6050.d" 
+"fw\peripherals\hal\mpu6050.d" 
 
 OBJS__QUOTED += \
-"fw/peripherals/hal/mpu6050.o" 
+"fw\peripherals\hal\mpu6050.o" 
 
 C_SRCS__QUOTED += \
 "../fw/peripherals/hal/mpu6050.c" 

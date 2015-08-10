@@ -7,5 +7,5 @@
 #       or equal to the generated config header
 #
 linker.cmd: package/cfg/app_pm4fg.xdl
-	$(SED) 's"^\"\(package/cfg/app_pm4fgcfg.cmd\)\"$""\"/home/vagrant/workspace_v6_1/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP/Debug/configPkg/\1\""' package/cfg/app_pm4fg.xdl > $@
+	$(SED) 's"^\"\(package/cfg/app_pm4fgcfg.cmd\)\"$""\"C:/Users/Sam/workspace_v6_1/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP/Debug/configPkg/\1\""' package/cfg/app_pm4fg.xdl > $@
 	-$(SETDATE) -r:max package/cfg/app_pm4fg.h compiler.opt compiler.opt.defs
