@@ -9,28 +9,20 @@ CG_TOOL_ROOT := C:/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3
 ORDERED_OBJS += \
 "./MSP_EXP432P401RLP.o" \
 "./fw/tests/minunit.o" \
-"./fw/peripherals/compass.o" \
-"./fw/peripherals/flash.o" \
+"./fw/peripherals/comm.o" \
 "./fw/peripherals/gps.o" \
-"./fw/peripherals/imu.o" \
-"./fw/peripherals/motor.o" \
-"./fw/peripherals/radio.o" \
-"./fw/peripherals/rockblock.o" \
-"./fw/peripherals/sonar.o" \
-"./fw/peripherals/strut.o" \
 "./fw/peripherals/weather.o" \
-"./fw/peripherals/wheel.o" \
+"./fw/peripherals/hal/bmp180.o" \
+"./fw/peripherals/hal/hx1.o" \
 "./fw/peripherals/hal/mpu6050.o" \
+"./fw/peripherals/hal/rockblock.o" \
 "./fw/peripherals/hal/ublox_6.o" \
-"./fw/nav/drive.o" \
-"./fw/nav/map.o" \
-"./fw/nav/path.o" \
-"./fw/nav/pose.o" \
 "./fw/main.o" \
 "./fw/lib/printf.o" \
 "./fw/lib/minmea/minmea.o" \
 "./fw/core/cli.o" \
 "./fw/core/log.o" \
+"./fw/core/system.o" \
 -Wl,-T"../MSP_EXP432P401RLP.lds" \
 $(GEN_CMDS__FLAG) \
 -Wl,--start-group \
@@ -52,7 +44,6 @@ RMDIR := RMDIR /S/Q
 -include fw/tests/subdir_vars.mk
 -include fw/peripherals/subdir_vars.mk
 -include fw/peripherals/hal/subdir_vars.mk
--include fw/nav/subdir_vars.mk
 -include fw/subdir_vars.mk
 -include fw/lib/subdir_vars.mk
 -include fw/lib/minmea/subdir_vars.mk
@@ -61,7 +52,6 @@ RMDIR := RMDIR /S/Q
 -include fw/tests/subdir_rules.mk
 -include fw/peripherals/subdir_rules.mk
 -include fw/peripherals/hal/subdir_rules.mk
--include fw/nav/subdir_rules.mk
 -include fw/subdir_rules.mk
 -include fw/lib/subdir_rules.mk
 -include fw/lib/minmea/subdir_rules.mk
@@ -192,8 +182,8 @@ Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP.hex: $(EXE_OUTPUTS)
 clean:
 	-$(RM) $(GEN_MISC_FILES__QUOTED)$(EXE_OUTPUTS__QUOTED)$(GEN_FILES__QUOTED)$(BIN_OUTPUTS__QUOTED)$(GEN_OPTS__QUOTED)$(GEN_CMDS__QUOTED)
 	-$(RMDIR) $(GEN_MISC_DIRS__QUOTED)
-	-$(RM) "MSP_EXP432P401RLP.d" "fw\tests\minunit.d" "fw\peripherals\compass.d" "fw\peripherals\flash.d" "fw\peripherals\gps.d" "fw\peripherals\imu.d" "fw\peripherals\motor.d" "fw\peripherals\radio.d" "fw\peripherals\rockblock.d" "fw\peripherals\sonar.d" "fw\peripherals\strut.d" "fw\peripherals\weather.d" "fw\peripherals\wheel.d" "fw\peripherals\hal\mpu6050.d" "fw\peripherals\hal\ublox_6.d" "fw\nav\drive.d" "fw\nav\map.d" "fw\nav\path.d" "fw\nav\pose.d" "fw\main.d" "fw\lib\printf.d" "fw\lib\minmea\minmea.d" "fw\core\cli.d" "fw\core\log.d" 
-	-$(RM) "MSP_EXP432P401RLP.o" "fw\tests\minunit.o" "fw\peripherals\compass.o" "fw\peripherals\flash.o" "fw\peripherals\gps.o" "fw\peripherals\imu.o" "fw\peripherals\motor.o" "fw\peripherals\radio.o" "fw\peripherals\rockblock.o" "fw\peripherals\sonar.o" "fw\peripherals\strut.o" "fw\peripherals\weather.o" "fw\peripherals\wheel.o" "fw\peripherals\hal\mpu6050.o" "fw\peripherals\hal\ublox_6.o" "fw\nav\drive.o" "fw\nav\map.o" "fw\nav\path.o" "fw\nav\pose.o" "fw\main.o" "fw\lib\printf.o" "fw\lib\minmea\minmea.o" "fw\core\cli.o" "fw\core\log.o" 
+	-$(RM) "MSP_EXP432P401RLP.d" "fw\tests\minunit.d" "fw\peripherals\comm.d" "fw\peripherals\gps.d" "fw\peripherals\weather.d" "fw\peripherals\hal\bmp180.d" "fw\peripherals\hal\hx1.d" "fw\peripherals\hal\mpu6050.d" "fw\peripherals\hal\rockblock.d" "fw\peripherals\hal\ublox_6.d" "fw\main.d" "fw\lib\printf.d" "fw\lib\minmea\minmea.d" "fw\core\cli.d" "fw\core\log.d" "fw\core\system.d" 
+	-$(RM) "MSP_EXP432P401RLP.o" "fw\tests\minunit.o" "fw\peripherals\comm.o" "fw\peripherals\gps.o" "fw\peripherals\weather.o" "fw\peripherals\hal\bmp180.o" "fw\peripherals\hal\hx1.o" "fw\peripherals\hal\mpu6050.o" "fw\peripherals\hal\rockblock.o" "fw\peripherals\hal\ublox_6.o" "fw\main.o" "fw\lib\printf.o" "fw\lib\minmea\minmea.o" "fw\core\cli.o" "fw\core\log.o" "fw\core\system.o" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

@@ -1,7 +1,7 @@
 /*
  *  File: gps.c
  *  Description: Model for gps module
- *  Author:
+ *  Author: Sam
  */
 #include "../../Board.h"
 #include "hal/ublox_6.h"
@@ -77,7 +77,7 @@ void gps_task(){
 				case MINMEA_SENTENCE_RMC: {
 					if(minmea_parse_rmc(&gps_rmc_frame, nmeaframes)){
 						//update system time when valid RMC frame arrives
-
+						Seconds_set(gps_get_last_update_time());
 					}
 
 				}break;

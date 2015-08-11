@@ -49,6 +49,8 @@ extern "C" {
 #include <ti/sysbios/knl/Semaphore.h>
 #include <ti/sysbios/knl/Swi.h>
 #include <ti/sysbios/knl/Task.h>
+#include <ti/sysbios/hal/Seconds.h>
+#include <ti/sysbios/knl/Mailbox.h>
 
 /* TI-RTOS Header files */
 #include <ti/drivers/GPIO.h>
@@ -83,6 +85,11 @@ extern "C" {
 #define Board_LED0                  MSP_EXP432P401RLP_LED1
 #define Board_LED1                  MSP_EXP432P401RLP_LED_RED
 #define Board_LED2                  MSP_EXP432P401RLP_LED_RED
+
+#define Board_ROCKBLOCK_SLEEP		MSP_EXP432P401RLP_ROCKBLOCK_SLEEP
+#define Board_ROCKBLOCK_NET			MSP_EXP432P401RLP_ROCKBLOCK_NET
+
+
 
 #define Board_I2C0                  MSP_EXP432P401RLP_I2CB0
 

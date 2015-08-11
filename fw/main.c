@@ -3,8 +3,6 @@
 
 
 
-
-
 //called periodically
 Void clockFxn(UArg arg)
 {
@@ -13,8 +11,8 @@ Void clockFxn(UArg arg)
 
   //print load periodically
   int cpuLoad = Load_getCPULoad();
-  cli_printf("CPU load: %d", cpuLoad);
-
+  cli_printf("CPU load: %d \n", cpuLoad);
+  cli_printf("Epoch: %d", Seconds_get());
 }
 
 

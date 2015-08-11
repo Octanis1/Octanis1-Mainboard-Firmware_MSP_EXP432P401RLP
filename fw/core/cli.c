@@ -8,7 +8,9 @@
 #include "../../Board.h"
 
 #include "cli.h"
+#include "system.h"
 #include "../peripherals/gps.h"
+#include "../peripherals/hal/rockblock.h"
 #include "../lib/printf.h"
 
 
@@ -19,12 +21,10 @@
 #define PRINTF_BUFFER 20
 
 
-static Semaphore_Handle cli_print_sem;
 
 static UART_Handle uart = NULL;
 static UART_Params uartParams;
 
-static char printf_output_buffer[PRINTF_BUFFER];
 
 
 
@@ -43,34 +43,42 @@ void cli_init(){
         System_abort("Error opening the UART");
     }
 
-    //create semaphore for print requests
-    cli_print_sem = Semaphore_create(0, NULL, NULL);
 }
-
 
 
 //can be called from any function to queue output strings (currently only integer support)
 void cli_printf(char *print_format, int number){
+
+	char printf_output_buffer[PRINTF_BUFFER];
+
     //clear buffer from any previous messages
 	memset(&printf_output_buffer[0], 0, sizeof(printf_output_buffer));
 
+	//post message to mailbox
     tfp_sprintf(printf_output_buffer, print_format, number);
 
-	Semaphore_post(cli_print_sem);
+    Mailbox_post(cli_print_mailbox, printf_output_buffer, BIOS_NO_WAIT);  //from this context, timeouts are not allowed
 }
 
 
 
 //allows sending log messages to the console
 void cli_print_task(){
+	char printf_output_buffer[PRINTF_BUFFER];
+
+    //clear buffer from any previous messages
+	memset(&printf_output_buffer[0], 0, sizeof(printf_output_buffer));
 
 	while(1){
 
-		if(uart != NULL){
-			Semaphore_pend(cli_print_sem, BIOS_WAIT_FOREVER);
+		while(Mailbox_pend(cli_print_mailbox, printf_output_buffer, BIOS_WAIT_FOREVER)){
 
-			//print message
-		    UART_write(uart, printf_output_buffer, sizeof(printf_output_buffer));
+			//while mailbox contains messages, print out to uart
+			if(uart != NULL){
+				//print message
+				UART_write(uart, printf_output_buffer, sizeof(printf_output_buffer));
+			}
+
 		}
 
 	}
@@ -82,52 +90,64 @@ void cli_print_task(){
 //runs with lowest priority
 void cli_task(){
 
-	   	char input[CLI_BUFFER];
-	    char output[CLI_BUFFER];
-	    const char consolePrompt[] = "octanis Rover Console:\r\n";
+	char input[CLI_BUFFER];
+	char output[CLI_BUFFER];
+	const char consolePrompt[] = "octanis Rover Console:\r\n";
 
-	    //initialises UART0 handle
-	    cli_init();
+	//initialises UART0 handle
+	cli_init();
 
-	    //prints welcome message
-	    UART_write(uart, consolePrompt, sizeof(consolePrompt));
+	//prints welcome message
+	UART_write(uart, consolePrompt, sizeof(consolePrompt));
 
-	    /* loop forever */
-	    while (1) {
+	/* loop forever */
+	while (1) {
 
-	        //clears buffers
-	        memset(&input[0], 0, sizeof(input));
-	        memset(&output[0], 0, sizeof(output));
+		//clears buffers
+		memset(&input[0], 0, sizeof(input));
+		memset(&output[0], 0, sizeof(output));
 
-	        //blocks until command received
-	        UART_read(uart, &input, sizeof(input));
-
-
-	        if(strcmp("gps\n", input) == 0){
-	           tfp_sprintf(output, "fq %d", gps_get_fix_quality());
-	           UART_write(uart, output, sizeof(output));
-	        }else if(strcmp("lat\n", input) == 0){
-		           ftoa(gps_get_lat(), output, 4);
-		           UART_write(uart, output, sizeof(output));
-	        }else if(strcmp("lon\n", input) == 0){
-		           ftoa(gps_get_lon(), output, 4);
-		           UART_write(uart, output, sizeof(output));
-	        }else if(strcmp("sat\n", input) == 0){
-		           tfp_sprintf(output, "sat %d \n", gps_get_satellites_tracked());
-		           UART_write(uart, output, sizeof(output));
-	        }else if(strcmp("valid\n", input) == 0){
-		           tfp_sprintf(output, "valid %d \n", gps_get_validity());
-		           UART_write(uart, output, sizeof(output));
-	        }else if(strcmp("hdop\n", input) == 0){
-		           tfp_sprintf(output, "hdop %d \n", gps_get_hdop());
-		           UART_write(uart, output, sizeof(output));
-	        }else if(strcmp("lastgps\n", input) == 0){
-		           tfp_sprintf(output, "lu %d \n", gps_get_last_update_time());
-		           UART_write(uart, output, sizeof(output));
-	        }
+		//blocks until command received
+		UART_read(uart, &input, sizeof(input));
 
 
-	    }
+		if(strcmp("gps\n", input) == 0){
+		   tfp_sprintf(output, "fq %d", gps_get_fix_quality());
+		   UART_write(uart, output, sizeof(output));
+		}else if(strcmp("lat\n", input) == 0){
+			   ftoa(gps_get_lat(), output, 4);
+			   UART_write(uart, output, sizeof(output));
+		}else if(strcmp("lon\n", input) == 0){
+			   ftoa(gps_get_lon(), output, 4);
+			   UART_write(uart, output, sizeof(output));
+		}else if(strcmp("sat\n", input) == 0){
+			   tfp_sprintf(output, "sat %d \n", gps_get_satellites_tracked());
+			   UART_write(uart, output, sizeof(output));
+		}else if(strcmp("valid\n", input) == 0){
+			   tfp_sprintf(output, "valid %d \n", gps_get_validity());
+			   UART_write(uart, output, sizeof(output));
+		}else if(strcmp("hdop\n", input) == 0){
+			   tfp_sprintf(output, "hdop %d \n", gps_get_hdop());
+			   UART_write(uart, output, sizeof(output));
+		}else if(strcmp("lastgps\n", input) == 0){
+			   tfp_sprintf(output, "lu %d \n", gps_get_last_update_time());
+			   UART_write(uart, output, sizeof(output));
+		}else if(strcmp("tasks\n", input) == 0){
+			   system_listTasks();
+		}else if(strcmp("rbs\n", input) == 0){
+			   tfp_sprintf(output, "rb sleep? %d \n", rockblock_get_sleep_status());
+			   UART_write(uart, output, sizeof(output));
+		}else if(strcmp("rbn\n", input) == 0){
+			   tfp_sprintf(output, "rb net? %d \n", rockblock_get_net_availability());
+			   UART_write(uart, output, sizeof(output));
+		}
+
+
+
+
+
+
+	}
 
 
 }

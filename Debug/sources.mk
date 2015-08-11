@@ -124,7 +124,6 @@ SUBDIRS := \
 fw/tests \
 fw/peripherals \
 fw/peripherals/hal \
-fw/nav \
 fw \
 fw/lib \
 fw/lib/minmea \

@@ -271,9 +271,18 @@ digraph configuration {
         ti_sysbios_hal_Hwi [style=filled,fillcolor=lightgray, label="Hwi"];
         ti_sysbios_hal__top -> ti_sysbios_hal_Hwi[style=invis];
         ti_sysbios_hal_Hwi -> ti_sysbios_hal__bot[style=invis];
+        ti_sysbios_hal_Seconds [style=filled,fillcolor=lightgray, label="Seconds"];
+        ti_sysbios_hal__top -> ti_sysbios_hal_Seconds[style=invis];
+        ti_sysbios_hal_Seconds -> ti_sysbios_hal__bot[style=invis];
+        ti_sysbios_hal_SecondsClock [style=filled,fillcolor=lightgray, label="SecondsClock"];
+        ti_sysbios_hal__top -> ti_sysbios_hal_SecondsClock[style=invis];
+        ti_sysbios_hal_SecondsClock -> ti_sysbios_hal__bot[style=invis];
         ti_sysbios_hal_Hwi_HwiProxy [style=filled,fillcolor=lightgray, label="Hwi_HwiProxy"];
         ti_sysbios_hal__top -> ti_sysbios_hal_Hwi_HwiProxy[style=invis];
         ti_sysbios_hal_Hwi_HwiProxy -> ti_sysbios_hal__bot[style=invis];
+        ti_sysbios_hal_Seconds_SecondsProxy [style=filled,fillcolor=lightgray, label="Seconds_SecondsProxy"];
+        ti_sysbios_hal__top -> ti_sysbios_hal_Seconds_SecondsProxy[style=invis];
+        ti_sysbios_hal_Seconds_SecondsProxy -> ti_sysbios_hal__bot[style=invis];
     }
     subgraph cluster32 {
         label="";
@@ -324,6 +333,9 @@ digraph configuration {
         ti_sysbios_knl_Event [style=filled,fillcolor=lightgray, label="Event"];
         ti_sysbios_knl__top -> ti_sysbios_knl_Event[style=invis];
         ti_sysbios_knl_Event -> ti_sysbios_knl__bot[style=invis];
+        ti_sysbios_knl_Mailbox [style=filled,fillcolor=lightgray, label="Mailbox"];
+        ti_sysbios_knl__top -> ti_sysbios_knl_Mailbox[style=invis];
+        ti_sysbios_knl_Mailbox -> ti_sysbios_knl__bot[style=invis];
         ti_sysbios_knl_Queue [style=filled,fillcolor=lightgray, label="Queue"];
         ti_sysbios_knl__top -> ti_sysbios_knl_Queue[style=invis];
         ti_sysbios_knl_Queue -> ti_sysbios_knl__bot[style=invis];

@@ -73,6 +73,9 @@ knl_Intrinsics.o: knl/Intrinsics.c makefile
 knl_Event.o: knl/Event.c makefile
 	@-$(call RM, knl_Event.o)
 	$(COMPILE) -o knl_Event.o
+knl_Mailbox.o: knl/Mailbox.c makefile
+	@-$(call RM, knl_Mailbox.o)
+	$(COMPILE) -o knl_Mailbox.o
 knl_Queue.o: knl/Queue.c makefile
 	@-$(call RM, knl_Queue.o)
 	$(COMPILE) -o knl_Queue.o
@@ -97,6 +100,12 @@ hal_Hwi_stack.o: hal/Hwi_stack.c makefile
 hal_Hwi_startup.o: hal/Hwi_startup.c makefile
 	@-$(call RM, hal_Hwi_startup.o)
 	$(COMPILE) -o hal_Hwi_startup.o
+hal_Seconds.o: hal/Seconds.c makefile
+	@-$(call RM, hal_Seconds.o)
+	$(COMPILE) -o hal_Seconds.o
+hal_SecondsClock.o: hal/SecondsClock.c makefile
+	@-$(call RM, hal_SecondsClock.o)
+	$(COMPILE) -o hal_SecondsClock.o
 gnu_ReentSupport.o: rts/gnu/ReentSupport.c makefile
 	@-$(call RM, gnu_ReentSupport.o)
 	$(COMPILE) -o gnu_ReentSupport.o
@@ -140,7 +149,7 @@ utils_Load_CPU.o: utils/Load_CPU.c makefile
 	@-$(call RM, utils_Load_CPU.o)
 	$(COMPILE) -o utils_Load_CPU.o
 
-sysbios.am4fg: m3_Hwi_asm_gnu.o m3_Hwi_asm_switch_gnu.o m3_IntrinsicsSupport_asm_gnu.o m3_TaskSupport_asm_gnu.o _BIOS.o knl_Clock.o knl_Idle.o knl_Intrinsics.o knl_Event.o knl_Queue.o knl_Semaphore.o knl_Swi.o knl_Swi_andn.o knl_Task.o hal_Hwi.o hal_Hwi_stack.o hal_Hwi_startup.o gnu_ReentSupport.o gnu_SemiHostSupport.o init_Boot.o m3_Hwi.o m3_TaskSupport.o m3_Timer.o m3_TimestampProvider.o msp432_Timer.o msp432_ClockFreqs.o gates_GateHwi.o gates_GateMutex.o heaps_HeapMem.o utils_Load.o utils_Load_CPU.o
+sysbios.am4fg: m3_Hwi_asm_gnu.o m3_Hwi_asm_switch_gnu.o m3_IntrinsicsSupport_asm_gnu.o m3_TaskSupport_asm_gnu.o _BIOS.o knl_Clock.o knl_Idle.o knl_Intrinsics.o knl_Event.o knl_Mailbox.o knl_Queue.o knl_Semaphore.o knl_Swi.o knl_Swi_andn.o knl_Task.o hal_Hwi.o hal_Hwi_stack.o hal_Hwi_startup.o hal_Seconds.o hal_SecondsClock.o gnu_ReentSupport.o gnu_SemiHostSupport.o init_Boot.o m3_Hwi.o m3_TaskSupport.o m3_Timer.o m3_TimestampProvider.o msp432_Timer.o msp432_ClockFreqs.o gates_GateHwi.o gates_GateMutex.o heaps_HeapMem.o utils_Load.o utils_Load_CPU.o
 	@echo arm4fg $^ ...
 	@-$(call RM, $@)
 	@$(AR) $@ $^
@@ -166,6 +175,8 @@ clean:
 	@-$(call RM, knl_Intrinsics.o.dep)
 	@-$(call RM, knl_Event.o)
 	@-$(call RM, knl_Event.o.dep)
+	@-$(call RM, knl_Mailbox.o)
+	@-$(call RM, knl_Mailbox.o.dep)
 	@-$(call RM, knl_Queue.o)
 	@-$(call RM, knl_Queue.o.dep)
 	@-$(call RM, knl_Semaphore.o)
@@ -182,6 +193,10 @@ clean:
 	@-$(call RM, hal_Hwi_stack.o.dep)
 	@-$(call RM, hal_Hwi_startup.o)
 	@-$(call RM, hal_Hwi_startup.o.dep)
+	@-$(call RM, hal_Seconds.o)
+	@-$(call RM, hal_Seconds.o.dep)
+	@-$(call RM, hal_SecondsClock.o)
+	@-$(call RM, hal_SecondsClock.o.dep)
 	@-$(call RM, gnu_ReentSupport.o)
 	@-$(call RM, gnu_ReentSupport.o.dep)
 	@-$(call RM, gnu_SemiHostSupport.o)
