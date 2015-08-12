@@ -12,13 +12,13 @@ void comm_task(){
 	while(1){
 		Task_sleep(10440);
 
-		cli_printf("RB open",0);
+		cli_printf("RB open \n",0);
 
 		if(rockblock_open()){
 
 			rockblock_begin();
 
-			cli_printf("RB begin done",0);
+			cli_printf("RB begin done \n",0);
 
 
 			rockblock_close();

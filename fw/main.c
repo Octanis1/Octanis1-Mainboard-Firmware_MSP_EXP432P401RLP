@@ -12,7 +12,7 @@ Void clockFxn(UArg arg)
   //print load periodically
   int cpuLoad = Load_getCPULoad();
   cli_printf("CPU load: %d \n", cpuLoad);
-  cli_printf("Epoch: %d", Seconds_get());
+  cli_printf("Epoch: %d \n", Seconds_get());
 }
 
 
@@ -29,7 +29,6 @@ int main(void)
 
     /* Turn on user LED */
     GPIO_write(Board_LED0, Board_LED_ON);
-
 
     /* Start BIOS */
     BIOS_start();

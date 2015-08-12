@@ -571,7 +571,7 @@ void MSP_EXP432P401RLP_initUART(void)
     MAP_GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P3,
         GPIO_PIN2 | GPIO_PIN3, GPIO_PRIMARY_MODULE_FUNCTION);
 
-    /* Set P3.2 & P3.3 in UART mode */
+    /* Set P9.6 & P9.7 in UART mode */
     MAP_GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P9,
         GPIO_PIN6 | GPIO_PIN7, GPIO_PRIMARY_MODULE_FUNCTION);
 
