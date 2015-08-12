@@ -70,7 +70,8 @@ fw/peripherals/gps.d: ../fw/peripherals/gps.c \
  C:/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/I2C.h \
  C:/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/PWM.h \
  ../fw/peripherals/../../MSP_EXP432P401RLP.h \
- ../fw/peripherals/../../fw/core/cli.h ../fw/peripherals/hal/ublox_6.h \
+ ../fw/peripherals/../../fw/core/cli.h \
+ ../fw/peripherals/../../fw/core/system.h ../fw/peripherals/hal/ublox_6.h \
  ../fw/peripherals/../lib/minmea/minmea.h ../fw/peripherals/gps.h
 
 ../fw/peripherals/../../Board.h:
@@ -216,6 +217,8 @@ C:/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/PWM.h:
 ../fw/peripherals/../../MSP_EXP432P401RLP.h:
 
 ../fw/peripherals/../../fw/core/cli.h:
+
+../fw/peripherals/../../fw/core/system.h:
 
 ../fw/peripherals/hal/ublox_6.h:
 

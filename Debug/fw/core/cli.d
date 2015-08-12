@@ -69,7 +69,8 @@ fw/core/cli.d: ../fw/core/cli.c ../fw/core/../../Board.h \
  C:/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/I2C.h \
  C:/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/PWM.h \
  ../fw/core/../../MSP_EXP432P401RLP.h ../fw/core/../../fw/core/cli.h \
- ../fw/core/cli.h ../fw/core/system.h ../fw/core/../peripherals/gps.h \
+ ../fw/core/../../fw/core/system.h ../fw/core/cli.h ../fw/core/system.h \
+ ../fw/core/../peripherals/gps.h \
  ../fw/core/../peripherals/hal/rockblock.h ../fw/core/../lib/printf.h
 
 ../fw/core/../../Board.h:
@@ -215,6 +216,8 @@ C:/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/PWM.h:
 ../fw/core/../../MSP_EXP432P401RLP.h:
 
 ../fw/core/../../fw/core/cli.h:
+
+../fw/core/../../fw/core/system.h:
 
 ../fw/core/cli.h:
 

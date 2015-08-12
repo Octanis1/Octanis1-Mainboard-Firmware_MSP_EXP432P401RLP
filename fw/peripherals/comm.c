@@ -16,10 +16,18 @@ void comm_task(){
 
 		if(rockblock_open()){
 
-			rockblock_begin();
+			if(rockblock_begin()){ //can timeout
 
-			cli_printf("RB begin done \n",0);
+				cli_printf("RB begin done \n",0);
 
+				int csq = rockblock_get_signal_quality();
+
+				cli_printf("RB sig: %d \n", csq);
+
+			}else{
+				cli_printf("RB begin problem \n",0);
+
+			}
 
 			rockblock_close();
 		}

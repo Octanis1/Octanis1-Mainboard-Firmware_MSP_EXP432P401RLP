@@ -38,3 +38,7 @@ void system_listTasks()
     }
 
 }
+
+int system_chartoint(char c){
+	return c - '0';
+}

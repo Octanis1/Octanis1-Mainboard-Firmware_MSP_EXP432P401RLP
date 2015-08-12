@@ -11,7 +11,7 @@
 void system_dumpTask(Task_Handle task);
 void system_listTasks();
 
-
+int system_chartoint(char c);
 
 
 #endif /* FW_CORE_SYSTEM_H_ */

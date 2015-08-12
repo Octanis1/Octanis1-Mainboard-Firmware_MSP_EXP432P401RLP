@@ -68,7 +68,8 @@ fw/main.d: ../fw/main.c ../fw/../Board.h \
  C:/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/UART.h \
  C:/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/I2C.h \
  C:/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/PWM.h \
- ../fw/../MSP_EXP432P401RLP.h ../fw/../fw/core/cli.h
+ ../fw/../MSP_EXP432P401RLP.h ../fw/../fw/core/cli.h \
+ ../fw/../fw/core/system.h
 
 ../fw/../Board.h:
 
@@ -213,3 +214,5 @@ C:/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/PWM.h:
 ../fw/../MSP_EXP432P401RLP.h:
 
 ../fw/../fw/core/cli.h:
+
+../fw/../fw/core/system.h:
