@@ -1,3 +1,6 @@
+#ifndef __GPS_H
+#define __GPS_H
+
 void gps_task();
 
 int gps_get_fix_quality();
@@ -15,3 +18,5 @@ int gps_get_validity();
 int gps_get_hdop();
 
 int gps_get_last_update_time();
+
+#endif

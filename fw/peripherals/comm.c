@@ -24,6 +24,10 @@ void comm_task(){
 
 				cli_printf("RB sig: %d \n", csq);
 
+				if(csq > 1){
+				    GPIO_write(Board_LED1, Board_LED_ON);
+				}
+
 			}else{
 				cli_printf("RB begin problem \n",0);
 

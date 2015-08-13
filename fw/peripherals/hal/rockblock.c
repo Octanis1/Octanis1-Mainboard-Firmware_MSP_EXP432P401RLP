@@ -2,6 +2,17 @@
  *  File: rockblock.c
  *  Description: Model for Iridium Satellite Modem "Rockblock"
  *  Author: Sam
+ *
+ *  Wouldn't have been possible without the great help from:
+ *  {
+	 *  IridiumSBD - An Arduino library for Iridium SBD ("Short Burst Data") Communications
+	 *	Suggested and generously supported by Rock Seven Location Technology
+	 *	(http://rock7mobile.com), makers of the brilliant RockBLOCK satellite modem.
+	 *	Copyright (C) 2013 Mikal Hart
+	 *	All rights reserved.
+	 *
+	 *	The latest version of this library is available at http://arduiniana.org.
+ *  }
  */
 
 #include "../../../Board.h"
@@ -22,6 +33,7 @@ static UART_Params uartParams;
 static const char rockblock_at[] = "AT\r";
 static const char rockblock_at_echo_off[] = "ATE0\r";
 static const char rockblock_at_csq[] = "AT+CSQ\r";
+static int last_powerup_time = 0;
 
 
 int rockblock_open(){
@@ -48,6 +60,8 @@ int rockblock_open(){
 	if (uart == NULL) {
 		return 0;
 	}else{
+		//store power up time
+		last_powerup_time = Seconds_get();
 		return 1;
 	}
 }
@@ -79,10 +93,16 @@ int rockblock_begin(){
 }
 
 
-
 void rockblock_close(){
-	UART_close(uart);
+	int elapsed_time = Seconds_get() - last_powerup_time;
 
+	// best practices guide suggests waiting at least 2 seconds
+	// before powering off again
+	if(elapsed_time < 2){
+		Task_sleep(elapsed_time);
+	}
+
+	UART_close(uart);
     GPIO_write(Board_ROCKBLOCK_SLEEP, ROCKBLOCK_SLEEP);
 }
 
@@ -97,7 +117,7 @@ int rockblock_get_signal_quality(){
 	memset(rxBuffer, 0, sizeof(rxBuffer));
 
 	UART_write(uart, rockblock_at_csq, sizeof(rockblock_at_csq));
-	int retbuf = UART_read(uart, rxBuffer, sizeof(rxBuffer));
+	UART_read(uart, rxBuffer, sizeof(rxBuffer));
 
 
 	//signal quality value is at index 7
@@ -105,14 +125,23 @@ int rockblock_get_signal_quality(){
 	return csq_val;
 }
 
+
+//sends an SBD, then checks the inbox (checking costs 1 credit!)
+int rockblock_send_receive_SBD(const uint8_t *tx_buffer, size_t tx_buffersize,
+								uint8_t *rx_buffer, size_t *rx_buffersizePtr);
+
+//gets an SBD message from rockblocks buffer
+int rockblock_get_SBD_binary(uint8_t *rx_buffer, size_t *rx_buffersizePtr);
+
+
+
+
 int rockblock_get_sleep_status(){
 	return GPIO_read(Board_ROCKBLOCK_SLEEP);
 }
 
 
-
 int rockblock_get_net_availability(){
 	return GPIO_read(Board_ROCKBLOCK_NET);
-
 }
 

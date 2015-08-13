@@ -1,0 +1,13 @@
+message status {
+  optional int32 system_temp = 1; //inside, on battery
+  
+  optional float bv = 2; //main battery voltage
+  optional float pv = 3; //total solar panel voltage
+  
+  optional int32 cpu_load = 4; //system cpu load (0-100%)
+  optional int32 gps_health = 5; //average hdop
+  optional int32 hx1_health = 6; //TBD
+  optional int32 rockblock_health = 7; //avg signal quality
+  optional int32 watchdog_last_fired = 8; //ultrasound distance 3
+
+}
