@@ -1,4 +1,4 @@
-message status {
+message rover_status {
   optional int32 system_temp = 1; //inside, on battery
   
   optional float bv = 2; //main battery voltage

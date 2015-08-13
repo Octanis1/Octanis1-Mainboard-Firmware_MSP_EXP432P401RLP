@@ -6,7 +6,16 @@
  */
 
 #include "../../Board.h"
-#include "cli.h"
+#include "../peripherals/comm.h"
+
+//protobuf
+#include "../lib/nanopb/pb_encode.h"
+#include "../lib/nanopb/pb_decode.h"
+#include "../protobuf/rover_status.pb.h"
+
+
+//holds system status struct
+static rover_status status;
 
 
 void system_dumpTask(Task_Handle task)
@@ -41,4 +50,12 @@ void system_listTasks()
 
 int system_chartoint(char c){
 	return c - '0';
+}
+
+int system_send_status(){
+
+	//get status from various places
+
+	//send to comms queue
+
 }

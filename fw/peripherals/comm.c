@@ -7,6 +7,11 @@
 #include "../../Board.h"
 #include "hal/rockblock.h"
 
+//protobuf
+#include "../lib/nanopb/pb_encode.h"
+#include "../lib/nanopb/pb_decode.h"
+#include "../protobuf/status.pb.h"
+
 void comm_task(){
 
 	while(1){
@@ -39,3 +44,10 @@ void comm_task(){
 	}
 
 }
+
+
+void comm_fetch_status(){
+
+
+}
+
