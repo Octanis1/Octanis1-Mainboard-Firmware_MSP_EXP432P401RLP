@@ -122,10 +122,12 @@ S64_DEPS__QUOTED :=
 SUBDIRS := \
 . \
 fw/tests \
+fw/protobuf \
 fw/peripherals \
 fw/peripherals/hal \
 fw \
 fw/lib \
+fw/lib/nanopb \
 fw/lib/minmea \
 fw/core \
 
