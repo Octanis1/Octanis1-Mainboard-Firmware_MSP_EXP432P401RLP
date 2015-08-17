@@ -15,7 +15,6 @@ ORDERED_OBJS += \
 "./fw/peripherals/weather.o" \
 "./fw/peripherals/hal/bmp180.o" \
 "./fw/peripherals/hal/hx1.o" \
-"./fw/peripherals/hal/mpu6050.o" \
 "./fw/peripherals/hal/rockblock.o" \
 "./fw/peripherals/hal/ublox_6.o" \
 "./fw/main.o" \
@@ -174,7 +173,7 @@ BIN_OUTPUTS__QUOTED += \
 all: Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP.out
 
 # Tool invocations
-Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP.out: $(OBJS) $(LDS_SRCS) $(GEN_CMDS)
+Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP.out: $(OBJS) $(LDS_SRCS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GNU Linker'
 	"C:/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/bin/arm-none-eabi-gcc.exe" -march=armv7e-m -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -D__MSP432P401R__ -DTARGET_IS_FALCON -Dgcc -DMSP432WARE -Dtimegm=mktime -O0 -ffunction-sections -fdata-sections -g -gdwarf-3 -gstrict-dwarf -Wall -Wl,-Map,"Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP.map" -nostartfiles -static -Wl,--gc-sections -L"C:/ti/tirtos_msp43x_2_12_01_33/products/MSPWare_2_00_00_40a/driverlib/MSP432P4xx/gcc" -L"C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_03_51/packages/gnu/targets/arm/libs/install-native/arm-none-eabi/lib/armv7e-m/fpu" -mthumb -g -gstrict-dwarf -Wall -o"Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP.out" $(ORDERED_OBJS)
@@ -191,8 +190,8 @@ Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP.hex: $(EXE_OUTPUTS)
 clean:
 	-$(RM) $(GEN_MISC_FILES__QUOTED)$(EXE_OUTPUTS__QUOTED)$(GEN_FILES__QUOTED)$(BIN_OUTPUTS__QUOTED)$(GEN_OPTS__QUOTED)$(GEN_CMDS__QUOTED)
 	-$(RMDIR) $(GEN_MISC_DIRS__QUOTED)
-	-$(RM) "MSP_EXP432P401RLP.d" "fw\tests\minunit.d" "fw\protobuf\rover_status.pb.d" "fw\peripherals\comm.d" "fw\peripherals\gps.d" "fw\peripherals\weather.d" "fw\peripherals\hal\bmp180.d" "fw\peripherals\hal\hx1.d" "fw\peripherals\hal\mpu6050.d" "fw\peripherals\hal\rockblock.d" "fw\peripherals\hal\ublox_6.d" "fw\main.d" "fw\lib\printf.d" "fw\lib\nanopb\pb_common.d" "fw\lib\nanopb\pb_decode.d" "fw\lib\nanopb\pb_encode.d" "fw\lib\minmea\minmea.d" "fw\core\cli.d" "fw\core\cron.d" "fw\core\log.d" "fw\core\system.d" 
-	-$(RM) "MSP_EXP432P401RLP.o" "fw\tests\minunit.o" "fw\protobuf\rover_status.pb.o" "fw\peripherals\comm.o" "fw\peripherals\gps.o" "fw\peripherals\weather.o" "fw\peripherals\hal\bmp180.o" "fw\peripherals\hal\hx1.o" "fw\peripherals\hal\mpu6050.o" "fw\peripherals\hal\rockblock.o" "fw\peripherals\hal\ublox_6.o" "fw\main.o" "fw\lib\printf.o" "fw\lib\nanopb\pb_common.o" "fw\lib\nanopb\pb_decode.o" "fw\lib\nanopb\pb_encode.o" "fw\lib\minmea\minmea.o" "fw\core\cli.o" "fw\core\cron.o" "fw\core\log.o" "fw\core\system.o" 
+	-$(RM) "MSP_EXP432P401RLP.d" "fw\tests\minunit.d" "fw\protobuf\rover_status.pb.d" "fw\peripherals\comm.d" "fw\peripherals\gps.d" "fw\peripherals\weather.d" "fw\peripherals\hal\bmp180.d" "fw\peripherals\hal\hx1.d" "fw\peripherals\hal\rockblock.d" "fw\peripherals\hal\ublox_6.d" "fw\main.d" "fw\lib\printf.d" "fw\lib\nanopb\pb_common.d" "fw\lib\nanopb\pb_decode.d" "fw\lib\nanopb\pb_encode.d" "fw\lib\minmea\minmea.d" "fw\core\cli.d" "fw\core\cron.d" "fw\core\log.d" "fw\core\system.d" 
+	-$(RM) "MSP_EXP432P401RLP.o" "fw\tests\minunit.o" "fw\protobuf\rover_status.pb.o" "fw\peripherals\comm.o" "fw\peripherals\gps.o" "fw\peripherals\weather.o" "fw\peripherals\hal\bmp180.o" "fw\peripherals\hal\hx1.o" "fw\peripherals\hal\rockblock.o" "fw\peripherals\hal\ublox_6.o" "fw\main.o" "fw\lib\printf.o" "fw\lib\nanopb\pb_common.o" "fw\lib\nanopb\pb_decode.o" "fw\lib\nanopb\pb_encode.o" "fw\lib\minmea\minmea.o" "fw\core\cli.o" "fw\core\cron.o" "fw\core\log.o" "fw\core\system.o" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

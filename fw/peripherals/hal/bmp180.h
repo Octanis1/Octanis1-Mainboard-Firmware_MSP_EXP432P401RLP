@@ -4,5 +4,13 @@
  *  Author: Sam
  */
 
-int bmp180_get_temp();
-int bmp180_get_pres();
+
+
+#ifndef __BMP180_H
+#define __BMP180_H
+
+float bmp180_get_temp();
+float bmp180_get_temp();
+int bmp180_begin();
+
+#endif

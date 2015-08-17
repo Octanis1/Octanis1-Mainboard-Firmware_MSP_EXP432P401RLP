@@ -308,14 +308,11 @@ digraph configuration {
     }
     subgraph cluster34 {
         label="";
-        ti_sysbios_rts_gnu__top [shape=box,label="ti.sysbios.rts.gnu\n2,0,0,0,0", color=white];
+        ti_sysbios_rts_gnu__top [shape=box,label="ti.sysbios.rts.gnu\n2,0,0,0,1421781441622", color=white];
         ti_sysbios_rts_gnu__bot [shape=point,label="", style=invis];
         ti_sysbios_rts_gnu_ReentSupport [style=filled,fillcolor=lightgray, label="ReentSupport"];
         ti_sysbios_rts_gnu__top -> ti_sysbios_rts_gnu_ReentSupport[style=invis];
         ti_sysbios_rts_gnu_ReentSupport -> ti_sysbios_rts_gnu__bot[style=invis];
-        ti_sysbios_rts_gnu_SemiHostSupport [style=filled,fillcolor=lightgray, label="SemiHostSupport"];
-        ti_sysbios_rts_gnu__top -> ti_sysbios_rts_gnu_SemiHostSupport[style=invis];
-        ti_sysbios_rts_gnu_SemiHostSupport -> ti_sysbios_rts_gnu__bot[style=invis];
     }
     subgraph cluster35 {
         label="";

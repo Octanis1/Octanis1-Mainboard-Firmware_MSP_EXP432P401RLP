@@ -215,8 +215,8 @@ I2CMSP432_Object i2cMSP432Objects[MSP_EXP432P401RLP_I2CCOUNT];
 /* I2C configuration structure */
 const I2CMSP432_HWAttrs i2cMSP432HWAttrs[MSP_EXP432P401RLP_I2CCOUNT] = {
     {
-        .baseAddr = EUSCI_B0_BASE,
-        .intNum = INT_EUSCIB0,
+        .baseAddr = EUSCI_B1_BASE, //P6.5/6.4
+        .intNum = INT_EUSCIB1,
         .intPriority = ~0,
         .clockSource = EUSCI_B_I2C_CLOCKSOURCE_SMCLK
     }
@@ -243,8 +243,8 @@ void MSP_EXP432P401RLP_initI2C(void)
      * conflict before running your the application.
      */
     /* Configure Pins 1.6 & 1.7 as SDA & SCL, respectively. */
-    MAP_GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P1,
-        GPIO_PIN6 | GPIO_PIN7, GPIO_PRIMARY_MODULE_FUNCTION);
+    MAP_GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P6,
+        GPIO_PIN5 | GPIO_PIN4, GPIO_PRIMARY_MODULE_FUNCTION);
 
     /* Initialize the I2C driver */
     I2C_init();

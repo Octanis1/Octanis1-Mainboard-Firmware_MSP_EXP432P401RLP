@@ -44,10 +44,10 @@ fw/peripherals/gps.d: ../fw/peripherals/gps.c \
  C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/package/Clock_TimerProxy.h \
  C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/package/Task_SupportProxy.h \
  C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Task__epilogue.h \
+ C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Mailbox.h \
  C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Event.h \
  C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Event__prologue.h \
  C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Event__epilogue.h \
- C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Mailbox.h \
  C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Semaphore.h \
  C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/System.h \
  C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/ISystemSupport.h \
@@ -164,13 +164,13 @@ C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/
 
 C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Task__epilogue.h:
 
+C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Mailbox.h:
+
 C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Event.h:
 
 C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Event__prologue.h:
 
 C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Event__epilogue.h:
-
-C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Mailbox.h:
 
 C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/Semaphore.h:
 

@@ -92,7 +92,7 @@ extern "C" {
 
 
 
-#define Board_I2C0                  MSP_EXP432P401RLP_I2CB0
+#define Board_I2C0                  MSP_EXP432P401RLP_I2CB1
 
 #define Board_PWM0                  MSP_EXP432P401RLP_PWM_TA1_1
 #define Board_PWM1                  MSP_EXP432P401RLP_PWM_TA1_2
@@ -108,9 +108,8 @@ extern "C" {
 
 
 /* Board specific I2C addresses */
-#define Board_TMP006_ADDR           (0x40)
-#define Board_RF430CL330_ADDR       (0x28)
-#define Board_TPL0401_ADDR          (0x40)
+#define Board_BMP180_I2CADDR	(0x77)
+
 
 #ifdef __cplusplus
 }

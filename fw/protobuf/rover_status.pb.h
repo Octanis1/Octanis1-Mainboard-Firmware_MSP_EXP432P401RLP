@@ -3,7 +3,7 @@
 
 #ifndef PB_ROVER_STATUS_PB_H_INCLUDED
 #define PB_ROVER_STATUS_PB_H_INCLUDED
-#include <pb.h>
+#include "../lib/nanopb/pb.h"
 
 #if PB_PROTO_HEADER_VERSION != 30
 #error Regenerate this file with the current version of nanopb generator.

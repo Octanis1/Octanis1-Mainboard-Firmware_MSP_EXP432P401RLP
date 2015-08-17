@@ -5,7 +5,7 @@
         <connection XML_version="1.2" id="Texas Instruments XDS110 USB Debug Probe">
             <instance XML_version="1.2" href="drivers/tixds510cs_dap.xml" id="drivers" xml="tixds510cs_dap.xml" xmlpath="drivers"/>
             <instance XML_version="1.2" href="drivers/tixds510cortexM.xml" id="drivers" xml="tixds510cortexM.xml" xmlpath="drivers"/>
-            <property Type="choicelist" Value="1" id="SWD Mode Settings"/>
+            <property Type="choicelist" Value="0" id="SWD Mode Settings"/>
             <platform XML_version="1.2" id="platform_0">
                 <instance XML_version="1.2" desc="MSP432P401R" href="devices/msp432p401r.xml" id="MSP432P401R" xml="msp432p401r.xml" xmlpath="devices"/>
             </platform>

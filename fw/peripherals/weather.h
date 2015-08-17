@@ -3,3 +3,4 @@
  *  Description: High level model for accessing calibrated temperature, pressure and moisture
  *  Author:
  */
+void weather_task();

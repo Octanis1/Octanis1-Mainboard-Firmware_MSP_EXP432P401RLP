@@ -7,6 +7,7 @@
 
 #include "../../Board.h"
 #include "../peripherals/comm.h"
+#include "../peripherals/hal/rockblock.h"
 
 //protobuf
 #include "../lib/nanopb/pb_encode.h"
@@ -15,8 +16,7 @@
 
 
 //holds system status struct
-static rover_status status;
-
+static rover_status system_status;
 
 void system_dumpTask(Task_Handle task)
 {
@@ -29,6 +29,7 @@ void system_dumpTask(Task_Handle task)
     cli_printf(" = %d \n\n", stat.mode);
 
 }
+
 
 void system_listTasks()
 {
@@ -48,14 +49,45 @@ void system_listTasks()
 
 }
 
+
 int system_chartoint(char c){
 	return c - '0';
 }
 
-int system_send_status(){
 
+void system_update_rover_status(){
 	//get status from various places
+	system_status.rockblock_health = rockblock_get_health();
+}
 
-	//send to comms queue
 
+int system_communicate_rover_status(){
+
+	comm_frame_t status_frame;
+
+	uint8_t message_buffer[COMM_MO_SIZE];
+	size_t message_length;
+
+	//update status message
+	system_update_rover_status();
+
+    //create a stream that will write to our buffer.
+    pb_ostream_t stream = pb_ostream_from_buffer(message_buffer, sizeof(message_buffer));
+
+    //now we are ready to encode the message!
+    pb_encode(&stream, rover_status_fields, &system_status);
+    message_length = stream.bytes_written;
+
+    //put message in frame
+    status_frame.destination = COMM_CLI;
+    status_frame.message_length = message_length;
+    memcpy(&status_frame.message_buffer, message_buffer, COMM_MO_SIZE);
+
+    //post the buffer to the communications queue
+    if(comm_post_message(status_frame)){
+    	cli_printf("posted comm to sbd\n",0);
+    }
+
+
+    return 1;
 }

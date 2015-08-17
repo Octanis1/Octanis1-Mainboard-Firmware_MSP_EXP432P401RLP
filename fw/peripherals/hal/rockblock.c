@@ -33,8 +33,9 @@ static UART_Params uartParams;
 static const char rockblock_at[] = "AT\r";
 static const char rockblock_at_echo_off[] = "ATE0\r";
 static const char rockblock_at_csq[] = "AT+CSQ\r";
-static int last_powerup_time = 0;
 
+static int last_powerup_time = 0;
+static int rockblock_health = 0;
 
 int rockblock_open(){
 
@@ -103,6 +104,7 @@ void rockblock_close(){
 	}
 
 	UART_close(uart);
+	uart = NULL;
     GPIO_write(Board_ROCKBLOCK_SLEEP, ROCKBLOCK_SLEEP);
 }
 
@@ -110,18 +112,31 @@ void rockblock_close(){
 //returns 0 (no signal) to 5 (best). iridium recommends at least a 2 before transmit
 // 1 works in some conditions
 int rockblock_get_signal_quality(){
+
 	char rxBuffer[ROCKBLOCK_RXBUFFER_SIZE];
-	int csq_val = 0;
+	static int csq_val = 0;
 
-	//clear the buffer
-	memset(rxBuffer, 0, sizeof(rxBuffer));
+	//get new signal quality only if UART is open. otherwise display stored value.
+	if(uart != NULL){
 
-	UART_write(uart, rockblock_at_csq, sizeof(rockblock_at_csq));
-	UART_read(uart, rxBuffer, sizeof(rxBuffer));
+		static int times_called = 1; //stores the amount of times this function was called
+		static int rockblock_health_sum = 0; //contains the sum of all values this function ever saw
+
+		//clear the buffer
+		memset(rxBuffer, 0, sizeof(rxBuffer));
+
+		UART_write(uart, rockblock_at_csq, sizeof(rockblock_at_csq));
+		UART_read(uart, rxBuffer, sizeof(rxBuffer));
 
 
-	//signal quality value is at index 7
-	csq_val = system_chartoint((char)rxBuffer[7]);
+		//signal quality value is at index 7
+		csq_val = system_chartoint((char)rxBuffer[7]);
+
+		rockblock_health_sum += rockblock_get_signal_quality();
+		rockblock_health = (int)(rockblock_health_sum/times_called + 0.5);
+		times_called++;
+	}
+
 	return csq_val;
 }
 
@@ -133,6 +148,11 @@ int rockblock_send_receive_SBD(const uint8_t *tx_buffer, size_t tx_buffersize,
 //gets an SBD message from rockblocks buffer
 int rockblock_get_SBD_binary(uint8_t *rx_buffer, size_t *rx_buffersizePtr);
 
+
+//returns an average of signal quality
+int rockblock_get_health(){
+ 	return rockblock_health;
+}
 
 
 

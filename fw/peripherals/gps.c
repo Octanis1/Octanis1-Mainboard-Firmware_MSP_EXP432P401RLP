@@ -8,6 +8,7 @@
 #include "../lib/minmea/minmea.h"
 #include "gps.h"
 
+
 static struct minmea_sentence_gga gps_gga_frame;
 static struct minmea_sentence_rmc gps_rmc_frame;
 static struct timespec gps_last_update;
@@ -53,6 +54,7 @@ int gps_get_last_update_time(){
 void gps_task(){
 
 	while (1) {
+
 
 		//initialise GPS device, open UART
 		if(!ublox_6_open()){
