@@ -16,7 +16,9 @@ void weather_task(){
 	//DEBUGGING BMP180 START
 	cli_printf("w begin \n", 0);
 	bmp180_begin();
+	float temp = bmp180_get_temp();
 
+	cli_printf("temp: %d \n", temp);
 
 	cli_printf("w end \n", 0);
 	//DEBUGGING BMP180 END

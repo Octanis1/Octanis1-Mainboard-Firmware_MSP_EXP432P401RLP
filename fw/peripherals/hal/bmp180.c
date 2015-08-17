@@ -108,6 +108,9 @@ void write8(uint8_t register_addr, uint8_t data) {
 
 	if(handle != NULL){
 
+		i2cTransaction.readBuf = NULL;
+		i2cTransaction.readCount = 0;
+
 		i2cTransaction.writeBuf = writeBuffer;
 		i2cTransaction.writeCount = 2;
 
@@ -196,6 +199,7 @@ int bmp180_begin(){
 	wait 4.5ms
 	uint16_t raw_temp = read16(BMP180_TEMPDATA);*/
 
+	/*
 
 	I2C_Transaction i2cTransaction;
 	uint8_t wb[2];
@@ -215,7 +219,7 @@ int bmp180_begin(){
 	uint16_t raw_temp = read16(BMP180_TEMPDATA);
 
 	cli_printf("t %d\n",raw_temp);
-
+*/
 
 
 	return 1;
@@ -238,11 +242,11 @@ float bmp180_get_temp(){
 
 		GPIO_write(Board_LED1, 1);
 
-/*		UT = read_raw_temp();
+		UT = read_raw_temp();
 		B5 = computeB5(UT);
 		temp = (B5+8) >> 4;
 		temp /= 10;
-*/
+
 		GPIO_write(Board_LED1, 0);
 
 		//end();
