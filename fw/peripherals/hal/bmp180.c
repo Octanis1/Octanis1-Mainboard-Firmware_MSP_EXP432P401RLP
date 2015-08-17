@@ -109,7 +109,7 @@ void write8(uint8_t register_addr, uint8_t data) {
 	if(handle != NULL){
 
 		i2cTransaction.writeBuf = writeBuffer;
-		i2cTransaction.writeCount = sizeof(writeBuffer);
+		i2cTransaction.writeCount = 2;
 
 		i2cTransaction.slaveAddress = Board_BMP180_I2CADDR;
 		int ret = I2C_transfer(handle, &i2cTransaction);
@@ -193,9 +193,28 @@ int bmp180_begin(){
 
 	/*
 	write8(BMP180_CONTROL, BMP180_READTEMPCMD);
-
+	wait 4.5ms
 	uint16_t raw_temp = read16(BMP180_TEMPDATA);*/
-	cli_printf("t %d\n",1);
+
+
+	I2C_Transaction i2cTransaction;
+	uint8_t wb[2];
+	wb[0] = BMP180_CONTROL;
+	wb[1] = BMP180_TEMPDATA;
+
+	i2cTransaction.readBuf = NULL;
+	i2cTransaction.readCount = 0;
+	i2cTransaction.writeBuf = wb;
+	i2cTransaction.writeCount = 2;
+
+	i2cTransaction.slaveAddress = Board_BMP180_I2CADDR;
+	int ret = I2C_transfer(handle, &i2cTransaction);
+
+
+	Task_sleep(5);
+	uint16_t raw_temp = read16(BMP180_TEMPDATA);
+
+	cli_printf("t %d\n",raw_temp);
 
 
 
