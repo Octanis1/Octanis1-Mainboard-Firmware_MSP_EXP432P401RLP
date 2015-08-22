@@ -8,6 +8,7 @@
 #include "../../Board.h"
 #include "comm.h"
 #include "hal/rockblock.h"
+#include "hal/hx1.h"
 
 
 //dispatches the message to its destination where it will be sent
@@ -87,17 +88,6 @@ int pend_message(){
 	*/
 }
 
-
-void comm_task(){
-
-	while(1){
-
-		pend_message();
-
-	}
-
-}
-
 int comm_post_message(comm_frame_t frame){
 
 /*
@@ -111,4 +101,20 @@ int comm_post_message(comm_frame_t frame){
 
 	return 1;
 	*/
+}
+
+
+
+void comm_task(){
+
+	while(1){
+		Task_sleep(220);
+
+		//pend_message();
+
+
+
+
+	}
+
 }

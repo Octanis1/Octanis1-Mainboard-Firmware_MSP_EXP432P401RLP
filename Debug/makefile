@@ -12,9 +12,12 @@ ORDERED_OBJS += \
 "./fw/protobuf/rover_status.pb.o" \
 "./fw/peripherals/comm.o" \
 "./fw/peripherals/gps.o" \
+"./fw/peripherals/imu.o" \
 "./fw/peripherals/weather.o" \
 "./fw/peripherals/hal/bmp180.o" \
+"./fw/peripherals/hal/bno055.o" \
 "./fw/peripherals/hal/hx1.o" \
+"./fw/peripherals/hal/i2c_helper.o" \
 "./fw/peripherals/hal/rockblock.o" \
 "./fw/peripherals/hal/ublox_6.o" \
 "./fw/main.o" \
@@ -190,8 +193,8 @@ Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP.hex: $(EXE_OUTPUTS)
 clean:
 	-$(RM) $(GEN_MISC_FILES__QUOTED)$(EXE_OUTPUTS__QUOTED)$(GEN_FILES__QUOTED)$(BIN_OUTPUTS__QUOTED)$(GEN_OPTS__QUOTED)$(GEN_CMDS__QUOTED)
 	-$(RMDIR) $(GEN_MISC_DIRS__QUOTED)
-	-$(RM) "MSP_EXP432P401RLP.d" "fw\tests\minunit.d" "fw\protobuf\rover_status.pb.d" "fw\peripherals\comm.d" "fw\peripherals\gps.d" "fw\peripherals\weather.d" "fw\peripherals\hal\bmp180.d" "fw\peripherals\hal\hx1.d" "fw\peripherals\hal\rockblock.d" "fw\peripherals\hal\ublox_6.d" "fw\main.d" "fw\lib\printf.d" "fw\lib\nanopb\pb_common.d" "fw\lib\nanopb\pb_decode.d" "fw\lib\nanopb\pb_encode.d" "fw\lib\minmea\minmea.d" "fw\core\cli.d" "fw\core\cron.d" "fw\core\log.d" "fw\core\system.d" 
-	-$(RM) "MSP_EXP432P401RLP.o" "fw\tests\minunit.o" "fw\protobuf\rover_status.pb.o" "fw\peripherals\comm.o" "fw\peripherals\gps.o" "fw\peripherals\weather.o" "fw\peripherals\hal\bmp180.o" "fw\peripherals\hal\hx1.o" "fw\peripherals\hal\rockblock.o" "fw\peripherals\hal\ublox_6.o" "fw\main.o" "fw\lib\printf.o" "fw\lib\nanopb\pb_common.o" "fw\lib\nanopb\pb_decode.o" "fw\lib\nanopb\pb_encode.o" "fw\lib\minmea\minmea.o" "fw\core\cli.o" "fw\core\cron.o" "fw\core\log.o" "fw\core\system.o" 
+	-$(RM) "MSP_EXP432P401RLP.d" "fw\tests\minunit.d" "fw\protobuf\rover_status.pb.d" "fw\peripherals\comm.d" "fw\peripherals\gps.d" "fw\peripherals\imu.d" "fw\peripherals\weather.d" "fw\peripherals\hal\bmp180.d" "fw\peripherals\hal\bno055.d" "fw\peripherals\hal\hx1.d" "fw\peripherals\hal\i2c_helper.d" "fw\peripherals\hal\rockblock.d" "fw\peripherals\hal\ublox_6.d" "fw\main.d" "fw\lib\printf.d" "fw\lib\nanopb\pb_common.d" "fw\lib\nanopb\pb_decode.d" "fw\lib\nanopb\pb_encode.d" "fw\lib\minmea\minmea.d" "fw\core\cli.d" "fw\core\cron.d" "fw\core\log.d" "fw\core\system.d" 
+	-$(RM) "MSP_EXP432P401RLP.o" "fw\tests\minunit.o" "fw\protobuf\rover_status.pb.o" "fw\peripherals\comm.o" "fw\peripherals\gps.o" "fw\peripherals\imu.o" "fw\peripherals\weather.o" "fw\peripherals\hal\bmp180.o" "fw\peripherals\hal\bno055.o" "fw\peripherals\hal\hx1.o" "fw\peripherals\hal\i2c_helper.o" "fw\peripherals\hal\rockblock.o" "fw\peripherals\hal\ublox_6.o" "fw\main.o" "fw\lib\printf.o" "fw\lib\nanopb\pb_common.o" "fw\lib\nanopb\pb_decode.o" "fw\lib\nanopb\pb_encode.o" "fw\lib\minmea\minmea.o" "fw\core\cli.o" "fw\core\cron.o" "fw\core\log.o" "fw\core\system.o" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

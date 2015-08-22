@@ -65,6 +65,8 @@ fw/peripherals/weather.d: ../fw/peripherals/weather.c \
  C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/package/package.defs.h \
  C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/interfaces/ISeconds.h \
  C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/package/Seconds_SecondsProxy.h \
+ C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/Timer.h \
+ C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/package/Timer_TimerProxy.h \
  C:/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/GPIO.h \
  C:/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/UART.h \
  C:/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/I2C.h \
@@ -72,7 +74,8 @@ fw/peripherals/weather.d: ../fw/peripherals/weather.c \
  ../fw/peripherals/../../MSP_EXP432P401RLP.h \
  ../fw/peripherals/../../fw/core/cli.h \
  ../fw/peripherals/../../fw/core/system.h ../fw/peripherals/weather.h \
- ../fw/peripherals/hal/bmp180.h ../fw/peripherals/../lib/printf.h
+ ../fw/peripherals/hal/bmp180.h ../fw/peripherals/hal/i2c_helper.h \
+ ../fw/peripherals/../lib/printf.h
 
 ../fw/peripherals/../../Board.h:
 
@@ -206,6 +209,10 @@ C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/inte
 
 C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/package/Seconds_SecondsProxy.h:
 
+C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/Timer.h:
+
+C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/package/Timer_TimerProxy.h:
+
 C:/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/GPIO.h:
 
 C:/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/UART.h:
@@ -223,5 +230,7 @@ C:/ti/tirtos_msp43x_2_12_01_33/packages/ti/drivers/PWM.h:
 ../fw/peripherals/weather.h:
 
 ../fw/peripherals/hal/bmp180.h:
+
+../fw/peripherals/hal/i2c_helper.h:
 
 ../fw/peripherals/../lib/printf.h:

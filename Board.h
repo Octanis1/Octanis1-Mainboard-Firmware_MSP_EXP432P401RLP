@@ -50,6 +50,7 @@ extern "C" {
 #include <ti/sysbios/knl/Swi.h>
 #include <ti/sysbios/knl/Task.h>
 #include <ti/sysbios/hal/Seconds.h>
+#include <ti/sysbios/hal/Timer.h>
 #include <ti/sysbios/knl/Mailbox.h>
 
 /* TI-RTOS Header files */
@@ -68,6 +69,22 @@ extern "C" {
 #include "fw/core/system.h" //provides useful general functions
 
 
+
+/* Board specific I2C addresses */
+#define Board_BMP180_I2CADDR					(0x77) //temp/pres
+#define Board_BNO055_MAINBOARD_I2CADDR			(0x28) //IMU 1
+#define Board_BNO055_WEATHERSTRIP_I2CADDR		(0x29) //IMU 2
+#define Board_MCP3425AD_I2CADDR					(0x68) //ADC for UV
+#define Board_SHT21_I2CADDR						(0x40) //temp/hygro
+#define Board_BME280_I2CADDR					(0x76) //hygro/pres
+#define Board_AS3935_I2CADDR					(0x03) //lightning
+
+/* The default I²C address of the BNO055 device is (0x29).
+ * The alternative address (0x28), can be selected by pulling COM3 down.
+ */
+
+
+/* General board mappings */
 #define Board_initGeneral           MSP_EXP432P401RLP_initGeneral
 #define Board_initGPIO              MSP_EXP432P401RLP_initGPIO
 #define Board_initI2C               MSP_EXP432P401RLP_initI2C
@@ -90,12 +107,14 @@ extern "C" {
 #define Board_ROCKBLOCK_SLEEP		MSP_EXP432P401RLP_ROCKBLOCK_SLEEP
 #define Board_ROCKBLOCK_NET			MSP_EXP432P401RLP_ROCKBLOCK_NET
 
+#define Board_HX1_EN				MSP_EXP432P401RLP_HX1_EN
+#define Board_HX1_TX				MSP_EXP432P401RLP_HX1_TX
+
 
 
 #define Board_I2C0                  MSP_EXP432P401RLP_I2CB1
 
 #define Board_PWM0                  MSP_EXP432P401RLP_PWM_TA1_1
-#define Board_PWM1                  MSP_EXP432P401RLP_PWM_TA1_2
 
 #define Board_SPI0                  MSP_EXP432P401RLP_SPIB0
 #define Board_SPI1                  MSP_EXP432P401RLP_SPIB2
@@ -106,9 +125,6 @@ extern "C" {
 
 #define Board_WATCHDOG0             MSP_EXP432P401RLP_WATCHDOG
 
-
-/* Board specific I2C addresses */
-#define Board_BMP180_I2CADDR	(0x77)
 
 
 #ifdef __cplusplus

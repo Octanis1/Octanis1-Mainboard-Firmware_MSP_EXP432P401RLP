@@ -19,6 +19,12 @@ extern const ti_sysbios_knl_Task_Handle gps_task_xdc;
 #include <ti/sysbios/knl/Task.h>
 extern const ti_sysbios_knl_Task_Handle weather_task_xdc;
 
+#include <ti/sysbios/knl/Task.h>
+extern const ti_sysbios_knl_Task_Handle imu_task_xdc;
+
+#include <ti/sysbios/knl/Task.h>
+extern const ti_sysbios_knl_Task_Handle comm_task_xdc;
+
 #include <ti/sysbios/knl/Clock.h>
 extern const ti_sysbios_knl_Clock_Handle cron_quick;
 

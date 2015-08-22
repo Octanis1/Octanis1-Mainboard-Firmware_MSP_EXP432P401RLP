@@ -13,7 +13,7 @@ int main(void)
     Board_initGPIO();
     Board_initUART();
     Board_initI2C();
-
+    Board_initPWM();
 
     /* Turn on user LED */
     GPIO_write(Board_LED0, Board_LED_ON);
@@ -23,6 +23,3 @@ int main(void)
 
     return (0);
 }
-
-
-

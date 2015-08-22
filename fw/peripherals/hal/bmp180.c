@@ -2,11 +2,33 @@
  *  File: bmp180.h
  *  Description: Model for BMP180
  *  Author: Sam
+ *  Port for TI RTOS from following library:
+ *
+ *  ***************************************************
+	  This is a library for the Adafruit BMP085/BMP180 Barometric Pressure + Temp sensor
+
+	  Designed specifically to work with the Adafruit BMP085 or BMP180 Breakout
+	  ----> http://www.adafruit.com/products/391
+	  ----> http://www.adafruit.com/products/1603
+
+	  These displays use I2C to communicate, 2 pins are required to
+	  interface
+	  Adafruit invests time and resources providing this open source code,
+	  please support Adafruit and open-source hardware by purchasing
+	  products from Adafruit!
+
+	  Written by Limor Fried/Ladyada for Adafruit Industries.
+	  BSD license, all text above must be included in any redistribution
+	 ****************************************************
  */
 
 #include "../../../Board.h"
 #include "bmp180.h"
+#include "i2c_helper.h"
+
+
 #define BMP180_CHIP_ID   (0xd0) /* chip ID - always 0x55 */
+#define BMP180_ADDR		 Board_BMP180_I2CADDR
 
 #define BMP180_CAL_AC1           0xAA  // R   Calibration data (16 bits)
 #define BMP180_CAL_AC2           0xAC  // R   Calibration data (16 bits)
@@ -32,225 +54,138 @@
 #define BMP180_READPRESSURECMD   0x34
 
 
-static I2C_Handle      handle = NULL;
 
-static int16_t ac1 = 0, ac2 = 0, ac3 = 0, b1 = 0, b2 = 0, mb = 0, mc = 0, md = 0;
-static uint16_t ac4 = 0, ac5 = 0, ac6 = 0;
+static int16_t ac1 = 0, ac2, ac3, b1, b2, mb, mc, md;
+static uint16_t ac4, ac5, ac6;
+static uint8_t oversampling = BMP180_ULTRALOWPOWER;
 
-
-uint8_t read8(uint8_t register_addr){
-
-	uint8_t readBuffer; //16 bits to be read only
-	uint16_t returnValue = 0;
-	I2C_Transaction i2cTransaction;
-
-
-	if(handle != NULL){
-
-		i2cTransaction.writeBuf = &register_addr;
-		i2cTransaction.writeCount = sizeof(register_addr);
-
-		i2cTransaction.readBuf = &readBuffer;
-		i2cTransaction.readCount = sizeof(readBuffer); //make sure we read only 2 bytes
-
-		i2cTransaction.slaveAddress = Board_BMP180_I2CADDR;
-
-		int ret = I2C_transfer(handle, &i2cTransaction);
-
-		if (!ret) {
-		    cli_printf("read8 error \n", 0);
-		}else{
-			returnValue = readBuffer;
-		}
-
-	}
-
-	return returnValue;
-}
-
-uint16_t read16(uint8_t register_addr){
-
-	uint8_t readBuffer[2]; //16 bits to be read only
-	uint16_t returnValue = 0;
-	I2C_Transaction i2cTransaction;
-
-	if(handle != NULL){
-
-		i2cTransaction.writeBuf = &register_addr;
-		i2cTransaction.writeCount = sizeof(register_addr);
-
-		i2cTransaction.readBuf = readBuffer;
-		i2cTransaction.readCount = 2; //make sure we read only 2 bytes
-
-		i2cTransaction.slaveAddress = Board_BMP180_I2CADDR;
-
-		int ret = I2C_transfer(handle, &i2cTransaction);
-
-		if (!ret) {
-		    cli_printf("read16 error \n", 0);
-		}else{
-			returnValue = readBuffer[0];
-			returnValue <<= 8;
-			returnValue |= readBuffer[1];
-		}
-
-	}
-
-	return returnValue;
-}
-
-void write8(uint8_t register_addr, uint8_t data) {
-	uint8_t writeBuffer[2];
-	I2C_Transaction i2cTransaction;
-
-	writeBuffer[0] = register_addr;
-	writeBuffer[1] = data;
-
-	if(handle != NULL){
-
-		i2cTransaction.readBuf = NULL;
-		i2cTransaction.readCount = 0;
-
-		i2cTransaction.writeBuf = writeBuffer;
-		i2cTransaction.writeCount = 2;
-
-		i2cTransaction.slaveAddress = Board_BMP180_I2CADDR;
-		int ret = I2C_transfer(handle, &i2cTransaction);
-
-		if (!ret) {
-		    cli_printf("write8 error\n", 0);
-		}
-	}
-}
 
 int32_t computeB5(int32_t UT) {
-  int32_t X1 = (UT - (int32_t)ac6) * ((int32_t)ac5) >> 15;
-  int32_t X2 = ((int32_t)mc << 11) / (X1+(int32_t)md);
-  return X1 + X2;
+	int32_t X1 = (UT - (int32_t)ac6) * ((int32_t)ac5) >> 15;
+	int32_t X2 = ((int32_t)mc << 11) / (X1+(int32_t)md);
+	return X1 + X2;
 }
 
-uint16_t read_raw_temp(void) {
-	write8(BMP180_CONTROL, BMP180_READTEMPCMD);
+uint16_t read_raw_temp(I2C_Handle handle) {
+	write8(BMP180_ADDR, handle, BMP180_CONTROL, BMP180_READTEMPCMD);
 	Task_sleep(5);
 
-	uint16_t raw_temp = read16(BMP180_TEMPDATA);
+	uint16_t raw_temp = read16(BMP180_ADDR, handle, BMP180_TEMPDATA);
 
 	return raw_temp;
 }
 
-//I2C connection setup
-int bmp180_begin(){
-	I2C_Params      params;
-	I2C_Params_init(&params);
 
-	cli_printf("attempt i2c \n", 0);
+uint32_t read_raw_pressure(I2C_Handle handle) {
+	uint32_t raw;
 
-	handle = I2C_open(Board_I2C0, &params);
-	if (!handle) {
-	    cli_printf("I2C did not open \n", 0);
-	    return 0;
+	write8(BMP180_ADDR, handle, BMP180_CONTROL, BMP180_READPRESSURECMD + (oversampling << 6));
+
+	if (oversampling == BMP180_ULTRALOWPOWER){
+		Task_sleep(26);
 	}else{
-		cli_printf("i2c open \n",0);
+		Task_sleep(26);
 	}
 
+	raw = read16(BMP180_ADDR, handle, BMP180_PRESSUREDATA);
 
+	raw <<= 8;
+	raw |= read8(BMP180_ADDR, handle, BMP180_PRESSUREDATA+2);
+	raw >>= (8 - oversampling);
 
+	return raw;
+}
 
-	int cid =  read8(BMP180_CHIP_ID);
-	cli_printf("cid %X \n",cid);
+//I2C connection setup
+int bmp180_begin(I2C_Handle handle){
 
-	Task_sleep(100);
-	cli_printf("attempt cal data \n",0);
+	//read chip id and verify that it's BMP180
+	int cid =  read8(BMP180_ADDR, handle, BMP180_CHIP_ID);
+	if(cid != 0x55) return 0;
 
 	//read calibration data
 	if(ac1 == 0){
-		ac1 = read16(BMP180_CAL_AC1);
-		cli_printf("ac1 %d\n",ac1);
-
-		ac2 = read16(BMP180_CAL_AC2);
-
-		ac3 = read16(BMP180_CAL_AC3);
-
-		ac4 = read16(BMP180_CAL_AC4);
-
-		ac5 = read16(BMP180_CAL_AC5);
-
-		ac6 = read16(BMP180_CAL_AC6);
-
-		b1 = read16(BMP180_CAL_B1);
-
-		b2 = read16(BMP180_CAL_B2);
-
-
-		mb = read16(BMP180_CAL_MB);
-
-		mc = read16(BMP180_CAL_MC);
-
-		md = read16(BMP180_CAL_MD);
-
-		cli_printf("md %d\n",md);
-
+		ac1 = read16(BMP180_ADDR, handle, BMP180_CAL_AC1);
+		ac2 = read16(BMP180_ADDR, handle, BMP180_CAL_AC2);
+		ac3 = read16(BMP180_ADDR, handle, BMP180_CAL_AC3);
+		ac4 = read16(BMP180_ADDR, handle, BMP180_CAL_AC4);
+		ac5 = read16(BMP180_ADDR, handle, BMP180_CAL_AC5);
+		ac6 = read16(BMP180_ADDR, handle, BMP180_CAL_AC6);
+		b1 = read16(BMP180_ADDR, handle, BMP180_CAL_B1);
+		b2 = read16(BMP180_ADDR, handle, BMP180_CAL_B2);
+		mb = read16(BMP180_ADDR, handle, BMP180_CAL_MB);
+		mc = read16(BMP180_ADDR, handle, BMP180_CAL_MC);
+		md = read16(BMP180_ADDR, handle, BMP180_CAL_MD);
 	}
-
-
-
-	/*
-	write8(BMP180_CONTROL, BMP180_READTEMPCMD);
-	wait 4.5ms
-	uint16_t raw_temp = read16(BMP180_TEMPDATA);*/
-
-	/*
-
-	I2C_Transaction i2cTransaction;
-	uint8_t wb[2];
-	wb[0] = BMP180_CONTROL;
-	wb[1] = BMP180_TEMPDATA;
-
-	i2cTransaction.readBuf = NULL;
-	i2cTransaction.readCount = 0;
-	i2cTransaction.writeBuf = wb;
-	i2cTransaction.writeCount = 2;
-
-	i2cTransaction.slaveAddress = Board_BMP180_I2CADDR;
-	int ret = I2C_transfer(handle, &i2cTransaction);
-
-
-	Task_sleep(5);
-	uint16_t raw_temp = read16(BMP180_TEMPDATA);
-
-	cli_printf("t %d\n",raw_temp);
-*/
-
 
 	return 1;
 }
 
-//ends an I2C "connection" to device
-/*
-void end(){
-	I2C_close(handle);
-	handle=NULL;
-}
-*/
-
-float bmp180_get_temp(){
 
 
-	int UT, B5;     // following ds convention
-	float temp = 999.0;
+float bmp180_get_temp(I2C_Handle handle){
 
+	float temp;
+	int32_t b5;
+	int32_t raw_temp = read_raw_temp(handle);
 
-		GPIO_write(Board_LED1, 1);
-
-		UT = read_raw_temp();
-		B5 = computeB5(UT);
-		temp = (B5+8) >> 4;
-		temp /= 10;
-
-		GPIO_write(Board_LED1, 0);
-
-		//end();
-
+	b5 = computeB5(raw_temp);
+	temp = (b5+8) >> 4;
+	temp /= 10;
 
 	return temp;
 }
+
+float bmp180_get_pressure(I2C_Handle handle){
+	int32_t UT, UP, B3, B5, B6, X1, X2, X3;
+	uint32_t B4, B7;
+	float p = 0;
+
+	UT = read_raw_temp(handle);
+	UP = read_raw_pressure(handle);
+
+	cli_printf("rp %d \n", UP);
+
+	B5 = computeB5(UT);
+
+	// do pressure calcs
+	B6 = B5 - 4000;
+	X1 = ((int32_t)b2 * ( (B6 * B6)>>12 )) >> 11;
+	X2 = ((int32_t)ac2 * B6) >> 11;
+	X3 = X1 + X2;
+	B3 = ((((int32_t)ac1*4 + X3) << oversampling) + 2) / 4;
+
+	X1 = ((int32_t)ac3 * B6) >> 13;
+	X2 = ((int32_t)b1 * ((B6 * B6) >> 12)) >> 16;
+	X3 = ((X1 + X2) + 2) >> 2;
+	B4 = ((uint32_t)ac4 * (uint32_t)(X3 + 32768)) >> 15;
+	B7 = ((uint32_t)UP - B3) * (uint32_t)( 50000UL >> oversampling );
+
+
+	/*
+
+	if (B7 < 0x80000000) {
+		p = (float)((B7 * 2) / B4);
+
+		//p=1;
+		cli_printf("s B7 %X \n", p);
+
+
+	}else{
+		cli_printf("b B7 %X \n", B7);
+		//p = (B7 / B4) * 2;
+	}
+
+*/
+/*
+	X1 = (p >> 8) * (p >> 8);
+	X1 = (X1 * 3038) >> 16;
+	X2 = (-7357 * p) >> 16;
+
+	p = p + ((X1 + X2 + (int32_t)3791)>>4);
+*/
+
+	return p;
+}
+
+

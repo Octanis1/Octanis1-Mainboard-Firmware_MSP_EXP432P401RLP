@@ -106,6 +106,9 @@ hal_Seconds.o: hal/Seconds.c makefile
 hal_SecondsClock.o: hal/SecondsClock.c makefile
 	@-$(call RM, hal_SecondsClock.o)
 	$(COMPILE) -o hal_SecondsClock.o
+hal_Timer.o: hal/Timer.c makefile
+	@-$(call RM, hal_Timer.o)
+	$(COMPILE) -o hal_Timer.o
 init_Boot.o: family/arm/msp432/init/Boot.c makefile
 	@-$(call RM, init_Boot.o)
 	$(COMPILE) -o init_Boot.o
@@ -139,6 +142,9 @@ gates_GateMutex.o: gates/GateMutex.c makefile
 heaps_HeapMem.o: heaps/HeapMem.c makefile
 	@-$(call RM, heaps_HeapMem.o)
 	$(COMPILE) -o heaps_HeapMem.o
+lm4_Timer.o: family/arm/lm4/Timer.c makefile
+	@-$(call RM, lm4_Timer.o)
+	$(COMPILE) -o lm4_Timer.o
 utils_Load.o: utils/Load.c makefile
 	@-$(call RM, utils_Load.o)
 	$(COMPILE) -o utils_Load.o
@@ -146,7 +152,7 @@ utils_Load_CPU.o: utils/Load_CPU.c makefile
 	@-$(call RM, utils_Load_CPU.o)
 	$(COMPILE) -o utils_Load_CPU.o
 
-sysbios.am4fg: m3_Hwi_asm_gnu.o m3_Hwi_asm_switch_gnu.o m3_IntrinsicsSupport_asm_gnu.o m3_TaskSupport_asm_gnu.o _BIOS.o knl_Clock.o knl_Idle.o knl_Intrinsics.o knl_Event.o knl_Mailbox.o knl_Queue.o knl_Semaphore.o knl_Swi.o knl_Swi_andn.o knl_Task.o hal_Hwi.o hal_Hwi_stack.o hal_Hwi_startup.o hal_Seconds.o hal_SecondsClock.o init_Boot.o m3_Hwi.o m3_TaskSupport.o m3_Timer.o m3_TimestampProvider.o gnu_ReentSupport.o msp432_Timer.o msp432_ClockFreqs.o gates_GateHwi.o gates_GateMutex.o heaps_HeapMem.o utils_Load.o utils_Load_CPU.o
+sysbios.am4fg: m3_Hwi_asm_gnu.o m3_Hwi_asm_switch_gnu.o m3_IntrinsicsSupport_asm_gnu.o m3_TaskSupport_asm_gnu.o _BIOS.o knl_Clock.o knl_Idle.o knl_Intrinsics.o knl_Event.o knl_Mailbox.o knl_Queue.o knl_Semaphore.o knl_Swi.o knl_Swi_andn.o knl_Task.o hal_Hwi.o hal_Hwi_stack.o hal_Hwi_startup.o hal_Seconds.o hal_SecondsClock.o hal_Timer.o init_Boot.o m3_Hwi.o m3_TaskSupport.o m3_Timer.o m3_TimestampProvider.o gnu_ReentSupport.o msp432_Timer.o msp432_ClockFreqs.o gates_GateHwi.o gates_GateMutex.o heaps_HeapMem.o lm4_Timer.o utils_Load.o utils_Load_CPU.o
 	@echo arm4fg $^ ...
 	@-$(call RM, $@)
 	@$(AR) $@ $^
@@ -194,6 +200,8 @@ clean:
 	@-$(call RM, hal_Seconds.o.dep)
 	@-$(call RM, hal_SecondsClock.o)
 	@-$(call RM, hal_SecondsClock.o.dep)
+	@-$(call RM, hal_Timer.o)
+	@-$(call RM, hal_Timer.o.dep)
 	@-$(call RM, init_Boot.o)
 	@-$(call RM, init_Boot.o.dep)
 	@-$(call RM, m3_Hwi.o)
@@ -216,6 +224,8 @@ clean:
 	@-$(call RM, gates_GateMutex.o.dep)
 	@-$(call RM, heaps_HeapMem.o)
 	@-$(call RM, heaps_HeapMem.o.dep)
+	@-$(call RM, lm4_Timer.o)
+	@-$(call RM, lm4_Timer.o.dep)
 	@-$(call RM, utils_Load.o)
 	@-$(call RM, utils_Load.o.dep)
 	@-$(call RM, utils_Load_CPU.o)

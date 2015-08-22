@@ -10,6 +10,7 @@
 #include "cli.h"
 #include "system.h"
 #include "../peripherals/gps.h"
+#include "../peripherals/hal/hx1.h"
 #include "../peripherals/hal/rockblock.h"
 #include "../lib/printf.h"
 
@@ -140,6 +141,10 @@ void cli_task(){
 		}else if(strcmp("rbn\n", input) == 0){
 			   tfp_sprintf(output, "rb net? %d \n", rockblock_get_net_availability());
 			   UART_write(uart, output, sizeof(output));
+		}else if(strcmp("hoff\n", input) == 0){
+			   hx1_off();
+		}else if(strcmp("hon\n", input) == 0){
+			   hx1_on();
 		}
 
 

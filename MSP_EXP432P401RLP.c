@@ -159,7 +159,14 @@ GPIO_PinConfig gpioPinConfigs[] = {
     /* MSP_EXP432P401RLP_ROCKBLOCK_SLEEP */
     GPIOMSP432_P4_6 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
+	/* MSP_EXP432P401RLPP_HX1_EN */
+	GPIOMSP432_P2_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_LOW | GPIO_CFG_OUT_LOW,
 
+	/* MSP_EXP432P401RLP_HX1_TX */
+	GPIOMSP432_P2_6 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+
+	/* MSP_EXP432P401RLP_5V_EN */
+	GPIOMSP432_P8_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
 
 
@@ -280,10 +287,6 @@ const PWMTimerMSP432_HWAttrs pwmTimerMSP432HWAttrs[MSP_EXP432P401RLP_PWMCOUNT] =
     {
         .baseAddr = TIMER_A1_BASE,
         .compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_1
-    },
-    {
-        .baseAddr = TIMER_A1_BASE,
-        .compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_2
     }
 };
 
@@ -293,11 +296,6 @@ const PWM_Config PWM_config[] = {
         .object = &pwmTimerMSP432Objects[0],
         .hwAttrs = &pwmTimerMSP432HWAttrs[0]
     },
-    {
-        .fxnTablePtr = &PWMTimerMSP432_fxnTable,
-        .object = &pwmTimerMSP432Objects[1],
-        .hwAttrs = &pwmTimerMSP432HWAttrs[1]
-    },
     {NULL, NULL, NULL}
 };
 
@@ -306,10 +304,10 @@ const PWM_Config PWM_config[] = {
  */
 void MSP_EXP432P401RLP_initPWM(void)
 {
-    /* Use Port Map on Port2 get Timer outputs on pins with LEDs (2.1, 2.2) */
+    /* Use Port Map on Port2 get Timer outputs on pin with HX1 TX (2.6) */
     const uint8_t portMap [] = {
-        PM_NONE, PM_TA1CCR1A, PM_TA1CCR2A, PM_NONE,
-        PM_NONE, PM_NONE,     PM_NONE,     PM_NONE
+        PM_NONE, PM_NONE, PM_NONE, PM_NONE,
+        PM_NONE, PM_NONE,     PM_TA1CCR1A,     PM_NONE
     };
 
     /* Mapping capture compare registers to Port 2 */
@@ -318,7 +316,7 @@ void MSP_EXP432P401RLP_initPWM(void)
 
     /* Enable PWM output on GPIO pins */
     MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2,
-        GPIO_PIN1 | GPIO_PIN2, GPIO_PRIMARY_MODULE_FUNCTION);
+        GPIO_PIN6, GPIO_PRIMARY_MODULE_FUNCTION);
 
     PWM_init();
 }

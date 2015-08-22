@@ -9,8 +9,8 @@
 #ifndef __BMP180_H
 #define __BMP180_H
 
-float bmp180_get_temp();
-float bmp180_get_temp();
-int bmp180_begin();
+float bmp180_get_pressure(I2C_Handle handle);
+float bmp180_get_temp(I2C_Handle handle);
+int bmp180_begin(I2C_Handle handle);
 
 #endif
