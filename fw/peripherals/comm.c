@@ -10,6 +10,13 @@
 #include "hal/rockblock.h"
 #include "hal/hx1.h"
 
+//protobuf DEBUG TO REMOVE
+
+#include "../lib/nanopb/pb_encode.h"
+#include "../lib/nanopb/pb_decode.h"
+#include "../protobuf/simple.pb.h"
+#include "../protobuf/rover_status.pb.h"
+
 
 //dispatches the message to its destination where it will be sent
 int dispatch_message(comm_destination_t dest, size_t message_length,
@@ -77,11 +84,39 @@ int pend_message(){
 
 	Mailbox_pend(comm_tx_mailbox, frame_buffer, BIOS_WAIT_FOREVER);
 
-
 	//is this memcpy dodgy?
 	memcpy(&frame, frame_buffer, sizeof(frame));
 
-	cli_printf("test pb %d \n", frame.message_length);
+	cli_printf("rxmsgl %d \n", frame.message_length);
+
+
+	/* But because we are lazy, we will just decode it immediately. */
+	{
+		/* Allocate space for the decoded message. */
+		rover_status message;
+
+		/* Create a stream that reads from the buffer. */
+		pb_istream_t stream = pb_istream_from_buffer(frame.message_buffer, frame.message_length);
+
+		/* Now we are ready to decode the message. */
+		int status = pb_decode(&stream, rover_status_fields, &message);
+
+		/* Check for errors... */
+		if (!status)
+		{
+			cli_printf("fail\n", 0);
+			return 1;
+		}
+
+		/* Print the data contained in the message. */
+		cli_printf("bv %d!\n", message.bv);
+		cli_printf("rb %d!\n", message.rockblock_health);
+		cli_printf("gps %d!\n", message.gps_health);
+	}
+
+
+
+
 
 	/*
 	//hardcode CLI for now

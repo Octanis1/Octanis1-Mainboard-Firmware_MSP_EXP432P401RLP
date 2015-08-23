@@ -23,7 +23,7 @@ typedef enum {COMM_CLI, COMM_IRIDIUM, COMM_GSM, COMM_VHF} comm_destination_t;
 //public communications frame for encapsulation
 typedef struct {
 	comm_destination_t destination;
-	size_t message_length;
+	int message_length;
 	uint8_t message_buffer[COMM_MO_SIZE];
 } comm_frame_t;
 
