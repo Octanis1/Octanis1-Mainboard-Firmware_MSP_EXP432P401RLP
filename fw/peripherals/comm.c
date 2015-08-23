@@ -71,36 +71,45 @@ int dispatch_message(comm_destination_t dest, size_t message_length,
 //waits for message to arrive on queue, unpacks frame, dispatches message.
 // BLOCKS UNTIL MESSAGE ARRIVES IN MAILBOX AND IS SUBSEQUENTLY SENT
 int pend_message(){
-/*
+
 	char frame_buffer[COMM_FRAME_SIZE];
 	comm_frame_t frame;
 
 	Mailbox_pend(comm_tx_mailbox, frame_buffer, BIOS_WAIT_FOREVER);
 
-	memcpy(frame_buffer, &frame, sizeof(frame_buffer));
 
+	//is this memcpy dodgy?
+	memcpy(&frame, frame_buffer, sizeof(frame));
+
+	cli_printf("test pb %d \n", frame.message_length);
+
+	/*
 	//hardcode CLI for now
 	dispatch_message(COMM_CLI, frame.message_length, frame.message_buffer);
 
 	cli_printf("msg pended  \n",0);
-	Task_sleep(1000);
-	return 1;
 	*/
+
+	return 1;
 }
 
+//this command is posted by any task that wishes to send a message
 int comm_post_message(comm_frame_t frame){
 
-/*
+
 	unsigned char frame_buffer[COMM_FRAME_SIZE];
+	int frame_size = sizeof(frame);
 
 	//copy frame struct to frame buffer
-	memcpy(&frame, frame_buffer, sizeof(frame));
+	memcpy(frame_buffer, &frame, frame_size);
+
+	cli_printf("frame size %d \n", frame_size);
 
 	//post the frame
     return Mailbox_post(comm_tx_mailbox, frame_buffer, BIOS_NO_WAIT);
 
 	return 1;
-	*/
+
 }
 
 
@@ -108,10 +117,10 @@ int comm_post_message(comm_frame_t frame){
 void comm_task(){
 
 	while(1){
-		Task_sleep(220);
 
-		//pend_message();
+		pend_message();
 
+		Task_sleep(10000);
 
 
 

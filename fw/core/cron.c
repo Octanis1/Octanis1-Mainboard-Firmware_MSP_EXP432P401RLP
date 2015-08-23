@@ -21,11 +21,12 @@ Void cron_quick_clock(UArg arg){
   cli_printf("Epoch: %d \n", Seconds_get());
 
 
+	//sends out system status message over the air
+	system_communicate_rover_status();
+
 }
 
 
 Void cron_hourly_clock(UArg arg){
-	//sends out system status message over the air
-	system_communicate_rover_status();
 
 }

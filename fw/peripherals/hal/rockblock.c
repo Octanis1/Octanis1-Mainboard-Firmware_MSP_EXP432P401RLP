@@ -143,10 +143,17 @@ int rockblock_get_signal_quality(){
 
 //sends an SBD, then checks the inbox (checking costs 1 credit!)
 int rockblock_send_receive_SBD(const uint8_t *tx_buffer, size_t tx_buffersize,
-								uint8_t *rx_buffer, size_t *rx_buffersizePtr);
+								uint8_t *rx_buffer, size_t *rx_buffersizePtr){
+
+	return 0;
+
+}
 
 //gets an SBD message from rockblocks buffer
-int rockblock_get_SBD_binary(uint8_t *rx_buffer, size_t *rx_buffersizePtr);
+int rockblock_get_SBD_binary(uint8_t *rx_buffer, size_t *rx_buffersizePtr){
+
+	return 0;
+}
 
 
 //returns an average of signal quality

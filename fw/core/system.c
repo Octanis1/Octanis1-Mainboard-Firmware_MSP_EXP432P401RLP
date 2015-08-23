@@ -10,13 +10,14 @@
 #include "../peripherals/hal/rockblock.h"
 
 //protobuf
+
 #include "../lib/nanopb/pb_encode.h"
 #include "../lib/nanopb/pb_decode.h"
+#include "../protobuf/simple.pb.h"
 #include "../protobuf/rover_status.pb.h"
 
 
 //holds system status struct
-static rover_status system_status;
 
 void system_dumpTask(Task_Handle task)
 {
@@ -57,36 +58,86 @@ int system_chartoint(char c){
 
 void system_update_rover_status(){
 	//get status from various places
-	system_status.rockblock_health = rockblock_get_health();
+
+
 }
 
 
 int system_communicate_rover_status(){
 
-	comm_frame_t status_frame;
 
-	uint8_t message_buffer[COMM_MO_SIZE];
-	size_t message_length;
+	//comm_frame_t frame;
 
-	//update status message
-	system_update_rover_status();
 
-    //create a stream that will write to our buffer.
-    pb_ostream_t stream = pb_ostream_from_buffer(message_buffer, sizeof(message_buffer));
+	  /* This is the buffer where we will store our message. */
+	    uint8_t buffer[128];
+	    size_t message_length;
+	    bool status;
 
-    //now we are ready to encode the message!
-    pb_encode(&stream, rover_status_fields, &system_status);
-    message_length = stream.bytes_written;
+	    /* Encode our message */
+	    {
+	        /* Allocate space on the stack to store the message data.
+	         *
+	         * Nanopb generates simple struct definitions for all the messages.
+	         * - check out the contents of simple.pb.h! */
+	        rover_status message;
 
-    //put message in frame
-    status_frame.destination = COMM_CLI;
-    status_frame.message_length = message_length;
-    memcpy(&status_frame.message_buffer, message_buffer, COMM_MO_SIZE);
+	        /* Create a stream that will write to our buffer. */
+	        pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
+
+	        /* Fill in the lucky number */
+	        message.bv = 698;
+	        message.gps_health = 5;
+	        message.rockblock_health = 5;
+
+	        /* Now we are ready to encode the message! */
+	        status = pb_encode(&stream, SimpleMessage_fields, &message);
+	        message_length = stream.bytes_written;
+
+	        /* Then just check for any errors.. */
+	        if (!status)
+	        {
+	            cli_printf("fail\n", 0);
+	            return 1;
+	        }
+	    }
+
+	    /* Now we could transmit the message over network, store it in a file or
+	     * wrap it to a pigeon's leg.
+	     */
+
+	    /* But because we are lazy, we will just decode it immediately. */
+
+	    {
+	        /* Allocate space for the decoded message. */
+	        rover_status message;
+
+	        /* Create a stream that reads from the buffer. */
+	        pb_istream_t stream = pb_istream_from_buffer(buffer, message_length);
+
+	        /* Now we are ready to decode the message. */
+	        status = pb_decode(&stream, SimpleMessage_fields, &message);
+
+	        /* Check for errors... */
+	        if (!status)
+	        {
+	            cli_printf("fail\n", 0);
+	            return 1;
+	        }
+
+	        /* Print the data contained in the message. */
+	        cli_printf("bv %d!\n", message.bv);
+	        cli_printf("rb %d!\n", message.rockblock_health);
+	        cli_printf("gps %d!\n", message.gps_health);
+	    }
+
 
     //post the buffer to the communications queue
-    if(comm_post_message(status_frame)){
+    /*
+	    if(comm_post_message(frame)){
     	cli_printf("posted comm to sbd\n",0);
     }
+    */
 
 
     return 1;
