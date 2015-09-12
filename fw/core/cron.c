@@ -18,7 +18,9 @@ Void cron_quick_clock(UArg arg){
   //print load periodically
   int cpuLoad = Load_getCPULoad();
   cli_printf("CPU load: %d \n", cpuLoad);
-  cli_printf("Epoch: %d \n", Seconds_get());
+  //cli_printf("Epoch: %d \n", Seconds_get());
+
+
 
 
 	//sends out system status message over the air

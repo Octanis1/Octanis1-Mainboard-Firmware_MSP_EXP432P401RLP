@@ -19,11 +19,19 @@
 #include "rockblock.h"
 
 #define ROCKBLOCK_WAKE 1
-#define ROCKBLOCK_WAKE_WAITTICKS 600
+#define ROCKBLOCK_WAKE_WAIT 600
 #define ROCKBLOCK_SLEEP 0
 #define ROCKBLOCK_RXBUFFER_SIZE 20
 #define ROCKBLOCK_READ_TIMEOUT 10000
 #define ROCKBLOCK_BAUD_RATE 9600
+
+#define ROCKBLOCK_CSQ_MINIMUM        2
+//following time units in seconds
+#define ROCKBLOCK_CSQ_INTERVAL       20
+#define ROCKBLOCK_SBDIX_INTERVAL     300
+#define ROCKBLOCK_SENDRECEIVE_TIME   300
+#define ROCKBLOCK_STARTUP_MAX_TIME   240
+
 
 static UART_Handle uart;
 static UART_Params uartParams;
@@ -42,8 +50,8 @@ int rockblock_open(){
 	//wake rockblock from sleep
     GPIO_write(Board_ROCKBLOCK_SLEEP, ROCKBLOCK_WAKE);
 
-    //it takes 500ms for the rockblock to wake up from its beauty sleep
-    Task_sleep(ROCKBLOCK_WAKE_WAITTICKS);
+    //it takes time for the rockblock to wake up from its beauty sleep
+    Task_sleep(ROCKBLOCK_WAKE_WAIT);
 
 
 	//these uart configs are good for writing to and reading from the RB module
@@ -70,6 +78,12 @@ int rockblock_open(){
 
 //must be called from within a task - this function will block!
 int rockblock_begin(){
+
+	if(!rockblock_open()){
+		cli_printf("RB open error \n",0);
+		return 0;
+	}
+
 
 	char rxBuffer[ROCKBLOCK_RXBUFFER_SIZE];
 
@@ -131,10 +145,11 @@ int rockblock_get_signal_quality(){
 
 		//signal quality value is at index 7
 		csq_val = system_chartoint((char)rxBuffer[7]);
-
+		/*
 		rockblock_health_sum += rockblock_get_signal_quality();
 		rockblock_health = (int)(rockblock_health_sum/times_called + 0.5);
 		times_called++;
+		*/
 	}
 
 	return csq_val;
@@ -144,7 +159,59 @@ int rockblock_get_signal_quality(){
 //sends an SBD, then checks the inbox (checking costs 1 credit!)
 int rockblock_send_receive_SBD(const uint8_t *tx_buffer, size_t tx_buffersize,
 								uint8_t *rx_buffer, size_t *rx_buffersizePtr){
+	cli_printf("RBsr\n",0);
 
+	if(!rockblock_begin()){
+		cli_printf("RB begin error \n",0);
+		return 0;
+	}
+
+	//write our data into the buffer of the rockblock (max 340B)
+
+	 //"AT+SBDWB=120\r" 120Bytes to be sent
+	 //wait for "READY\r\n"
+	/* write data to rockblock and compute checksum
+	      uint16_t checksum = 0;
+	      for (int i=0; i<txDataSize; ++i)
+	      {
+	         stream.write(txData[i]);
+	         checksum += (uint16_t)txData[i];
+	      }
+	*/
+	//write computed checksum to RB
+	/*
+	      stream.write(checksum >> 8);
+	      stream.write(checksum & 0xFF);
+	*/
+	//WAIT FOR "0\r\n\r\nOK\r\n"
+
+
+	//now start long SBD session to transmit message
+	for(int starttime = Seconds_get(); (Seconds_get() - starttime) < ROCKBLOCK_SENDRECEIVE_TIME; ){
+
+		int csq = rockblock_get_signal_quality();
+		if(csq > ROCKBLOCK_CSQ_MINIMUM){
+			//perform MSST workaround
+
+					   	   //AT+SBDIX\r
+					   	   //wait for +SBDIX:
+					   	   //store response of SBDIX
+
+					   	   //if moCode >= 0 && moCode <= 4
+					   	   	   //SBDIX successful
+					   	   	   //(mtCode == 1 && rxBuffer) -> retrieve RX message (SRDB)
+					   	   //else if (moCode == 12 || moCode == 14 || moCode == 16) fatal failure: no retry
+					   	   //else RETRY SBDIX
+		}
+
+		//wait for CSQ retry
+		cli_printf("csq in %d\n", ROCKBLOCK_CSQ_INTERVAL);
+		Task_sleep(ROCKBLOCK_CSQ_INTERVAL*1000);
+
+	//else timeout loop
+	}
+
+	cli_printf("RB s/r timeout\n",0);
 	return 0;
 
 }

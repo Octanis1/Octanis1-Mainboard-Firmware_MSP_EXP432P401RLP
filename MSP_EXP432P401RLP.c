@@ -484,13 +484,20 @@ unsigned char uartMSP432RingBuffer[32];
  * http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSP430BaudRateConverter/index.html
  */
 const UARTMSP432_BaudrateConfig uartMSP432Baudrates[] = {
-    /* {baudrate, input clock, prescalar, UCBRFx, UCBRSx, oversampling} */
+    /* {baudrate, input clock, prescalar, UCBRFx, UCBRSx, oversampling} - EUSCI */
     {115200, 12000000,  6,  8,  32, 1},
     {115200, 6000000,   3,  4,   2, 1},
     {115200, 3000000,   1, 10,   0, 1},
+
+    {57600, 12000000,  13,  0,  37, 1},
+    {57600, 6000000,    6,  8,  32, 1},
+    {57600, 3000000,  3, 4, 2, 1},
+
+
     {19200, 12000000,  39,  1,  0, 1},
     {19200, 6000000,   19,  8,   85, 1},
     {19200, 3000000,   9, 12,   34, 1},
+
     {9600,   12000000, 78,  2,   0, 1},
     {9600,   6000000,  39,  1,   0, 1},
     {9600,   3000000,  19,  8,  85, 1},
@@ -510,6 +517,18 @@ const UARTMSP432_HWAttrs uartMSP432HWAttrs[MSP_EXP432P401RLP_UARTCOUNT] = {
         .baudrateLUT = uartMSP432Baudrates,
         .ringBufPtr  = uartMSP432RingBuffer,
         .ringBufSize = sizeof(uartMSP432RingBuffer)
+    },
+	{
+            .baseAddr = EUSCI_A1_BASE,
+            .intNum = INT_EUSCIA1,
+            .intPriority = ~0,
+            .clockSource = EUSCI_A_UART_CLOCKSOURCE_SMCLK,
+            .bitOrder = EUSCI_A_UART_LSB_FIRST,
+            .numBaudrateEntries = sizeof(uartMSP432Baudrates) /
+                sizeof(UARTMSP432_BaudrateConfig),
+            .baudrateLUT = uartMSP432Baudrates,
+            .ringBufPtr  = uartMSP432RingBuffer,
+            .ringBufSize = sizeof(uartMSP432RingBuffer)
     },
     {
         .baseAddr = EUSCI_A2_BASE,
@@ -543,15 +562,20 @@ const UART_Config UART_config[] = {
         .object = &uartMSP432Objects[0],
         .hwAttrs = &uartMSP432HWAttrs[0]
     },
-    {
-        .fxnTablePtr = &UARTMSP432_fxnTable,
-        .object = &uartMSP432Objects[1],
-        .hwAttrs = &uartMSP432HWAttrs[1]
+	{
+            .fxnTablePtr = &UARTMSP432_fxnTable,
+            .object = &uartMSP432Objects[1],
+            .hwAttrs = &uartMSP432HWAttrs[1]
     },
     {
         .fxnTablePtr = &UARTMSP432_fxnTable,
         .object = &uartMSP432Objects[2],
         .hwAttrs = &uartMSP432HWAttrs[2]
+    },
+    {
+        .fxnTablePtr = &UARTMSP432_fxnTable,
+        .object = &uartMSP432Objects[3],
+        .hwAttrs = &uartMSP432HWAttrs[3]
     },
     {NULL, NULL, NULL}
 };
@@ -565,6 +589,12 @@ void MSP_EXP432P401RLP_initUART(void)
     MAP_GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P1,
         GPIO_PIN2 | GPIO_PIN3, GPIO_PRIMARY_MODULE_FUNCTION);
 
+
+    /* Set P2.2 & P2.3 in UART mode */
+    MAP_GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P2,
+        GPIO_PIN2 | GPIO_PIN3, GPIO_PRIMARY_MODULE_FUNCTION);
+
+
     /* Set P3.2 & P3.3 in UART mode */
     MAP_GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P3,
         GPIO_PIN2 | GPIO_PIN3, GPIO_PRIMARY_MODULE_FUNCTION);
@@ -572,7 +602,6 @@ void MSP_EXP432P401RLP_initUART(void)
     /* Set P9.6 & P9.7 in UART mode */
     MAP_GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P9,
         GPIO_PIN6 | GPIO_PIN7, GPIO_PRIMARY_MODULE_FUNCTION);
-
 
     /* Initialize the UART driver */
     UART_init();
@@ -623,69 +652,3 @@ void MSP_EXP432P401RLP_initWatchdog(void)
     Watchdog_init();
 }
 
-/*
- *  =============================== WiFi ===============================
- */
-/* Place into subsections to allow the TI linker to remove items properly */
-#if defined(__TI_COMPILER_VERSION__)
-#pragma DATA_SECTION(WiFi_config, ".const:WiFi_config")
-#pragma DATA_SECTION(wiFiCC3100HWAttrs, ".const:wiFiCC3100HWAttrs")
-#endif
-
-#include <ti/drivers/WiFi.h>
-#include <ti/drivers/wifi/WiFiCC3100.h>
-
-/* WiFi objects */
-WiFiCC3100_Object wiFiCC3100Objects[MSP_EXP432P401RLP_WIFICOUNT];
-
-/* WiFi configuration structure */
-const WiFiCC3100_HWAttrs wiFiCC3100HWAttrs[MSP_EXP432P401RLP_WIFICOUNT] = {
-    {
-        .irqPort = GPIO_PORT_P2,
-        .irqPin = GPIO_PIN5,
-        .irqIntNum = INT_PORT2,
-
-        .csPort = GPIO_PORT_P3,
-        .csPin = GPIO_PIN0,
-
-        .enPort = GPIO_PORT_P4,
-        .enPin = GPIO_PIN1
-    }
-};
-
-const WiFi_Config WiFi_config[] = {
-    {
-        .fxnTablePtr = &WiFiCC3100_fxnTable,
-        .object = &wiFiCC3100Objects[0],
-        .hwAttrs = &wiFiCC3100HWAttrs[0]
-    },
-    {NULL, NULL, NULL},
-};
-
-/*
- *  ======== MSP_EXP432P401RLP_initWiFi ========
- */
-void MSP_EXP432P401RLP_initWiFi(void)
-{
-    /* Configure EN & CS pins to disable CC3100 */
-    MAP_GPIO_setAsOutputPin(GPIO_PORT_P3, GPIO_PIN0);
-    MAP_GPIO_setAsOutputPin(GPIO_PORT_P4, GPIO_PIN1);
-    MAP_GPIO_setOutputHighOnPin(GPIO_PORT_P3, GPIO_PIN0);
-    MAP_GPIO_setOutputLowOnPin(GPIO_PORT_P4, GPIO_PIN1);
-
-    /* Configure CLK, MOSI & MISO for SPI0 (EUSCI_B0) */
-    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P1,
-        GPIO_PIN5 | GPIO_PIN6, GPIO_PRIMARY_MODULE_FUNCTION);
-    MAP_GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P1, GPIO_PIN7,
-        GPIO_PRIMARY_MODULE_FUNCTION);
-
-    /* Configure IRQ pin */
-    MAP_GPIO_setAsInputPinWithPullDownResistor(GPIO_PORT_P2, GPIO_PIN5);
-    MAP_GPIO_interruptEdgeSelect(GPIO_PORT_P2, GPIO_PIN5,
-        GPIO_LOW_TO_HIGH_TRANSITION);
-
-    /* Initialize SPI and WiFi drivers */
-    MSP_EXP432P401RLP_initDMA();
-    SPI_init();
-    WiFi_init();
-}
