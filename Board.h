@@ -69,6 +69,11 @@ extern "C" {
 #include "fw/core/system.h" //provides useful general functions
 
 
+/*Â Clock cycle conversion factors */
+#define CYCLES_PER_US		48			// cycles per microsecond
+#define CYCLES_PER_MS		48000		// cycles per millisecond
+#define CYCLES_PER_S		48000000	// cycles per second
+
 
 /* Board specific I2C addresses */
 #define Board_BMP180_I2CADDR					(0x77) //temp/pres
@@ -79,7 +84,7 @@ extern "C" {
 #define Board_BME280_I2CADDR					(0x76) //hygro/pres
 #define Board_AS3935_I2CADDR					(0x03) //lightning
 
-/* The default I²C address of the BNO055 device is (0x29).
+/* The default Iï¿½C address of the BNO055 device is (0x29).
  * The alternative address (0x28), can be selected by pulling COM3 down.
  */
 
@@ -110,6 +115,8 @@ extern "C" {
 #define Board_HX1_EN				MSP_EXP432P401RLP_HX1_EN
 #define Board_HX1_TX				MSP_EXP432P401RLP_HX1_TX
 
+//#define Board_ULTRASONIC_IN0		MSP_EXP432P401RLP_ULTRASONIC_IN0
+#define Board_ULTRASONIC_OUT0		MSP_EXP432P401RLP_ULTRASONIC_OUT0
 
 
 #define Board_I2C0                  MSP_EXP432P401RLP_I2CB1
@@ -124,7 +131,6 @@ extern "C" {
 #define Board_UART2_COMM  			MSP_EXP432P401RLP_UARTA2 //P3.2,3.3
 
 #define Board_WATCHDOG0             MSP_EXP432P401RLP_WATCHDOG
-
 
 
 #ifdef __cplusplus
