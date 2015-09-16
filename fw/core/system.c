@@ -13,7 +13,6 @@
 
 #include "../lib/nanopb/pb_encode.h"
 #include "../lib/nanopb/pb_decode.h"
-#include "../protobuf/simple.pb.h"
 #include "../protobuf/rover_status.pb.h"
 
 

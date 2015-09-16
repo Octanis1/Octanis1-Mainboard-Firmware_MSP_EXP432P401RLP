@@ -8,13 +8,13 @@
 #include "../../Board.h"
 #include "comm.h"
 #include "hal/rockblock.h"
-#include "hal/hx1.h"
+#include "hal/rn2483.h"
+#include "../lib/printf.h"
 
 //protobuf DEBUG TO REMOVE
 
 #include "../lib/nanopb/pb_encode.h"
 #include "../lib/nanopb/pb_decode.h"
-#include "../protobuf/simple.pb.h"
 #include "../protobuf/rover_status.pb.h"
 
 
@@ -90,6 +90,40 @@ int pend_message(){
 	cli_printf("rxmsgl %d \n", frame.message_length);
 
 
+	//try to print the buffer in hex
+
+	//test buffer to get byte order right
+	uint8_t deadbeef[4] = {222,173,190,239};
+
+	char hex_string_byte[2];
+	char hex_string[COMM_FRAME_SIZE]; //TODO: ATTENTION: this is too small! need to change this
+	memset(&hex_string, 0, sizeof(hex_string));
+
+	int i;
+	for(i=0; i<4; i++){
+		memset(&hex_string_byte, 0, sizeof(hex_string_byte));
+	    tfp_sprintf(hex_string_byte, "%02x", deadbeef[i]);
+	    strcat(hex_string, hex_string_byte);
+	}
+
+
+	//lora test
+
+	 	if(rn2483_begin()){
+			cli_printf("rn2483.\n", 0);
+		}else{
+			cli_printf("adiedrn2483.\n", 0);
+		}
+
+
+	 	rn2483_send_receive(hex_string, strlen(hex_string));
+
+
+		rn2483_end();
+
+	//lora test end
+
+
 	/* But because we are lazy, we will just decode it immediately. */
 	{
 		/* Allocate space for the decoded message. */
@@ -125,6 +159,9 @@ int pend_message(){
 	cli_printf("msg pended  \n",0);
 	*/
 
+	//DISPATCH TEST
+	//rockblock_send_receive_SBD(NULL,NULL,NULL,NULL);
+
 	return 1;
 }
 
@@ -152,8 +189,12 @@ int comm_post_message(comm_frame_t frame){
 void comm_task(){
 
 	while(1){
+ 	    GPIO_write(MSP_EXP432P401RLP_LED_RED, Board_LED_ON);
 
 		pend_message();
+
+
+		GPIO_write(MSP_EXP432P401RLP_LED_RED, Board_LED_OFF);
 
 		Task_sleep(10000);
 

@@ -98,7 +98,6 @@ extern "C" {
 #define Board_initSPI               MSP_EXP432P401RLP_initSPI
 #define Board_initUART              MSP_EXP432P401RLP_initUART
 #define Board_initWatchdog          MSP_EXP432P401RLP_initWatchdog
-#define Board_initWiFi              MSP_EXP432P401RLP_initWiFi
 
 #define Board_LED_ON                MSP_EXP432P401RLP_LED_ON
 #define Board_LED_OFF               MSP_EXP432P401RLP_LED_OFF
@@ -129,6 +128,7 @@ extern "C" {
 #define Board_UART0_DEBUG           MSP_EXP432P401RLP_UARTA0 //"backchannel UART"
 #define Board_UART1_GPS             MSP_EXP432P401RLP_UARTA3 //P9.6,9.7
 #define Board_UART2_COMM  			MSP_EXP432P401RLP_UARTA2 //P3.2,3.3
+#define Board_UART3_LORACOMM		MSP_EXP432P401RLP_UARTA1 //P2.2=RX,2.3=TX
 
 #define Board_WATCHDOG0             MSP_EXP432P401RLP_WATCHDOG
 

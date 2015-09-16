@@ -120,6 +120,7 @@ typedef enum MSP_EXP432P401RLP_SPIName {
  */
 typedef enum MSP_EXP432P401RLP_UARTName {
     MSP_EXP432P401RLP_UARTA0 = 0, //"backchannel" port - jumpered
+    MSP_EXP432P401RLP_UARTA1, //TX: P2.3, RX: P2.2
     MSP_EXP432P401RLP_UARTA2, //TX: P3.3, RX: P3.2
 	MSP_EXP432P401RLP_UARTA3, //TX: P9.7, RX: P9.6
 
@@ -230,19 +231,6 @@ extern void MSP_EXP432P401RLP_initUART(void);
  */
 extern void MSP_EXP432P401RLP_initWatchdog(void);
 
-/*!
- *  @brief  Initialize board specific WiFi settings
- *
- *  This function initializes the board specific WiFi settings and then calls
- *  the WiFi_init API to initialize the WiFi module.
- *
- *  The hardware resources controlled by the WiFi module are determined by the
- *  WiFi_config variable.
- *
- *  A SimpleLink CC3100 device or module is required and must be connected to
- *  use the WiFi driver.
- */
-extern void MSP_EXP432P401RLP_initWiFi(void);
 
 #ifdef __cplusplus
 }
