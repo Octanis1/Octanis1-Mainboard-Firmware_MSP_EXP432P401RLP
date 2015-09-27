@@ -23,6 +23,18 @@ I2C_Handle i2c_helper_get_handle(){
 	return i2c_helper_handle;
 }
 
+void i2c_helper_init_handle(){
+
+	/* Initialise I2C Bus */
+	I2C_Params      params;
+	I2C_Params_init(&params);
+	i2c_helper_handle = I2C_open(Board_I2C0, &params);
+
+	if (!i2c_helper_handle) {
+		cli_printf("I2C did not or already open\n", 0);
+	}
+}
+
 
 uint8_t read8(unsigned char i2c_addr, I2C_Handle handle, uint8_t register_addr){
 
