@@ -34,3 +34,10 @@
 Debug/*
 *.sublime*
 Release/*
+/Debug/
+
+#Files adding problems with using CCS on Mac.
+src/makefile.libs
+src/sysbios/makefile
+src/sysbios/sysbios.am4fg
+
