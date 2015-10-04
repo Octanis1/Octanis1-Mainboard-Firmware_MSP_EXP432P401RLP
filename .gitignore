@@ -36,8 +36,9 @@ Debug/*
 Release/*
 /Debug/
 
-#Files adding problems with using CCS on Mac.
+#Files that get modified when using CCS on Mac.
 src/makefile.libs
 src/sysbios/makefile
 src/sysbios/sysbios.am4fg
+.launches/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP.launch
 

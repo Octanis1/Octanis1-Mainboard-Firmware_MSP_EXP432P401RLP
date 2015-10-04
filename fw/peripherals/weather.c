@@ -39,7 +39,7 @@ void weather_task(){
 	while(1){
 		Task_sleep(3000); //replace with a semaphore pend on i2c bus
 
-//		bme280_data_readout_template();
+		bme280_data_readout_template();
 
 		bmp180_data_readout_template();
 
