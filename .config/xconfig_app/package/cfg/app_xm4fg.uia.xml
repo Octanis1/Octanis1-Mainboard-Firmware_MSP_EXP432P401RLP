@@ -705,385 +705,385 @@
    <modIdMap id="32770">
       <moduleName>xdc.runtime.Assert</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>Assert.c</cFileName>
    </modIdMap>
    <modIdMap id="32771">
       <moduleName>xdc.runtime.Core</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="32772">
       <moduleName>xdc.runtime.Defaults</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="32773">
       <moduleName>xdc.runtime.Diags</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>Diags.c</cFileName>
    </modIdMap>
    <modIdMap id="32774">
       <moduleName>xdc.runtime.Error</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>Error.c</cFileName>
    </modIdMap>
    <modIdMap id="32775">
       <moduleName>xdc.runtime.Gate</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>Gate.c</cFileName>
    </modIdMap>
    <modIdMap id="32776">
       <moduleName>xdc.runtime.Log</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>Log.c</cFileName>
    </modIdMap>
    <modIdMap id="32777">
       <moduleName>xdc.runtime.Main</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="32778">
       <moduleName>xdc.runtime.Memory</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>Memory.c</cFileName>
    </modIdMap>
    <modIdMap id="32779">
       <moduleName>xdc.runtime.Registry</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>Registry.c</cFileName>
    </modIdMap>
    <modIdMap id="32780">
       <moduleName>xdc.runtime.Startup</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>Startup.c</cFileName>
    </modIdMap>
    <modIdMap id="32781">
       <moduleName>xdc.runtime.System</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>System.c</cFileName>
    </modIdMap>
    <modIdMap id="32782">
       <moduleName>xdc.runtime.SysMin</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>SysMin.c</cFileName>
    </modIdMap>
    <modIdMap id="32783">
       <moduleName>xdc.runtime.Text</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>Text.c</cFileName>
    </modIdMap>
    <modIdMap id="32784">
       <moduleName>xdc.runtime.Timestamp</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>Timestamp.c</cFileName>
    </modIdMap>
    <modIdMap id="32785">
       <moduleName>xdc.runtime.Types</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="1">
       <moduleName>xdc.runtime.Main_Module_GateProxy</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="2">
       <moduleName>xdc.runtime.Memory_HeapProxy</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="3">
       <moduleName>xdc.runtime.System_SupportProxy</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="4">
       <moduleName>xdc.runtime.System_Module_GateProxy</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="5">
       <moduleName>xdc.runtime.Timestamp_SupportProxy</moduleName>
       <packageVersion>2,1,0,0</packageVersion>
-      <packageBase>C:/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
+      <packageBase>/Applications/ti/xdctools_3_31_00_24_core/packages/xdc/runtime/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="32788">
       <moduleName>ti.sysbios.knl.Clock</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>Clock.c</cFileName>
    </modIdMap>
    <modIdMap id="32789">
       <moduleName>ti.sysbios.knl.Idle</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>Idle.c</cFileName>
    </modIdMap>
    <modIdMap id="32790">
       <moduleName>ti.sysbios.knl.Intrinsics</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>Intrinsics.c</cFileName>
    </modIdMap>
    <modIdMap id="32791">
       <moduleName>ti.sysbios.knl.Event</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>Event.c</cFileName>
    </modIdMap>
    <modIdMap id="32792">
       <moduleName>ti.sysbios.knl.Mailbox</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>Mailbox.c</cFileName>
    </modIdMap>
    <modIdMap id="32793">
       <moduleName>ti.sysbios.knl.Queue</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>Queue.c</cFileName>
    </modIdMap>
    <modIdMap id="32794">
       <moduleName>ti.sysbios.knl.Semaphore</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>Semaphore.c</cFileName>
    </modIdMap>
    <modIdMap id="32795">
       <moduleName>ti.sysbios.knl.Swi</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>Swi.c</cFileName>
    </modIdMap>
    <modIdMap id="32796">
       <moduleName>ti.sysbios.knl.Task</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>Task.c</cFileName>
    </modIdMap>
    <modIdMap id="6">
       <moduleName>ti.sysbios.knl.Clock_TimerProxy</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="7">
       <moduleName>ti.sysbios.knl.Intrinsics_SupportProxy</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="8">
       <moduleName>ti.sysbios.knl.Task_SupportProxy</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/knl/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="32798">
       <moduleName>ti.sysbios.hal.Hwi</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/</packageBase>
       <cFileName>Hwi.c</cFileName>
    </modIdMap>
    <modIdMap id="32799">
       <moduleName>ti.sysbios.hal.Seconds</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/</packageBase>
       <cFileName>Seconds.c</cFileName>
    </modIdMap>
    <modIdMap id="32800">
       <moduleName>ti.sysbios.hal.SecondsClock</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/</packageBase>
       <cFileName>SecondsClock.c</cFileName>
    </modIdMap>
    <modIdMap id="32801">
       <moduleName>ti.sysbios.hal.Timer</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/</packageBase>
       <cFileName>Timer.c</cFileName>
    </modIdMap>
    <modIdMap id="9">
       <moduleName>ti.sysbios.hal.Hwi_HwiProxy</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="10">
       <moduleName>ti.sysbios.hal.Seconds_SecondsProxy</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="11">
       <moduleName>ti.sysbios.hal.Timer_TimerProxy</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/hal/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="32802">
       <moduleName>ti.sysbios.BIOS</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/</packageBase>
       <cFileName>BIOS.c</cFileName>
    </modIdMap>
    <modIdMap id="12">
       <moduleName>ti.sysbios.BIOS_RtsGateProxy</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="32807">
       <moduleName>ti.sysbios.family.arm.msp432.init.Boot</moduleName>
       <packageVersion>1,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/msp432/init/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/msp432/init/</packageBase>
       <cFileName>Boot.c</cFileName>
    </modIdMap>
    <modIdMap id="32810">
       <moduleName>ti.uia.events.DvtTypes</moduleName>
       <packageVersion>1,0,0,2,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/events/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/events/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="32811">
       <moduleName>ti.uia.events.UIAErr</moduleName>
       <packageVersion>1,0,0,2,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/events/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/events/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="32812">
       <moduleName>ti.uia.events.UIAEvt</moduleName>
       <packageVersion>1,0,0,2,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/events/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/events/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="32814">
       <moduleName>ti.uia.runtime.EventHdr</moduleName>
       <packageVersion>1,0,0,2,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/runtime/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/runtime/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="32815">
       <moduleName>ti.uia.runtime.QueueDescriptor</moduleName>
       <packageVersion>1,0,0,2,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/runtime/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/runtime/</packageBase>
       <cFileName>QueueDescriptor.c</cFileName>
    </modIdMap>
    <modIdMap id="32816">
       <moduleName>ti.uia.runtime.UIAMetaData</moduleName>
       <packageVersion>1,0,0,2,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/runtime/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/runtime/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="32818">
       <moduleName>ti.sysbios.family.arm.m3.Hwi</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/</packageBase>
       <cFileName>Hwi.c</cFileName>
    </modIdMap>
    <modIdMap id="32819">
       <moduleName>ti.sysbios.family.arm.m3.IntrinsicsSupport</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="32820">
       <moduleName>ti.sysbios.family.arm.m3.TaskSupport</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/</packageBase>
       <cFileName>TaskSupport.c</cFileName>
    </modIdMap>
    <modIdMap id="32821">
       <moduleName>ti.sysbios.family.arm.m3.Timer</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/</packageBase>
       <cFileName>Timer.c</cFileName>
    </modIdMap>
    <modIdMap id="32822">
       <moduleName>ti.sysbios.family.arm.m3.TimestampProvider</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/m3/</packageBase>
       <cFileName>TimestampProvider.c</cFileName>
    </modIdMap>
    <modIdMap id="32825">
       <moduleName>ti.sysbios.rts.gnu.ReentSupport</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/rts/gnu/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/rts/gnu/</packageBase>
       <cFileName>ReentSupport.c</cFileName>
    </modIdMap>
    <modIdMap id="32826">
       <moduleName>ti.sysbios.family.arm.msp432.Timer</moduleName>
       <packageVersion>1,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/msp432/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/msp432/</packageBase>
       <cFileName>Timer.c</cFileName>
    </modIdMap>
    <modIdMap id="32827">
       <moduleName>ti.sysbios.family.arm.msp432.ClockFreqs</moduleName>
       <packageVersion>1,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/msp432/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/msp432/</packageBase>
       <cFileName>ClockFreqs.c</cFileName>
    </modIdMap>
    <modIdMap id="32829">
       <moduleName>ti.sysbios.gates.GateHwi</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/gates/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/gates/</packageBase>
       <cFileName>GateHwi.c</cFileName>
    </modIdMap>
    <modIdMap id="32830">
       <moduleName>ti.sysbios.gates.GateMutex</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/gates/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/gates/</packageBase>
       <cFileName>GateMutex.c</cFileName>
    </modIdMap>
    <modIdMap id="32832">
       <moduleName>ti.sysbios.heaps.HeapMem</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/heaps/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/heaps/</packageBase>
       <cFileName>HeapMem.c</cFileName>
    </modIdMap>
    <modIdMap id="13">
       <moduleName>ti.sysbios.heaps.HeapMem_Module_GateProxy</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/heaps/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/heaps/</packageBase>
       <cFileName>null</cFileName>
    </modIdMap>
    <modIdMap id="32834">
       <moduleName>ti.sysbios.family.arm.lm4.Timer</moduleName>
       <packageVersion>1,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/lm4/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/family/arm/lm4/</packageBase>
       <cFileName>Timer.c</cFileName>
    </modIdMap>
    <modIdMap id="32836">
       <moduleName>ti.uia.loggers.LoggerStopMode</moduleName>
       <packageVersion>1,0,0,2,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/loggers/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/uia_2_00_02_39/packages/ti/uia/loggers/</packageBase>
       <cFileName>LoggerStopMode.c</cFileName>
    </modIdMap>
    <modIdMap id="32838">
       <moduleName>ti.sysbios.utils.Load</moduleName>
       <packageVersion>2,0,0,0,0</packageVersion>
-      <packageBase>C:/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/utils/</packageBase>
+      <packageBase>/Applications/ti/tirtos_msp43x_2_12_01_33/products/bios_6_41_04_54/packages/ti/sysbios/utils/</packageBase>
       <cFileName>Load.c</cFileName>
    </modIdMap>
    <transport2>

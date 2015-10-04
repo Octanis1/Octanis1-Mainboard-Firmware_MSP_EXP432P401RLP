@@ -6,7 +6,7 @@
  */
 #include "../../Board.h"
 #include "imu.h"
-#include "hal/bno055.h"
+#include "hal/bno055_support.h"
 #include "hal/i2c_helper.h"
 
 void imu_task(){
@@ -23,7 +23,12 @@ void imu_task(){
 			}
 			*/
 
+	i2c_helper_init_handle(); //TODO: move this to a more general board_init function.
+
+
 	while(1){
+
+	//	bno055_data_readout_template();
 
 		/*
 		if(drive_get_status() == NOT_MOVING){

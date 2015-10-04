@@ -33,15 +33,14 @@ void weather_task(){
 			cli_printf("I2C did not or already open\n", 0);
 		}
 */
-	i2c_helper_init_handle();
 
 
 	while(1){
 		Task_sleep(3000); //replace with a semaphore pend on i2c bus
 
-		bme280_data_readout_template();
+		//bme280_data_readout_template();
 
-		bmp180_data_readout_template();
+		//bmp180_data_readout_template();
 
 		//DEBUGGING BMP180 START
 		/* bmp180_begin(i2c_handle);
