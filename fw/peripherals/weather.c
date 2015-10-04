@@ -6,8 +6,8 @@
 #include "../../Board.h"
 
 #include "weather.h"
-#include "hal/bmp180.h"
 #include "hal/bme280i2c.h"
+#include "hal/bmp180i2c.h"
 #include "hal/i2c_helper.h"
 #include "../lib/printf.h"
 
@@ -39,7 +39,9 @@ void weather_task(){
 	while(1){
 		Task_sleep(3000); //replace with a semaphore pend on i2c bus
 
-		bme280_data_readout_template();
+//		bme280_data_readout_template();
+
+		bmp180_data_readout_template();
 
 		//DEBUGGING BMP180 START
 		/* bmp180_begin(i2c_handle);

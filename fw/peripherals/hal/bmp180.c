@@ -1,191 +1,447 @@
 /*
- *  File: bmp180.h
- *  Description: Model for BMP180
- *  Author: Sam
- *  Port for TI RTOS from following library:
- *
- *  ***************************************************
-	  This is a library for the Adafruit BMP085/BMP180 Barometric Pressure + Temp sensor
-
-	  Designed specifically to work with the Adafruit BMP085 or BMP180 Breakout
-	  ----> http://www.adafruit.com/products/391
-	  ----> http://www.adafruit.com/products/1603
-
-	  These displays use I2C to communicate, 2 pins are required to
-	  interface
-	  Adafruit invests time and resources providing this open source code,
-	  please support Adafruit and open-source hardware by purchasing
-	  products from Adafruit!
-
-	  Written by Limor Fried/Ladyada for Adafruit Industries.
-	  BSD license, all text above must be included in any redistribution
-	 ****************************************************
- */
-
-#include "../../../Board.h"
+****************************************************************************
+* Copyright (C) 2008 - 2015 Bosch Sensortec GmbH
+*
+* bmp180.c
+* Date: 2015/03/27
+* Revision: 2.0.3 $
+*
+* Usage: Sensor Driver file for BMP180
+*
+****************************************************************************
+* License:
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*
+*   Redistributions of source code must retain the above copyright
+*   notice, this list of conditions and the following disclaimer.
+*
+*   Redistributions in binary form must reproduce the above copyright
+*   notice, this list of conditions and the following disclaimer in the
+*   documentation and/or other materials provided with the distribution.
+*
+*   Neither the name of the copyright holder nor the names of the
+*   contributors may be used to endorse or promote products derived from
+*   this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+* CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL COPYRIGHT HOLDER
+* OR CONTRIBUTORS BE LIABLE FOR ANY
+* DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+* OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO,
+* PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+* WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+* ANY WAY OUT OF THE USE OF THIS
+* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
+*
+* The information provided is believed to be accurate and reliable.
+* The copyright holder assumes no responsibility
+* for the consequences of use
+* of such information nor for any infringement of patents or
+* other rights of third parties which may result from its use.
+* No license is granted by implication or otherwise under any patent or
+* patent rights of the copyright holder.
+**************************************************************************/
 #include "bmp180.h"
-#include "i2c_helper.h"
+static struct bmp180_t *p_bmp180;
 
-
-#define BMP180_CHIP_ID   (0xd0) /* chip ID - always 0x55 */
-#define BMP180_ADDR		 Board_BMP180_I2CADDR
-
-#define BMP180_CAL_AC1           0xAA  // R   Calibration data (16 bits)
-#define BMP180_CAL_AC2           0xAC  // R   Calibration data (16 bits)
-#define BMP180_CAL_AC3           0xAE  // R   Calibration data (16 bits)
-#define BMP180_CAL_AC4           0xB0  // R   Calibration data (16 bits)
-#define BMP180_CAL_AC5           0xB2  // R   Calibration data (16 bits)
-#define BMP180_CAL_AC6           0xB4  // R   Calibration data (16 bits)
-#define BMP180_CAL_B1            0xB6  // R   Calibration data (16 bits)
-#define BMP180_CAL_B2            0xB8  // R   Calibration data (16 bits)
-#define BMP180_CAL_MB            0xBA  // R   Calibration data (16 bits)
-#define BMP180_CAL_MC            0xBC  // R   Calibration data (16 bits)
-#define BMP180_CAL_MD            0xBE  // R   Calibration data (16 bits)
-
-#define BMP180_ULTRALOWPOWER 0
-#define BMP180_STANDARD      1
-#define BMP180_HIGHRES       2
-#define BMP180_ULTRAHIGHRES  3
-
-#define BMP180_CONTROL           0xF4
-#define BMP180_TEMPDATA          0xF6
-#define BMP180_PRESSUREDATA      0xF6
-#define BMP180_READTEMPCMD       0x2E
-#define BMP180_READPRESSURECMD   0x34
-
-
-
-static int16_t ac1 = 0, ac2, ac3, b1, b2, mb, mc, md;
-static uint16_t ac4, ac5, ac6;
-static uint8_t oversampling = BMP180_ULTRALOWPOWER;
-
-
-int32_t computeB5(int32_t UT) {
-	int32_t X1 = (UT - (int32_t)ac6) * ((int32_t)ac5) >> 15;
-	int32_t X2 = ((int32_t)mc << 11) / (X1+(int32_t)md);
-	return X1 + X2;
-}
-
-uint16_t read_raw_temp(I2C_Handle handle) {
-	write8(BMP180_ADDR, handle, BMP180_CONTROL, BMP180_READTEMPCMD);
-	Task_sleep(5);
-
-	uint16_t raw_temp = read16(BMP180_ADDR, handle, BMP180_TEMPDATA);
-
-	return raw_temp;
-}
-
-
-uint32_t read_raw_pressure(I2C_Handle handle) {
-	uint32_t raw;
-
-	write8(BMP180_ADDR, handle, BMP180_CONTROL, BMP180_READPRESSURECMD + (oversampling << 6));
-
-	if (oversampling == BMP180_ULTRALOWPOWER){
-		Task_sleep(26);
-	}else{
-		Task_sleep(26);
-	}
-
-	raw = read16(BMP180_ADDR, handle, BMP180_PRESSUREDATA);
-
-	raw <<= 8;
-	raw |= read8(BMP180_ADDR, handle, BMP180_PRESSUREDATA+2);
-	raw >>= (8 - oversampling);
-
-	return raw;
-}
-
-//I2C connection setup
-int bmp180_begin(I2C_Handle handle){
-
-	//read chip id and verify that it's BMP180
-	int cid =  read8(BMP180_ADDR, handle, BMP180_CHIP_ID);
-	if(cid != 0x55) return 0;
-
-	//read calibration data
-	if(ac1 == 0){
-		ac1 = read16(BMP180_ADDR, handle, BMP180_CAL_AC1);
-		ac2 = read16(BMP180_ADDR, handle, BMP180_CAL_AC2);
-		ac3 = read16(BMP180_ADDR, handle, BMP180_CAL_AC3);
-		ac4 = read16(BMP180_ADDR, handle, BMP180_CAL_AC4);
-		ac5 = read16(BMP180_ADDR, handle, BMP180_CAL_AC5);
-		ac6 = read16(BMP180_ADDR, handle, BMP180_CAL_AC6);
-		b1 = read16(BMP180_ADDR, handle, BMP180_CAL_B1);
-		b2 = read16(BMP180_ADDR, handle, BMP180_CAL_B2);
-		mb = read16(BMP180_ADDR, handle, BMP180_CAL_MB);
-		mc = read16(BMP180_ADDR, handle, BMP180_CAL_MC);
-		md = read16(BMP180_ADDR, handle, BMP180_CAL_MD);
-	}
-
-	return 1;
-}
-
-
-
-float bmp180_get_temp(I2C_Handle handle){
-
-	float temp;
-	int32_t b5;
-	int32_t raw_temp = read_raw_temp(handle);
-
-	b5 = computeB5(raw_temp);
-	temp = (b5+8) >> 4;
-	temp /= 10;
-
-	return temp;
-}
-
-float bmp180_get_pressure(I2C_Handle handle){
-	int32_t UT, UP, B3, B5, B6, X1, X2, X3;
-	uint32_t B4, B7;
-	float p = 0;
-
-	UT = read_raw_temp(handle);
-	UP = read_raw_pressure(handle);
-
-	cli_printf("rp %d \n", UP);
-
-	B5 = computeB5(UT);
-
-	// do pressure calcs
-	B6 = B5 - 4000;
-	X1 = ((int32_t)b2 * ( (B6 * B6)>>12 )) >> 11;
-	X2 = ((int32_t)ac2 * B6) >> 11;
-	X3 = X1 + X2;
-	B3 = ((((int32_t)ac1*4 + X3) << oversampling) + 2) / 4;
-
-	X1 = ((int32_t)ac3 * B6) >> 13;
-	X2 = ((int32_t)b1 * ((B6 * B6) >> 12)) >> 16;
-	X3 = ((X1 + X2) + 2) >> 2;
-	B4 = ((uint32_t)ac4 * (uint32_t)(X3 + 32768)) >> 15;
-	B7 = ((uint32_t)UP - B3) * (uint32_t)( 50000UL >> oversampling );
-
-
-	/*
-
-	if (B7 < 0x80000000) {
-		p = (float)((B7 * 2) / B4);
-
-		//p=1;
-		cli_printf("s B7 %X \n", p);
-
-
-	}else{
-		cli_printf("b B7 %X \n", B7);
-		//p = (B7 / B4) * 2;
-	}
-
+/*!
+ *	@brief This function is used for initialize
+ *	the bus read and bus write functions
+ *  and assign the chip id and I2C address of the BMP180
+ *	chip id is read in the register 0xD0 bit from 0 to 7
+ *
+ *	 @param bmp180 structure pointer.
+ *
+ *	@note While changing the parameter of the bmp180_t
+ *	@note consider the following point:
+ *	Changing the reference value of the parameter
+ *	will changes the local copy or local reference
+ *	make sure your changes will not
+ *	affect the reference value of the parameter
+ *	(Better case don't change the reference value of the parameter)
+ *
+ *
+ *
+ *
+ *	@return results of bus communication function
+ *	@retval 0 -> Success
+ *	@retval -1 -> Error
+ *
+ *
 */
-/*
-	X1 = (p >> 8) * (p >> 8);
-	X1 = (X1 * 3038) >> 16;
-	X2 = (-7357 * p) >> 16;
+BMP180_RETURN_FUNCTION_TYPE bmp180_init(struct bmp180_t *bmp180)
+{
+	/* used to return the bus communication results*/
+	BMP180_RETURN_FUNCTION_TYPE v_com_rslt_s8 = E_BMP_COMM_RES;
+	u8 v_data_u8 = BMP180_INIT_VALUE;
+	/* assign BMP180 ptr */
+	p_bmp180 = bmp180;
+	/* read Chip Id */
+	v_com_rslt_s8 = p_bmp180->BMP180_BUS_READ_FUNC(
+	p_bmp180->dev_addr, BMP180_CHIP_ID__REG,
+	&v_data_u8, BMP180_GEN_READ_WRITE_DATA_LENGTH);
+	p_bmp180->chip_id = BMP180_GET_BITSLICE(v_data_u8, BMP180_CHIP_ID);
+	p_bmp180->number_of_samples = BMP180_INITIALIZE_NUMBER_OF_SAMPLES_U8X;
+	p_bmp180->oversamp_setting = BMP180_INITIALIZE_OVERSAMP_SETTING_U8X;
+	p_bmp180->sw_oversamp = BMP180_INITIALIZE_SW_OVERSAMP_U8X;
+	v_com_rslt_s8 += p_bmp180->BMP180_BUS_READ_FUNC(
+	p_bmp180->dev_addr, BMP180_VERSION_REG,
+	&v_data_u8, BMP180_GEN_READ_WRITE_DATA_LENGTH);
+	/* read Version reg */
 
-	p = p + ((X1 + X2 + (int32_t)3791)>>4);
-*/
+	p_bmp180->ml_version = BMP180_GET_BITSLICE(
+	v_data_u8, BMP180_ML_VERSION);/* get ML Version */
+	p_bmp180->al_version = BMP180_GET_BITSLICE(
+	v_data_u8, BMP180_AL_VERSION); /* get AL Version */
+	v_com_rslt_s8 += bmp180_get_calib_param();
 
-	return p;
+	return v_com_rslt_s8;
 }
+/*!
+ *	@brief this function used for read the calibration
+ *	parameter from the register
+ *
+ *	Parameter  |  MSB    |  LSB    |  bit
+ * ------------|---------|---------|-----------
+ *		AC1    |  0xAA   | 0xAB    | 0 to 7
+ *		AC2    |  0xAC   | 0xAD    | 0 to 7
+ *		AC3    |  0xAE   | 0xAF    | 0 to 7
+ *		AC4    |  0xB0   | 0xB1    | 0 to 7
+ *		AC5    |  0xB2   | 0xB3    | 0 to 7
+ *		AC6    |  0xB4   | 0xB5    | 0 to 7
+ *		B1     |  0xB6   | 0xB7    | 0 to 7
+ *		B2     |  0xB8   | 0xB9    | 0 to 7
+ *		MB     |  0xBA   | 0xBB    | 0 to 7
+ *		MC     |  0xBC   | 0xBD    | 0 to 7
+ *		MD     | 0xBE    | 0xBF    | 0 to 7
+ *
+ *
+ *	@return results of bus communication function
+ *	@retval 0 -> Success
+ *	@retval -1 -> Error
+ *
+ *
+*/
+BMP180_RETURN_FUNCTION_TYPE bmp180_get_calib_param(void)
+{
+	/* used to return the bus communication results*/
+	BMP180_RETURN_FUNCTION_TYPE v_com_rslt_s8 = E_BMP_COMM_RES;
+	/* Array holding the calibration informations*/
+	u8 a_data_u8r[BMP180_CALIB_DATA_SIZE] = {
+	BMP180_INIT_VALUE, BMP180_INIT_VALUE,
+	BMP180_INIT_VALUE, BMP180_INIT_VALUE,
+	BMP180_INIT_VALUE, BMP180_INIT_VALUE,
+	BMP180_INIT_VALUE, BMP180_INIT_VALUE,
+	BMP180_INIT_VALUE, BMP180_INIT_VALUE,
+	BMP180_INIT_VALUE, BMP180_INIT_VALUE,
+	BMP180_INIT_VALUE, BMP180_INIT_VALUE,
+	BMP180_INIT_VALUE, BMP180_INIT_VALUE,
+	BMP180_INIT_VALUE, BMP180_INIT_VALUE,
+	BMP180_INIT_VALUE, BMP180_INIT_VALUE,
+	BMP180_INIT_VALUE, BMP180_INIT_VALUE};
+	/* read calibration data*/
+	v_com_rslt_s8 = p_bmp180->BMP180_BUS_READ_FUNC(
+	p_bmp180->dev_addr, BMP180_PROM_START__ADDR,
+	a_data_u8r, BMP180_PROM_DATA__LEN);
 
+	/*parameters AC1-AC6*/
+	p_bmp180->calib_param.ac1 =
+	(s16)((((s32)((s8)a_data_u8r[BMP180_CALIB_PARAM_AC1_MSB]))
+	<< BMP180_SHIFT_BIT_POSITION_BY_08_BITS)
+	| a_data_u8r[BMP180_CALIB_PARAM_AC1_LSB]);
+	p_bmp180->calib_param.ac2 =
+	(s16)((((s32)((s8)a_data_u8r[BMP180_CALIB_PARAM_AC2_MSB]))
+	<< BMP180_SHIFT_BIT_POSITION_BY_08_BITS)
+	| a_data_u8r[BMP180_CALIB_PARAM_AC2_LSB]);
+	p_bmp180->calib_param.ac3 =
+	(s16)((((s32)((s8)a_data_u8r[BMP180_CALIB_PARAM_AC3_MSB]))
+	<< BMP180_SHIFT_BIT_POSITION_BY_08_BITS)
+	| a_data_u8r[BMP180_CALIB_PARAM_AC3_LSB]);
+	p_bmp180->calib_param.ac4 =
+	(u16)((((u32)((u8)a_data_u8r[BMP180_CALIB_PARAM_AC4_MSB]))
+	<< BMP180_SHIFT_BIT_POSITION_BY_08_BITS)
+	| a_data_u8r[BMP180_CALIB_PARAM_AC4_LSB]);
+	p_bmp180->calib_param.ac5 =
+	(u16)((((u32)((u8)a_data_u8r[BMP180_CALIB_PARAM_AC5_MSB]))
+	<< BMP180_SHIFT_BIT_POSITION_BY_08_BITS)
+	| a_data_u8r[BMP180_CALIB_PARAM_AC5_LSB]);
+	p_bmp180->calib_param.ac6 =
+	(u16)((((u32)((u8)a_data_u8r[BMP180_CALIB_PARAM_AC6_MSB]))
+	<< BMP180_SHIFT_BIT_POSITION_BY_08_BITS)
+	| a_data_u8r[BMP180_CALIB_PARAM_AC6_LSB]);
 
+	/*parameters B1,B2*/
+	p_bmp180->calib_param.b1 =
+	(s16)((((s32)((s8)a_data_u8r[BMP180_CALIB_PARAM_B1_MSB]))
+	<< BMP180_SHIFT_BIT_POSITION_BY_08_BITS) |
+	a_data_u8r[BMP180_CALIB_PARAM_B1_LSB]);
+	p_bmp180->calib_param.b2 =
+	(s16)((((s32)((s8)a_data_u8r[BMP180_CALIB_PARAM_B2_MSB]))
+	<< BMP180_SHIFT_BIT_POSITION_BY_08_BITS)
+	| a_data_u8r[BMP180_CALIB_PARAM_B2_LSB]);
+
+	/*parameters MB,MC,MD*/
+	p_bmp180->calib_param.mb =
+	(s16)((((s32)((s8)a_data_u8r[BMP180_CALIB_PARAM_MB_MSB]))
+	<< BMP180_SHIFT_BIT_POSITION_BY_08_BITS)
+	| a_data_u8r[BMP180_CALIB_PARAM_MB_LSB]);
+	p_bmp180->calib_param.mc =
+	(s16)((((s32)((s8)a_data_u8r[BMP180_CALIB_PARAM_MC_MSB]))
+	<< BMP180_SHIFT_BIT_POSITION_BY_08_BITS)
+	| a_data_u8r[BMP180_CALIB_PARAM_MC_LSB]);
+	p_bmp180->calib_param.md =
+	(s16)((((s32)((s8)a_data_u8r[BMP180_CALIB_PARAM_MD_MSB]))
+	<< BMP180_SHIFT_BIT_POSITION_BY_08_BITS)
+	| a_data_u8r[BMP180_CALIB_PARAM_MD_LSB]);
+	return v_com_rslt_s8;
+}
+/*!
+ *	@brief this API is used to calculate the true
+ *	temperature using the uncompensated temperature(ut)
+ *	@note For reading the ut data refer : bmp180_read_ut()
+ *
+ *	@param v_uncomp_temperature_u32:
+ *	the value of uncompensated temperature
+ *
+ *	@return Return the temperature in steps of 0.1 deg Celsius
+ *
+ *
+*/
+s16 bmp180_get_temperature(u32 v_uncomp_temperature_u32)
+{
+	s16 v_temperature_s16 = BMP180_INIT_VALUE;
+	s32 v_x1_s32, v_x2_s32 = BMP180_INIT_VALUE;
+	/* calculate temperature*/
+	v_x1_s32 = (((s32) v_uncomp_temperature_u32 -
+	(s32) p_bmp180->calib_param.ac6) *
+	(s32) p_bmp180->calib_param.ac5)
+	>> BMP180_SHIFT_BIT_POSITION_BY_15_BITS;
+	if (v_x1_s32 == BMP180_CHECK_DIVISOR && p_bmp180->calib_param.md
+	== BMP180_CHECK_DIVISOR)
+		return BMP180_INVALID_DATA;
+	/* executed only the divisor is not zero*/
+	v_x2_s32 = ((s32) p_bmp180->calib_param.mc
+	<< BMP180_SHIFT_BIT_POSITION_BY_11_BITS) /
+	(v_x1_s32 + p_bmp180->calib_param.md);
+
+	p_bmp180->param_b5 = v_x1_s32 + v_x2_s32;
+	v_temperature_s16 = ((p_bmp180->param_b5 +
+	BMP180_CALCULATE_TRUE_TEMPERATURE)
+	>> BMP180_SHIFT_BIT_POSITION_BY_04_BITS);
+
+	return v_temperature_s16;
+}
+/*!
+ *	@brief this API is used to calculate the true
+ *	pressure using the uncompensated pressure(up)
+ *	@note For reading the up data refer : bmp180_read_up()
+ *
+ *	@param v_uncomp_pressure_u32: the value of uncompensated pressure
+ *
+ *	@return Return the value of pressure in steps of 1.0 Pa
+ *
+*/
+s32 bmp180_get_pressure(u32 v_uncomp_pressure_u32)
+{
+	s32 v_pressure_s32, v_x1_s32, v_x2_s32,
+	v_x3_s32, v_b3_s32, v_b6_s32 = BMP180_INIT_VALUE;
+	u32 v_b4_u32, v_b7_u32 = BMP180_INIT_VALUE;
+
+		v_b6_s32 = p_bmp180->param_b5 - 4000;
+	/*****calculate B3************/
+	v_x1_s32 = (v_b6_s32*v_b6_s32)
+	>> BMP180_SHIFT_BIT_POSITION_BY_12_BITS;
+	v_x1_s32 *= p_bmp180->calib_param.b2;
+	v_x1_s32 >>= BMP180_SHIFT_BIT_POSITION_BY_11_BITS;
+
+	v_x2_s32 = (p_bmp180->calib_param.ac2*v_b6_s32);
+	v_x2_s32 >>= BMP180_SHIFT_BIT_POSITION_BY_11_BITS;
+
+	v_x3_s32 = v_x1_s32 + v_x2_s32;
+	v_b3_s32 = (((((s32)p_bmp180->calib_param.ac1)*4 + v_x3_s32) <<
+	p_bmp180->oversamp_setting) + 2)
+	>> BMP180_SHIFT_BIT_POSITION_BY_02_BITS;
+
+	/*****calculate B4************/
+	v_x1_s32 = (p_bmp180->calib_param.ac3 * v_b6_s32)
+	>> BMP180_SHIFT_BIT_POSITION_BY_13_BITS;
+	v_x2_s32 = (p_bmp180->calib_param.b1 *
+	((v_b6_s32 * v_b6_s32) >> BMP180_SHIFT_BIT_POSITION_BY_12_BITS))
+	>> BMP180_SHIFT_BIT_POSITION_BY_16_BITS;
+	v_x3_s32 = ((v_x1_s32 + v_x2_s32) + 2)
+	>> BMP180_SHIFT_BIT_POSITION_BY_02_BITS;
+	v_b4_u32 = (p_bmp180->calib_param.ac4 * (u32)
+	(v_x3_s32 + 32768)) >> BMP180_SHIFT_BIT_POSITION_BY_15_BITS;
+
+	v_b7_u32 = ((u32)(v_uncomp_pressure_u32 - v_b3_s32) *
+	(50000 >> p_bmp180->oversamp_setting));
+	if (v_b7_u32 < 0x80000000) {
+		if (v_b4_u32 != BMP180_CHECK_DIVISOR)
+			v_pressure_s32 =
+			(v_b7_u32
+			<< BMP180_SHIFT_BIT_POSITION_BY_01_BIT) / v_b4_u32;
+		 else
+			return BMP180_INVALID_DATA;
+	} else {
+		if (v_b4_u32 != BMP180_CHECK_DIVISOR)
+			v_pressure_s32 = (v_b7_u32 / v_b4_u32)
+			<< BMP180_SHIFT_BIT_POSITION_BY_01_BIT;
+		else
+			return BMP180_INVALID_DATA;
+	}
+
+		v_x1_s32 = v_pressure_s32
+		>> BMP180_SHIFT_BIT_POSITION_BY_08_BITS;
+		v_x1_s32 *= v_x1_s32;
+		v_x1_s32 =
+		(v_x1_s32 * BMP180_PARAM_MG)
+		>> BMP180_SHIFT_BIT_POSITION_BY_16_BITS;
+		v_x2_s32 = (v_pressure_s32 * BMP180_PARAM_MH)
+		>> BMP180_SHIFT_BIT_POSITION_BY_16_BITS;
+		/*pressure in Pa*/
+		v_pressure_s32 += (v_x1_s32 + v_x2_s32 + BMP180_PARAM_MI)
+		>> BMP180_SHIFT_BIT_POSITION_BY_04_BITS;
+	return v_pressure_s32;
+}
+/*!
+ *	@brief this API is used to read the
+ *	uncompensated temperature(ut) from the register
+ *	@note 0xF6(MSB) bit from 0 to 7
+ *	@note 0xF7(LSB) bit from 0 to 7
+ *
+ *
+ *	@return results of bus communication function
+ *	@retval 0 -> Success
+ *	@retval -1 -> Error
+ *
+ *
+*/
+u16 bmp180_get_uncomp_temperature(void)
+{
+	u16 v_ut_u16 = BMP180_INIT_VALUE;
+	/* Array holding the temperature LSB and MSB data*/
+	u8 v_data_u8[BMP180_TEMPERATURE_DATA_BYTES] = {BMP180_INIT_VALUE, BMP180_INIT_VALUE};
+	u8 v_ctrl_reg_data_u8 = BMP180_INIT_VALUE;
+	/* used to return the bus communication results*/
+	BMP180_RETURN_FUNCTION_TYPE v_com_rslt_s8 = E_BMP_COMM_RES;
+	u8 v_wait_time_u8 = BMP180_INIT_VALUE;
+
+	v_ctrl_reg_data_u8 = BMP180_T_MEASURE;
+	v_wait_time_u8 = BMP180_TEMP_CONVERSION_TIME;
+
+	v_com_rslt_s8 = p_bmp180->BMP180_BUS_WRITE_FUNC(p_bmp180->dev_addr,
+	BMP180_CTRL_MEAS_REG,
+	&v_ctrl_reg_data_u8, BMP180_GEN_READ_WRITE_DATA_LENGTH);
+	p_bmp180->delay_msec(v_wait_time_u8);
+	v_com_rslt_s8 +=
+	p_bmp180->BMP180_BUS_READ_FUNC(p_bmp180->dev_addr,
+	BMP180_ADC_OUT_MSB_REG, v_data_u8,
+	BMP180_TEMPERATURE_DATA_LENGTH);
+	v_ut_u16 = (u16)((((s32)
+	((s8)v_data_u8[BMP180_TEMPERATURE_MSB_DATA]))
+	<< BMP180_SHIFT_BIT_POSITION_BY_08_BITS)
+	| (v_data_u8[BMP180_TEMPERATURE_LSB_DATA]));
+	return v_ut_u16;
+}
+/*!
+ *	@brief this API is used to read the
+ *	uncompensated pressure(up) from the register
+ *	@note 0xF6(MSB) bit from 0 to 7
+ *	@note 0xF7(LSB) bit from 0 to 7
+ *	@note 0xF8(LSB) bit from 3 to 7
+ *
+ *
+ *	@return results of bus communication function
+ *	@retval 0 -> Success
+ *	@retval -1 -> Error
+ *
+*/
+u32 bmp180_get_uncomp_pressure(void)
+{
+	/*j included for loop*/
+	u8 v_j_u8 = BMP180_INIT_VALUE;
+	u32 v_up_u32 = BMP180_INIT_VALUE;
+	/*get the calculated pressure data*/
+	u32 v_sum_u32 = BMP180_INIT_VALUE;
+	u8 v_data_u8[BMP180_PRESSURE_DATA_BYTES] = {
+	BMP180_INIT_VALUE,
+	BMP180_INIT_VALUE, BMP180_INIT_VALUE};
+	u8 v_ctrl_reg_data_u8 = BMP180_INIT_VALUE;
+	/* used to return the bus communication results*/
+	BMP180_RETURN_FUNCTION_TYPE v_com_rslt_s8 = E_BMP_COMM_RES;
+
+	if (p_bmp180->sw_oversamp == BMP180_SW_OVERSAMP_U8X &&
+	p_bmp180->oversamp_setting == BMP180_OVERSAMP_SETTING_U8X) {
+		for (v_j_u8 = BMP180_INIT_VALUE;
+		v_j_u8 < BMP180_DATA_MEASURE; v_j_u8++) {
+			/* 3 times getting pressure data*/
+			v_ctrl_reg_data_u8 = BMP180_P_MEASURE +
+			(p_bmp180->oversamp_setting
+			<< BMP180_SHIFT_BIT_POSITION_BY_06_BITS);
+			v_com_rslt_s8 = p_bmp180->BMP180_BUS_WRITE_FUNC(
+			p_bmp180->dev_addr,
+			BMP180_CTRL_MEAS_REG,
+			&v_ctrl_reg_data_u8, BMP180_GEN_READ_WRITE_DATA_LENGTH);
+			p_bmp180->delay_msec(BMP180_2MS_DELAY_U8X + (
+			BMP180_3MS_DELAY_U8X <<
+			(p_bmp180->oversamp_setting)));
+			v_com_rslt_s8 +=
+			p_bmp180->BMP180_BUS_READ_FUNC(
+			p_bmp180->dev_addr,
+			BMP180_ADC_OUT_MSB_REG,
+			v_data_u8, BMP180_PRESSURE_DATA_LENGTH);
+			v_sum_u32 = (u32)((((u32)
+			v_data_u8[BMP180_PRESSURE_MSB_DATA]
+			<< BMP180_SHIFT_BIT_POSITION_BY_16_BITS) |
+			((u32) v_data_u8[BMP180_PRESSURE_LSB_DATA]
+			<< BMP180_SHIFT_BIT_POSITION_BY_08_BITS) |
+			(u32) v_data_u8[BMP180_PRESSURE_XLSB_DATA]) >>
+			(BMP180_CALCULATE_TRUE_PRESSURE -
+			p_bmp180->oversamp_setting));
+			p_bmp180->number_of_samples =
+			BMP180_INITIALIZE_NUMBER_OF_SAMPLES_U8X;
+
+			v_up_u32 = v_up_u32 + v_sum_u32;
+			/*add up with dummy var*/
+		}
+		v_up_u32 = v_up_u32 / BMP180_AVERAGE_U8X; /*averaging*/
+	} else {
+		if (p_bmp180->sw_oversamp ==
+		BMP180_INITIALIZE_SW_OVERSAMP_U8X) {
+			v_ctrl_reg_data_u8 = BMP180_P_MEASURE +
+			(p_bmp180->oversamp_setting
+			<< BMP180_SHIFT_BIT_POSITION_BY_06_BITS);
+			v_com_rslt_s8 = p_bmp180->BMP180_BUS_WRITE_FUNC(
+			p_bmp180->dev_addr, BMP180_CTRL_MEAS_REG,
+			&v_ctrl_reg_data_u8, BMP180_GEN_READ_WRITE_DATA_LENGTH);
+			p_bmp180->delay_msec(BMP180_2MS_DELAY_U8X
+			+ (BMP180_3MS_DELAY_U8X <<
+			(p_bmp180->oversamp_setting)));
+			v_com_rslt_s8 += p_bmp180->BMP180_BUS_READ_FUNC(
+			p_bmp180->dev_addr,
+			BMP180_ADC_OUT_MSB_REG,
+			v_data_u8, BMP180_PRESSURE_DATA_LENGTH);
+			v_up_u32 = (u32)((((u32)
+			v_data_u8[BMP180_PRESSURE_MSB_DATA]
+			<< BMP180_SHIFT_BIT_POSITION_BY_16_BITS) | (
+			(u32) v_data_u8[BMP180_PRESSURE_LSB_DATA]
+			<< BMP180_SHIFT_BIT_POSITION_BY_08_BITS) |
+			(u32) v_data_u8[BMP180_PRESSURE_XLSB_DATA]) >>
+			(BMP180_CALCULATE_TRUE_PRESSURE -
+			p_bmp180->oversamp_setting));
+			p_bmp180->number_of_samples =
+			BMP180_INITIALIZE_NUMBER_OF_SAMPLES_U8X;
+		}
+
+	}
+
+	return v_up_u32;
+}

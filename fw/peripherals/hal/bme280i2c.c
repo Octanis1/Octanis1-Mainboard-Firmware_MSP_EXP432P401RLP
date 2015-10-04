@@ -1,10 +1,54 @@
-/*
- * bme280i2c.c
- *
- *  Created on: Sep 27, 2015
- *      Author: vagrant
- */
-
+ /*
+****************************************************************************
+* Copyright (C) 2014 - 2015 Bosch Sensortec GmbH
+*
+* bmp280_support.c
+* Date: 2015/03/27
+* Revision: 1.0.5
+*
+* Usage: Sensor Driver support file for BMP280 sensor
+*
+****************************************************************************
+* License:
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*
+*   Redistributions of source code must retain the above copyright
+*   notice, this list of conditions and the following disclaimer.
+*
+*   Redistributions in binary form must reproduce the above copyright
+*   notice, this list of conditions and the following disclaimer in the
+*   documentation and/or other materials provided with the distribution.
+*
+*   Neither the name of the copyright holder nor the names of the
+*   contributors may be used to endorse or promote products derived from
+*   this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+* CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL COPYRIGHT HOLDER
+* OR CONTRIBUTORS BE LIABLE FOR ANY
+* DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+* OR CONSEQUENTIAL DAMAGES(INCLUDING, BUT NOT LIMITED TO,
+* PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+* WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+* ANY WAY OUT OF THE USE OF THIS
+* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
+*
+* The information provided is believed to be accurate and reliable.
+* The copyright holder assumes no responsibility
+* for the consequences of use
+* of such information nor for any infringement of patents or
+* other rights of third parties which may result from its use.
+* No license is granted by implication or otherwise under any patent or
+* patent rights of the copyright holder.
+**************************************************************************/
 #include "../../../Board.h"
 #include "i2c_helper.h"
 #include "bme280i2c.h"
@@ -46,7 +90,7 @@ s32 bme280_data_readout_template(void)
  /*********************** START INITIALIZATION ************************/
   /*	Based on the user need configure I2C or SPI interface.
   *	It is example code to explain how to use the bme280 API*/
-	I2C_routine();
+	bme280I2C_routine();
 
 /*--------------------------------------------------------------------------*
  *  This function used to assign the value/reference of
@@ -169,7 +213,7 @@ return com_rslt;
 *	The following function is used to map the I2C bus read, write, delay and
 *	device address with global structure bme280
 *-------------------------------------------------------------------------*/
-s8 I2C_routine(void) {
+s8 bme280I2C_routine(void) {
 /*--------------------------------------------------------------------------*
  *  By using bme280 the following structure parameter can be accessed
  *	Bus write function pointer: BME280_WR_FUNC_PTR
@@ -221,7 +265,7 @@ s8 BME280_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 	i2cTransaction.writeBuf = writebuffer;
 	i2cTransaction.writeCount = cnt + 1;
 
-	i2cTransaction.slaveAddress = dev_addr; //Board_BMP280_I2CADDR;
+	i2cTransaction.slaveAddress = dev_addr; //Board_BME280_I2CADDR;
 	int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
 	if (!ret) {
@@ -275,14 +319,14 @@ s8 BME280_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 	i2cTransaction.writeCount = sizeof(reg_addr);
 
 	i2cTransaction.readBuf = &readBuffer;
-	i2cTransaction.readCount = sizeof(readBuffer); //make sure we read only 2 bytes
+	i2cTransaction.readCount = sizeof(readBuffer);
 
 	i2cTransaction.slaveAddress = dev_addr;
 
 	int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
 	if (!ret) {
-		cli_printf("read8 error \n", 0);
+		cli_printf("bme280 read error \n", 0);
 		iError = ERROR;
 	}else{
 		iError = SUCCESS;
