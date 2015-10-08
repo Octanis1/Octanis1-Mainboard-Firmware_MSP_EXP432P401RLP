@@ -16,7 +16,7 @@ int main(void)
     Board_initPWM();
 
     /* Turn on user LED */
-    GPIO_write(Board_LED0, Board_LED_ON);
+    GPIO_write(Board_LED_GREEN, Board_LED_ON);
 
     /* Start BIOS */
     BIOS_start();

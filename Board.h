@@ -102,11 +102,10 @@ extern "C" {
 #define Board_LED_ON                MSP_EXP432P401RLP_LED_ON
 #define Board_LED_OFF               MSP_EXP432P401RLP_LED_OFF
 
-#define Board_BUTTON0               MSP_EXP432P401RLP_S1
-#define Board_BUTTON1               MSP_EXP432P401RLP_S2
-#define Board_LED0                  MSP_EXP432P401RLP_LED1
-#define Board_LED1                  MSP_EXP432P401RLP_LED_RED
-#define Board_LED2                  MSP_EXP432P401RLP_LED_RED
+//#define Board_BUTTON0               MSP_EXP432P401RLP_S1
+//#define Board_BUTTON1               MSP_EXP432P401RLP_S2
+#define Board_LED_GREEN               MSP_EXP432P401RLP_LED1
+#define Board_LED_RED                 MSP_EXP432P401RLP_LED2
 
 #define Board_ROCKBLOCK_SLEEP		MSP_EXP432P401RLP_ROCKBLOCK_SLEEP
 #define Board_ROCKBLOCK_NET			MSP_EXP432P401RLP_ROCKBLOCK_NET

@@ -59,6 +59,11 @@
 *---------------------------------------------------------------------------*/
 #include "bno055.h"
 
+s32 imu_init();
+s32 bno055_get_heading(double *d_euler_data_h, double *d_euler_data_p);
+unsigned char bno055_check_calibration_status();
+
+
 /*----------------------------------------------------------------------------*
  *  The following functions are used for reading and writing of
  *	sensor data using I2C communication

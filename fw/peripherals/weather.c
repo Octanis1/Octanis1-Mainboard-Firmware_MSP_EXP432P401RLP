@@ -14,31 +14,13 @@
 
 
 void weather_task(){
-	/* Initialise I2C Bus */
-/*
-		I2C_Params      params;
-		I2C_Params_init(&params);
-		i2c_helper_handle = I2C_open(Board_I2C0, &params);
 
-		if (!i2c_helper_handle) {
-			cli_printf("I2C did not open \n", 0);
-		}
-*/
-	/* Initialise I2C Bus */
-	/*	I2C_Params      params;
-		I2C_Params_init(&params);
-		i2c_helper_handle = I2C_open(Board_I2C0, &params);
-
-		if (!i2c_helper_handle) {
-			cli_printf("I2C did not or already open\n", 0);
-		}
-*/
-
+	i2c_helper_init_handle();
 
 	while(1){
-		Task_sleep(3000); //replace with a semaphore pend on i2c bus
+		Task_sleep(3000);
 
-		//bme280_data_readout_template();
+		bme280_data_readout_template();
 
 		//bmp180_data_readout_template();
 

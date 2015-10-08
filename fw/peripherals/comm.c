@@ -42,7 +42,7 @@ int dispatch_message(comm_destination_t dest, size_t message_length,
 							cli_printf("RB sig: %d \n", csq);
 
 							if(csq > 1){
-							    GPIO_write(Board_LED1, Board_LED_ON);
+							    GPIO_write(Board_LED_GREEN, Board_LED_ON);
 							}
 
 							//send msg here
@@ -189,12 +189,12 @@ int comm_post_message(comm_frame_t frame){
 void comm_task(){
 
 	while(1){
- 	    GPIO_write(MSP_EXP432P401RLP_LED_RED, Board_LED_ON);
+ 	    GPIO_write(Board_LED_RED, Board_LED_ON);
 
 		pend_message();
 
 
-		GPIO_write(MSP_EXP432P401RLP_LED_RED, Board_LED_OFF);
+		GPIO_write(Board_LED_RED, Board_LED_OFF);
 
 		Task_sleep(10000);
 

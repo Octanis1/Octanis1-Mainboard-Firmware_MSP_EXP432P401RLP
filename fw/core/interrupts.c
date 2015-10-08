@@ -15,7 +15,7 @@ void port1_isr()
 	             __no_operation();
 	             break;
 	        case P1IV__P1IFG1:                                       // Pin 1 (button0)
-	        	 GPIO_clearInt(Board_BUTTON0);
+//	        	 GPIO_clearInt(Board_BUTTON0);
 	             break;
 	        case P1IV__P1IFG2:                                       // Pin 2
 	        	__no_operation();
@@ -24,7 +24,7 @@ void port1_isr()
 	        	__no_operation();
 	             break;
 	        case P1IV__P1IFG4:                                       // Pin 4 (button1)
-	        	 GPIO_clearInt(Board_BUTTON1);
+//	        	 GPIO_clearInt(Board_BUTTON1);
 	             break;
 	        case P1IV__P1IFG5:                                       // Pin 5
 	             __no_operation();

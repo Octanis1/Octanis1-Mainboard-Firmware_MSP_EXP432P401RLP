@@ -7,32 +7,22 @@
 #include "../../../Board.h"
 #include "i2c_helper.h"
 
-I2C_Handle i2c_helper_handle;
+//global variable accessible by all tasks performing i2c transactions.
+I2C_Handle i2c_helper_handle=0;
 
-I2C_Handle i2c_helper_get_handle(){
-
-	/* Initialise I2C Bus */
-	I2C_Params      params;
-	I2C_Params_init(&params);
-	i2c_helper_handle = I2C_open(Board_I2C0, &params);
-
-	if (!i2c_helper_handle) {
-		cli_printf("I2C did not or already open\n", 0);
-	}
-
-	return i2c_helper_handle;
-}
-
+/*Place this function in every task that needs i2c. It will know by itself if the handle has been opened already*/
 void i2c_helper_init_handle(){
 
-	/* Initialise I2C Bus */
-	I2C_Params      params;
-	I2C_Params_init(&params);
-	i2c_helper_handle = I2C_open(Board_I2C0, &params);
-
-	if (!i2c_helper_handle) {
-		cli_printf("I2C did not or already open\n", 0);
+	if(!i2c_helper_handle) //only initialize for the first time.
+	{
+		/* Initialise I2C Bus */
+		I2C_Params      params;
+		I2C_Params_init(&params); //by default i2c is in blocking mode,
+	//								which means a task's execution is blocked until the transfer is completed.
+	//								No semaphores are needed, as queuing works automatically in the background.
+		i2c_helper_handle = I2C_open(Board_I2C0, &params);
 	}
+
 }
 
 
