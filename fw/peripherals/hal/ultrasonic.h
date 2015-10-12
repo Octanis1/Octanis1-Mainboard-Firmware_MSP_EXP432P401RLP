@@ -20,7 +20,6 @@ void ultrasonic_init();
 void ultrasonic_send_pulse(uint8_t index);
 void ultrasonic_ISR(uint8_t index);
 
-
-
+void ultrasonic_ccr_ISR(uint8_t index, uint16_t timestamp, uint8_t edgetype);
 
 #endif /* FW_PERIPHERALS_HAL_ULTRASONIC_H_ */

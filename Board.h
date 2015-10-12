@@ -65,6 +65,9 @@ extern "C" {
 
 #include "MSP_EXP432P401RLP.h"
 
+/* DriverLib Includes (for register defines) */
+#include "driverlib.h"
+
 #include "fw/core/cli.h" //enable CLI printf everywhere
 #include "fw/core/system.h" //provides useful general functions
 
@@ -104,17 +107,45 @@ extern "C" {
 
 //#define Board_BUTTON0               MSP_EXP432P401RLP_S1
 //#define Board_BUTTON1               MSP_EXP432P401RLP_S2
-#define Board_LED_GREEN               MSP_EXP432P401RLP_LED1
-#define Board_LED_RED                 MSP_EXP432P401RLP_LED2
+#define Board_LED_GREEN               Octanis05_LED1
+#define Board_LED_RED                 Octanis05_LED2
 
-#define Board_ROCKBLOCK_SLEEP		MSP_EXP432P401RLP_ROCKBLOCK_SLEEP
-#define Board_ROCKBLOCK_NET			MSP_EXP432P401RLP_ROCKBLOCK_NET
+#define Board_ROCKBLOCK_SLEEP		Octanis05_ROCKBLOCK_SLEEP
+#define Board_ROCKBLOCK_NET			Octanis05_ROCKBLOCK_NET
 
-#define Board_HX1_EN				MSP_EXP432P401RLP_HX1_EN
-#define Board_HX1_TX				MSP_EXP432P401RLP_HX1_TX
 
-//#define Board_ULTRASONIC_IN0		MSP_EXP432P401RLP_ULTRASONIC_IN0
-#define Board_ULTRASONIC_OUT0		MSP_EXP432P401RLP_ULTRASONIC_OUT0
+/*Ultrasonic pin and timer definitions*/
+#define Board_ULTRASONIC_OUT_0			Octanis05_ULTRASONIC_OUT_0
+#define Board_ULTRASONIC_OUT_1			Octanis05_ULTRASONIC_OUT_1
+
+#define Board_ULTRASONIC_IN_0_PORT		GPIO_PORT_P6
+#define Board_ULTRASONIC_IN_0_PIN		GPIO_PIN6
+#define Board_ULTRASONIC_IN_0_SELECT		GPIO_PRIMARY_MODULE_FUNCTION
+#define Board_ULTRASONIC_IN_0_TAx_MODULE	TIMER_A2_MODULE
+#define Board_ULTRASONIC_IN_0_CCR		TIMER_A_CAPTURECOMPARE_REGISTER_3
+#define Board_ULTRASONIC_IN_0_IV			BIT3
+
+#define Board_ULTRASONIC_IN_1_PORT		GPIO_PORT_P5
+#define Board_ULTRASONIC_IN_1_PIN		GPIO_PIN7
+#define Board_ULTRASONIC_IN_1_SELECT		GPIO_PRIMARY_MODULE_FUNCTION
+#define Board_ULTRASONIC_IN_1_TAx_MODULE	TIMER_A2_MODULE
+#define Board_ULTRASONIC_IN_1_CCR		TIMER_A_CAPTURECOMPARE_REGISTER_2
+#define Board_ULTRASONIC_IN_1_IV			BIT2
+
+#define Board_ULTRASONIC_IN_2_PORT		GPIO_PORT_P9
+#define Board_ULTRASONIC_IN_2_PIN		GPIO_PIN2
+#define Board_ULTRASONIC_IN_2_SELECT		GPIO_PRIMARY_MODULE_FUNCTION
+#define Board_ULTRASONIC_IN_2_TAx_MODULE	TIMER_A3_MODULE
+#define Board_ULTRASONIC_IN_2_CCR		TIMER_A_CAPTURECOMPARE_REGISTER_3
+#define Board_ULTRASONIC_IN_2_IV			BIT3
+
+#define Board_ULTRASONIC_IN_3_PORT		GPIO_PORT_P9
+#define Board_ULTRASONIC_IN_3_PIN		GPIO_PIN3
+#define Board_ULTRASONIC_IN_3_SELECT		GPIO_PRIMARY_MODULE_FUNCTION
+#define Board_ULTRASONIC_IN_3_TAx_MODULE	TIMER_A3_MODULE
+#define Board_ULTRASONIC_IN_3_CCR		TIMER_A_CAPTURECOMPARE_REGISTER_4
+#define Board_ULTRASONIC_IN_3_IV			BIT4
+
 
 
 #define Board_I2C0                  MSP_EXP432P401RLP_I2CB1

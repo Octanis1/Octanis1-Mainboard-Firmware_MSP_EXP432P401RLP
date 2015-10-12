@@ -13,15 +13,12 @@
 #include <msp432.h>
 
 
-#include "../../Board.h"
 
-/* include all modules with interrupt service routines */
-#include "../peripherals/hal/ultrasonic.h"
 
 void port1_isr();
 void port4_isr();
 
-
-
+//void timer_a2_isr();
+//void timer_a3_isr();
 
 #endif /* FW_CORE_INTERRUPTS_H_ */

@@ -141,11 +141,12 @@ void cli_task(){
 		}else if(strcmp("rbn\n", input) == 0){
 			   tfp_sprintf(output, "rb net? %d \n", rockblock_get_net_availability());
 			   UART_write(uart, output, sizeof(output));
-		}else if(strcmp("hoff\n", input) == 0){
-			   hx1_off();
-		}else if(strcmp("hon\n", input) == 0){
-			   hx1_on();
 		}
+//		else if(strcmp("hoff\n", input) == 0){
+//			   hx1_off();
+//		}else if(strcmp("hon\n", input) == 0){
+//			   hx1_on();
+//		}
 
 
 
