@@ -16,14 +16,10 @@
 #include "driverlib.h"
 
 
-uint16_t pulse_rising_time[8]; //record timestamp when pulse was sent out
-uint16_t pulse_falling_time[8]; //record timestamp when the interrupt was triggered by the echoed pulse
+uint16_t pulse_rising_time[N_ULTRASONIC_SENSORS_PER_ARRAY]; //record timestamp when pulse was sent out
+uint16_t pulse_falling_time[N_ULTRASONIC_SENSORS_PER_ARRAY]; //record timestamp when the interrupt was triggered by the echoed pulse
 
-
-uint8_t running=0;
-uint8_t index=0; // the index of the ultrasonic sensor who sends out the pulse.
-
-void ultrasonic_ccr_ISR(uint8_t index, uint16_t timestamp, uint8_t edgetype);
+void ultrasonic_ccr_ISR(uint8_t pin_index, uint16_t timestamp, uint8_t edgetype);
 Timer_Handle timer;
 
 const Timer_A_ContinuousModeConfig continuousModeConfig =
@@ -117,22 +113,96 @@ void ultrasonic_init()
 }
 
 
-void ultrasonic_send_pulse(uint8_t index)
+
+/*
+ * distance_values: integer times of flight in ms for each sensor
+ */
+bool ultrasonic_get_distance(int32_t distance_values[])
 {
+	bool retval=1;
+	uint8_t j=0,
+			i=0,
+			arrayoffset=0; //the index offset to store the distance_value's for each array
+
+
+	/* iterate over the number of sensor arrays */
+	for(j=0; j<N_ULTRASONIC_ARRAYS; j++)
+	{
+		for(i=0; i < N_ULTRASONIC_SENSORS_PER_ARRAY; i++)
+		{
+			pulse_rising_time[i]=0;
+			pulse_falling_time[i]=0;
+		}
+		ultrasonic_send_pulses(j);
+		arrayoffset = j*N_ULTRASONIC_SENSORS_PER_ARRAY;
+
+		for(i=0; i < N_ULTRASONIC_SENSORS_PER_ARRAY; i++)
+		{
+			/* Check if pulse was detected and timestamp recorded */
+			if(pulse_rising_time[i]==0 || pulse_falling_time[i]==0) //assuming timestamp = 0 is very unlikely
+			{
+				retval = 0; //return ERROR
+			}
+			else
+			{
+				/* Check that no timer overflow happened */
+				if(pulse_rising_time[i] > pulse_falling_time[i])
+				{ //calculate time difference normally
+					distance_values[i+arrayoffset]=(int32_t)pulse_falling_time[i] - (int32_t)pulse_rising_time[i];
+				}
+				else
+				{ //compensate for the overflow
+					distance_values[i+arrayoffset]=(int32_t)pulse_falling_time[i] - (int32_t)pulse_rising_time[i] + 0xFFFF;
+				}
+			}
+		}
+
+	}
+
+	return retval;
+}
+
+/*
+ * Function triggers 4 out of 8 sensors to send out Ultrasonic pulse and
+ * sends task to sleep for the necessary time. Then it triggers the other
+ * 4 sensors and waits again before the calling function can resume
+ *
+ *
+ */
+void ultrasonic_send_pulses(uint8_t index)
+{
+	const static uint8_t enable_pins[2] = {Board_ULTRASONIC_EN_0,Board_ULTRASONIC_EN_1};
+	const static uint8_t trigger_pins[2] = {Board_ULTRASONIC_OUT_0,Board_ULTRASONIC_OUT_1};
+
 	uint32_t start_time;
 	uint32_t stop_time;
 
+	/* Turn on logic OR gate */
+	GPIO_write(Board_ULTRASONIC_OR_SLEEP, 0);
+
+	/* Turn on sensors 0-3 */
+	GPIO_write(enable_pins[index], 1);
+
+	//TODO: maybe would be useful to turn on/off CCR interrupts
+
+	/* Send pulse for 10us */
 	start_time = Timestamp_get32();
-	GPIO_write(Board_ULTRASONIC_OUT_0, 1);
+	GPIO_write(trigger_pins[index], 1);
 	stop_time = Timestamp_get32();
-	running = 0;
 	while((stop_time-start_time)<10*CYCLES_PER_US)
-	{
+	{ //wait 10us
 		stop_time = Timestamp_get32();
 	}
+	GPIO_write(trigger_pins[index], 0);
 
-	GPIO_write(Board_ULTRASONIC_OUT_0, 0);
-	index=0;
+	/* Wait for all pulses to arrive and ISR to finish (max pulse lenght: 23ms) */
+	Task_sleep(60);
+
+	/* Turn off sensors 0-3 (or 4-7) */
+	GPIO_write(enable_pins[index], 0);
+
+	/* Turn off logic OR gate */
+	GPIO_write(Board_ULTRASONIC_OR_SLEEP, 1);
 }
 
 /* TODO: this code is just here for reference. remove later
@@ -171,7 +241,6 @@ void ultrasonic_ccr_ISR(uint8_t pin_index, uint16_t timestamp, uint8_t edgetype)
 	if(edgetype)
 	{//bit was high -> falling edge
 		pulse_falling_time[pin_index]=timestamp;
-		diff=(int16_t)pulse_falling_time[pin_index] - (int16_t)pulse_rising_time[pin_index]; //TODO: remove. this is only for debug.
 	}
 	else
 	{

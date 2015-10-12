@@ -115,6 +115,10 @@ extern "C" {
 
 
 /*Ultrasonic pin and timer definitions*/
+#define Board_ULTRASONIC_OR_SLEEP		Octanis05_ULTRASONIC_OR_SLEEP
+#define Board_ULTRASONIC_EN_0			Octanis05_ULTRASONIC_EN_0
+#define Board_ULTRASONIC_EN_1			Octanis05_ULTRASONIC_EN_1
+
 #define Board_ULTRASONIC_OUT_0			Octanis05_ULTRASONIC_OUT_0
 #define Board_ULTRASONIC_OUT_1			Octanis05_ULTRASONIC_OUT_1
 
