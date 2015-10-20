@@ -6,6 +6,7 @@
  */
 #include "../../Board.h"
 #include "imu.h"
+#include "hal/motors.h"
 #include "hal/bno055_support.h"
 #include "hal/i2c_helper.h"
 
@@ -14,6 +15,7 @@ void imu_task(){
 	i2c_helper_init_handle();
 //	cli_printf("BNO begin \n", 0);
 	imu_init();
+	motors_init();
 
 
 	double d_euler_data_p;

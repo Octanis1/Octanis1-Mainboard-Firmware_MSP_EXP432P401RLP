@@ -150,11 +150,15 @@ extern "C" {
 #define Board_ULTRASONIC_IN_3_CCR		TIMER_A_CAPTURECOMPARE_REGISTER_4
 #define Board_ULTRASONIC_IN_3_IV			BIT4
 
+/* Motor pins */
+#define Board_M4567_sleep				Octanis05_M4567_sleep
+#define Board_M7_ph					Octanis05_M7_ph
+#define Board_PWM_TEST              		MSP_EXP432P401RLP_PWM_TA1_2
 
 
 #define Board_I2C0                  MSP_EXP432P401RLP_I2CB1
 
-#define Board_PWM0                  MSP_EXP432P401RLP_PWM_TA1_1
+
 
 #define Board_SPI0                  MSP_EXP432P401RLP_SPIB0
 #define Board_SPI1                  MSP_EXP432P401RLP_SPIB2

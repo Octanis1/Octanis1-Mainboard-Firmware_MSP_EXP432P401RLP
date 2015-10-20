@@ -187,8 +187,11 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	/* Octanis05_ULTRASONIC_Sleep_1 */
 	GPIOMSP432_PJ_3 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
+	/* Octanis05_M4567_sleep */
+	GPIOMSP432_P3_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
-
+	/* Octanis05_M7_ph */
+	GPIOMSP432_P7_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
 };
 
@@ -306,7 +309,7 @@ PWMTimerMSP432_Object pwmTimerMSP432Objects[MSP_EXP432P401RLP_PWMCOUNT];
 const PWMTimerMSP432_HWAttrs pwmTimerMSP432HWAttrs[MSP_EXP432P401RLP_PWMCOUNT] = {
     {
         .baseAddr = TIMER_A1_BASE,
-        .compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_1
+        .compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_2
     }
 };
 
@@ -324,18 +327,19 @@ const PWM_Config PWM_config[] = {
  */
 void MSP_EXP432P401RLP_initPWM(void)
 {
-    /* Use Port Map on Port2 get Timer outputs on pin with HX1 TX (2.6) */
-    const uint8_t portMap [] = {
-        PM_NONE, PM_NONE, PM_NONE, PM_NONE,
-        PM_NONE, PM_NONE,     PM_TA1CCR1A,     PM_NONE
+    /* Use Port Map on Port 7 to test pwm */
+	//TODO this is only for testing purposes
+    const uint8_t port7Map [] = {
+        PM_NONE, PM_NONE,  PM_NONE, PM_NONE,
+        PM_NONE, PM_NONE,  PM_TA1CCR2A, PM_NONE
     };
 
-    /* Mapping capture compare registers to Port 2 */
-    MAP_PMAP_configurePorts((const uint8_t *) portMap, P2MAP, 1,
+    /* Mapping capture compare registers to Port 7 */
+    MAP_PMAP_configurePorts((const uint8_t *) port7Map, P7MAP, 1,
         PMAP_DISABLE_RECONFIGURATION);
 
     /* Enable PWM output on GPIO pins */
-    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2,
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P7,
         GPIO_PIN6, GPIO_PRIMARY_MODULE_FUNCTION);
 
     PWM_init();
