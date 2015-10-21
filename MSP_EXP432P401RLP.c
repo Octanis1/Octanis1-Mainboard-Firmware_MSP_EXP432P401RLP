@@ -187,12 +187,47 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	/* Octanis05_ULTRASONIC_Sleep_1 */
 	GPIOMSP432_PJ_3 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
-	/* Octanis05_M4567_sleep */
+	/* Octanis05_M1234_SLEEP */
+	GPIOMSP432_P2_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+
+	/* Octanis05_M1_PH */
+	GPIOMSP432_P3_6 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+
+	/* Octanis05_M2_PH */
+	GPIOMSP432_P2_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+
+	/* Octanis05_M3_PH */
+	GPIOMSP432_P2_7 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+
+	/* Octanis05_M4_PH */
+	GPIOMSP432_P10_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+
+	/* Octanis05_M1_EN */
+	GPIOMSP432_P2_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+
+	/* Octanis05_M2_EN */
+	GPIOMSP432_P2_6 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+
+	/* Octanis05_M3_EN */
+	GPIOMSP432_P10_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+
+	/* Octanis05_M4_EN */
+	GPIOMSP432_P7_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+
+	/* Octanis05_M5678_SLEEP */
 	GPIOMSP432_P3_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
-	/* Octanis05_M7_ph */
-	GPIOMSP432_P7_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+	/* Octanis05_M5_PH */
+	GPIOMSP432_P3_1 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
+	/* Octanis05_M6_PH */
+	GPIOMSP432_P8_1 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+
+	/* Octanis05_M7_PH */
+	GPIOMSP432_P8_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+
+	/* Octanis05_M8_PH */
+	GPIOMSP432_P7_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 };
 
 /*
@@ -307,10 +342,22 @@ PWMTimerMSP432_Object pwmTimerMSP432Objects[MSP_EXP432P401RLP_PWMCOUNT];
 
 /* PWM configuration structure */
 const PWMTimerMSP432_HWAttrs pwmTimerMSP432HWAttrs[MSP_EXP432P401RLP_PWMCOUNT] = {
-    {
-        .baseAddr = TIMER_A1_BASE,
-        .compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_2
-    }
+	{
+		.baseAddr = TIMER_A1_BASE,
+		.compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_2
+	},
+	{
+		.baseAddr = TIMER_A1_BASE,
+		.compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_1
+	},
+	{
+		.baseAddr = TIMER_A1_BASE,
+		.compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_3
+	},
+	{
+		.baseAddr = TIMER_A1_BASE,
+		.compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_4
+	}
 };
 
 const PWM_Config PWM_config[] = {
@@ -318,6 +365,21 @@ const PWM_Config PWM_config[] = {
         .fxnTablePtr = &PWMTimerMSP432_fxnTable,
         .object = &pwmTimerMSP432Objects[0],
         .hwAttrs = &pwmTimerMSP432HWAttrs[0]
+    },
+    {
+        .fxnTablePtr = &PWMTimerMSP432_fxnTable,
+        .object = &pwmTimerMSP432Objects[1],
+        .hwAttrs = &pwmTimerMSP432HWAttrs[1]
+    },
+    {
+        .fxnTablePtr = &PWMTimerMSP432_fxnTable,
+        .object = &pwmTimerMSP432Objects[2],
+        .hwAttrs = &pwmTimerMSP432HWAttrs[2]
+    },
+    {
+        .fxnTablePtr = &PWMTimerMSP432_fxnTable,
+        .object = &pwmTimerMSP432Objects[3],
+        .hwAttrs = &pwmTimerMSP432HWAttrs[3]
     },
     {NULL, NULL, NULL}
 };
@@ -331,17 +393,34 @@ void MSP_EXP432P401RLP_initPWM(void)
 	//TODO this is only for testing purposes
     const uint8_t port7Map [] = {
         PM_NONE, PM_NONE,  PM_NONE, PM_NONE,
-        PM_NONE, PM_NONE,  PM_TA1CCR2A, PM_NONE
+        PM_NONE, PM_NONE,  PM_TA1CCR2A, PM_TA1CCR1A
     };
+
+    const uint8_t port3Map [] = {
+    		PM_TA1CCR3A, PM_NONE, PM_NONE, PM_NONE,
+		PM_TA1CCR4A, PM_NONE, PM_NONE , PM_NONE
+	};
 
     /* Mapping capture compare registers to Port 7 */
     MAP_PMAP_configurePorts((const uint8_t *) port7Map, P7MAP, 1,
+        PMAP_ENABLE_RECONFIGURATION);
+
+    /* Mapping capture compare registers to Port 3 */
+    MAP_PMAP_configurePorts((const uint8_t *) port3Map, P3MAP, 1,
         PMAP_DISABLE_RECONFIGURATION);
 
     /* Enable PWM output on GPIO pins */
     MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P7,
-        GPIO_PIN6, GPIO_PRIMARY_MODULE_FUNCTION);
+    		GPIO_PIN6, GPIO_PRIMARY_MODULE_FUNCTION);
 
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P7,
+    		GPIO_PIN7, GPIO_PRIMARY_MODULE_FUNCTION);
+
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P3,
+        GPIO_PIN0, GPIO_PRIMARY_MODULE_FUNCTION);
+
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P3,
+		GPIO_PIN4, GPIO_PRIMARY_MODULE_FUNCTION);
     PWM_init();
 }
 

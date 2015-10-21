@@ -73,8 +73,20 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
 	Octanis05_ULTRASONIC_OUT_1,
 	Octanis05_ULTRASONIC_Sleep_0,
 	Octanis05_ULTRASONIC_Sleep_1,
-	Octanis05_M4567_sleep,
-	Octanis05_M7_ph,
+	Octanis05_M1234_SLEEP_N,
+	Octanis05_M1_PH,
+	Octanis05_M2_PH,
+	Octanis05_M3_PH,
+	Octanis05_M4_PH,
+	Octanis05_M1_EN,
+	Octanis05_M2_EN,
+	Octanis05_M3_EN,
+	Octanis05_M4_EN,
+	Octanis05_M5678_SLEEP_N,
+	Octanis05_M5_PH,
+	Octanis05_M6_PH,
+	Octanis05_M7_PH,
+	Octanis05_M8_PH,
 
     MSP_EXP432P401RLP_GPIOCOUNT
 } MSP_EXP432P401RLP_GPIOName;
@@ -94,7 +106,10 @@ typedef enum MSP_EXP432P401RLP_I2CName {
  *  @brief  Enum of PWM names on the MSP_EXP432P401RLP dev board
  */
 typedef enum MSP_EXP432P401RLP_PWMName {
-    MSP_EXP432P401RLP_PWM_TA1_2 = 0,
+	Octanis05_PWM_TA1_2 = 0,
+	Octanis05_PWM_TA1_1,
+	Octanis05_PWM_TA1_3,
+	Octanis05_PWM_TA1_4,
 
     MSP_EXP432P401RLP_PWMCOUNT
 } MSP_EXP432P401RLP_PWMName;

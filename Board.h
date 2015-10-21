@@ -151,9 +151,25 @@ extern "C" {
 #define Board_ULTRASONIC_IN_3_IV			BIT4
 
 /* Motor pins */
-#define Board_M4567_sleep				Octanis05_M4567_sleep
-#define Board_M7_ph					Octanis05_M7_ph
-#define Board_PWM_TEST              		MSP_EXP432P401RLP_PWM_TA1_2
+#define Board_M1234_SLEEP_N			Octanis05_M1234_SLEEP_N
+#define Board_M1_PH					Octanis05_M1_PH
+#define Board_M2_PH  				Octanis05_M2_PH
+#define Board_M3_PH 					Octanis05_M3_PH
+#define Board_M4_PH					Octanis05_M4_PH
+#define Board_M1_EN					Octanis05_M1_EN
+#define Board_M2_EN					Octanis05_M2_EN
+#define Board_M3_EN					Octanis05_M3_EN
+#define Board_M4_EN 					Octanis05_M4_EN
+#define Board_M5678_SLEEP_N 			Octanis05_M5678_SLEEP_N
+#define Board_M5_PH					Octanis05_M5_PH
+#define Board_M6_PH					Octanis05_M6_PH
+#define Board_M7_PH					Octanis05_M7_PH
+#define Board_M8_PH					Octanis05_M8_PH
+
+#define Board_M5_EN_PWM           	Octanis05_PWM_TA1_2
+#define Board_M6_EN_PWM           	Octanis05_PWM_TA1_1
+#define Board_M7_EN_PWM           	Octanis05_PWM_TA1_3
+#define Board_M8_EN_PWM           	Octanis05_PWM_TA1_4
 
 
 #define Board_I2C0                  MSP_EXP432P401RLP_I2CB1
