@@ -73,7 +73,6 @@ void cli_print_task(){
 	while(1){
 
 		while(Mailbox_pend(cli_print_mailbox, printf_output_buffer, BIOS_WAIT_FOREVER)){
-
 			//while mailbox contains messages, print out to uart
 			if(uart != NULL){
 				//print message

@@ -25,14 +25,14 @@ void imu_task(){
 	while(1){
 
 	calib_status=bno055_check_calibration_status();
-//	if(calib_status > 8)
-//	{
-//		GPIO_write(Board_LED1, Board_LED_OFF);
-//	}
-//	else
-//	{
-//		GPIO_write(Board_LED1, Board_LED_ON);
-//	}
+	if(calib_status > 8)
+	{
+		GPIO_write(Board_LED_GREEN, Board_LED_OFF);
+	}
+	else
+	{
+		GPIO_write(Board_LED_GREEN, Board_LED_ON);
+	}
 
 
 	bno055_get_heading(&d_euler_data_h, &d_euler_data_p);

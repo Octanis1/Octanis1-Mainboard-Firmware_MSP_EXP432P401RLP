@@ -55,7 +55,6 @@ void gps_task(){
 
 	while (1) {
 
-
 		//initialise GPS device, open UART
 		if(!ublox_6_open()){
 			cli_printf("%d GPS UART error", 0);
@@ -89,7 +88,7 @@ void gps_task(){
 		}
 
 		ublox_6_close();
-		Task_sleep(60000);
+		Task_sleep(6000);
 	}
 
 
