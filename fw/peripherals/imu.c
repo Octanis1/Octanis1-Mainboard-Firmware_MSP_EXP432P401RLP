@@ -15,7 +15,7 @@ void imu_task(){
 	i2c_helper_init_handle();
 //	cli_printf("BNO begin \n", 0);
 	imu_init();
-	motors_init();
+	motors_pwm_init();
 
 
 	double d_euler_data_p;

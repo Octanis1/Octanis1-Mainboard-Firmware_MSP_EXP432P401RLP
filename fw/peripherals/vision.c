@@ -14,12 +14,16 @@
 void vision_task(){
 	ultrasonic_init();
 	int32_t distance_values[N_ULTRASONIC_SENSORS_PER_ARRAY*N_ULTRASONIC_ARRAYS];
+	int8_t directions_result[N_ULTRASONIC_SENSORS_PER_ARRAY*N_ULTRASONIC_ARRAYS] = {(int8_t) 1}; //all ok
+
 
 	while(1){
 
 		if(ultrasonic_get_distance(distance_values))
 		{
 		//successfully read the sensor values
+//			cli_printf('us check %d \n', (int)CRITICAL_DISTANCE_THRESHOLD_TIMESTAMP);
+			ultrasonic_check_distance(distance_values, directions_result);
 		}
 		else
 		{

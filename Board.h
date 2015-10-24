@@ -171,6 +171,8 @@ extern "C" {
 #define Board_M7_EN_PWM           	Octanis05_PWM_TA1_3
 #define Board_M8_EN_PWM           	Octanis05_PWM_TA1_4
 
+#define Board_M5678_CURR_SENS_EN 	Octanis05_M5678_CURR_SENS_EN
+
 
 #define Board_I2C0                  MSP_EXP432P401RLP_I2CB1
 

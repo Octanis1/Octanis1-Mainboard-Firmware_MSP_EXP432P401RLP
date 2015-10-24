@@ -20,9 +20,9 @@ void weather_task(){
 	while(1){
 		Task_sleep(3000);
 
-		bme280_data_readout_template();
+	//	bme280_data_readout_template();
 
-		//bmp180_data_readout_template();
+	//	bmp180_data_readout_template();
 
 		//DEBUGGING BMP180 START
 		/* bmp180_begin(i2c_handle);

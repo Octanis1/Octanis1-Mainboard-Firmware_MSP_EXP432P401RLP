@@ -11,6 +11,10 @@
 #define N_ULTRASONIC_ARRAYS				2
 #define N_ULTRASONIC_SENSORS_PER_ARRAY	4
 
+#define CRITICAL_DISTANCE_THRESHOLD_METERS	1
+#define SOUND_SPEED	343 // in m/s, at 20C (so change it for antartica)
+#define CRITICAL_DISTANCE_THRESHOLD_TIMESTAMP	((uint16_t) 1000000.0*CRITICAL_DISTANCE_THRESHOLD_METERS/SOUND_SPEED) // in us, perform computation in floating point
+
 #include "../../../Board.h"
 
 //#include <ti/sysbios/knl/Clock.h>
