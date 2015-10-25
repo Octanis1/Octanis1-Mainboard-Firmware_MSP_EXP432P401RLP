@@ -162,13 +162,13 @@ void timer_a3_isr()
 	switch( TA3IV ) {
 // check if board definitions are still the same
 #if(Board_ULTRASONIC_IN_2_TAx_MODULE==TIMER_A3_MODULE && Board_ULTRASONIC_IN_3_TAx_MODULE==TIMER_A3_MODULE)
-		case Board_ULTRASONIC_IN_2_IV:                                      // ultrasonic input capture 0
+		case Board_ULTRASONIC_IN_2_IV:                                      // ultrasonic input capture 2
 			ccr_timestamp = Timer_A_getCaptureCompareCount ( TIMER_A3_MODULE, Board_ULTRASONIC_IN_2_CCR );
 			ccr_edgetype  = Timer_A_getSynchronizedCaptureCompareInput(TIMER_A3_MODULE,Board_ULTRASONIC_IN_2_CCR,TIMER_A_READ_SYNCHRONIZED_CAPTURECOMPAREINPUT);
 			ultrasonic_ccr_ISR(2,ccr_timestamp,ccr_edgetype);
 			Timer_A_clearCaptureCompareInterrupt(TIMER_A3_MODULE,Board_ULTRASONIC_IN_2_CCR);
 			break;
-		case Board_ULTRASONIC_IN_3_IV:                                      // ultrasonic input capture 1
+		case Board_ULTRASONIC_IN_3_IV:                                      // ultrasonic input capture 3
 			ccr_timestamp = Timer_A_getCaptureCompareCount ( TIMER_A3_MODULE, Board_ULTRASONIC_IN_3_CCR );
 			ccr_edgetype  = Timer_A_getSynchronizedCaptureCompareInput(TIMER_A3_MODULE,Board_ULTRASONIC_IN_3_CCR,TIMER_A_READ_SYNCHRONIZED_CAPTURECOMPAREINPUT);
 			ultrasonic_ccr_ISR(3,ccr_timestamp,ccr_edgetype);
