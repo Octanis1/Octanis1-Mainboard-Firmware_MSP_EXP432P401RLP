@@ -11,94 +11,56 @@
 
 //---------- Includes ----------------------------------------------------------
 #include "SHT2xi2c.h"
-#include "../../Board.h"
+#include "../../../Board.h"
 #include "i2c_helper.h"
 
-//==============================================================================
-void I2c_Init ()
-//==============================================================================
-{
-  SDA=LOW;                // Set port as output for configuration
-  SCL=LOW;                // Set port as output for configuration
+s8 SHT2x_I2C_write(u8 dev_addr, u8 *reg_data, u8 cnt){
+	I2C_Transaction i2cTransaction;
 
-  SDA_CONF=LOW;           // Set SDA level as low for output mode
-  SCL_CONF=LOW;           // Set SCL level as low for output mode
+	s8 iError = 1;
 
-  SDA=HIGH;               // I2C-bus idle mode SDA released (input)
-  SCL=HIGH;               // I2C-bus idle mode SCL released (input)
+	i2cTransaction.slaveAddress = dev_addr; //SHT2x_ADR
+	i2cTransaction.readBuf = NULL;
+	i2cTransaction.readCount = 0;
+	i2cTransaction.writeBuf = reg_data;
+	i2cTransaction.writeCount = cnt + 1;
+
+	int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
+
+	if (!ret) {
+		cli_printf("SHT2x i2c bus write error\n", 0);
+		iError = SHT2x_I2C_ERROR;
+	}
+
+	return iError;
 }
 
-//==============================================================================
-void I2c_StartCondition ()
-//==============================================================================
+s8 SHT2x_I2C_read(u8 dev_addr, u8 *reg_data, u8 cnt)
 {
-  SDA=HIGH;
-  SCL=HIGH;
-  SDA=LOW;
-  DelayMicroSeconds(10);  // hold time start condition (t_HD;STA)
-  SCL=LOW;
-  DelayMicroSeconds(10);
+	I2C_Transaction i2cTransaction;
+
+	u8 iError = 1;
+
+	i2cTransaction.slaveAddress = dev_addr;
+	i2cTransaction.writeBuf = NULL;
+	i2cTransaction.writeCount = 0;
+	i2cTransaction.readBuf = reg_data;
+	i2cTransaction.readCount = cnt;
+
+
+	int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
+
+	if (!ret) {
+		cli_printf("SHT2x read error \n", 0);
+		iError = SHT2x_I2C_ERROR;
+	}
+
+	return (s8)iError;
 }
 
-//==============================================================================
-void I2c_StopCondition ()
-//==============================================================================
+void SHT2x_delay_msek(u16 msek)
 {
-  SDA=LOW;
-  SCL=LOW;
-  SCL=HIGH;
-  DelayMicroSeconds(10);  // set-up time stop condition (t_SU;STO)
-  SDA=HIGH;
-  DelayMicroSeconds(10);
+	Task_sleep(msek);
 }
-
-//==============================================================================
-u8t I2c_WriteByte (u8t txByte)
-//==============================================================================
-{
-  u8t mask,error=0;
-  for (mask=0x80; mask>0; mask>>=1)   //shift bit for masking (8 times)
-  { if ((mask & txByte) == 0) SDA=LOW;//masking txByte, write bit to SDA-Line
-    else SDA=HIGH;
-    DelayMicroSeconds(1);             //data set-up time (t_SU;DAT)
-    SCL=HIGH;                         //generate clock pulse on SCL
-    DelayMicroSeconds(5);             //SCL high time (t_HIGH)
-    SCL=LOW;
-    DelayMicroSeconds(1);             //data hold time(t_HD;DAT)
-  }
-  SDA=HIGH;                           //release SDA-line
-  SCL=HIGH;                           //clk #9 for ack
-  DelayMicroSeconds(1);               //data set-up time (t_SU;DAT)
-  if(SDA_CONF==HIGH) error=ACK_ERROR; //check ack from i2c slave
-  SCL=LOW;
-  DelayMicroSeconds(20);              //wait time to see byte package on scope
-  return error;                       //return error code
-}
-
-//==============================================================================
-u8t I2c_ReadByte (etI2cAck ack)
-//==============================================================================
-{
-  u8t mask,rxByte=0;
-  SDA=HIGH;                           //release SDA-line
-  for (mask=0x80; mask>0; mask>>=1)   //shift bit for masking (8 times)
-  { SCL=HIGH;                         //start clock on SCL-line
-    DelayMicroSeconds(1);             //data set-up time (t_SU;DAT)
-    DelayMicroSeconds(3);             //SCL high time (t_HIGH)
-    if (SDA_CONF==1) rxByte=(rxByte | mask); //read bit
-    SCL=LOW;
-    DelayMicroSeconds(1);             //data hold time(t_HD;DAT)
-  }
-  SDA=ack;                            //send acknowledge if necessary
-  DelayMicroSeconds(1);               //data set-up time (t_SU;DAT)
-  SCL=HIGH;                           //clk #9 for ack
-  DelayMicroSeconds(5);               //SCL high time (t_HIGH)
-  SCL=LOW;
-  SDA=HIGH;                           //release SDA-line
-  DelayMicroSeconds(20);              //wait time to see byte package on scope
-  return rxByte;                      //return error code
-}
-
-
 
 
