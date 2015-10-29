@@ -13,10 +13,16 @@
 //==============================================================================
 //---------- Includes ----------------------------------------------------------
 #include "SHT2xi2c.h"
-#include "../../Board.h"
+
+
 //---------- Defines -----------------------------------------------------------
+
+//#include "SHT2x_define.h"
+#include "bmp180.h"
+typedef float ft;
+
 //  CRC
-const u16t POLYNOMIAL = 0x131;  //P(x)=x^8+x^5+x^4+1 = 100110001
+const u16 POLYNOMIAL = 0x131;  //P(x)=x^8+x^5+x^4+1 = 100110001
 
 // sensor command
 typedef enum{
@@ -59,11 +65,19 @@ typedef enum{
   I2C_ADR_R                = 129    // sensor I2C address + read bit
 }etI2cHeader;
 
+#define SHT2x_I2C_ADR 0x80 //sensor I2C 7 bits address
+#define SHT2x_WRITE_SIZE 1
+#define SHT2X_READ_SIZE 3
 
+#define CHECKSUM_ERROR 0
+#define TIME_OUT_ERROR 0
+
+
+#define SHT2x_INIT_VALUE ((u8)0)
 
 
 //==============================================================================
-u8t SHT2x_CheckCrc(u8t data[], u8t nbrOfBytes, u8t checksum);
+u8 SHT2x_CheckCrc(u8 data[], u8 nbrOfBytes, u8 checksum);
 //==============================================================================
 // calculates checksum for n bytes of data and compares it with expected
 // checksum
@@ -74,7 +88,7 @@ u8t SHT2x_CheckCrc(u8t data[], u8t nbrOfBytes, u8t checksum);
 //                      0              = checksum matches
 
 //==============================================================================
-u8t SHT2x_ReadUserRegister(u8t *pRegisterValue);
+u8 SHT2x_ReadUserRegister(u8 *pRegisterValue);
 //==============================================================================
 // reads the SHT2x user register (8bit)
 // input : -
@@ -82,7 +96,7 @@ u8t SHT2x_ReadUserRegister(u8t *pRegisterValue);
 // return: error
 
 //==============================================================================
-u8t SHT2x_WriteUserRegister(u8t *pRegisterValue);
+u8 SHT2x_WriteUserRegister(u8 *pRegisterValue);
 //==============================================================================
 // writes the SHT2x user register (8bit)
 // input : *pRegisterValue
@@ -90,7 +104,7 @@ u8t SHT2x_WriteUserRegister(u8t *pRegisterValue);
 // return: error
 
 //==============================================================================
-u8t SHT2x_MeasurePoll(etSHT2xMeasureType eSHT2xMeasureType, nt16 *pMeasurand);
+s8 SHT2x_Measure(etSHT2xMeasureType eSHT2xMeasureType, u8 *pMeasurand);
 //==============================================================================
 // measures humidity or temperature. This function polls every 10ms until
 // measurement is ready.
@@ -100,7 +114,7 @@ u8t SHT2x_MeasurePoll(etSHT2xMeasureType eSHT2xMeasureType, nt16 *pMeasurand);
 // note:   timing for timeout may be changed
 
 //==============================================================================
-u8t SHT2x_MeasureHM(etSHT2xMeasureType eSHT2xMeasureType, nt16 *pMeasurand);
+u8 SHT2x_MeasureHM(etSHT2xMeasureType eSHT2xMeasureType, u8 *pMeasurand);
 //==============================================================================
 // measures humidity or temperature. This function waits for a hold master until
 // measurement is ready or a timeout occurred.
@@ -110,7 +124,7 @@ u8t SHT2x_MeasureHM(etSHT2xMeasureType eSHT2xMeasureType, nt16 *pMeasurand);
 // note:   timing for timeout may be changed
 
 //==============================================================================
-u8t SHT2x_SoftReset();
+u8 SHT2x_SoftReset();
 //==============================================================================
 // performs a reset
 // input:  -
@@ -118,21 +132,21 @@ u8t SHT2x_SoftReset();
 // return: error
 
 //==============================================================================
-float SHT2x_CalcRH(u16t u16sRH);
+float SHT2x_CalcRH(u16 u16sRH);
 //==============================================================================
 // calculates the relative humidity
 // input:  sRH: humidity raw value (16bit scaled)
 // return: pHumidity relative humidity [%RH]
 
 //==============================================================================
-float SHT2x_CalcTemperatureC(u16t u16sT);
+float SHT2x_CalcTemperatureC(u16 u16sT);
 //==============================================================================
 // calculates temperature
 // input:  sT: temperature raw value (16bit scaled)
 // return: temperature [�C]
 
 //==============================================================================
-u8t SHT2x_GetSerialNumber(u8t u8SerialNumber[]);
+u8 SHT2x_GetSerialNumber(u8 u8SerialNumber[]);
 //==============================================================================
 // gets serial number of SHT2x according application note "How To
 // Read-Out the Serial Number"
@@ -144,4 +158,20 @@ u8t SHT2x_GetSerialNumber(u8t u8SerialNumber[]);
 //         u8SerialNumber[7]             u8SerialNumber[0]
 //         SNA_1 SNA_0 SNB_3 SNB_2 SNB_1 SNB_0 SNC_1 SNC_0
 // return: error
+
+//==============================================================================
+u16 SHT2x_GetInfo (u8* pMeasurand);
+//==============================================================================
+//input: u8 table containing the result of the i2c communication.
+//return: u16 number containing the measurment result, ready for the calc* function.
+
+//==============================================================================
+float sht2x_get_temp();
+//==============================================================================
+// "main" function giving the temperature.
+
+//==============================================================================
+float sht2x_get_humidity();
+//==============================================================================
+// "main" function giving the relative humidity.
 #endif

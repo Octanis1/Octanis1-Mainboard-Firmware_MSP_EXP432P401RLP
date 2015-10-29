@@ -13,15 +13,51 @@
 #include "SHT2x.h"
 
 //==============================================================================
-u8t SHT2x_CheckCrc(u8t data[], u8t nbrOfBytes, u8t checksum)
+float sht2x_get_temp()
 //==============================================================================
 {
-  u8t crc = 0;	
-  u8t byteCtr;
+	u8 pMeasurand[3]; //table where the result of the communication is put
+	u16 data =0;
+	float result =0;
+	s8 error =1;
+
+	error = SHT2x_Measure(TRIG_T_MEASUREMENT_POLL, pMeasurand);
+
+	data = SHT2x_GetInfo (pMeasurand);
+
+	result = SHT2x_CalcTemperatureC(data);
+
+	return result;
+}
+
+//==============================================================================
+float sht2x_get_humidity()
+//==============================================================================
+{
+	u8 pMeasurand[3]; //table where the result of the communication is put
+	u16 data =0;
+	float result =0;
+	s8 error =1;
+
+	error = SHT2x_Measure(TRIG_RH_MEASUREMENT_POLL, pMeasurand);
+
+	data = SHT2x_GetInfo (pMeasurand);
+
+	result = SHT2x_CalcRH(data);
+
+	return result;
+}
+
+//==============================================================================
+u8 SHT2x_CheckCrc(u8 data[], u8 nbrOfBytes, u8 checksum)
+//==============================================================================
+{
+  u8 crc = 0;
+  u8 byteCtr;
   //calculates 8-Bit checksum with given polynomial
   for (byteCtr = 0; byteCtr < nbrOfBytes; ++byteCtr)
   { crc ^= (data[byteCtr]);
-    for (u8t bit = 8; bit > 0; --bit)
+    for (u8 bit = 8; bit > 0; --bit)
     { if (crc & 0x80) crc = (crc << 1) ^ POLYNOMIAL;
       else crc = (crc << 1);
     }
@@ -31,11 +67,11 @@ u8t SHT2x_CheckCrc(u8t data[], u8t nbrOfBytes, u8t checksum)
 }
 
 //===========================================================================
-u8t SHT2x_ReadUserRegister(u8t *pRegisterValue)
+u8 SHT2x_ReadUserRegister(u8 *pRegisterValue)
 //===========================================================================
 {
-  u8t checksum;   //variable for checksum byte
-  u8t error=0;    //variable for error code
+/*  u8 checksum;   //variable for checksum byte
+  u8 error=0;    //variable for error code
 
   I2c_StartCondition();
   error |= I2c_WriteByte (I2C_ADR_W);
@@ -46,117 +82,79 @@ u8t SHT2x_ReadUserRegister(u8t *pRegisterValue)
   checksum=I2c_ReadByte(NO_ACK);
   error |= SHT2x_CheckCrc (pRegisterValue,1,checksum);
   I2c_StopCondition();
-  return error;
+  return error;*/
+	return 0;
 }
 
 //===========================================================================
-u8t SHT2x_WriteUserRegister(u8t *pRegisterValue)
+u8 SHT2x_WriteUserRegister(u8 *pRegisterValue)
 //===========================================================================
 {
-  u8t error=0;   //variable for error code
+  /*u8 error=0;   //variable for error code
 
   I2c_StartCondition();
   error |= I2c_WriteByte (I2C_ADR_W);
   error |= I2c_WriteByte (USER_REG_W);
   error |= I2c_WriteByte (*pRegisterValue);
   I2c_StopCondition();
-  return error;
+  return error;*/
+	return 0;
 }
 
-//===========================================================================
-u8t SHT2x_MeasureHM(etSHT2xMeasureType eSHT2xMeasureType, nt16 *pMeasurand)
-//===========================================================================
-{
-  u8t  checksum;   //checksum
-  u8t  data[2];    //data array for checksum verification
-  u8t  error=0;    //error variable
-  u16t i;          //counting variable
-
-  //-- write I2C sensor address and command --
-  I2c_StartCondition();
-  error |= I2c_WriteByte (I2C_ADR_W); // I2C Adr
-  switch(eSHT2xMeasureType)
-  { case HUMIDITY: error |= I2c_WriteByte (TRIG_RH_MEASUREMENT_HM); break;
-    case TEMP    : error |= I2c_WriteByte (TRIG_T_MEASUREMENT_HM);  break;
-    default: assert(0);
-  }
-  //-- wait until hold master is released --
-  I2c_StartCondition();
-  error |= I2c_WriteByte (I2C_ADR_R);
-  SCL=HIGH;                     // set SCL I/O port as input
-  for(i=0; i<1000; i++)         // wait until master hold is released or
-  { DelayMicroSeconds(1000);    // a timeout (~1s) is reached
-    if (SCL_CONF==1) break;
-  }
-  //-- check for timeout --
-  if(SCL_CONF==0) error |= TIME_OUT_ERROR;
-
-  //-- read two data bytes and one checksum byte --
-  pMeasurand->s16.u8H = data[0] = I2c_ReadByte(ACK);
-  pMeasurand->s16.u8L = data[1] = I2c_ReadByte(ACK);
-  checksum=I2c_ReadByte(NO_ACK);
-
-  //-- verify checksum --
-  error |= SHT2x_CheckCrc (data,2,checksum);
-  I2c_StopCondition();
-  return error;
-}
 
 //===========================================================================
-u8t SHT2x_MeasurePoll(etSHT2xMeasureType eSHT2xMeasureType, nt16 *pMeasurand)
+s8 SHT2x_Measure(etSHT2xMeasureType eSHT2xMeasureType, u8 *pMeasurand)
 //===========================================================================
 {
-  u8t  checksum;   //checksum
-  u8t  data[2];    //data array for checksum verification
-  u8t  error=0;    //error variable
-  u16t i=0;        //counting variable
+
+  s8  error=1;    //error variable
+  u16 i=0;        //counting variable
+  u8 write_buffer =0;
 
   //-- write I2C sensor address and command --
-  I2c_StartCondition();
-  error |= I2c_WriteByte (I2C_ADR_W); // I2C Adr
+
   switch(eSHT2xMeasureType)
-  { case HUMIDITY: error |= I2c_WriteByte (TRIG_RH_MEASUREMENT_POLL); break;
-    case TEMP    : error |= I2c_WriteByte (TRIG_T_MEASUREMENT_POLL);  break;
-    default: assert(0);
+  { case HUMIDITY: write_buffer = TRIG_RH_MEASUREMENT_POLL; break;
+    case TEMP    : write_buffer = TRIG_T_MEASUREMENT_POLL;  break;
+    default: ; //error message?
   }
+
+  error = SHT2x_I2C_write (SHT2x_I2C_ADR, &write_buffer, 1);
+
   //-- poll every 10ms for measurement ready. Timeout after 20 retries (200ms)--
   do
-  { I2c_StartCondition();
-    DelayMicroSeconds(10000);  //delay 10ms
+  { SHT2x_delay_msek(10);  //delay 10ms
     if(i++ >= 20) break;
-  } while(I2c_WriteByte (I2C_ADR_R) == ACK_ERROR);
+  } while(SHT2x_I2C_read(SHT2x_I2C_ADR, pMeasurand, 3));
   if (i>=20) error |= TIME_OUT_ERROR;
 
-  //-- read two data bytes and one checksum byte --
-  pMeasurand->s16.u8H = data[0] = I2c_ReadByte(ACK);
-  pMeasurand->s16.u8L = data[1] = I2c_ReadByte(ACK);
-  checksum=I2c_ReadByte(NO_ACK);
 
   //-- verify checksum --
-  error |= SHT2x_CheckCrc (data,2,checksum);
-  I2c_StopCondition();
+  //The 2 first bytes recieved are the data measured and the last one is a
+  //checksum we use to verify the validity of the data.
+  error |= SHT2x_CheckCrc (pMeasurand, 2, pMeasurand[2]);
 
   return error;
 }
 
 //===========================================================================
-u8t SHT2x_SoftReset()
+u8 SHT2x_SoftReset()
 //===========================================================================
 {
-  u8t  error=0;           //error variable
+  u8  error=0;           //error variable
 
-  I2c_StartCondition();
-  error |= I2c_WriteByte (I2C_ADR_W); // I2C Adr
-  error |= I2c_WriteByte (SOFT_RESET);                            // Command
-  I2c_StopCondition();
+  //I2c_StartCondition();
+  //error |= I2c_WriteByte (I2C_ADR_W); // I2C Adr
+  //error |= I2c_WriteByte (SOFT_RESET);                            // Command
+  //I2c_StopCondition();
 
-  DelayMicroSeconds(15000); // wait till sensor has restarted
+  //DelayMicroSeconds(15000); // wait till sensor has restarted
 
   return error;
 }
 
 //==============================================================================
-float SHT2x_CalcRH(u16t u16sRH)
+float SHT2x_CalcRH(u16 u16sRH)
 //==============================================================================
 {
   ft humidityRH;              // variable for result
@@ -169,26 +167,26 @@ float SHT2x_CalcRH(u16t u16sRH)
 }
 
 //==============================================================================
-float SHT2x_CalcTemperatureC(u16t u16sT)
+float SHT2x_CalcTemperatureC(u16 u16sT)
 //==============================================================================
 {
   ft temperatureC;            // variable for result
 
   u16sT &= ~0x0003;           // clear bits [1..0] (status bits)
 
-  //-- calculate temperature [°C] --
+  //-- calculate temperature [ï¿½C] --
   temperatureC= -46.85 + 175.72/65536 *(ft)u16sT; //T= -46.85 + 175.72 * ST/2^16
   return temperatureC;
 }
 
 //==============================================================================
-u8t SHT2x_GetSerialNumber(u8t u8SerialNumber[])
+u8 SHT2x_GetSerialNumber(u8 u8SerialNumber[])
 //==============================================================================
 {
-  u8t  error=0;                          //error variable
+  u8  error=0;                          //error variable
 
   //Read from memory location 1
-  I2c_StartCondition();
+  /*I2c_StartCondition();
   error |= I2c_WriteByte (I2C_ADR_W);    //I2C address
   error |= I2c_WriteByte (0xFA);         //Command for readout on-chip memory
   error |= I2c_WriteByte (0x0F);         //on-chip memory address
@@ -217,7 +215,20 @@ u8t SHT2x_GetSerialNumber(u8t u8SerialNumber[])
   u8SerialNumber[7] = I2c_ReadByte(ACK); //Read SNA_1
   u8SerialNumber[6] = I2c_ReadByte(ACK); //Read SNA_0
   I2c_ReadByte(NO_ACK);                  //Read CRC SNA0/1 (CRC is not analyzed)
-  I2c_StopCondition();
+  I2c_StopCondition();*/
 
   return error;
+}
+
+
+//==============================================================================
+u16 SHT2x_GetInfo (u8* pMeasurand)
+//==============================================================================
+//The RH or T value is stoked on 2 entries in a u8 table. Here we put them in a u16
+{
+	u16 info = 0;
+	info = (u16)pMeasurand[0];
+	info = info << 8;
+	info += (u16)pMeasurand[1];
+	return info;
 }
