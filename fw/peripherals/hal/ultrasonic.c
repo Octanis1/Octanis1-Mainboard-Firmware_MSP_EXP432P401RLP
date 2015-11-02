@@ -215,10 +215,11 @@ void ultrasonic_send_pulses(uint8_t index)
 	uint32_t stop_time;
 
 	/* Turn on logic OR gate */
-	GPIO_write(Board_ULTRASONIC_OR_SLEEP, 0);
+//	GPIO_write(Board_ULTRASONIC_OR_SLEEP, 0);
 
 	/* Turn on sensors 0-3 */
 	GPIO_write(enable_pins[index], 1);
+	Task_sleep(600); //assure supply voltage could rise high.
 
 	//TODO: maybe would be useful to turn on/off CCR interrupts
 
@@ -230,16 +231,17 @@ void ultrasonic_send_pulses(uint8_t index)
 	{ //wait 10us
 		stop_time = Timestamp_get32();
 	}
+//	Task_sleep(60); //todo remove
 	GPIO_write(trigger_pins[index], 0);
 
 	/* Wait for all pulses to arrive and ISR to finish (max pulse lenght: 23ms) */
-	Task_sleep(60);
+	Task_sleep(80);
 
 	/* Turn off sensors 0-3 (or 4-7) */
 	GPIO_write(enable_pins[index], 0);
 
 	/* Turn off logic OR gate */
-	GPIO_write(Board_ULTRASONIC_OR_SLEEP, 1);
+//	GPIO_write(Board_ULTRASONIC_OR_SLEEP, 1);
 }
 
 /* TODO: this code is just here for reference. remove later
@@ -271,17 +273,18 @@ int16_t diff=0;
  *
  * index : ultrasonic input pin that triggered the CCR (0-3)
  * timestamp : ...
- * edgetype : 1=falling, 0=rising
+ * edgetype : 1=rising, 0=falling
  */
 void ultrasonic_ccr_ISR(uint8_t pin_index, uint16_t timestamp, uint8_t edgetype)
 {
 	if(edgetype)
-	{//bit was high -> falling edge
-		pulse_falling_time[pin_index]=timestamp;
+	{//bit is high -> rising edge
+		pulse_rising_time[pin_index]=timestamp;
+
 	}
 	else
-	{
-		pulse_rising_time[pin_index]=timestamp;
+	{//input bit is low -> falling edge
+		pulse_falling_time[pin_index]=timestamp;
 	}
 
 }

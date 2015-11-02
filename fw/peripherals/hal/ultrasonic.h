@@ -27,6 +27,8 @@ void ultrasonic_init();
 /* returns 1 if success */
 bool ultrasonic_get_distance(int32_t* distance_values);
 
+void ultrasonic_check_distance(int32_t distance_values[], int8_t directions_array[]);
+
 
 void ultrasonic_send_pulses(uint8_t index);
 void ultrasonic_ISR(uint8_t index);

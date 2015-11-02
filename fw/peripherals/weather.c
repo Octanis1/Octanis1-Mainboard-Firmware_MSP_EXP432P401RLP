@@ -8,6 +8,7 @@
 #include "weather.h"
 #include "hal/bme280i2c.h"
 #include "hal/bmp180i2c.h"
+#include "hal/windsensor.h"
 #include "hal/i2c_helper.h"
 #include "../lib/printf.h"
 
@@ -16,10 +17,12 @@
 void weather_task(){
 
 	i2c_helper_init_handle();
+	windsensor_init();
 
 	while(1){
 		Task_sleep(3000);
 
+		windsensor_getvalue();
 	//	bme280_data_readout_template();
 
 	//	bmp180_data_readout_template();

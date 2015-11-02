@@ -187,6 +187,9 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	/* Octanis05_ULTRASONIC_Sleep_1 */
 	GPIOMSP432_PJ_3 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
+	/* Octanis05_WINDSENSOR_SLEEP */
+	GPIOMSP432_P7_2 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
+
 	/* Octanis05_M1234_SLEEP */
 	GPIOMSP432_P2_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
@@ -395,7 +398,7 @@ void MSP_EXP432P401RLP_initPWM(void)
     /* Use Port Map on Port 7 to test pwm */
 	//TODO this is only for testing purposes
     const uint8_t port7Map [] = {
-        PM_NONE, PM_NONE,  PM_NONE, PM_NONE,
+        PM_NONE, PM_NONE,  PM_NONE, PM_TA0CCR1A, //note: P7.3 was defined as windsensor input
         PM_NONE, PM_NONE,  PM_TA1CCR2A, PM_TA1CCR1A
     };
 
@@ -410,7 +413,7 @@ void MSP_EXP432P401RLP_initPWM(void)
 
     /* Mapping capture compare registers to Port 3 */
     MAP_PMAP_configurePorts((const uint8_t *) port3Map, P3MAP, 1,
-        PMAP_DISABLE_RECONFIGURATION);
+        PMAP_ENABLE_RECONFIGURATION);
 
     /* Enable PWM output on GPIO pins */
     MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P7,
