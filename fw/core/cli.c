@@ -18,8 +18,8 @@
 //which uart index to use for the CLI
 #define CLI_UART Board_UART0_DEBUG
 //buffer sizes
-#define CLI_BUFFER 20
-#define PRINTF_BUFFER 20
+#define CLI_BUFFER 300
+#define PRINTF_BUFFER 300
 
 
 

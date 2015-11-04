@@ -61,12 +61,15 @@ void navigation_task(){
 
 		//Commented for debug reason because oterwise we never go into the else
 		//We check if the gps is already working
-		//if (gps_get_validity() == 0){
-		if(0){
+		if (gps_get_validity() == 0){
+		//if(0){
 		}
 		else{
 			pos_var.lat_current = gps_get_lat();
 			pos_var.lon_current = gps_get_lon();
+
+
+
 			pos_var.distance = nav_get_distance(pos_var.lat_current, pos_var.lon_current, TARGET_LAT, TARGET_LON);
 
 			//We check if we are at the location

@@ -21,8 +21,8 @@ int ublox_6_open(){
 	//uartParams.readTimeout = 10;
 	uartParams.dataLength = UART_LEN_8;
 
-		uart = UART_open(Board_UART1_GPS, &uartParams);
-
+	//Correct port for the mainboard
+	uart = UART_open(Board_UART1_GPS, &uartParams);
 
 		if (uart == NULL) {
 			return 0;
@@ -44,8 +44,8 @@ void ublox_6_close(){
 char * ublox_6_read(){
 
 	UART_read(uart, rxBuffer, sizeof(rxBuffer));
-//	System_printf("%s \n", rxBuffer);
+	System_printf("%s \n", rxBuffer);
 	    /* SysMin will only print to the console when you call flush or exit */
-//	    System_flush();
+	    System_flush();
 	return rxBuffer;
 }
