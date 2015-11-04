@@ -65,7 +65,6 @@ typedef enum{
   I2C_ADR_R                = 129    // sensor I2C address + read bit
 }etI2cHeader;
 
-#define SHT2x_I2C_ADR 0x80 //sensor I2C 7 bits address
 #define SHT2x_WRITE_SIZE 1
 #define SHT2X_READ_SIZE 3
 

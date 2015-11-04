@@ -23,14 +23,14 @@ void weather_task(){
 
 		bme280_data_readout_template();
 
-		//float inside_temperature = sht2x_get_temp();
-		//float inside_humidity = sht2x_get_humidity();
+		float inside_temperature = sht2x_get_temp();
+		float inside_humidity = sht2x_get_humidity();
 
-		float inside_temperature = 20.4;
-		float inside_humidity = 0.34;
+		//float inside_temperature = 20.4;
+		//float inside_humidity = 0.34;
 
-		cli_printf("temp: %f \n", inside_temperature);
-		cli_printf("RH: %f \n", inside_humidity);
+		cli_printf("temp: %f \n", &inside_temperature);
+		cli_printf("RH: %f \n", &inside_humidity);
 
 		//bmp180_data_readout_template();
 

@@ -11,6 +11,7 @@
 
 //---------- Includes ----------------------------------------------------------
 #include "SHT2x.h"
+#include "../../../Board.h"
 
 //==============================================================================
 float sht2x_get_temp()
@@ -21,7 +22,7 @@ float sht2x_get_temp()
 	float result =0;
 	s8 error =1;
 
-	error = SHT2x_Measure(TRIG_T_MEASUREMENT_POLL, pMeasurand);
+	error = SHT2x_Measure(TEMP, pMeasurand);
 
 	data = SHT2x_GetInfo (pMeasurand);
 
@@ -39,7 +40,7 @@ float sht2x_get_humidity()
 	float result =0;
 	s8 error =1;
 
-	error = SHT2x_Measure(TRIG_RH_MEASUREMENT_POLL, pMeasurand);
+	error = SHT2x_Measure(HUMIDITY, pMeasurand);
 
 	data = SHT2x_GetInfo (pMeasurand);
 
@@ -119,13 +120,13 @@ s8 SHT2x_Measure(etSHT2xMeasureType eSHT2xMeasureType, u8 *pMeasurand)
     default: ; //error message?
   }
 
-  error = SHT2x_I2C_write (SHT2x_I2C_ADR, &write_buffer, 1);
+  error = SHT2x_I2C_write (Board_SHT21_I2CADDR, &write_buffer, 1);
 
   //-- poll every 10ms for measurement ready. Timeout after 20 retries (200ms)--
   do
   { SHT2x_delay_msek(10);  //delay 10ms
     if(i++ >= 20) break;
-  } while(SHT2x_I2C_read(SHT2x_I2C_ADR, pMeasurand, 3));
+  } while(!SHT2x_I2C_read(Board_SHT21_I2CADDR, pMeasurand, 3));
   if (i>=20) error |= TIME_OUT_ERROR;
 
 
