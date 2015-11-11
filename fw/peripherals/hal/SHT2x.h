@@ -18,11 +18,11 @@
 //---------- Defines -----------------------------------------------------------
 
 //#include "SHT2x_define.h"
-#include "bmp180.h"
-typedef float ft;
+//#include "bmp180.h"
+//typedef float ft;
 
 //  CRC
-const u16 POLYNOMIAL = 0x131;  //P(x)=x^8+x^5+x^4+1 = 100110001
+const int POLYNOMIAL = 0x131;  //P(x)=x^8+x^5+x^4+1 = 100110001
 
 // sensor command
 typedef enum{
@@ -76,7 +76,7 @@ typedef enum{
 
 
 //==============================================================================
-u8 SHT2x_CheckCrc(u8 data[], u8 nbrOfBytes, u8 checksum);
+unsigned char SHT2x_CheckCrc(unsigned char data[], unsigned char nbrOfBytes, unsigned char checksum);
 //==============================================================================
 // calculates checksum for n bytes of data and compares it with expected
 // checksum
@@ -87,23 +87,25 @@ u8 SHT2x_CheckCrc(u8 data[], u8 nbrOfBytes, u8 checksum);
 //                      0              = checksum matches
 
 //==============================================================================
-u8 SHT2x_ReadUserRegister(u8 *pRegisterValue);
+unsigned char SHT2x_ReadUserRegister(unsigned char *pRegisterValue);
 //==============================================================================
 // reads the SHT2x user register (8bit)
 // input : -
 // output: *pRegisterValue
 // return: error
+// ATTENTION: Not implemented (yet) for ti rtos. Should not be hard nor long to do however
 
 //==============================================================================
-u8 SHT2x_WriteUserRegister(u8 *pRegisterValue);
+unsigned char SHT2x_WriteUserRegister(unsigned char *pRegisterValue);
 //==============================================================================
 // writes the SHT2x user register (8bit)
 // input : *pRegisterValue
 // output: -
 // return: error
+// ATTENTION: Not implemented (yet) for ti rtos. Should not be hard nor long to do however
 
 //==============================================================================
-s8 SHT2x_Measure(etSHT2xMeasureType eSHT2xMeasureType, u8 *pMeasurand);
+char SHT2x_Measure(etSHT2xMeasureType eSHT2xMeasureType, unsigned char *pMeasurand);
 //==============================================================================
 // measures humidity or temperature. This function polls every 10ms until
 // measurement is ready.
@@ -113,39 +115,41 @@ s8 SHT2x_Measure(etSHT2xMeasureType eSHT2xMeasureType, u8 *pMeasurand);
 // note:   timing for timeout may be changed
 
 //==============================================================================
-u8 SHT2x_MeasureHM(etSHT2xMeasureType eSHT2xMeasureType, u8 *pMeasurand);
+unsigned char SHT2x_MeasureHM(etSHT2xMeasureType eSHT2xMeasureType, unsigned char *pMeasurand);
 //==============================================================================
 // measures humidity or temperature. This function waits for a hold master until
 // measurement is ready or a timeout occurred.
 // input:  eSHT2xMeasureType
 // output: *pMeasurand:  humidity / temperature as raw value
 // return: error
-// note:   timing for timeout may be changed
+// note: timing for timeout may be changed
+// note: Unused
 
 //==============================================================================
-u8 SHT2x_SoftReset();
+unsigned char SHT2x_SoftReset();
 //==============================================================================
 // performs a reset
 // input:  -
 // output: -
 // return: error
+// ATTENTION: Not implemented (yet) for ti rtos. Should not be hard nor long to do however
 
 //==============================================================================
-float SHT2x_CalcRH(u16 u16sRH);
+float SHT2x_CalcRH(int u16sRH);
 //==============================================================================
 // calculates the relative humidity
 // input:  sRH: humidity raw value (16bit scaled)
 // return: pHumidity relative humidity [%RH]
 
 //==============================================================================
-float SHT2x_CalcTemperatureC(u16 u16sT);
+float SHT2x_CalcTemperatureC(int u16sT);
 //==============================================================================
 // calculates temperature
 // input:  sT: temperature raw value (16bit scaled)
 // return: temperature [�C]
 
 //==============================================================================
-u8 SHT2x_GetSerialNumber(u8 u8SerialNumber[]);
+unsigned char SHT2x_GetSerialNumber(unsigned char u8SerialNumber[]);
 //==============================================================================
 // gets serial number of SHT2x according application note "How To
 // Read-Out the Serial Number"
@@ -157,9 +161,10 @@ u8 SHT2x_GetSerialNumber(u8 u8SerialNumber[]);
 //         u8SerialNumber[7]             u8SerialNumber[0]
 //         SNA_1 SNA_0 SNB_3 SNB_2 SNB_1 SNB_0 SNC_1 SNC_0
 // return: error
+// ATTENTION: Not implemented (yet) for ti rtos. Should not be hard nor long to do however
 
 //==============================================================================
-u16 SHT2x_GetInfo (u8* pMeasurand);
+int SHT2x_GetInfo (unsigned char* pMeasurand);
 //==============================================================================
 //input: u8 table containing the result of the i2c communication.
 //return: u16 number containing the measurment result, ready for the calc* function.

@@ -17,12 +17,11 @@
 float sht2x_get_temp()
 //==============================================================================
 {
-	u8 pMeasurand[3]; //table where the result of the communication is put
-	u16 data =0;
+	unsigned char pMeasurand[3]; //table where the result of the communication is put
+	int data =0;
 	float result =0;
-	s8 error =1;
 
-	error = SHT2x_Measure(TEMP, pMeasurand);
+	char error = SHT2x_Measure(TEMP, pMeasurand);
 
 	data = SHT2x_GetInfo (pMeasurand);
 
@@ -35,12 +34,11 @@ float sht2x_get_temp()
 float sht2x_get_humidity()
 //==============================================================================
 {
-	u8 pMeasurand[3]; //table where the result of the communication is put
-	u16 data =0;
+	unsigned char pMeasurand[3]; //table where the result of the communication is put
+	int data =0;
 	float result =0;
-	s8 error =1;
 
-	error = SHT2x_Measure(HUMIDITY, pMeasurand);
+	char error = SHT2x_Measure(HUMIDITY, pMeasurand);
 
 	data = SHT2x_GetInfo (pMeasurand);
 
@@ -50,15 +48,15 @@ float sht2x_get_humidity()
 }
 
 //==============================================================================
-u8 SHT2x_CheckCrc(u8 data[], u8 nbrOfBytes, u8 checksum)
+unsigned char SHT2x_CheckCrc(unsigned char data[], unsigned char nbrOfBytes, unsigned char checksum)
 //==============================================================================
 {
-  u8 crc = 0;
-  u8 byteCtr;
+  unsigned char crc = 0;
+  unsigned char byteCtr;
   //calculates 8-Bit checksum with given polynomial
   for (byteCtr = 0; byteCtr < nbrOfBytes; ++byteCtr)
   { crc ^= (data[byteCtr]);
-    for (u8 bit = 8; bit > 0; --bit)
+    for (unsigned char bit = 8; bit > 0; --bit)
     { if (crc & 0x80) crc = (crc << 1) ^ POLYNOMIAL;
       else crc = (crc << 1);
     }
@@ -68,7 +66,7 @@ u8 SHT2x_CheckCrc(u8 data[], u8 nbrOfBytes, u8 checksum)
 }
 
 //===========================================================================
-u8 SHT2x_ReadUserRegister(u8 *pRegisterValue)
+unsigned char SHT2x_ReadUserRegister(unsigned char *pRegisterValue)
 //===========================================================================
 {
 /*  u8 checksum;   //variable for checksum byte
@@ -88,7 +86,7 @@ u8 SHT2x_ReadUserRegister(u8 *pRegisterValue)
 }
 
 //===========================================================================
-u8 SHT2x_WriteUserRegister(u8 *pRegisterValue)
+unsigned char SHT2x_WriteUserRegister(unsigned char *pRegisterValue)
 //===========================================================================
 {
   /*u8 error=0;   //variable for error code
@@ -104,13 +102,13 @@ u8 SHT2x_WriteUserRegister(u8 *pRegisterValue)
 
 
 //===========================================================================
-s8 SHT2x_Measure(etSHT2xMeasureType eSHT2xMeasureType, u8 *pMeasurand)
+char SHT2x_Measure(etSHT2xMeasureType eSHT2xMeasureType, unsigned char *pMeasurand)
 //===========================================================================
 {
 
-  s8  error=1;    //error variable
-  u16 i=0;        //counting variable
-  u8 write_buffer =0;
+  char  error=1;    //error variable
+  int i=0;        //counting variable
+  unsigned char write_buffer =0;
 
   //-- write I2C sensor address and command --
 
@@ -139,10 +137,10 @@ s8 SHT2x_Measure(etSHT2xMeasureType eSHT2xMeasureType, u8 *pMeasurand)
 }
 
 //===========================================================================
-u8 SHT2x_SoftReset()
+unsigned char SHT2x_SoftReset()
 //===========================================================================
 {
-  u8  error=0;           //error variable
+  unsigned char  error=0;           //error variable
 
   //I2c_StartCondition();
   //error |= I2c_WriteByte (I2C_ADR_W); // I2C Adr
@@ -155,36 +153,36 @@ u8 SHT2x_SoftReset()
 }
 
 //==============================================================================
-float SHT2x_CalcRH(u16 u16sRH)
+float SHT2x_CalcRH(int u16sRH)
 //==============================================================================
 {
-  ft humidityRH;              // variable for result
+  float humidityRH;              // variable for result
 
   u16sRH &= ~0x0003;          // clear bits [1..0] (status bits)
   //-- calculate relative humidity [%RH] --
 
-  humidityRH = -6.0 + 125.0/65536 * (ft)u16sRH; // RH= -6 + 125 * SRH/2^16
+  humidityRH = -6.0 + 125.0/65536 * (float)u16sRH; // RH= -6 + 125 * SRH/2^16
   return humidityRH;
 }
 
 //==============================================================================
-float SHT2x_CalcTemperatureC(u16 u16sT)
+float SHT2x_CalcTemperatureC(int u16sT)
 //==============================================================================
 {
-  ft temperatureC;            // variable for result
+  float temperatureC;            // variable for result
 
   u16sT &= ~0x0003;           // clear bits [1..0] (status bits)
 
   //-- calculate temperature [�C] --
-  temperatureC= -46.85 + 175.72/65536 *(ft)u16sT; //T= -46.85 + 175.72 * ST/2^16
+  temperatureC= -46.85 + 175.72/65536 *(float)u16sT; //T= -46.85 + 175.72 * ST/2^16
   return temperatureC;
 }
 
 //==============================================================================
-u8 SHT2x_GetSerialNumber(u8 u8SerialNumber[])
+unsigned char SHT2x_GetSerialNumber(unsigned char SerialNumber[])
 //==============================================================================
 {
-  u8  error=0;                          //error variable
+	unsigned char  error=0;                          //error variable
 
   //Read from memory location 1
   /*I2c_StartCondition();
@@ -223,13 +221,13 @@ u8 SHT2x_GetSerialNumber(u8 u8SerialNumber[])
 
 
 //==============================================================================
-u16 SHT2x_GetInfo (u8* pMeasurand)
+int SHT2x_GetInfo (unsigned char* pMeasurand)
 //==============================================================================
 //The RH or T value is stoked on 2 entries in a u8 table. Here we put them in a u16
 {
-	u16 info = 0;
-	info = (u16)pMeasurand[0];
+	int info = 0;
+	info = (int)pMeasurand[0];
 	info = info << 8;
-	info += (u16)pMeasurand[1];
+	info += (int)pMeasurand[1];
 	return info;
 }

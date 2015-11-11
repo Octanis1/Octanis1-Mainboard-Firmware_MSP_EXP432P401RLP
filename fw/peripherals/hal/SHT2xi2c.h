@@ -13,11 +13,11 @@
 
 //---------- Includes ----------------------------------------------------------
 //#include "SHT2x_define.h"
-#include "bmp180.h"
+//#include "bmp180.h"
 
 //---------- Defines -----------------------------------------------------------
 #define SHT2x_I2C_ERROR 0
-typedef float ft;
+//typedef float ft;
 
 //---------- Enumerations ------------------------------------------------------
 //  I2C level
@@ -33,17 +33,17 @@ typedef enum{
 }etI2cAck;
 
 //==============================================================================
-s8 SHT2x_I2C_write(u8 dev_addr, u8 *reg_data, u8 cnt);
+char SHT2x_I2C_write(unsigned char dev_addr, unsigned char *reg_data, unsigned char cnt);
 //==============================================================================
 
 //==============================================================================
-s8 SHT2x_I2C_read(u8 dev_addr, u8 *reg_data, u8 cnt);
+char SHT2x_I2C_read(unsigned char dev_addr, unsigned char *reg_data, unsigned char cnt);
 //==============================================================================
 //Write and read function
 
 
 //===========================================================================
-void SHT2x_delay_msek(u16 msek);
+void SHT2x_delay_msek(int msek);
 //===========================================================================
 // Put the tasl on sleep for a while
 

@@ -14,7 +14,7 @@
 #include "../../../Board.h"
 #include "i2c_helper.h"
 
-s8 SHT2x_I2C_write(u8 dev_addr, u8 *reg_data, u8 cnt){
+char SHT2x_I2C_write(unsigned char dev_addr, unsigned char *reg_data, unsigned char cnt){
 	I2C_Transaction i2cTransaction;
 
 
@@ -33,7 +33,7 @@ s8 SHT2x_I2C_write(u8 dev_addr, u8 *reg_data, u8 cnt){
 	return ret;
 }
 
-s8 SHT2x_I2C_read(u8 dev_addr, u8 *reg_data, u8 cnt)
+char SHT2x_I2C_read(unsigned char dev_addr, unsigned char *reg_data, unsigned char cnt)
 {
 	I2C_Transaction i2cTransaction;
 
@@ -53,7 +53,7 @@ s8 SHT2x_I2C_read(u8 dev_addr, u8 *reg_data, u8 cnt)
 	return ret;
 }
 
-void SHT2x_delay_msek(u16 msek)
+void SHT2x_delay_msek(int msek)
 {
 	Task_sleep(msek);
 }
