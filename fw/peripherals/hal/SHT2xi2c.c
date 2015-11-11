@@ -10,9 +10,10 @@
 //==============================================================================
 
 //---------- Includes ----------------------------------------------------------
-#include "SHT2xi2c.h"
 #include "../../../Board.h"
 #include "i2c_helper.h"
+#include "SHT2xi2c.h"
+
 
 char SHT2x_I2C_write(unsigned char dev_addr, unsigned char *reg_data, unsigned char cnt){
 	I2C_Transaction i2cTransaction;
