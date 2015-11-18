@@ -18,8 +18,8 @@
 //which uart index to use for the CLI
 #define CLI_UART Board_UART0_DEBUG
 //buffer sizes
-#define CLI_BUFFER 20
-#define PRINTF_BUFFER 20
+#define CLI_BUFFER 300
+#define PRINTF_BUFFER 300
 
 
 
@@ -73,7 +73,6 @@ void cli_print_task(){
 	while(1){
 
 		while(Mailbox_pend(cli_print_mailbox, printf_output_buffer, BIOS_WAIT_FOREVER)){
-
 			//while mailbox contains messages, print out to uart
 			if(uart != NULL){
 				//print message

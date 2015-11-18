@@ -61,24 +61,28 @@ bool minmea_check(const char *sentence, bool strict)
     if (*sentence == '*') {
         // Extract checksum.
         sentence++;
-        int upper = hex2int(*sentence++);
+        uint8_t upper = hex2int(*sentence++);
         if (upper == -1)
             return false;
-        int lower = hex2int(*sentence++);
+        uint8_t lower = hex2int(*sentence++);
         if (lower == -1)
             return false;
-        int expected = upper << 4 | lower;
+        uint8_t expected = upper << 4 | lower;
+
+        uint8_t diff = checksum-expected;
 
         // Check for checksum mismatch.
-        if (checksum != expected)
+        if (expected != checksum){
             return false;
-    } else if (strict) {
+        }
+    }
+    else if (strict) {
         // Discard non-checksummed frames in strict mode.
         return false;
     }
 
     // The only stuff allowed at this point is a newline.
-    if (*sentence && strcmp(sentence, "\n") && strcmp(sentence, "\r\n"))
+    if (*sentence && strcmp(sentence, "\n") && strcmp(sentence, "\r\n") && strcmp(sentence, "\n\r") && strcmp(sentence, "\r"))
         return false;
 
     return true;
@@ -409,8 +413,8 @@ bool minmea_parse_gga(struct minmea_sentence_gga *frame, const char *sentence)
             &frame->time,
             &frame->latitude, &latitude_direction,
             &frame->longitude, &longitude_direction,
-            &frame->fix_quality,
             &frame->satellites_tracked,
+            &frame->fix_quality,
             &frame->hdop,
             &frame->altitude, &frame->altitude_units,
             &frame->height, &frame->height_units,

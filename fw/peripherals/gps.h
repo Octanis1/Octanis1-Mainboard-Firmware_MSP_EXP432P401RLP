@@ -1,11 +1,12 @@
 #ifndef __GPS_H
 #define __GPS_H
 
+#define NUM_SENTENCES 4
+
 void gps_task();
 
 int gps_get_fix_quality();
 int gps_get_satellites_tracked();
-
 
 //unscaled lat and lon integers
 float gps_get_lat();

@@ -62,6 +62,8 @@ extern "C" {
 #include <stdint.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
+
 
 #include "MSP_EXP432P401RLP.h"
 
