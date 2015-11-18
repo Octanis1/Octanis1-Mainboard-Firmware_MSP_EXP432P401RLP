@@ -20,8 +20,16 @@
 //#define TARGET_LON 6.590315
 
 //Other, hopefully closer
-#define TARGET_LAT 76.31559
-#define TARGET_LON 6.35276
+#define ESP_LAT 46.520216
+#define ESP_LON 6.565783
+#define HACK_LAT 46.532483
+#define HACK_LON 6.590315
+#define EL_LAT 46.519832
+#define EL_LON 6.564925
+#define ROLEX_LAT 46.518996
+#define ROLEX_LON 6.568278
+#define PLASMA_LAT 46.517241
+#define PLASMA_LON 6.565021
 
 struct rover_status{
 	float lat_current;
@@ -54,6 +62,12 @@ float nav_get_angle(float lat_current, float lon_current, float lat_target, floa
 
 void navigation_task(){
 
+	float toPlasma=0;
+	float toEL=0;
+	float toRolex=0;
+	float toHackuarium=0;
+	float toEsplanade=0;
+
 	while(1){
 
 		GPIO_write(Board_LED_RED, Board_LED_OFF);
@@ -62,23 +76,51 @@ void navigation_task(){
 		//Commented for debug reason because oterwise we never go into the else
 		//We check if the gps is already working
 		if (gps_get_validity() == 0){
-		//if(0){
+			//error
 		}
 		else{
 			pos_var.lat_current = gps_get_lat();
 			pos_var.lon_current = gps_get_lon();
 
-
-
-			pos_var.distance = nav_get_distance(pos_var.lat_current, pos_var.lon_current, TARGET_LAT, TARGET_LON);
+			toPlasma= nav_get_distance(pos_var.lat_current, pos_var.lon_current, PLASMA_LAT, PLASMA_LON);
+			toEL= nav_get_distance(pos_var.lat_current, pos_var.lon_current, EL_LAT, EL_LON);
+			toRolex= nav_get_distance(pos_var.lat_current, pos_var.lon_current, ROLEX_LAT, ROLEX_LON);
+			toHackuarium= nav_get_distance(pos_var.lat_current, pos_var.lon_current, HACK_LAT, HACK_LON);
+			toEsplanade= nav_get_distance(pos_var.lat_current, pos_var.lon_current, ESP_LAT, ESP_LON);
 
 			//We check if we are at the location
-			if(pos_var.distance <= 5){
-				GPIO_write(Board_LED_RED, Board_LED_ON);
+			if(toEsplanade <= 5){
+				System_printf("Esplanade reached\n");
+				    /* SysMin will only print to the console when you call flush or exit */
+				System_flush();
+			}
+			else if (toHackuarium <= 5){
+				System_printf("Hackuarium reached\n");
+								    /* SysMin will only print to the console when you call flush or exit */
+				System_flush();
+			}
+			else if (toEL <= 5){
+				System_printf("EL reached\n");
+								    /* SysMin will only print to the console when you call flush or exit */
+				System_flush();
+			}
+			else if (toRolex <= 5){
+				System_printf("RLC reached\n");
+								    /* SysMin will only print to the console when you call flush or exit */
+				System_flush();
+			}
+			else if (toPlasma <= 5){
+				System_printf("Plasma center reached\n");
+								    /* SysMin will only print to the console when you call flush or exit */
+				System_flush();
+			}
+			else{
+				System_printf("To EL = %f\n To Esplanade = %f\n To Rolex = %f\n To Plasma = %f\n To Hackuarium = %f\n", toEL, toEsplanade, toRolex, toPlasma, toHackuarium);
+				    /* SysMin will only print to the console when you call flush or exit */
+				System_flush();
 			}
 
-
-			pos_var.angle = nav_get_angle(pos_var.lat_current, pos_var.lon_current, TARGET_LAT, TARGET_LON);
+			pos_var.angle = nav_get_angle(pos_var.lat_current, pos_var.lon_current, HACK_LAT, HACK_LON);
 
 			//Tell the motor to move accordingly
 		}

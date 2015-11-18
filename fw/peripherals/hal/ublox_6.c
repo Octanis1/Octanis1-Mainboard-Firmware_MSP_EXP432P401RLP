@@ -43,9 +43,13 @@ void ublox_6_close(){
 
 char * ublox_6_read(){
 
+//	int i=0;
 	UART_read(uart, rxBuffer, sizeof(rxBuffer));
-	System_printf("%s \n", rxBuffer);
-	    /* SysMin will only print to the console when you call flush or exit */
-	    System_flush();
+
+//	for(i=0;rxBuffer[i]!='\0';i++){
+//		System_printf("%c \n", rxBuffer[i]);
+	    	/* SysMin will only print to the console when you call flush or exit */
+//	    System_flush();
+//	}
 	return rxBuffer;
 }

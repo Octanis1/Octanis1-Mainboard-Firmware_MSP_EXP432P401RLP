@@ -7,6 +7,9 @@
 #include "hal/ublox_6.h"
 #include "../lib/minmea/minmea.h"
 #include "gps.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 
 static struct minmea_sentence_gga gps_gga_frame;
@@ -51,7 +54,8 @@ int gps_get_last_update_time(){
 	return gps_last_update.tv_sec;
 }
 
-void gps_task(){
+
+ void gps_task(){
 
 	while (1) {
 
@@ -93,3 +97,4 @@ void gps_task(){
 
 
 }
+
