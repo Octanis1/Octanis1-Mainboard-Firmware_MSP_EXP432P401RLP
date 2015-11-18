@@ -9,6 +9,7 @@
 #include "hal/bme280i2c.h"
 #include "hal/bmp180i2c.h"
 #include "hal/SHT2x.h"
+#include "hal/windsensor.h"
 #include "hal/i2c_helper.h"
 #include "../lib/printf.h"
 
@@ -17,11 +18,13 @@
 void weather_task(){
 
 	i2c_helper_init_handle();
+	windsensor_init();
 
 	while(1){
 		Task_sleep(3000);
 
-		bme280_data_readout_template();
+		windsensor_getvalue();
+	//	bme280_data_readout_template();
 
 		float inside_temperature = sht2x_get_temp();
 		float inside_humidity = sht2x_get_humidity();
@@ -34,6 +37,7 @@ void weather_task(){
 		//cli_printf("RH: %f \n", &inside_humidity);
 
 		//bmp180_data_readout_template();
+	//	bmp180_data_readout_template();
 
 		//DEBUGGING BMP180 START
 		/* bmp180_begin(i2c_handle);

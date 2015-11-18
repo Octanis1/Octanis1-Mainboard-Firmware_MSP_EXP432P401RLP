@@ -19,6 +19,8 @@
 uint16_t pulse_rising_time[N_ULTRASONIC_SENSORS_PER_ARRAY]; //record timestamp when pulse was sent out
 uint16_t pulse_falling_time[N_ULTRASONIC_SENSORS_PER_ARRAY]; //record timestamp when the interrupt was triggered by the echoed pulse
 
+//uint16_t
+
 void ultrasonic_ccr_ISR(uint8_t pin_index, uint16_t timestamp, uint8_t edgetype);
 Timer_Handle timer;
 
@@ -141,12 +143,13 @@ bool ultrasonic_get_distance(int32_t distance_values[])
 			/* Check if pulse was detected and timestamp recorded */
 			if(pulse_rising_time[i]==0 || pulse_falling_time[i]==0) //assuming timestamp = 0 is very unlikely
 			{
-				retval = 0; //return ERROR
+				distance_values[i+arrayoffset]=0;
+				//retval = 0; //return ERROR
 			}
 			else
 			{
 				/* Check that no timer overflow happened */
-				if(pulse_rising_time[i] > pulse_falling_time[i])
+				if(pulse_rising_time[i] < pulse_falling_time[i])
 				{ //calculate time difference normally
 					distance_values[i+arrayoffset]=(int32_t)pulse_falling_time[i] - (int32_t)pulse_rising_time[i];
 				}
@@ -154,12 +157,46 @@ bool ultrasonic_get_distance(int32_t distance_values[])
 				{ //compensate for the overflow
 					distance_values[i+arrayoffset]=(int32_t)pulse_falling_time[i] - (int32_t)pulse_rising_time[i] + 0xFFFF;
 				}
+
+			//	cli_printf("us : distance : %d \n", distance_values[i+arrayoffset]);
 			}
 		}
 
 	}
 
 	return retval;
+}
+
+/*
+ * distance_values: integer times of flight in ms for each sensor
+ *
+ * return an array of boolean values (or possibly more information) if the direction corresponding to an array of ultrasonic sensors is cleared or not
+ */
+void ultrasonic_check_distance(int32_t distance_values[], int8_t directions_array[])
+{
+	uint8_t j=0,
+			i=0,
+			arrayoffset=0; //the index offset to store the distance_value's for each array
+
+
+	/* iterate over the number of sensor arrays */
+	for(j=0; j<N_ULTRASONIC_ARRAYS; j++)
+	{
+		arrayoffset = j*N_ULTRASONIC_SENSORS_PER_ARRAY;
+		for(i=0; i < N_ULTRASONIC_SENSORS_PER_ARRAY; i++)
+		{
+			if(distance_values[i+arrayoffset] <= CRITICAL_DISTANCE_THRESHOLD_TIMESTAMP)
+			{
+				directions_array[i+arrayoffset] = 0;
+			}
+			else
+			{
+				directions_array[i+arrayoffset] = 1;
+			}
+		//	cli_printf("us: cleared? - for %d \n", directions_array[i+arrayoffset]);
+		}
+
+	}
 }
 
 /*
@@ -178,10 +215,11 @@ void ultrasonic_send_pulses(uint8_t index)
 	uint32_t stop_time;
 
 	/* Turn on logic OR gate */
-	GPIO_write(Board_ULTRASONIC_OR_SLEEP, 0);
+//	GPIO_write(Board_ULTRASONIC_OR_SLEEP, 0);
 
 	/* Turn on sensors 0-3 */
 	GPIO_write(enable_pins[index], 1);
+	Task_sleep(600); //assure supply voltage could rise high.
 
 	//TODO: maybe would be useful to turn on/off CCR interrupts
 
@@ -193,16 +231,17 @@ void ultrasonic_send_pulses(uint8_t index)
 	{ //wait 10us
 		stop_time = Timestamp_get32();
 	}
+//	Task_sleep(60); //todo remove
 	GPIO_write(trigger_pins[index], 0);
 
 	/* Wait for all pulses to arrive and ISR to finish (max pulse lenght: 23ms) */
-	Task_sleep(60);
+	Task_sleep(80);
 
 	/* Turn off sensors 0-3 (or 4-7) */
 	GPIO_write(enable_pins[index], 0);
 
 	/* Turn off logic OR gate */
-	GPIO_write(Board_ULTRASONIC_OR_SLEEP, 1);
+//	GPIO_write(Board_ULTRASONIC_OR_SLEEP, 1);
 }
 
 /* TODO: this code is just here for reference. remove later
@@ -234,17 +273,18 @@ int16_t diff=0;
  *
  * index : ultrasonic input pin that triggered the CCR (0-3)
  * timestamp : ...
- * edgetype : 1=falling, 0=rising
+ * edgetype : 1=rising, 0=falling
  */
 void ultrasonic_ccr_ISR(uint8_t pin_index, uint16_t timestamp, uint8_t edgetype)
 {
 	if(edgetype)
-	{//bit was high -> falling edge
-		pulse_falling_time[pin_index]=timestamp;
+	{//bit is high -> rising edge
+		pulse_rising_time[pin_index]=timestamp;
+
 	}
 	else
-	{
-		pulse_rising_time[pin_index]=timestamp;
+	{//input bit is low -> falling edge
+		pulse_falling_time[pin_index]=timestamp;
 	}
 
 }
