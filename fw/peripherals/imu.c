@@ -20,32 +20,33 @@ void imu_task(){
 
 	double d_euler_data_p;
 	double d_euler_data_h;
+	double d_euler_data_r;
 	unsigned char calib_status;
 
 	while(1){
 
 	calib_status=bno055_check_calibration_status();
-	if(calib_status > 8)
-	{
+//	if(calib_status > 8)
+//	{
+//
+//		GPIO_write(Board_LED_RED, Board_LED_OFF);
+//	}
+//	else
+//	{
+//		GPIO_write(Board_LED_RED, Board_LED_ON);
+//
+//	}
 
-		GPIO_write(Board_LED_RED, Board_LED_OFF);
-	}
-	else
-	{
-		GPIO_write(Board_LED_RED, Board_LED_ON);
 
-	}
-
-
-	bno055_get_heading(&d_euler_data_h, &d_euler_data_p);
-	if(d_euler_data_h > 180)
-	{
-		GPIO_write(Board_LED_GREEN, Board_LED_ON);
-	}
-	else
-	{
-		GPIO_write(Board_LED_GREEN, Board_LED_OFF);
-	}
+	bno055_get_heading(&d_euler_data_h, &d_euler_data_p, &d_euler_data_r);
+//	if(d_euler_data_h > 180)
+//	{
+//		GPIO_write(Board_LED_GREEN, Board_LED_ON);
+//	}
+//	else
+//	{
+//		GPIO_write(Board_LED_GREEN, Board_LED_OFF);
+//	}
 
 	//	bno055_data_readout_template();
 

@@ -62,8 +62,8 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
 //    MSP_EXP432P401RLP_S2,
     Octanis05_ROCKBLOCK_NET,
 	//MSP_EXP432P401RLP_ULTRASONIC_IN0,
-	Octanis05_LED1, //octanis led1
-	Octanis05_LED2, //octanis led2
+	Octanis05_LED0, //octanis led1
+	Octanis05_LED1, //octanis led2
 	Octanis05_ROCKBLOCK_SLEEP,
 	Octanis05_5V_EN,
 	Octanis05_ULTRASONIC_OR_SLEEP,

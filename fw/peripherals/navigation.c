@@ -70,7 +70,7 @@ void navigation_task(){
 
 	while(1){
 
-		GPIO_write(Board_LED_RED, Board_LED_OFF);
+//		GPIO_write(Board_LED_RED, Board_LED_OFF);
 		struct rover_status pos_var;
 
 		//Commented for debug reason because oterwise we never go into the else

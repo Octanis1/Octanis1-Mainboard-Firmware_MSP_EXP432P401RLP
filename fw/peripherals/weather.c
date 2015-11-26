@@ -23,11 +23,11 @@ void weather_task(){
 	while(1){
 		Task_sleep(3000);
 
-		windsensor_getvalue();
-	//	bme280_data_readout_template();
+	//	windsensor_getvalue();
+		bme280_data_readout_template();
 
-		float inside_temperature = sht2x_get_temp();
-		float inside_humidity = sht2x_get_humidity();
+//		float inside_temperature = sht2x_get_temp();
+//		float inside_humidity = sht2x_get_humidity();
 
 		//TODO: write little routine that compare the value given by the different captors
 

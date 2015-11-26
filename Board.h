@@ -109,8 +109,8 @@ extern "C" {
 
 //#define Board_BUTTON0               MSP_EXP432P401RLP_S1
 //#define Board_BUTTON1               MSP_EXP432P401RLP_S2
-#define Board_LED_GREEN               Octanis05_LED1
-#define Board_LED_RED                 Octanis05_LED2
+#define Board_LED_RED               	Octanis05_LED0
+#define Board_LED_GREEN              Octanis05_LED1
 
 #define Board_ROCKBLOCK_SLEEP		Octanis05_ROCKBLOCK_SLEEP
 #define Board_ROCKBLOCK_NET			Octanis05_ROCKBLOCK_NET

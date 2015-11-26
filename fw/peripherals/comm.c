@@ -90,10 +90,12 @@ int pend_message(){
 	cli_printf("rxmsgl %d \n", frame.message_length);
 
 
+	// LORA STARTS  HERE
+
 	//try to print the buffer in hex
 
 	//test buffer to get byte order right
-	uint8_t deadbeef[4] = {222,173,190,239};
+	uint8_t deadbeef[4] = {2,3,4,5};
 
 	char hex_string_byte[2];
 	char hex_string[COMM_FRAME_SIZE]; //TODO: ATTENTION: this is too small! need to change this

@@ -19,6 +19,25 @@
 //available destinations
 typedef enum {COMM_CLI, COMM_IRIDIUM, COMM_GSM, COMM_VHF} comm_destination_t;
 
+/* Enum definitions */
+/* Struct definitions */
+typedef struct _rover_status_comm {
+	float gps_lat;
+	float gps_long;
+	int gps_fix_quality;
+	uint32_t system_seconds;
+	unsigned char imu_calib_status;
+	double imu_heading;
+	double imu_roll;
+	double imu_pitch;
+	signed int int_temperature;
+	unsigned int int_pressure;
+	unsigned int int_humidity;
+	uint16_t ext_temperature;
+	uint32_t ext_pressure;
+	float ext_humidity
+} rover_status_comm;
+
 
 //public communications frame for encapsulation
 typedef struct {
