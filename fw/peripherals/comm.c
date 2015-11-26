@@ -11,12 +11,30 @@
 #include "hal/rn2483.h"
 #include "../lib/printf.h"
 
+
 //protobuf DEBUG TO REMOVE
 
 #include "../lib/nanopb/pb_encode.h"
 #include "../lib/nanopb/pb_decode.h"
 #include "../protobuf/rover_status.pb.h"
 
+void comm_init(rover_status_comm* stat)
+{
+	stat->gps_lat = -1.0;
+	stat->gps_long = -1.0;
+	stat->gps_fix_quality = -1;
+	stat->system_seconds = -1;
+	stat->imu_calib_status = 0;
+	stat->imu_heading = -1;
+	stat->imu_roll = -1;
+	stat->imu_pitch = -1;
+	stat->int_temperature = -274;
+	stat->int_pressure = -1;
+	stat->int_humidity = -1;
+	stat->ext_temperature = -274;
+	stat->ext_pressure = -1;
+	stat->ext_humidity = -1;
+}
 
 //dispatches the message to its destination where it will be sent
 int dispatch_message(comm_destination_t dest, size_t message_length,
@@ -90,40 +108,7 @@ int pend_message(){
 	cli_printf("rxmsgl %d \n", frame.message_length);
 
 
-	// LORA STARTS  HERE
 
-	//try to print the buffer in hex
-
-	//test buffer to get byte order right
-	uint8_t deadbeef[4] = {2,3,4,5};
-
-	char hex_string_byte[2];
-	char hex_string[COMM_FRAME_SIZE]; //TODO: ATTENTION: this is too small! need to change this
-	memset(&hex_string, 0, sizeof(hex_string));
-
-	int i;
-	for(i=0; i<4; i++){
-		memset(&hex_string_byte, 0, sizeof(hex_string_byte));
-	    tfp_sprintf(hex_string_byte, "%02x", deadbeef[i]);
-	    strcat(hex_string, hex_string_byte);
-	}
-
-
-	//lora test
-
-	 	if(rn2483_begin()){
-			cli_printf("rn2483.\n", 0);
-		}else{
-			cli_printf("adiedrn2483.\n", 0);
-		}
-
-
-	 	rn2483_send_receive(hex_string, strlen(hex_string));
-
-
-		rn2483_end();
-
-	//lora test end
 
 
 	/* But because we are lazy, we will just decode it immediately. */
@@ -177,7 +162,7 @@ int comm_post_message(comm_frame_t frame){
 	//copy frame struct to frame buffer
 	memcpy(frame_buffer, &frame, frame_size);
 
-	cli_printf("frame size %d \n", frame_size);
+	//cli_printf("frame size %d \n", frame_size);
 
 	//post the frame
     return Mailbox_post(comm_tx_mailbox, frame_buffer, BIOS_NO_WAIT);
@@ -187,13 +172,84 @@ int comm_post_message(comm_frame_t frame){
 }
 
 
+void comm_send_status_over_lora(rover_status_comm* stat)
+{
+	// LORA STARTS  HERE
+
+	//try to print the buffer in hex
+
+	//test buffer to get byte order right
+	int stringlength=0;
+	char txdata[COMM_STRING_SIZE] = "";
+
+	stringlength += ftoa(stat->gps_lat, &txdata[stringlength], 7); //convert gps latitude to string with sign and 7 afterpoint
+	txdata[stringlength++] = ','; 					//plus a comma
+
+	stringlength += ftoa(stat->gps_lat, &txdata[stringlength], 7); //convert gps long to string with sign and 7 afterpoint
+	txdata[stringlength++] = ','; 					//plus a comma
+
+	stringlength += tfp_sprintf(&(txdata[stringlength]), "%d,%u,%u,%d,%d,%d,%d,%u,%u,%d,%d",
+											stat->gps_fix_quality,
+											stat->system_seconds,
+											stat->imu_calib_status,
+											stat->imu_heading,
+											stat->imu_roll,
+											stat->imu_pitch,
+											stat->int_temperature,
+											stat->int_pressure,
+											stat->int_humidity,
+											stat->ext_temperature,
+											stat->ext_pressure,
+											stat->ext_humidity);
+
+	if(stringlength > COMM_FRAME_SIZE) //should never happen! corrupt memory will be the result!
+	{
+		cli_printf("LoRa status string overflow! %u",stringlength);
+		stringlength = COMM_FRAME_SIZE;
+	}
+
+	char hex_string_byte[2];
+	char hex_string[COMM_FRAME_SIZE]; //TODO: ATTENTION: this is too small! need to change this
+	memset(&hex_string, 0, sizeof(hex_string));
+
+	int i;
+	for(i=0; i<stringlength; i++){
+		memset(&hex_string_byte, 0, sizeof(hex_string_byte));
+		tfp_sprintf(hex_string_byte, "%02x", txdata[i]);
+		strcat(hex_string, hex_string_byte);
+	}
+
+
+
+	//lora test
+
+	if(rn2483_begin()){
+		cli_printf("rn2483.\n", 0);
+	}else{
+		cli_printf("adiedrn2483.\n", 0);
+	}
+
+
+	rn2483_send_receive(hex_string, 2*stringlength);
+
+
+	rn2483_end();
+	//lora test end
+}
+
+
 
 void comm_task(){
+	rover_status_comm my_rover_status;
 
+	comm_init(&my_rover_status);
 	while(1){
 //TODO:debug 	    GPIO_write(Board_LED_RED, Board_LED_ON);
 
 		pend_message();
+
+
+		comm_send_status_over_lora(&my_rover_status);
 
 
 //TODO:debug		GPIO_write(Board_LED_RED, Board_LED_OFF);

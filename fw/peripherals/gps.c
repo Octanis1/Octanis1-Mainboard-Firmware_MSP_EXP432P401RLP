@@ -61,7 +61,7 @@ int gps_get_last_update_time(){
 
 		//initialise GPS device, open UART
 		if(!ublox_6_open()){
-			cli_printf("%d GPS UART error", 0);
+//			cli_printf("%d GPS UART error", 0);
 		}
 
 		//get data from device (blocking call)

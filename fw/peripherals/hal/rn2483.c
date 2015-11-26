@@ -6,7 +6,7 @@
 
 #include "../../../Board.h"
 #include "rn2483.h"
-
+#include "../comm.h"
 
 #define RN2483_RXBUFFER_SIZE 20
 #define RN2483_READ_TIMEOUT 1000
@@ -36,7 +36,7 @@ int rn2483_open(){
 	uartParams.readEcho = UART_ECHO_OFF;
 	uartParams.baudRate = 57600;
 
-	uart = UART_open(Board_UART2_COMM, &uartParams);
+	uart = UART_open(Board_UART3_LORACOMM, &uartParams);
 
 	if (uart == NULL) {
 		return 0;
@@ -93,9 +93,10 @@ void rn2483_end(){
 
 
 
-int rn2483_send_receive(char * tx_buffer, int tx_size){
+int rn2483_send_receive(char * tx_buffer, int tx_size)
+{
 	char rxBuffer[RN2483_RXBUFFER_SIZE];
-	char txBuffer[50];
+	char txBuffer[tx_size+18]; //18 for the aditionnal lora commands
 
 	if(!rn2483_initialised) return 0;
 
@@ -106,11 +107,14 @@ int rn2483_send_receive(char * tx_buffer, int tx_size){
 	int tx_ret = UART_write(uart, txBuffer, strlen(txBuffer));
 	int rx_ret = UART_read(uart, rxBuffer, sizeof(rxBuffer));
 
-	cli_printf("tx %d\n", tx_ret);
+	cli_printf("tx %d \n", tx_ret);
 
-	if(!strcmp("ok\r\n", rxBuffer)){
+	if(!strcmp("ok\r\n", rxBuffer))
+	{
 		return 1; //modem can now communicate with us
-	}else{
+	}
+	else
+	{
 		return 0;
 	}
 

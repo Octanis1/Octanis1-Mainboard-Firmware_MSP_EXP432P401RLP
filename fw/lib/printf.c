@@ -59,7 +59,7 @@ static void li2a (long num, char * bf)
 
 #endif
 
-static void ui2a(unsigned int num, unsigned int base, int uc,char * bf)
+static int ui2a(unsigned int num, unsigned int base, int uc,char * bf)
     {
     int n=0;
     unsigned int d=1;
@@ -75,15 +75,19 @@ static void ui2a(unsigned int num, unsigned int base, int uc,char * bf)
             }
         }
     *bf=0;
+    return n;
     }
 
-static void i2a (int num, char * bf)
+static int i2a (int num, char * bf)
     {
+	int n=0;
     if (num<0) {
         num=-num;
         *bf++ = '-';
+        n=1;
         }
-    ui2a(num,10,0,bf);
+    n+=ui2a(num,10,0,bf);
+    return n;
     }
 
 static int a2d(char ch)
@@ -125,16 +129,20 @@ static void putchw(void* putp,putcf putf,int n, char z, char* bf)
         putf(putp,ch);
     }
 
-void tfp_format(void* putp,putcf putf,char *fmt, va_list va)
+/* WARNING: THE RETURNED STRING LENGHT ONLY WORKS FOR %u AND %d ARGUMENTS */
+int tfp_format(void* putp,putcf putf,char *fmt, va_list va)
     {
     char bf[12];
-
+    int length=0;
     char ch;
 
 
     while ((ch=*(fmt++))) {
         if (ch!='%')
+        {
             putf(putp,ch);
+        		(length)++;
+        }
         else {
             char lz=0;
 #ifdef  PRINTF_LONG_SUPPORT
@@ -164,7 +172,7 @@ void tfp_format(void* putp,putcf putf,char *fmt, va_list va)
                         uli2a(va_arg(va, unsigned long int),10,0,bf);
                     else
 #endif
-                    ui2a(va_arg(va, unsigned int),10,0,bf);
+                    length+=ui2a(va_arg(va, unsigned int),10,0,bf);
                     putchw(putp,putf,w,lz,bf);
                     break;
                     }
@@ -174,7 +182,7 @@ void tfp_format(void* putp,putcf putf,char *fmt, va_list va)
                         li2a(va_arg(va, unsigned long int),bf);
                     else
 #endif
-                    i2a(va_arg(va, int),bf);
+                    	length+=i2a(va_arg(va, int),bf);
                     putchw(putp,putf,w,lz,bf);
                     break;
                     }
@@ -199,8 +207,12 @@ void tfp_format(void* putp,putcf putf,char *fmt, va_list va)
                     break;
                 }
             }
+
         }
     abort:;
+
+    return length;
+
     }
 
 
@@ -225,13 +237,15 @@ static void putcp(void* p,char c)
 
 
 
-void tfp_sprintf(char* s,char *fmt, ...)
+int tfp_sprintf(char* s,char *fmt, ...)
     {
+	int length;
     va_list va;
     va_start(va,fmt);
-    tfp_format(&s,putcp,fmt,va);
+    length=tfp_format(&s,putcp,fmt,va);
     putcp(&s,0);
     va_end(va);
+    return length;
     }
 
 
@@ -273,9 +287,11 @@ int intToStr(int x, char str[], int d)
     return i;
 }
 
-// Converts a floating point number to string.
-void ftoa(float n, char *res, int afterpoint)
+// Converts a floating point number to string with two integer number places.
+// returns the length of the string
+int ftoa(float n, char *res, int afterpoint)
 {
+	int length=0;
     // Extract integer part
     int ipart = (int)n;
 
@@ -283,20 +299,30 @@ void ftoa(float n, char *res, int afterpoint)
     float fpart = n - (float)ipart;
 
     // convert integer part to string
-    int i = intToStr(ipart, res, 0);
+    if(ipart<0)
+    {
+    		res[0]='-'; //TODO can probably be improved
+    		ipart=-ipart;
+    		length++;
+    }
+
+    length += intToStr(ipart, res+length,0);
 
     // check for display option after point
     if (afterpoint != 0)
     {
-        res[i] = '.';  // add dot
+        res[length] = '.';  // add dot
+        length++;
 
         // Get the value of fraction part upto given no.
         // of points after dot. The third parameter is needed
         // to handle cases like 233.007
         fpart = fpart * pow(10, afterpoint);
 
-        intToStr((int)fpart, res + i + 1, afterpoint);
+        intToStr((int)fpart, res + length, afterpoint);
+        length+=afterpoint;
     }
+    return length;
 }
 
 

@@ -13,8 +13,11 @@
 #define COMM_MO_SIZE 340
 //max size of mobile terminated messages
 #define COMM_MT_SIZE 270
-//max size of internal comm frame
+//max size of internal comm frame (hex string for LoRa)
 #define COMM_FRAME_SIZE 350
+//max size of status string
+#define COMM_STRING_SIZE 175
+
 
 //available destinations
 typedef enum {COMM_CLI, COMM_IRIDIUM, COMM_GSM, COMM_VHF} comm_destination_t;
@@ -27,15 +30,15 @@ typedef struct _rover_status_comm {
 	int gps_fix_quality;
 	uint32_t system_seconds;
 	unsigned char imu_calib_status;
-	double imu_heading;
-	double imu_roll;
-	double imu_pitch;
+	int imu_heading; //converted from double
+	int imu_roll; //converted from double
+	int imu_pitch; //converted from double
 	signed int int_temperature;
 	unsigned int int_pressure;
 	unsigned int int_humidity;
-	uint16_t ext_temperature;
+	signed int ext_temperature;
 	uint32_t ext_pressure;
-	float ext_humidity
+	uint32_t ext_humidity; //converted from float
 } rover_status_comm;
 
 
@@ -47,6 +50,7 @@ typedef struct {
 } comm_frame_t;
 
 
+void comm_init();
 void comm_task();
 
 int comm_post_message(comm_frame_t frame);

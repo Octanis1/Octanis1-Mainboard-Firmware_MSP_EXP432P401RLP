@@ -19,6 +19,9 @@
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROJECT.Texas Instruments XDS110 USB Debug Probe/CORTEX_M4_0" value="Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_TARGET_CONFIG" value="${target_config_active_default:Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP}"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.Texas Instruments XDS110 USB Debug Probe/CORTEX_M4_0" value="/Users/raffael/Desktop/Octanis/ccs_workspace/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP/Debug/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP.out"/>
+<mapAttribute key="com.ti.ccstudio.debug.ui.displayFormats">
+<mapEntry key="Texas Instruments XDS110 USB Debug Probe/CORTEX_M4_0@##separator##@0" value="8-Bit Hex - TI Style"/>
+</mapAttribute>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
 <listEntry value="/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP"/>
 </listAttribute>

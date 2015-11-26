@@ -80,7 +80,7 @@ int rockblock_open(){
 int rockblock_begin(){
 
 	if(!rockblock_open()){
-		cli_printf("RB open error \n",0);
+//		cli_printf("RB open error \n",0);
 		return 0;
 	}
 
@@ -159,10 +159,10 @@ int rockblock_get_signal_quality(){
 //sends an SBD, then checks the inbox (checking costs 1 credit!)
 int rockblock_send_receive_SBD(const uint8_t *tx_buffer, size_t tx_buffersize,
 								uint8_t *rx_buffer, size_t *rx_buffersizePtr){
-	cli_printf("RBsr\n",0);
+//	cli_printf("RBsr\n",0);
 
 	if(!rockblock_begin()){
-		cli_printf("RB begin error \n",0);
+//		cli_printf("RB begin error \n",0);
 		return 0;
 	}
 

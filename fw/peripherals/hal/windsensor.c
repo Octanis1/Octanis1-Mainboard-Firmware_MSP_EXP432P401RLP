@@ -88,15 +88,15 @@ void windsensor_ccr_ISR(uint16_t timestamp, uint8_t edgetype)
 {
 //	GPIO_toggle(Board_LED_GREEN);
 
-	if(edgetype)
-	{
-		GPIO_write(Board_LED_GREEN, 0);
+	// if(edgetype)
+	// {
+	// 	GPIO_write(Board_LED_GREEN, 0);
 
-	}
-	else
-	{
-		GPIO_write(Board_LED_GREEN, 1);
+	// }
+	// else
+	// {
+	// 	GPIO_write(Board_LED_GREEN, 1);
 
-	}
+	// }
 }
 

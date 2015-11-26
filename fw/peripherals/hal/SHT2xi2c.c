@@ -28,7 +28,7 @@ char SHT2x_I2C_write(unsigned char dev_addr, unsigned char *reg_data, unsigned c
 	int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
 	if (!ret) {
-		cli_printf("SHT2x i2c bus write error\n", 0);
+//		cli_printf("SHT2x i2c bus write error\n", 0);
 	}
 
 	return ret;
@@ -48,7 +48,7 @@ char SHT2x_I2C_read(unsigned char dev_addr, unsigned char *reg_data, unsigned ch
 	int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
 	if (!ret) {
-		cli_printf("SHT2x read error \n", 0);
+//		cli_printf("SHT2x read error \n", 0);
 	}
 
 	return ret;
