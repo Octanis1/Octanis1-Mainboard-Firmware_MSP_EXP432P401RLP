@@ -90,7 +90,7 @@ void BME280_delay_msek(u32 msek);
  *	\param: None
  *	\return: communication result
  */
-s32 bme280_data_readout_template(void);
+s32 bme280_data_readout_template(int* temp_s32, unsigned int* press_u32, unsigned int* humity_u32);
 /*----------------------------------------------------------------------------*
  *  struct bme280_t parameters can be accessed by using bme280
  *	bme280_t having the following parameters

@@ -33,12 +33,12 @@ typedef struct _rover_status_comm {
 	int imu_heading; //converted from double
 	int imu_roll; //converted from double
 	int imu_pitch; //converted from double
-	signed int int_temperature;
+	int int_temperature;
 	unsigned int int_pressure;
 	unsigned int int_humidity;
-	signed int ext_temperature;
-	uint32_t ext_pressure;
-	uint32_t ext_humidity; //converted from float
+	int ext_temperature;
+	unsigned int ext_pressure;
+	unsigned int ext_humidity; //converted from float
 } rover_status_comm;
 
 

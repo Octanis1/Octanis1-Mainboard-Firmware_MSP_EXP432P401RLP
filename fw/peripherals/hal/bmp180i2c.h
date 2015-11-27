@@ -93,7 +93,7 @@ void BMP180_delay_msek(u32 msek);
  *	\param: None
  *	\return: communication result
  */
-s32 bmp180_data_readout_template(void);
+s32 bmp180_data_readout_template(int* temp_s32, unsigned int* press_u32);
 /*----------------------------------------------------------------------------
  struct bmp180_t parameters can be accessed by using bmp180
  *	bmp180_t having the following parameters

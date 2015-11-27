@@ -778,7 +778,7 @@ FOR PRESSURE AND TEMPERATURE DATA  */
 		s8 (*bus_read)(u8, u8,\
 		u8 *, u8)
 
-#define BME280_MDELAY_DATA_TYPE u16
+#define BME280_MDELAY_DATA_TYPE u32
 
 #define	BME280_3MS_DELAY	3
 /**************************************************************/

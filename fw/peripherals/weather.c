@@ -14,6 +14,56 @@
 #include "../lib/printf.h"
 
 
+static struct _weather_data {
+	int int_temp; //in 0.01 degree Centigrade
+	unsigned int int_press; //in Pa
+	unsigned int int_humid; //value of 42313 represents 42313 / 1024 = 41.321 %rH
+	int ext_temp_bmp180; //in 0.1 degree Centigrade
+	float ext_temp_sht21;
+	int ext_temp; // average of both values in 0.01 degree Centigrade
+	unsigned int ext_press; //pressure in steps of 1.0 Pa
+	float ext_humid;
+} weather_data;
+
+//in 0.01 degree Centigrade
+int weather_get_int_temp(){
+	return weather_data.int_temp;
+}
+
+//in Pa
+unsigned int weather_get_int_press(){
+	return weather_data.int_press;
+}
+
+//value of 42313 represents 42313 / 1024 = 41.321 %rH
+unsigned int weather_get_int_humid(){
+	return weather_data.int_humid;
+}
+
+//in 0.01 degree Centigrade
+int weather_get_ext_temp(){
+	return weather_data.ext_temp;
+}
+
+//in Pa
+unsigned int weather_get_ext_press(){
+	return weather_data.ext_press;
+}
+
+//value of 42313 represents 42313 / 1024 = 41.321 %rH
+unsigned int weather_get_ext_humid(){
+	return (int)(1024*weather_data.ext_humid);
+}
+
+/* function calculating averages etc. of measured sensor data */
+void weather_aggregate_data()
+{
+	// average SHT21 and BMP180 external temperature data and scale the result to 0.01 degree Celsius
+	weather_data.ext_temp = (int)((10*weather_data.ext_temp_sht21+(float)weather_data.ext_temp_bmp180)*5);
+}
+
+
+
 
 void weather_task(){
 
@@ -23,33 +73,16 @@ void weather_task(){
 	while(1){
 		Task_sleep(3000);
 
-	//	windsensor_getvalue();
-		bme280_data_readout_template();
-
-//		float inside_temperature = sht2x_get_temp();
-//		float inside_humidity = sht2x_get_humidity();
-
-		//TODO: write little routine that compare the value given by the different captors
-
+		bme280_data_readout_template(&(weather_data.int_temp),&(weather_data.int_press),&(weather_data.int_humid));
 		//note: bme280 can give pressure, humidity and temperature
 
-		//cli_printf("temp: %f \n", &inside_temperature);
-		//cli_printf("RH: %f \n", &inside_humidity);
+		bmp180_data_readout_template(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
 
-		//bmp180_data_readout_template();
-	//	bmp180_data_readout_template();
+		weather_data.ext_temp_sht21 = sht2x_get_temp();
+		weather_data.ext_humid = sht2x_get_humidity();
 
-		//DEBUGGING BMP180 START
-		/* bmp180_begin(i2c_handle);
+		//	windsensor_getvalue();
 
-		float inside_temperature = bmp180_get_temp(i2c_handle);
-		float inside_pressure = bmp180_get_pressure(i2c_handle);
-
-		cli_printf("cabin temp: %d \n", inside_temperature);
-		cli_printf("cabin pressure: %d \n", inside_pressure);
-	*/
-
-		//DEBUGGING BMP180 END
-
+		void weather_aggregate_data();
 	}
 }

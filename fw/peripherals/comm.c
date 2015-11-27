@@ -18,6 +18,11 @@
 #include "../lib/nanopb/pb_decode.h"
 #include "../protobuf/rover_status.pb.h"
 
+/* libraries to get status info from other peripherals */
+#include "gps.h"
+#include "imu.h"
+#include "weather.h"
+
 void comm_init(rover_status_comm* stat)
 {
 	stat->gps_lat = -1.0;
@@ -107,10 +112,6 @@ int pend_message(){
 
 	cli_printf("rxmsgl %d \n", frame.message_length);
 
-
-
-
-
 	/* But because we are lazy, we will just decode it immediately. */
 	{
 		/* Allocate space for the decoded message. */
@@ -172,13 +173,29 @@ int comm_post_message(comm_frame_t frame){
 }
 
 
+void comm_gather_status_info(rover_status_comm* stat)
+{
+	/*Fill in struct with status information */
+	stat->gps_lat = gps_get_lat();
+	stat->gps_long = gps_get_lon();
+	stat->gps_fix_quality = gps_get_fix_quality();
+	stat->system_seconds = Seconds_get();
+	stat->imu_calib_status = 0;
+	stat->imu_heading = -1;
+	stat->imu_roll = -1;
+	stat->imu_pitch = -1;
+	stat->int_temperature = weather_get_int_temp();
+	stat->int_pressure = weather_get_int_press();
+	stat->int_humidity = weather_get_int_humid();
+	stat->ext_temperature = weather_get_ext_temp();
+	stat->ext_pressure = weather_get_ext_press();
+	stat->ext_humidity = weather_get_ext_humid();
+}
+
+
 void comm_send_status_over_lora(rover_status_comm* stat)
 {
-	// LORA STARTS  HERE
-
-	//try to print the buffer in hex
-
-	//test buffer to get byte order right
+	/* create Hexstring buffer from struct */
 	int stringlength=0;
 	char txdata[COMM_STRING_SIZE] = "";
 

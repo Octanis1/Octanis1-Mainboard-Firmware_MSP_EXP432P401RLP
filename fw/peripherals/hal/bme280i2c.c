@@ -66,22 +66,14 @@
 struct bme280_t bme280;
 
 
-s32 bme280_data_readout_template(void)
+s32 bme280_data_readout_template(int* temp_s32, unsigned int* press_u32, unsigned int* humity_u32)
 {
-	/* The variable used to assign the standby time*/
-	u8 v_stand_by_time_u8 = BME280_INIT_VALUE;
-	/* The variable used to read uncompensated temperature*/
-	s32 v_data_uncomp_tem_s32 = BME280_INIT_VALUE;
-	/* The variable used to read uncompensated pressure*/
-	s32 v_data_uncomp_pres_s32 = BME280_INIT_VALUE;
-	/* The variable used to read uncompensated pressure*/
-	s32 v_data_uncomp_hum_s32 = BME280_INIT_VALUE;
 	/* The variable used to read real temperature*/
-	s32 v_actual_temp_s32 = BME280_INIT_VALUE;
+	(*temp_s32) = BME280_INIT_VALUE;
 	/* The variable used to read real pressure*/
-	u32 v_actual_press_u32 = BME280_INIT_VALUE;
+	(*press_u32) = BME280_INIT_VALUE;
 	/* The variable used to read real humidity*/
-	u32 v_actual_humity_u32 = BME280_INIT_VALUE;
+	(*humity_u32) = BME280_INIT_VALUE;
 	/* result of communication results*/
 	s32 com_rslt = ERROR;
 
@@ -138,7 +130,7 @@ s32 bme280_data_readout_template(void)
 	com_rslt += bme280_set_standby_durn(BME280_STANDBY_TIME_1_MS);
 
 	/* This API used to read back the written value of standby time*/
-	com_rslt += bme280_get_standby_durn(&v_stand_by_time_u8);
+//	com_rslt += bme280_get_standby_durn(&v_stand_by_time_u8);
 /*-----------------------------------------------------------------*
 ************************* END GET and SET FUNCTIONS ****************
 *------------------------------------------------------------------*/
@@ -146,45 +138,11 @@ s32 bme280_data_readout_template(void)
 /************************* END INITIALIZATION *************************/
 
 /*------------------------------------------------------------------*
-************ START READ UNCOMPENSATED PRESSURE, TEMPERATURE
-AND HUMIDITY DATA ********
-*---------------------------------------------------------------------*/
-	/* API is used to read the uncompensated temperature*/
-	com_rslt += bme280_read_uncomp_temperature(&v_data_uncomp_tem_s32);
-
-	/* API is used to read the uncompensated pressure*/
-	com_rslt += bme280_read_uncomp_pressure(&v_data_uncomp_pres_s32);
-
-	/* API is used to read the uncompensated humidity*/
-	com_rslt += bme280_read_uncomp_humidity(&v_data_uncomp_hum_s32);
-
-	/* API is used to read the uncompensated temperature,pressure
-	and humidity data */
-	com_rslt += bme280_read_uncomp_pressure_temperature_humidity(
-	&v_data_uncomp_tem_s32, &v_data_uncomp_pres_s32, &v_data_uncomp_hum_s32);
-/*--------------------------------------------------------------------*
-************ END READ UNCOMPENSATED PRESSURE AND TEMPERATURE********
-*-------------------------------------------------------------------------*/
-
-/*------------------------------------------------------------------*
 ************ START READ TRUE PRESSURE, TEMPERATURE
 AND HUMIDITY DATA ********
 *---------------------------------------------------------------------*/
-	/* API is used to read the true temperature*/
-	/* Input value as uncompensated temperature and output format*/
-	com_rslt += bme280_compensate_temperature_int32(v_data_uncomp_tem_s32);
-
-	/* API is used to read the true pressure*/
-	/* Input value as uncompensated pressure */
-	com_rslt += bme280_compensate_pressure_int32(v_data_uncomp_pres_s32);
-
-	/* API is used to read the true humidity*/
-	/* Input value as uncompensated humidity and output format*/
-	com_rslt += bme280_compensate_humidity_int32(v_data_uncomp_hum_s32);
-
 	/* API is used to read the true temperature, humidity and pressure*/
-	com_rslt += bme280_read_pressure_temperature_humidity(
-	&v_actual_press_u32, &v_actual_temp_s32, &v_actual_humity_u32);
+	com_rslt += bme280_read_pressure_temperature_humidity(press_u32, temp_s32, humity_u32);
 /*--------------------------------------------------------------------*
 ************ END READ TRUE PRESSURE, TEMPERATURE AND HUMIDITY ********
 *-------------------------------------------------------------------------*/

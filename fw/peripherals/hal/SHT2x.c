@@ -123,12 +123,12 @@ char SHT2x_Measure(etSHT2xMeasureType eSHT2xMeasureType, unsigned char *pMeasura
 
   error = SHT2x_I2C_write (Board_SHT21_I2CADDR, &write_buffer, 1);
 
-  //-- poll every 10ms for measurement ready. Timeout after 20 retries (200ms)--
+  //-- poll every 10ms for measurement ready. Timeout after 1 retry (10ms)--
   do
   { SHT2x_delay_msek(10);  //delay 10ms
-    if(i++ >= 20) break;
+    if(i++ > 1) break;
   } while(!SHT2x_I2C_read(Board_SHT21_I2CADDR, pMeasurand, 3));
-  if (i>=20) error |= TIME_OUT_ERROR;
+  if (i>1) error |= TIME_OUT_ERROR;
 
 
   //-- verify checksum --

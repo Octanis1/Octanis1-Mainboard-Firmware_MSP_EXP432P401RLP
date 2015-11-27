@@ -70,7 +70,7 @@ struct bmp180_t bmp180;
  *	\param: None
  *	\return: communication result
  */
-s32 bmp180_data_readout_template(void)
+s32 bmp180_data_readout_template(int* temp_s32, unsigned int* press_u32)
 {
  /* result of communication results*/
 	s32 com_rslt = E_BMP_COMM_RES;
@@ -134,7 +134,7 @@ s32 bmp180_data_readout_template(void)
  *	parameter as uncompensated temperature(ut)
  *
  ***************************************************************************/
-	com_rslt += bmp180_get_temperature(v_uncomp_temp_u16);
+	(*temp_s32) = bmp180_get_temperature(v_uncomp_temp_u16);
 
 /****************************************************************************
  *	This API is used to read the
@@ -142,7 +142,7 @@ s32 bmp180_data_readout_template(void)
  *	input parameter as uncompensated pressure(up)
  *
  ***************************************************************************/
-	com_rslt += bmp180_get_pressure(v_uncomp_press_u32);
+	(*press_u32) = bmp180_get_pressure(v_uncomp_press_u32);
 
 /************************* END READ TRUE TEMPERATURE AND PRESSURE********/
 return com_rslt;
