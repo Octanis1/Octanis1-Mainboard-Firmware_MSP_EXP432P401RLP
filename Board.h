@@ -115,6 +115,9 @@ extern "C" {
 #define Board_ROCKBLOCK_SLEEP		Octanis05_ROCKBLOCK_SLEEP
 #define Board_ROCKBLOCK_NET			Octanis05_ROCKBLOCK_NET
 
+/* LoRa module pin definitions */
+#define Board_LORA_RESET_N			Octanis05_LORA_RESET_N
+
 
 /*Ultrasonic pin and timer definitions*/
 #define Board_ULTRASONIC_OR_SLEEP		Octanis05_ULTRASONIC_OR_SLEEP

@@ -25,6 +25,13 @@
 
 void comm_init(rover_status_comm* stat)
 {
+	if(rn2483_begin()){
+		cli_printf("rn2483.\n", 0);
+	}else{
+		cli_printf("adiedrn2483.\n", 0);
+	}
+
+
 	stat->gps_lat = -1.0;
 	stat->gps_long = -1.0;
 	stat->gps_fix_quality = -1;
@@ -240,23 +247,28 @@ void comm_send_status_over_lora(rover_status_comm* stat)
 
 	//lora test
 
-	if(rn2483_begin()){
-		cli_printf("rn2483.\n", 0);
-	}else{
-		cli_printf("adiedrn2483.\n", 0);
-	}
+
 
 
 	rn2483_send_receive(hex_string, 2*stringlength);
 
 
-	rn2483_end();
+	//rn2483_end(); //TODO: do we have to close the uart handle?
 	//lora test end
 }
 
 
 
 void comm_task(){
+
+#ifdef CONFIG_MODE
+	int comm_result=rn2483_config();
+	if(comm_result)
+		cli_printf("LoRa config failed: %d", comm_result);
+	else
+		cli_printf("LoRa config success: %d", comm_result);
+#endif
+
 	rover_status_comm my_rover_status;
 
 	comm_init(&my_rover_status);
