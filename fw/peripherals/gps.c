@@ -16,7 +16,7 @@ static struct minmea_sentence_gga gps_gga_frame;
 static struct minmea_sentence_rmc gps_rmc_frame;
 static struct timespec gps_last_update;
 
-int gps_get_fix_quality(){
+uint8_t gps_get_fix_quality(){
 	return gps_gga_frame.fix_quality;
 }
 

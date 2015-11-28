@@ -66,7 +66,7 @@ struct minmea_sentence_gga {
     struct minmea_time time;
     struct minmea_float latitude;
     struct minmea_float longitude;
-    int fix_quality;
+    uint8_t fix_quality;
     int satellites_tracked;
     struct minmea_float hdop;
     struct minmea_float altitude; char altitude_units;

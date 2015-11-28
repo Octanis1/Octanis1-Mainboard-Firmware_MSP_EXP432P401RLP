@@ -180,10 +180,10 @@ void comm_gather_status_info(rover_status_comm* stat)
 	stat->gps_long = gps_get_lon();
 	stat->gps_fix_quality = gps_get_fix_quality();
 	stat->system_seconds = Seconds_get();
-	stat->imu_calib_status = 0;
-	stat->imu_heading = -1;
-	stat->imu_roll = -1;
-	stat->imu_pitch = -1;
+	stat->imu_calib_status = imu_get_calib_status();
+	stat->imu_heading = imu_get_heading();
+	stat->imu_roll = imu_get_roll();
+	stat->imu_pitch = imu_get_pitch();
 	stat->int_temperature = weather_get_int_temp();
 	stat->int_pressure = weather_get_int_press();
 	stat->int_humidity = weather_get_int_humid();
@@ -265,6 +265,7 @@ void comm_task(){
 
 		pend_message();
 
+		comm_gather_status_info(&my_rover_status);
 
 		comm_send_status_over_lora(&my_rover_status);
 

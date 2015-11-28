@@ -10,6 +10,33 @@
 #include "hal/bno055_support.h"
 #include "hal/i2c_helper.h"
 
+static struct _imu_data {
+	double d_euler_data_p;
+	double d_euler_data_h;
+	double d_euler_data_r;
+	unsigned char calib_status;
+} imu_data;
+
+// pitch Euler data in 100 degrees
+uint16_t imu_get_pitch(){
+	return (uint16_t)(100*imu_data.d_euler_data_p);
+}
+
+// heading Euler data in 100 degrees
+uint16_t imu_get_heading(){
+	return (uint16_t)(100*imu_data.d_euler_data_h);
+}
+
+// roll Euler data in 100 degrees
+uint16_t imu_get_roll(){
+	return (uint16_t)(100*imu_data.d_euler_data_r);
+}
+
+// return IMU calib status
+uint8_t imu_get_calib_status(){
+	return (uint8_t)(imu_data.calib_status);
+}
+
 void imu_task(){
 
 	i2c_helper_init_handle();
@@ -17,15 +44,9 @@ void imu_task(){
 	imu_init();
 	motors_pwm_init();
 
-
-	double d_euler_data_p;
-	double d_euler_data_h;
-	double d_euler_data_r;
-	unsigned char calib_status;
-
 	while(1){
 
-	calib_status=bno055_check_calibration_status();
+	imu_data.calib_status=bno055_check_calibration_status();
 //	if(calib_status > 8)
 //	{
 //
@@ -38,7 +59,7 @@ void imu_task(){
 //	}
 
 
-	bno055_get_heading(&d_euler_data_h, &d_euler_data_p, &d_euler_data_r);
+	bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r));
 //	if(d_euler_data_h > 180)
 //	{
 //		GPIO_write(Board_LED_GREEN, Board_LED_ON);

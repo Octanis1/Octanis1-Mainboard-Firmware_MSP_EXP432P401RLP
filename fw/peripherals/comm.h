@@ -27,12 +27,12 @@ typedef enum {COMM_CLI, COMM_IRIDIUM, COMM_GSM, COMM_VHF} comm_destination_t;
 typedef struct _rover_status_comm {
 	float gps_lat;
 	float gps_long;
-	int gps_fix_quality;
 	uint32_t system_seconds;
-	unsigned char imu_calib_status;
-	int imu_heading; //converted from double
-	int imu_roll; //converted from double
-	int imu_pitch; //converted from double
+	uint8_t gps_fix_quality;
+	uint8_t imu_calib_status;
+	int16_t imu_heading; //converted from double
+	int16_t imu_roll; //converted from double
+	int16_t imu_pitch; //converted from double
 	int int_temperature;
 	unsigned int int_pressure;
 	unsigned int int_humidity;

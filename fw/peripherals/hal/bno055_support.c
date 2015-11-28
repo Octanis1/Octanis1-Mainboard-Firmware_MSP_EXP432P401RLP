@@ -137,7 +137,7 @@ s32 bno055_get_heading(double *d_euler_data_h, double *d_euler_data_p, double *d
 	/*	API used to read Euler data output as double  - degree and radians
 		float functions also available in the BNO055 API */
 	comres += bno055_convert_double_euler_h_deg(d_euler_data_h);
-	comres += bno055_convert_double_euler_r_deg(&d_euler_data_r);
+	comres += bno055_convert_double_euler_r_deg(d_euler_data_r);
 	comres += bno055_convert_double_euler_p_deg(d_euler_data_p);
 
 	return comres;

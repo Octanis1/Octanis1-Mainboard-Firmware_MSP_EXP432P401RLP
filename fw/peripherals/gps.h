@@ -5,7 +5,7 @@
 
 void gps_task();
 
-int gps_get_fix_quality();
+uint8_t gps_get_fix_quality();
 int gps_get_satellites_tracked();
 
 //unscaled lat and lon integers

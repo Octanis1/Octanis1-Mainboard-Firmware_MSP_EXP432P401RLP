@@ -78,8 +78,8 @@ void weather_task(){
 
 		bmp180_data_readout_template(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
 
-		weather_data.ext_temp_sht21 = sht2x_get_temp();
-		weather_data.ext_humid = sht2x_get_humidity();
+//		weather_data.ext_temp_sht21 = sht2x_get_temp(); //TODO: fix
+//		weather_data.ext_humid = sht2x_get_humidity();
 
 		//	windsensor_getvalue();
 
