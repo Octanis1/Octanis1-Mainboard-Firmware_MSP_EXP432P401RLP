@@ -90,6 +90,7 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
 	Octanis05_M7_PH,
 	Octanis05_M8_PH,
 	Octanis05_M5678_CURR_SENS_EN,
+	Octanis05_UV_EN,
 
 
     MSP_EXP432P401RLP_GPIOCOUNT

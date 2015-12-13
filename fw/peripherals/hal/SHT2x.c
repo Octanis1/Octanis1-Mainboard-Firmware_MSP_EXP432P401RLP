@@ -24,7 +24,7 @@ float sht2x_get_temp()
 	int data =0;
 	float result =0;
 
-	char error = SHT2x_Measure(TEMP, pMeasurand);
+	SHT2x_Measure(TEMP, pMeasurand);
 
 	data = SHT2x_GetInfo (pMeasurand);
 
@@ -41,7 +41,7 @@ float sht2x_get_humidity()
 	int data =0;
 	float result =0;
 
-	char error = SHT2x_Measure(HUMIDITY, pMeasurand);
+	SHT2x_Measure(HUMIDITY, pMeasurand);
 
 	data = SHT2x_GetInfo (pMeasurand);
 

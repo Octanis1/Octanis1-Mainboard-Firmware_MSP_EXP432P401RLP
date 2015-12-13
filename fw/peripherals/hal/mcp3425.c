@@ -5,9 +5,20 @@
  *      Author: Eloi
  */
 
+#include "mcp3425.h"
+#include "../../../Board.h"
+#include "i2c_helper.h"
+#include <xdc/runtime/Timestamp.h>
+//#include <xdc/runtime/Types.h>
+#include <msp432.h> //to access the registers
+//#include <driverlib/timer_a.h>
+
+/* DriverLib Includes */
+#include "driverlib.h"
+
 #define MCP_OUTPUT_LENGTH 3
 #define MCP_WRITE_LENGTH 1
-#define MCP_ADDR MCP3425AD_I2CADDR
+#define MCP_ADDR Board_MCP3425AD_I2CADDR
 #define MCP_REG_POS 2
 #define MSP_MSB_POS 0
 #define MCP_CONT_MODE 0b00010000
@@ -80,10 +91,10 @@ void mcp_init () {
      * =========================================
      */
 
-    unsigned char read_buffer[MCP_DATA_LENGTH];
+    unsigned char read_buffer[MCP_OUTPUT_LENGTH];
     unsigned char write_buffer = 0;
 
-    mcp_read(MCP_ADDR, read_buffer, MCP_OUTPUT_LENGTHi);
+    mcp_read(MCP_ADDR, read_buffer, MCP_OUTPUT_LENGTH);
 
     write_buffer = read_buffer[MCP_REG_POS];
     
@@ -101,18 +112,18 @@ void mcp_parse (unsigned char* reg_data, cpt_data* parsed_info) {
     
     voltage += reg_data[MSP_MSB_POS];
     voltage = (voltage << 8);
-    voltage | reg_data[MSP_MSB_POS+1];
+    voltage |= reg_data[MSP_MSB_POS+1];
 
     //if int is 4 bytes long we have to fill the 2 bigger bytes with the MSB
     if (sizeof(int) == 4){
         if((reg_data[0] & 0x80) == 0x80)
-            voltage | 0xFFFF0000;
+            voltage |= 0xFFFF0000;
         else
-            voltage & 0x0000FFFF;
+            voltage &= 0x0000FFFF;
     }
     
-    *parsed_info.uv_data = voltage;
-    *parsed_info.status_register = reg_data[MCP_REG_POS];
+    parsed_info->uv_data = voltage;
+    parsed_info->status_register = reg_data[MCP_REG_POS];
 }
 
 float mcp_convert_uv_data (int raw_data){
@@ -125,10 +136,11 @@ float mcp_convert_uv_data (int raw_data){
 float mcp_get_data (){
 
     cpt_data uv_cpt;
-    unsigned char* buffer[3];
+    unsigned char buffer[3];
 
     //turn on UV captor then wait 1msec
-    task_sleep(1200);
+    GPIO_write(Board_UV_PIN, Board_UV_ON);
+    Task_sleep(1200);
     
     mcp_read(MCP_ADDR, buffer, 3);
 
@@ -144,9 +156,10 @@ float mcp_get_data (){
     }
 
     //Turn UV captor off
+    GPIO_write(Board_UV_PIN, Board_UV_OFF);
 
-    mcp_parse (buffer, uv_cpt);
-    uv_cpt.uv_value = mcp_convert (uv_cpt.uv_data);
+    mcp_parse (buffer, &uv_cpt);
+    uv_cpt.uv_value = mcp_convert_uv_data (uv_cpt.uv_data);
 
     return uv_cpt.uv_data;
 }

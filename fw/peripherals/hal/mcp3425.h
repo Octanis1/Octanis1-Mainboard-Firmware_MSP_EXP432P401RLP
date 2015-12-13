@@ -8,7 +8,7 @@
 #ifndef FW_PERIPHERALS_HAL_MCP3425_H_
 #define FW_PERIPHERALS_HAL_MCP3425_H_
 
-typedef struct {
+typedef struct cpt_data {
     float uv_value; //mW/cm^2
     int uv_data; 
     unsigned char status_register;
