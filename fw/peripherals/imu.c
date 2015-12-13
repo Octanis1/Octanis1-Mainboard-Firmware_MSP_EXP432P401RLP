@@ -18,18 +18,18 @@ static struct _imu_data {
 } imu_data;
 
 // pitch Euler data in 100 degrees
-uint16_t imu_get_pitch(){
-	return (uint16_t)(100*imu_data.d_euler_data_p);
+int16_t imu_get_pitch(){
+	return (int16_t)(100*imu_data.d_euler_data_p);
 }
 
 // heading Euler data in 100 degrees
-uint16_t imu_get_heading(){
-	return (uint16_t)(100*imu_data.d_euler_data_h);
+int16_t imu_get_heading(){
+	return (int16_t)(100*imu_data.d_euler_data_h);
 }
 
 // roll Euler data in 100 degrees
-uint16_t imu_get_roll(){
-	return (uint16_t)(100*imu_data.d_euler_data_r);
+int16_t imu_get_roll(){
+	return (int16_t)(100*imu_data.d_euler_data_r);
 }
 
 // return IMU calib status

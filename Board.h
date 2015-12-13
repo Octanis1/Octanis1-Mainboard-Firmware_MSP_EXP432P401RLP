@@ -33,6 +33,9 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
+#define VERBOSE	1
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -25,8 +25,13 @@
 
 void comm_init(rover_status_comm* stat)
 {
+	Task_sleep(5000);
+	cli_printf("reset occured.\n", 0);
+
 	if(rn2483_begin()){
+	#if VERBOSE==1
 		cli_printf("rn2483.\n", 0);
+	#endif
 	}else{
 		cli_printf("adiedrn2483.\n", 0);
 	}
@@ -116,8 +121,9 @@ int pend_message(){
 
 	//is this memcpy dodgy?
 	memcpy(&frame, frame_buffer, sizeof(frame));
-
+	#if VERBOSE==1
 	cli_printf("rxmsgl %d \n", frame.message_length);
+	#endif
 
 	/* But because we are lazy, we will just decode it immediately. */
 	{
@@ -138,9 +144,11 @@ int pend_message(){
 		}
 
 		/* Print the data contained in the message. */
+		#if VERBOSE==1
 		cli_printf("bv %d!\n", message.bv);
 		cli_printf("rb %d!\n", message.rockblock_health);
 		cli_printf("gps %d!\n", message.gps_health);
+		#endif
 	}
 
 
@@ -209,7 +217,7 @@ void comm_send_status_over_lora(rover_status_comm* stat)
 	stringlength += ftoa(stat->gps_lat, &txdata[stringlength], 7); //convert gps latitude to string with sign and 7 afterpoint
 	txdata[stringlength++] = ','; 					//plus a comma
 
-	stringlength += ftoa(stat->gps_lat, &txdata[stringlength], 7); //convert gps long to string with sign and 7 afterpoint
+	stringlength += ftoa(stat->gps_long, &txdata[stringlength], 7); //convert gps long to string with sign and 7 afterpoint
 	txdata[stringlength++] = ','; 					//plus a comma
 
 	stringlength += tfp_sprintf(&(txdata[stringlength]), "%d,%u,%u,%d,%d,%d,%d,%u,%u,%d,%d",
@@ -275,7 +283,7 @@ void comm_task(){
 	while(1){
 //TODO:debug 	    GPIO_write(Board_LED_RED, Board_LED_ON);
 
-		pend_message();
+//		pend_message();
 
 		comm_gather_status_info(&my_rover_status);
 
@@ -284,7 +292,7 @@ void comm_task(){
 
 //TODO:debug		GPIO_write(Board_LED_RED, Board_LED_OFF);
 
-		Task_sleep(10000);
+		Task_sleep(100000);
 
 
 

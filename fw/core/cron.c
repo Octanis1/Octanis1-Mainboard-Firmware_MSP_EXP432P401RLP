@@ -17,7 +17,9 @@ Void cron_quick_clock(UArg arg){
 
   //print load periodically
   int cpuLoad = Load_getCPULoad();
+  #if VERBOSE==1
   cli_printf("CPU load: %d \n", cpuLoad);
+  #endif
   //cli_printf("Epoch: %d \n", Seconds_get());
 
 
