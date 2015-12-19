@@ -91,6 +91,10 @@ void mcp_init () {
      * =========================================
      */
 
+    /* Here we put it in 1shot conversion mode for energy economy purposes
+     * because the device uses 0.1 micro-A when in sleep mode
+     */
+
     unsigned char read_buffer[MCP_OUTPUT_LENGTH];
     unsigned char write_buffer = 0;
 
@@ -102,7 +106,7 @@ void mcp_init () {
     write_buffer = write_buffer & 0b11100000;
     
     //load the desired config
-    write_buffer = write_buffer + MCP_1SHOT_MODE + MCP_SPS_240 + MCP_PGA_2;
+    write_buffer = write_buffer + MCP_1SHOT_MODE + MCP_SPS_240 + MCP_PGA_1;
     mcp_write(MCP_ADDR, &write_buffer, MCP_WRITE_LENGTH);
 }
 
@@ -127,8 +131,13 @@ void mcp_parse (unsigned char* reg_data, cpt_data* parsed_info) {
 }
 
 float mcp_convert_uv_data (int raw_data){
-    
     float converted = 0;
+    
+    //we adjust the raw data to fit our 0-3.3V range
+    
+
+    //conversion to mW, numbers have to be determined experimentaly
+    
 
     return converted;
 }
