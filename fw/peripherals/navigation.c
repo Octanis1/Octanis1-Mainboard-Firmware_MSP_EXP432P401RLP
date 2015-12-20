@@ -69,12 +69,12 @@ void navigation_task(){
 //	float toHackuarium=0;
 //	float toEsplanade=0;
 
-	int motors_pwm_init();
+	motors_init();
 	Task_sleep(1000);
 
+	uint16_t sensor_values[N_WHEELS];
 
 	while(1){
-
 //		motors_wheels_move(32767, 32767, 32767, 32767);
 //		Task_sleep(100000);
 //		motors_wheels_move(-32767, 32767, -32767, 32767);
@@ -143,6 +143,10 @@ void navigation_task(){
 
 
 		Task_sleep(1500);
+
+
+		motors_wheels_update_distance();
+
 	}
 }
 

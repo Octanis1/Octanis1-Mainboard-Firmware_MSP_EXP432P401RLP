@@ -7,9 +7,19 @@
 
 #include "motors.h"
 #include "../../../Board.h"
+#include "adc.h"
 
 PWM_Handle pwm5_handle, pwm6_handle, pwm7_handle, pwm8_handle;
 PWM_Params pwm5_params, pwm6_params, pwm7_params, pwm8_params;
+
+
+int motors_init()
+{
+	motors_pwm_init();
+	adc_init();
+
+	return 1;
+}
 
 
 int motors_pwm_init(){
@@ -99,6 +109,14 @@ void motors_wheels_move(int16_t front_left, int16_t front_right, int16_t rear_le
 	PWM_setDuty(pwm7_handle, (rear_left));
 	PWM_setDuty(pwm8_handle, (rear_right));
 }
+
+
+void motors_wheels_update_distance()
+{
+	static uint16_t sensor_values[N_WHEELS];
+	adc_read_motor_sensors(sensor_values);
+}
+
 
 /*
  * arguments determine the direction of the struts movement

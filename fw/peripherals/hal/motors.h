@@ -8,9 +8,13 @@
 #ifndef FW_PERIPHERALS_HAL_MOTORS_H_
 #define FW_PERIPHERALS_HAL_MOTORS_H_
 
+#define N_WHEELS		4
+#define N_STRUTS		4
+
+
 #include <stdint.h>
 
-
+int motors_init();
 int motors_pwm_init();
 void motors_pwm_close();
 
@@ -23,6 +27,9 @@ void motors_struts_move(int8_t front_left, int8_t front_right, int8_t rear_left,
 
 void motors_wheels_stop();
 void motors_struts_stop();
+
+void motors_wheels_update_distance();
+
 
 
 #endif /* FW_PERIPHERALS_HAL_MOTORS_H_ */
