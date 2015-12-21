@@ -69,6 +69,8 @@ int motors_pwm_init(){
  */
 void motors_wheels_move(int16_t front_left, int16_t front_right, int16_t rear_left, int16_t rear_right)
 {
+	GPIO_write(Board_M5678_CURR_SENS_EN, 1); //turn current sensors on
+
 	GPIO_write(Board_M5678_SLEEP_N, 1); //turn h-bridge on
 
 	/* determine direction of the wheel (forward/backward) */
@@ -113,8 +115,10 @@ void motors_wheels_move(int16_t front_left, int16_t front_right, int16_t rear_le
 
 void motors_wheels_update_distance()
 {
+
 	static uint16_t sensor_values[N_WHEELS];
 	adc_read_motor_sensors(sensor_values);
+
 }
 
 
@@ -161,6 +165,7 @@ void motors_wheels_stop()
 	PWM_setDuty(pwm7_handle, 0);
 	PWM_setDuty(pwm8_handle, 0);
 
+	GPIO_write(Board_M5678_CURR_SENS_EN, 0); //turn current sensor off
 	GPIO_write(Board_M5678_SLEEP_N, 1); //turn h-bridge off
 }
 

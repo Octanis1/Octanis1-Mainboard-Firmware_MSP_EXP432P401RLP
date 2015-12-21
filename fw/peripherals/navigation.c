@@ -75,7 +75,7 @@ void navigation_task(){
 	uint16_t sensor_values[N_WHEELS];
 
 	while(1){
-//		motors_wheels_move(32767, 32767, 32767, 32767);
+		motors_wheels_move(32767, 32767, 32767, 32767);
 //		Task_sleep(100000);
 //		motors_wheels_move(-32767, 32767, -32767, 32767);
 //		Task_sleep(40000);
