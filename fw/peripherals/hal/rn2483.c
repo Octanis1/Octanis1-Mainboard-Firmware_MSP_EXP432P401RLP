@@ -185,6 +185,9 @@ int rn2483_config()
 int rn2483_send_receive(char * tx_buffer, int tx_size)
 {
 	char rxBuffer[RN2483_RXBUFFER_SIZE];
+	UART_read(uart, rxBuffer, sizeof(rxBuffer)); //clear the buffer: after 1st "ok", it receives a \n before "ok".
+												// this is a pretty bad hack and we should look where the character comes from .
+
 	memset(&rxBuffer, 0, sizeof(rxBuffer));
 	char txBuffer[tx_size+18]; //18 for the aditionnal lora commands
 
@@ -195,7 +198,7 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 	strcat(txBuffer, rn_txstop);
 
 	int tx_ret = UART_write(uart, txBuffer, strlen(txBuffer));
-	int rx_ret = UART_read(uart, rxBuffer, sizeof(rxBuffer)); //TODO: after 1st "ok", it receives a \n before "ok"
+	int rx_ret = UART_read(uart, rxBuffer, sizeof(rxBuffer));
 
 	//cli_printf("tx %d \n", tx_ret);
 
