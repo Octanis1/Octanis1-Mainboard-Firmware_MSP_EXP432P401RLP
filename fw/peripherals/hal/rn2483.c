@@ -133,9 +133,17 @@ int rn2483_config()
 {
 	int comm_result = 0;
 
+	//	reset the rn2483
+    GPIO_write(Board_LORA_RESET_N, 0);
+    GPIO_write(Board_LORA_RESET_N, 1);
+    	char rxBuffer[RN2483_RXBUFFER_SIZE];
+
 	comm_result+=(!rn2483_open());
 
-	char rxBuffer[RN2483_RXBUFFER_SIZE];
+	Task_sleep(500);
+	UART_read(uart, rxBuffer, sizeof(rxBuffer)); //clean the reset message
+	UART_read(uart, rxBuffer, sizeof(rxBuffer));
+	memset(&rxBuffer, 0, sizeof(rxBuffer));
 
 	Task_sleep(500);
 	UART_write(uart, rn_set_devaddr, sizeof(rn_set_devaddr));

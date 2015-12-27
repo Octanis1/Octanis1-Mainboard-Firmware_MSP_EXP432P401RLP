@@ -117,6 +117,12 @@ void motors_wheels_update_distance()
 {
 
 	static uint16_t sensor_values[N_WHEELS];
+
+	sensor_values[0] = 0;
+	sensor_values[1] = 0;
+	sensor_values[2] = 0;
+	sensor_values[3] = 0;
+
 	adc_read_motor_sensors(sensor_values);
 
 }

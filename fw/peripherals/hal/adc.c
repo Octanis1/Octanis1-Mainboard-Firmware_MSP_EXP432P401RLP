@@ -79,31 +79,36 @@ void adc_isr()
 
 uint8_t adc_read_motor_sensors(uint16_t sensor_values[N_WHEELS])
 {
+	static int i,j; //counter variables
+
 	ADC14_disableConversion(); //just as a safety
 
 	if(ADC14_configureMultiSequenceMode(ADC_MEM20,ADC_MEM23, false)) //Last argument is "repeat mode". only has effect in AUTOMATIC_ITERATION. Silicon Bug present too!
 	{
 		if(ADC14_enableConversion())
 		{
-			conversion_done = 0;
-			int i=0;
-			int c=0;
-			while(i<N_WHEELS)
+			for(j=0;j<N_ADC_AVG;j++)
 			{
-				if(ADC14_isBusy())
-				{c++;}
-				else
-				{
-					i += (int)ADC14_toggleConversionTrigger();
-				}
-			}
-			sensor_values[3] = ADC14MEM20;
-			sensor_values[2] = ADC14MEM21;
-			sensor_values[1] = ADC14MEM22;
-			while(conversion_done == 0);
-			ADC14_disableConversion();
-			sensor_values[0] = ADC14MEM23;
+				i = ADC14_toggleConversionTrigger();
+				conversion_done = 0;
 
+				while(i<N_WHEELS)
+				{
+					if(ADC14_isBusy())
+					{continue;}
+					else
+					{
+						i += (int)ADC14_toggleConversionTrigger();
+					}
+				}
+				sensor_values[3] += ADC14MEM20;
+				sensor_values[2] += ADC14MEM21;
+				sensor_values[1] += ADC14MEM22;
+				while(conversion_done == 0);
+				sensor_values[0] += ADC14MEM23;
+			}
+
+			ADC14_disableConversion();
 			return ADC_SUCCESS;
 		}
 	}
