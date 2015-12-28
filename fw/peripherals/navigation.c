@@ -36,8 +36,6 @@
 #define PLASMA_LAT 46.517241
 #define PLASMA_LON 6.565021
 
-
-
 typedef struct _navigation_status{
 	float lat_rover;
 	float lon_rover;
@@ -54,7 +52,6 @@ typedef struct _navigation_status{
 } navigation_status_t;
 
 static navigation_status_t navigation_status;
-
 static target_list_t navigation_targets;
 
 
@@ -103,6 +100,27 @@ float getAngleToTarget(float lat1, float lon1, float lat2, float lon2, float hea
 
     return brng;
 }
+
+
+uint8_t navigation_add_target(float new_lat, float new_lon, uint8_t new_id)
+{
+	uint8_t next_index = (navigation_targets.last_index + 1) % N_TARGETS_MAX;
+	if(next_index == navigation_targets.current_index)
+	{
+		return 0;
+	}
+	else
+	{
+		navigation_targets.last_index = next_index;
+		navigation_targets.lat[next_index] = new_lat;
+		navigation_targets.lon[next_index] = new_lon;
+		navigation_targets.id[next_index] = new_id;
+		navigation_targets.state[next_index] = VALID;
+
+		return 1;
+	}
+}
+
 
 /* fetch the next target to move to from the queue */
 void navigation_update_target()
@@ -229,6 +247,9 @@ void navigation_init()
 	navigation_status.distance_to_target = 0.0;
 	navigation_status.angle_to_target = 0.0;
 	navigation_status.current_state = STOP;
+
+	int i=navigation_add_target(TARGET_LAT, TARGET_LON, 0); //fill initial target to list
+
 }
 
 
@@ -249,6 +270,9 @@ void navigation_task(){
 		navigation_update_position();
 		navigation_update_state();
 		navigation_move();
+
+		int i=navigation_add_target(TARGET_LAT, TARGET_LON, 0); //TODO: remove test
+
 
 //		GPIO_write(Board_LED_RED, Board_LED_OFF);
 //		struct navigation_status pos_var;

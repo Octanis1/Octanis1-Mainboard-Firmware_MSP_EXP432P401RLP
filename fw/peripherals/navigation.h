@@ -14,6 +14,7 @@
 typedef struct _target_list_t{
 	float lat[N_TARGETS_MAX];
 	float lon[N_TARGETS_MAX];
+	uint8_t id[N_TARGETS_MAX];
 	enum _target_list_state{
 		INVALID = 0,
 		VALID,
@@ -22,7 +23,14 @@ typedef struct _target_list_t{
 	state[N_TARGETS_MAX];
 	// circular buffer index variables
 	uint8_t current_index;
-	uint8_t last_index;} target_list_t;
+	uint8_t last_index;
+} target_list_t;
+
+
+/* Add a new target position to the list. Returns 1 on success and 0
+ * if the queue is full.
+ */
+uint8_t navigation_add_target(float new_lat, float new_lon, uint8_t new_id);
 
 //Compute angle and distance from the rover to the target
 float nav_get_distance(float lat_current, float lon_current, float lat_target, float lon_target);
