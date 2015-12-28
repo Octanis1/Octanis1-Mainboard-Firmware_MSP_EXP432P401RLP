@@ -47,13 +47,16 @@ typedef struct _navigation_status{
 	float distance_to_target;
 	float angle_to_target;
 	enum _current_state{
-		STOP,
+		STOP=0,
 		GO_TO_TARGET,
 		AVOID_OBSTACLE,
 	} current_state;
 } navigation_status_t;
 
 static navigation_status_t navigation_status;
+
+static target_list_t navigation_targets;
+
 
 float getDistanceToTarget(float lat_current, float lon_current, float lat_target, float lon_target){
 
@@ -104,7 +107,22 @@ float getAngleToTarget(float lat1, float lon1, float lat2, float lon2, float hea
 /* fetch the next target to move to from the queue */
 void navigation_update_target()
 {
-// TODO
+	if(navigation_targets.state[navigation_targets.current_index] == DONE)
+	{
+		navigation_targets.current_index = (navigation_targets.current_index + 1) % N_TARGETS_MAX;
+	}
+
+	if(navigation_targets.state[navigation_targets.current_index] == VALID)
+	{
+		navigation_status.lon_target = navigation_targets.lon[navigation_targets.current_index];
+		navigation_status.lat_target = navigation_targets.lat[navigation_targets.current_index];
+		navigation_targets.state[navigation_targets.current_index] = CURRENT;
+	}
+	else if(navigation_targets.state[navigation_targets.current_index] == INVALID &&
+			navigation_targets.current_index != navigation_targets.last_index)
+	{//search queue for valid goals, until whole buffer is cycled
+		navigation_targets.current_index = (navigation_targets.current_index + 1) % N_TARGETS_MAX;
+	}
 }
 
 void navigation_update_position()
@@ -124,12 +142,33 @@ void navigation_update_position()
 	navigation_status.heading_rover = imu_get_fheading();
 	navigation_status.angle_to_target = getAngleToTarget(navigation_status.lat_rover,navigation_status.lon_rover,
 			navigation_status.lat_target, navigation_status.lon_target, navigation_status.heading_rover);
+	// recalculate distance to target
+	navigation_status.distance_to_target = getDistanceToTarget(navigation_status.lat_rover,navigation_status.lon_rover,
+			navigation_status.lat_target, navigation_status.lon_target);
 }
 
 
 void navigation_update_state()
 {
-// TODO
+	if(navigation_status.current_state == AVOID_OBSTACLE)
+	{
+		//TODO: check if obstacle is gone.
+	}
+	else
+	{
+		if(navigation_targets.state[navigation_targets.current_index] == CURRENT)
+		{ //TODO: add conditions that may stop from changing state, for example low battery.
+			navigation_status.current_state = GO_TO_TARGET;
+		}
+		else if(navigation_status.current_state == GO_TO_TARGET)
+		{
+			if(navigation_status.distance_to_target < TARGET_REACHED_DISTANCE)
+			{
+				navigation_targets.state[navigation_targets.current_index] = DONE;
+				navigation_status.current_state = STOP;
+			}
+		}
+	}
 }
 
 
@@ -145,8 +184,8 @@ void navigation_move()
 		}
 		else if(navigation_status.angle_to_target > 90) //turn on spot to the right
 		{
-			lspeed = PWM_SPEED_100;
-			rspeed = PWM_SPEED_60;
+			lspeed = PWM_SPEED_80;
+			rspeed = -PWM_SPEED_80;
 		}
 		else if(navigation_status.angle_to_target < -5) //go to the left
 		{
@@ -265,8 +304,6 @@ void navigation_task(){
 //
 //			//Tell the motor to move accordingly
 //		}
-
-
 		Task_sleep(1500);
 
 	}
