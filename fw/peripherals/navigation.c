@@ -10,15 +10,19 @@
 
 #include "../../Board.h"
 #include "gps.h"
+#include "imu.h"
 #include "navigation.h"
-#include "hal/motors.h"
+#include "hal/motors.h" //also contains all sorts of geometries (wheel radius etc)
+#include <math.h>
 
-
+#define MATH_PI 3.14159265358979323846
 #define EARTH_RADIUS 6356752
 
 //Target for testing, just outside of hackuarium
-//#define TARGET_LAT 46.532476
-//#define TARGET_LON 6.590315
+#define TARGET_LAT 	46.532476
+#define TARGET_LON 	6.590315
+#define INIT_LAT		46.5252206
+#define INIT_LON 	6.6296219
 
 //Other, hopefully closer
 #define ESP_LAT 46.520216
@@ -32,14 +36,26 @@
 #define PLASMA_LAT 46.517241
 #define PLASMA_LON 6.565021
 
-struct rover_status{
-	float lat_current;
-	float lon_current;
-	float distance;
-	float angle;
-};
 
-float nav_get_distance(float lat_current, float lon_current, float lat_target, float lon_target){
+
+typedef struct _navigation_status{
+	float lat_rover;
+	float lon_rover;
+	float heading_rover;
+	float lat_target;
+	float lon_target;
+	float distance_to_target;
+	float angle_to_target;
+	enum _current_state{
+		STOP,
+		GO_TO_TARGET,
+		AVOID_OBSTACLE,
+	} current_state;
+} navigation_status_t;
+
+static navigation_status_t navigation_status;
+
+float getDistanceToTarget(float lat_current, float lon_current, float lat_target, float lon_target){
 
 	/*About this code: here we use the haversin formula
 	 * As I undersood, we may run into problems if our robot goes past the 180/-180 degree line
@@ -55,11 +71,127 @@ float nav_get_distance(float lat_current, float lon_current, float lat_target, f
 	return distance;
 }
 
-float nav_get_angle(float lat_current, float lon_current, float lat_target, float lon_target){
-	float angle = 0;
 
-	return angle;
+/**
+ * Params: lat1, long1 => Latitude and Longitude of current point
+ *         lat2, long2 => Latitude and Longitude of target  point
+ *
+ *         headX       => x-Value of built-in compass
+ *
+ * Returns the degree of a direction from current point to target point (between -180, 180).
+ * Note: a negative result means the target is towards the left of the rover. positive to the right
+ *
+ */
+float getAngleToTarget(float lat1, float lon1, float lat2, float lon2, float headX) {
+    float dLon = MATH_PI/180*(lon2-lon1);
+
+    lat1 = MATH_PI/180*(lat1);
+    lat2 = MATH_PI/180*(lat2);
+
+    float y = sinf(dLon) * cosf(lat2);
+    float x = cosf(lat1) * sinf(lat2) - sinf(lat1)*cosf(lat2)*cosf(dLon);
+    float brng = 180/MATH_PI*(atan2f(y, x));
+
+    brng = brng - headX;
+
+    // bound result between -180 and 180
+    if(brng < -180.0)
+    		brng = 360 + brng;
+
+    return brng;
 }
+
+/* fetch the next target to move to from the queue */
+void navigation_update_target()
+{
+// TODO
+}
+
+void navigation_update_position()
+{
+	if(gps_update_new_position(&(navigation_status.lat_rover), &(navigation_status.lon_rover)))
+	{
+		//we get a new gps position
+	}
+	else
+	{
+		//we didn't get a new gps position --> update position using odometry.
+		//TODO
+		motors_wheels_update_distance();
+	}
+
+	// recalculate heading angle
+	navigation_status.heading_rover = imu_get_fheading();
+	navigation_status.angle_to_target = getAngleToTarget(navigation_status.lat_rover,navigation_status.lon_rover,
+			navigation_status.lat_target, navigation_status.lon_target, navigation_status.heading_rover);
+}
+
+
+void navigation_update_state()
+{
+// TODO
+}
+
+
+void navigation_move()
+{
+	static uint16_t lspeed, rspeed;
+	if(navigation_status.current_state == GO_TO_TARGET)
+	{
+		if(navigation_status.angle_to_target < -90) //turn on spot to the left
+		{
+			lspeed = -PWM_SPEED_80;
+			rspeed = PWM_SPEED_80;
+		}
+		else if(navigation_status.angle_to_target > 90) //turn on spot to the right
+		{
+			lspeed = PWM_SPEED_100;
+			rspeed = PWM_SPEED_60;
+		}
+		else if(navigation_status.angle_to_target < -5) //go to the left
+		{
+			lspeed = PWM_SPEED_60;
+			rspeed = PWM_SPEED_100;
+		}
+		else if(navigation_status.angle_to_target > 5) //go to the right
+		{
+			lspeed = PWM_SPEED_100;
+			rspeed = PWM_SPEED_60;
+		}
+		else //go straight
+		{
+			lspeed = PWM_SPEED_100;
+			rspeed = PWM_SPEED_100;
+		}
+
+		motors_wheels_move(lspeed, rspeed, lspeed, rspeed);
+	}
+	else if(navigation_status.current_state == STOP)
+	{
+		motors_wheels_stop();
+	}
+	else if(navigation_status.current_state == AVOID_OBSTACLE)
+	{
+		// TODO: obstacle avoidance
+	}
+}
+
+
+
+
+void navigation_init()
+{
+	motors_init();
+	navigation_status.lat_rover = INIT_LAT;
+	navigation_status.lon_rover = INIT_LON;
+	navigation_status.heading_rover = 0.0;
+	navigation_status.lat_target = TARGET_LAT;
+	navigation_status.lon_target = TARGET_LON;
+	navigation_status.distance_to_target = 0.0;
+	navigation_status.angle_to_target = 0.0;
+	navigation_status.current_state = STOP;
+}
+
 
 void navigation_task(){
 
@@ -69,27 +201,18 @@ void navigation_task(){
 //	float toHackuarium=0;
 //	float toEsplanade=0;
 
-	motors_init();
+	navigation_init();
 	Task_sleep(1000);
 
-	uint16_t sensor_values[N_WHEELS];
-
 	while(1){
-//		motors_wheels_move(16384, 16384, 16384, 16384);
 
-		motors_wheels_move(32767, 32767, 32767, 32767);
-//		Task_sleep(100000);
-//		motors_wheels_move(-32767, 32767, -32767, 32767);
-//		Task_sleep(40000);
-//		motors_wheels_move(32767, 32767, 32767, 32767);
-//		Task_sleep(100000);
-//		motors_wheels_move(32767, -32767, 32767, -32767);
-//		Task_sleep(40000);
-
-
+		navigation_update_target();
+		navigation_update_position();
+		navigation_update_state();
+		navigation_move();
 
 //		GPIO_write(Board_LED_RED, Board_LED_OFF);
-//		struct rover_status pos_var;
+//		struct navigation_status pos_var;
 //
 //		//Commented for debug reason because oterwise we never go into the else
 //		//We check if the gps is already working
@@ -145,9 +268,6 @@ void navigation_task(){
 
 
 		Task_sleep(1500);
-
-
-		motors_wheels_update_distance();
 
 	}
 }

@@ -27,6 +27,10 @@ int16_t imu_get_heading(){
 	return (int16_t)(100*imu_data.d_euler_data_h);
 }
 
+float imu_get_fheading(){
+	return (float)imu_data.d_euler_data_h;
+}
+
 // roll Euler data in 100 degrees
 int16_t imu_get_roll(){
 	return (int16_t)(100*imu_data.d_euler_data_r);

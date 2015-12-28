@@ -5,6 +5,8 @@
 
 void gps_task();
 
+uint8_t gps_update_new_position(float* lat_, float* lon_);
+
 uint8_t gps_get_fix_quality();
 int gps_get_satellites_tracked();
 

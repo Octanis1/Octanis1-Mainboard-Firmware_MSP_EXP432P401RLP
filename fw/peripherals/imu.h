@@ -15,6 +15,10 @@ int16_t imu_get_pitch();
 // heading Euler data in 100 degrees
 int16_t imu_get_heading();
 
+// heading Euler data
+float imu_get_fheading();
+
+
 // roll Euler data in 100 degrees
 int16_t imu_get_roll();
 

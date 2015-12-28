@@ -8,7 +8,22 @@
 #ifndef FW_PERIPHERALS_HAL_MOTORS_H_
 #define FW_PERIPHERALS_HAL_MOTORS_H_
 
-#define N_WHEELS		4
+#define N_WHEELS			4
+#define WHEEL_RADIUS		0.1 //[m]
+#define SPEED_FACTOR		0.00001875 //[rps/pwm value]
+
+//PWM speed scale (percentage) :
+#define PWM_SPEED_100	32767
+#define PWM_SPEED_80		26214
+#define PWM_SPEED_60		19660
+#define PWM_SPEED_50		16384
+#define PWM_SPEED_40		13107
+#define PWM_SPEED_20		6553
+#define PWM_SPEED_10		3277
+#define PWM_SPEED_0		0
+
+
+
 #define N_STRUTS		4
 
 
