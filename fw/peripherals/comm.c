@@ -292,7 +292,7 @@ void comm_task(){
 
 //TODO:debug		GPIO_write(Board_LED_RED, Board_LED_OFF);
 
-		Task_sleep(60000);
+		Task_sleep(20000);
 
 
 

@@ -115,7 +115,6 @@ void motors_wheels_move(int16_t front_left, int16_t front_right, int16_t rear_le
 
 void motors_wheels_update_distance()
 {
-
 	static uint16_t sensor_values[N_WHEELS];
 
 	sensor_values[0] = 0;
@@ -124,6 +123,8 @@ void motors_wheels_update_distance()
 	sensor_values[3] = 0;
 
 	adc_read_motor_sensors(sensor_values);
+
+
 
 }
 

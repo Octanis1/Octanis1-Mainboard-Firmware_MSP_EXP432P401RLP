@@ -190,6 +190,8 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 
 	memset(&rxBuffer, 0, sizeof(rxBuffer));
 	char txBuffer[tx_size+18]; //18 for the aditionnal lora commands
+	memset(&txBuffer, 0, sizeof(txBuffer)); //important! always clean buffer before tx
+
 
 	if(!rn2483_initialised) return 0;
 
@@ -204,6 +206,7 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 
 	if(!strcmp("ok\r\n", rxBuffer))
 	{
+		GPIO_toggle(Board_LED_GREEN);
 		return 1; //modem can now communicate with us
 	}
 	else
