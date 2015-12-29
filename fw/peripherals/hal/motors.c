@@ -23,7 +23,7 @@ int motors_init()
 
 
 int motors_pwm_init(){
-	uint32_t period = 1000; /* PWM period in microseconds -> 1kHz*/
+	uint32_t period = 20; /* PWM period in microseconds -> 50kHz*/
 
 	PWM_Params_init(&pwm5_params);
 	pwm5_params.period = period;             	// Period in microseconds
@@ -64,10 +64,10 @@ int motors_pwm_init(){
 }
 
 /*
- * arguments are integers scaled to the speed 0 = 0% and 32767 = 100% and the sign of the number
+ * arguments are integers scaled to the speed 0 = 0% and 65535 = 100% and the sign of the number
  * determines the direction of travel (negative: backwards, positive: forward).
  */
-void motors_wheels_move(int16_t front_left, int16_t front_right, int16_t rear_left, int16_t rear_right)
+void motors_wheels_move(int32_t front_left, int32_t front_right, int32_t rear_left, int32_t rear_right)
 {
 	GPIO_write(Board_M5678_CURR_SENS_EN, 1); //turn current sensors on
 
@@ -76,35 +76,35 @@ void motors_wheels_move(int16_t front_left, int16_t front_right, int16_t rear_le
 	/* determine direction of the wheel (forward/backward) */
 	if(front_left < 0)
 	{
-		GPIO_write(Board_M5_PH, 0); //set phase
+		GPIO_write(Board_M5_PH, PH_REVERSE); //set phase
 		front_left = -front_left;
 	}
 	else
-		GPIO_write(Board_M5_PH, 1); //set phase
+		GPIO_write(Board_M5_PH, PH_FORWARD); //set phase
 
 	if(front_right < 0)
 	{
-		GPIO_write(Board_M6_PH, 0); //set phase
+		GPIO_write(Board_M6_PH, PH_REVERSE); //set phase
 		front_right = -front_right;
 	}
 	else
-		GPIO_write(Board_M6_PH, 1); //set phase
+		GPIO_write(Board_M6_PH, PH_FORWARD); //set phase
 
 	if(rear_left < 0)
 	{
-		GPIO_write(Board_M7_PH, 0); //set phase
+		GPIO_write(Board_M7_PH, PH_REVERSE); //set phase
 		rear_left = -rear_left;
 	}
 	else
-		GPIO_write(Board_M7_PH, 1); //set phase
+		GPIO_write(Board_M7_PH, PH_FORWARD); //set phase
 
 	if(rear_right < 0)
 	{
-		GPIO_write(Board_M8_PH, 0); //set phase
+		GPIO_write(Board_M8_PH, PH_REVERSE); //set phase
 		rear_right = -rear_right;
 	}
 	else
-		GPIO_write(Board_M8_PH, 1); //set phase
+		GPIO_write(Board_M8_PH, PH_FORWARD); //set phase
 
 	PWM_setDuty(pwm5_handle, (front_left));
 	PWM_setDuty(pwm6_handle, (front_right));

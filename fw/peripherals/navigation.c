@@ -192,7 +192,7 @@ void navigation_update_state()
 
 void navigation_move()
 {
-	static uint16_t lspeed, rspeed;
+	static int32_t lspeed, rspeed;
 	if(navigation_status.current_state == GO_TO_TARGET)
 	{
 		if(navigation_status.angle_to_target < -90) //turn on spot to the left

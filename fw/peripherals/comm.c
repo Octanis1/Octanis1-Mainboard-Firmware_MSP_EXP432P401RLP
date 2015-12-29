@@ -287,7 +287,7 @@ void comm_task(){
 
 		comm_gather_status_info(&my_rover_status);
 
-		comm_send_status_over_lora(&my_rover_status);
+		// comm_send_status_over_lora(&my_rover_status);
 
 
 //TODO:debug		GPIO_write(Board_LED_RED, Board_LED_OFF);
