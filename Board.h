@@ -174,6 +174,10 @@ extern "C" {
 #define Board_WINDSENSOR_IN_IV			0x02
 
 
+/* Lightning sensor */
+#define Board_LIGHTNING_INT			Octanis_LIGHTNING_INT
+#define Board_LIGHTNING_INT_IV		P1IV__P1IFG4
+
 /* Motor pins */
 #define Board_M1234_SLEEP_N			Octanis05_M1234_SLEEP_N
 #define Board_M1_PH					Octanis05_M1_PH
