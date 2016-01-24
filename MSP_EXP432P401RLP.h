@@ -45,6 +45,8 @@
 #ifndef __MSP_EXP432P401RLP_H
 #define __MSP_EXP432P401RLP_H
 
+#define VERSION_0_5 // define to use board v0.5 pin definitions, else undefine
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -60,37 +62,37 @@ extern "C" {
 typedef enum MSP_EXP432P401RLP_GPIOName {
 //    MSP_EXP432P401RLP_S1 = 0,
 //    MSP_EXP432P401RLP_S2,
-    Octanis05_ROCKBLOCK_NET,
+    Octanis_ROCKBLOCK_NET,
 	//MSP_EXP432P401RLP_ULTRASONIC_IN0,
 	Octanis_LIGHTNING_INT,
-	Octanis05_LED0, //octanis led1
-	Octanis05_LED1, //octanis led2
-	Octanis05_ROCKBLOCK_SLEEP,
-	Octanis05_LORA_RESET_N,
-	Octanis05_5V_EN,
-	Octanis05_ULTRASONIC_OR_SLEEP,
-	Octanis05_ULTRASONIC_EN_0,
-	Octanis05_ULTRASONIC_EN_1,
-	Octanis05_ULTRASONIC_OUT_0,
-	Octanis05_ULTRASONIC_OUT_1,
-	Octanis05_ULTRASONIC_Sleep_0,
-	Octanis05_ULTRASONIC_Sleep_1,
-	Octanis05_WINDSENSOR_SLEEP,
-	Octanis05_M1234_SLEEP_N,
-	Octanis05_M1_PH,
-	Octanis05_M2_PH,
-	Octanis05_M3_PH,
-	Octanis05_M4_PH,
-	Octanis05_M1_EN,
-	Octanis05_M2_EN,
-	Octanis05_M3_EN,
-	Octanis05_M4_EN,
-	Octanis05_M5678_SLEEP_N,
-	Octanis05_M5_PH,
-	Octanis05_M6_PH,
-	Octanis05_M7_PH,
-	Octanis05_M8_PH,
-	Octanis05_M5678_CURR_SENS_EN,
+	Octanis_LED0, //octanis led1
+	Octanis_LED1, //octanis led2
+	Octanis_ROCKBLOCK_SLEEP,
+	Octanis_LORA_RESET_N,
+	Octanis_5V_EN,
+	Octanis_ULTRASONIC_OR_SLEEP,
+	Octanis_ULTRASONIC_EN_0,
+	Octanis_ULTRASONIC_EN_1,
+	Octanis_ULTRASONIC_OUT_0,
+	Octanis_ULTRASONIC_OUT_1,
+	Octanis_ULTRASONIC_Sleep_0,
+	Octanis_ULTRASONIC_Sleep_1,
+	Octanis_WINDSENSOR_SLEEP,
+	Octanis_M1234_SLEEP_N,
+	Octanis_M1_PH,
+	Octanis_M2_PH,
+	Octanis_M3_PH,
+	Octanis_M4_PH,
+	Octanis_M1_EN,
+	Octanis_M2_EN,
+	Octanis_M3_EN,
+	Octanis_M4_EN,
+	Octanis_M5678_SLEEP_N,
+	Octanis_M5_PH,
+	Octanis_M6_PH,
+	Octanis_M7_PH,
+	Octanis_M8_PH,
+	Octanis_M5678_CURR_SENS_EN,
 
 
     MSP_EXP432P401RLP_GPIOCOUNT
@@ -111,10 +113,17 @@ typedef enum MSP_EXP432P401RLP_I2CName {
  *  @brief  Enum of PWM names on the MSP_EXP432P401RLP dev board
  */
 typedef enum MSP_EXP432P401RLP_PWMName {
-	Octanis05_PWM_TA1_2 = 0,
-	Octanis05_PWM_TA1_1,
-	Octanis05_PWM_TA1_3,
-	Octanis05_PWM_TA1_4,
+#ifdef VERSION_0_5
+	Octanis_PWM_TA1_2 = 0,
+	Octanis_PWM_TA1_1,
+	Octanis_PWM_TA1_3,
+	Octanis_PWM_TA1_4,
+#else
+	Octanis_PWM_TA1_0 = 0,
+	Octanis_PWM_TA2_0,
+	Octanis_PWM_TA1_2,
+	Octanis_PWM_TA1_3,
+#endif
 
     MSP_EXP432P401RLP_PWMCOUNT
 } MSP_EXP432P401RLP_PWMName;
