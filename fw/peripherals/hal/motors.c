@@ -21,7 +21,6 @@ int motors_init()
 	return 1;
 }
 
-
 int motors_pwm_init(){
 	uint32_t period = 20; /* PWM period in microseconds -> 50kHz*/
 
@@ -29,11 +28,10 @@ int motors_pwm_init(){
 	pwm5_params.period = period;             	// Period in microseconds
 	pwm5_params.dutyMode = PWM_DUTY_SCALAR; 	// duty is an integer scaled to the period,
 										  	  // 0 = 0% and 65535 = 100%
-
 	PWM_Params_init(&pwm6_params);
 	pwm6_params.period = period;             	// Period in microseconds
-	pwm6_params.dutyMode = PWM_DUTY_SCALAR; 	// duty is an integer scaled to the period,
-											  	  // 0 = 0% and 65535 = 100%
+	pwm6_params.dutyMode = PWM_DUTY_SCALAR; 		// duty is an integer scaled to the period,
+											// 0 = 0% and 65535 = 100%
 	PWM_Params_init(&pwm7_params);
 	pwm7_params.period = period;             	// Period in microseconds
 	pwm7_params.dutyMode = PWM_DUTY_SCALAR; 	// duty is an integer scaled to the period,

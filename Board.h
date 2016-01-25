@@ -199,10 +199,10 @@ extern "C" {
 	#define Board_M7_EN_PWM           	Octanis_PWM_TA1_3
 	#define Board_M8_EN_PWM           	Octanis_PWM_TA1_4
 #else
-	#define Board_M5_EN_PWM           	Octanis_PWM_TA1_0
-	#define Board_M6_EN_PWM           	Octanis_PWM_TA2_0
+	#define Board_M5_EN_PWM           	Octanis_PWM_TA1_1
+	#define Board_M6_EN_PWM           	Octanis_PWM_TA1_3
 	#define Board_M7_EN_PWM           	Octanis_PWM_TA1_2
-	#define Board_M8_EN_PWM           	Octanis_PWM_TA1_3
+	#define Board_M8_EN_PWM           	Octanis_PWM_TA1_4
 #endif
 
 #define Board_M5678_CURR_SENS_EN 	Octanis_M5678_CURR_SENS_EN

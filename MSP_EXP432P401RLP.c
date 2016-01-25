@@ -168,9 +168,6 @@ GPIO_PinConfig gpioPinConfigs[] = {
     /* Octanis_LORA_RESET_N */
     GPIOMSP432_P9_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
 
-	/* MSP_EXP432P401RLP_5V_EN */
-	GPIOMSP432_P8_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
-
 	/* Octanis_ULTRASONIC_OR_SLEEP */
 	GPIOMSP432_P7_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
@@ -280,6 +277,11 @@ GPIO_PinConfig gpioPinConfigs[] = {
 
 	/* Octanis_M8_PH */
 	GPIOMSP432_P3_6 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+
+	/* UNUSED; bridged to another pin. define as input */
+	GPIOMSP432_P8_0 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_NONE,
+	GPIOMSP432_P8_1 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_NONE,
+
 #endif
 
 	/* Octanis_M5678_CURR_SENS_EN */
@@ -419,11 +421,11 @@ const PWMTimerMSP432_HWAttrs pwmTimerMSP432HWAttrs[MSP_EXP432P401RLP_PWMCOUNT] =
 #else
 	{
 		.baseAddr = TIMER_A1_BASE,
-		.compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_0
+		.compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_1
 	},
 	{
-		.baseAddr = TIMER_A2_BASE,
-		.compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_0
+		.baseAddr = TIMER_A1_BASE,
+		.compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_3
 	},
 	{
 		.baseAddr = TIMER_A1_BASE,
@@ -431,7 +433,7 @@ const PWMTimerMSP432_HWAttrs pwmTimerMSP432HWAttrs[MSP_EXP432P401RLP_PWMCOUNT] =
 	},
 	{
 		.baseAddr = TIMER_A1_BASE,
-		.compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_3
+		.compareRegister = TIMER_A_CAPTURECOMPARE_REGISTER_4
 	}
 #endif
 
@@ -468,6 +470,7 @@ void MSP_EXP432P401RLP_initPWM(void)
 {
     /* Use Port Map on Port 7 to test pwm */
 	//TODO this is only for testing purposes
+#ifdef VERSION_0_5
     const uint8_t port7Map [] = {
         PM_NONE, PM_NONE,  PM_NONE, PM_TA0CCR1A, //note: P7.3 was defined as windsensor input
         PM_NONE, PM_NONE,  PM_TA1CCR2A, PM_TA1CCR1A
@@ -475,9 +478,28 @@ void MSP_EXP432P401RLP_initPWM(void)
 
     const uint8_t port3Map [] = {
     		PM_TA1CCR3A, PM_NONE, PM_NONE, PM_NONE,
-		PM_TA1CCR4A, PM_NONE, PM_NONE , PM_NONE
+		PM_TA1CCR4A, PM_NONE, PM_NONE, PM_NONE
+	};
+#else
+    const uint8_t port2Map [] = {
+		PM_TA1CCR1A, PM_NONE, PM_NONE,  PM_NONE,
+		PM_NONE, PM_NONE,  PM_NONE, PM_NONE
+     };
+
+    const uint8_t port7Map [] = {
+        PM_NONE, PM_NONE,  PM_NONE, PM_TA0CCR1A, //note: P7.3 was defined as windsensor input
+        PM_NONE, PM_TA1CCR3A,  PM_NONE, PM_NONE
+    };
+
+    const uint8_t port3Map [] = {
+    		PM_NONE, PM_NONE, PM_NONE, PM_NONE,
+		PM_NONE, PM_TA1CCR2A, PM_NONE, PM_TA1CCR4A
 	};
 
+    /* Mapping capture compare registers to Port 2 */
+    MAP_PMAP_configurePorts((const uint8_t *) port2Map, P2MAP, 1,
+        PMAP_ENABLE_RECONFIGURATION);
+#endif
     /* Mapping capture compare registers to Port 7 */
     MAP_PMAP_configurePorts((const uint8_t *) port7Map, P7MAP, 1,
         PMAP_ENABLE_RECONFIGURATION);
@@ -487,6 +509,7 @@ void MSP_EXP432P401RLP_initPWM(void)
         PMAP_ENABLE_RECONFIGURATION);
 
     /* Enable PWM output on GPIO pins */
+#ifdef VERSION_0_5
     MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P7,
     		GPIO_PIN6, GPIO_PRIMARY_MODULE_FUNCTION);
 
@@ -498,6 +521,19 @@ void MSP_EXP432P401RLP_initPWM(void)
 
     MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P3,
 		GPIO_PIN4, GPIO_PRIMARY_MODULE_FUNCTION);
+#else
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2,
+    		GPIO_PIN0, GPIO_SECONDARY_MODULE_FUNCTION);
+
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P7,
+    		GPIO_PIN5, GPIO_SECONDARY_MODULE_FUNCTION);
+
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P3,
+        GPIO_PIN5, GPIO_PRIMARY_MODULE_FUNCTION);
+
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P3,
+		GPIO_PIN7, GPIO_PRIMARY_MODULE_FUNCTION);
+#endif
     PWM_init();
 }
 

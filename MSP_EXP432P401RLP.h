@@ -45,7 +45,8 @@
 #ifndef __MSP_EXP432P401RLP_H
 #define __MSP_EXP432P401RLP_H
 
-//#define VERSION_0_5 // define to use board v0.5 pin definitions, else undefine
+//#define VERSION_0_5 // define to use board v0.5 pin definitions, else undefin
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,7 +70,6 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
 	Octanis_LED1, //octanis led2
 	Octanis_ROCKBLOCK_SLEEP,
 	Octanis_LORA_RESET_N,
-	Octanis_5V_EN,
 	Octanis_ULTRASONIC_OR_SLEEP,
 	Octanis_ULTRASONIC_EN_0,
 	Octanis_ULTRASONIC_EN_1,
@@ -92,6 +92,10 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
 	Octanis_M6_PH,
 	Octanis_M7_PH,
 	Octanis_M8_PH,
+#ifndef VERSION_0_5
+	UNCONNECTED1,
+	UNCONNECTED2,
+#endif
 	Octanis_M5678_CURR_SENS_EN,
 
 
@@ -119,10 +123,10 @@ typedef enum MSP_EXP432P401RLP_PWMName {
 	Octanis_PWM_TA1_3,
 	Octanis_PWM_TA1_4,
 #else
-	Octanis_PWM_TA1_0 = 0,
-	Octanis_PWM_TA2_0,
-	Octanis_PWM_TA1_2,
+	Octanis_PWM_TA1_1 = 0,
 	Octanis_PWM_TA1_3,
+	Octanis_PWM_TA1_2,
+	Octanis_PWM_TA1_4,
 #endif
 
     MSP_EXP432P401RLP_PWMCOUNT
