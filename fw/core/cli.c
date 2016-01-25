@@ -113,7 +113,7 @@ void cli_task(){
 
 
 		if(strncmp ("mot", input, 3) == 0){ //motor command was sent
-			if(navigation_bypass(input[3],atoi(input[4])))
+			if(navigation_bypass(input[3],(input[4]-'0')))
 				tfp_sprintf(output, "okm\n");
 			else
 				tfp_sprintf(output, "inv\n");
