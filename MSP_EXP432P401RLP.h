@@ -45,7 +45,7 @@
 #ifndef __MSP_EXP432P401RLP_H
 #define __MSP_EXP432P401RLP_H
 
-#define VERSION_0_5 // define to use board v0.5 pin definitions, else undefine
+//#define VERSION_0_5 // define to use board v0.5 pin definitions, else undefine
 
 #ifdef __cplusplus
 extern "C" {

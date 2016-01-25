@@ -46,6 +46,7 @@ typedef struct _navigation_status{
 	float angle_to_target;
 	enum _current_state{
 		STOP=0,
+		BYPASS,
 		GO_TO_TARGET,
 		AVOID_OBSTACLE,
 	} current_state;
@@ -121,6 +122,48 @@ uint8_t navigation_add_target(float new_lat, float new_lon, uint8_t new_id)
 	}
 }
 
+uint8_t navigation_bypass(char command, uint8_t index)
+{
+	if(command == 'n')
+	{
+		navigation_status.current_state = STOP;
+		return 1;
+	}
+	else if(index>0 && index<5)
+	{
+		static uint8_t strut_speed[4]; //initialized as zero at the first time
+		if(command == 'h')
+			strut_speed[index-1] = 0;
+		else if(command == 'u')
+			strut_speed[index-1] = 1;
+		else if(command == 'd')
+			strut_speed[index-1] = -1;
+		else
+			return 0;
+
+		motors_struts_move(strut_speed[0],strut_speed[1],strut_speed[2],strut_speed[3]);
+	}
+	else if(index == 0)
+	{
+		switch(command)
+		{
+		case 'f': motors_wheels_move(PWM_SPEED_100, PWM_SPEED_100, PWM_SPEED_100, PWM_SPEED_100);break;
+		case 'b': motors_wheels_move(-PWM_SPEED_100, -PWM_SPEED_100, -PWM_SPEED_100, -PWM_SPEED_100);break;
+		case 'l': motors_wheels_move(PWM_SPEED_60, PWM_SPEED_80, PWM_SPEED_60, PWM_SPEED_80);break;
+		case 'r': motors_wheels_move(PWM_SPEED_80, PWM_SPEED_60, PWM_SPEED_80, PWM_SPEED_60);break;
+		case 'x': motors_wheels_move(0, 0, 0, 0);break;
+		default: return 0;
+		}
+	}
+	else
+	{
+		return 0;
+	}
+
+	navigation_status.current_state = BYPASS;
+	return 1;
+}
+
 
 /* fetch the next target to move to from the queue */
 void navigation_update_target()
@@ -168,7 +211,11 @@ void navigation_update_position()
 
 void navigation_update_state()
 {
-	if(navigation_status.current_state == AVOID_OBSTACLE)
+	if(navigation_status.current_state == BYPASS)
+	{
+		//motor command is done directly in CLI
+	}
+	else if(navigation_status.current_state == AVOID_OBSTACLE)
 	{
 		//TODO: check if obstacle is gone.
 	}

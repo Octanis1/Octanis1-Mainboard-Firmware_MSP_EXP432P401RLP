@@ -32,6 +32,17 @@ typedef struct _target_list_t{
  */
 uint8_t navigation_add_target(float new_lat, float new_lon, uint8_t new_id);
 
+/* bypass the navigation logic and control the motors individually via CLI or other interface.
+ * Commands are single chars:
+ * 			- for wheels: f[orward], b[ackward], r[ight], l[eft], x[=stop]; index=0
+ * 			- for struts: u[p], d[own], h[alt]; index = 1...4 to select strut
+ * Return values:
+ * 			1 for success
+ * 			0 for invalid command
+ */
+uint8_t navigation_bypass(char command, uint8_t index);
+
+
 //Compute angle and distance from the rover to the target
 float nav_get_distance(float lat_current, float lon_current, float lat_target, float lon_target);
 float nav_get_angle(float lat_current, float lon_current, float lat_target, float lon_target);

@@ -131,7 +131,7 @@ void motors_wheels_update_distance()
 
 /*
  * arguments determine the direction of the struts movement
- * (negative: backwards, positive: forward, zero: stop).
+ * (negative: backwards, positive: forward, zero: stop). ????????????
  */
 void motors_struts_move(int8_t front_left, int8_t front_right, int8_t rear_left, int8_t rear_right)
 {
