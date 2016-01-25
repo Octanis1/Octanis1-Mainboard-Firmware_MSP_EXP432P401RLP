@@ -143,7 +143,7 @@ uint8_t navigation_bypass(char command, uint8_t index)
 
 		motors_struts_move(strut_speed[0],strut_speed[1],strut_speed[2],strut_speed[3]);
 	}
-	else if(index == 0)
+	else
 	{
 		switch(command)
 		{
@@ -154,10 +154,6 @@ uint8_t navigation_bypass(char command, uint8_t index)
 		case 'x': motors_wheels_move(0, 0, 0, 0);break;
 		default: return 0;
 		}
-	}
-	else
-	{
-		return 0;
 	}
 
 	navigation_status.current_state = BYPASS;
