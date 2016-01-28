@@ -44,6 +44,7 @@ typedef struct _navigation_status{
 	float lon_target;
 	float distance_to_target;
 	float angle_to_target;
+	uint8_t angle_valid;
 	enum _current_state{
 		STOP=0,
 		BYPASS,
@@ -131,7 +132,7 @@ uint8_t navigation_bypass(char command, uint8_t index)
 	}
 	else if(index>0 && index<5)
 	{
-		static uint8_t strut_speed[4]; //initialized as zero at the first time
+		static int8_t strut_speed[4]; //initialized as zero at the first time
 		if(command == 'h')
 			strut_speed[index-1] = 0;
 		else if(command == 'u')
@@ -149,8 +150,8 @@ uint8_t navigation_bypass(char command, uint8_t index)
 		{
 		case 'f': motors_wheels_move(PWM_SPEED_100, PWM_SPEED_100, PWM_SPEED_100, PWM_SPEED_100);break;
 		case 'b': motors_wheels_move(-PWM_SPEED_100, -PWM_SPEED_100, -PWM_SPEED_100, -PWM_SPEED_100);break;
-		case 'l': motors_wheels_move(PWM_SPEED_60, PWM_SPEED_80, PWM_SPEED_60, PWM_SPEED_80);break;
-		case 'r': motors_wheels_move(PWM_SPEED_80, PWM_SPEED_60, PWM_SPEED_80, PWM_SPEED_60);break;
+		case 'l': motors_wheels_move(PWM_SPEED_60, PWM_SPEED_100, PWM_SPEED_60, PWM_SPEED_100);break;
+		case 'r': motors_wheels_move(PWM_SPEED_100, PWM_SPEED_60, PWM_SPEED_100, PWM_SPEED_60);break;
 		case 'x': motors_wheels_move(0, 0, 0, 0);break;
 		default: return 0;
 		}
@@ -195,6 +196,8 @@ void navigation_update_position()
 		motors_wheels_update_distance();
 	}
 
+	navigation_status.angle_valid = (imu_get_calib_status()>6);
+
 	// recalculate heading angle
 	navigation_status.heading_rover = imu_get_fheading();
 	navigation_status.angle_to_target = getAngleToTarget(navigation_status.lat_rover,navigation_status.lon_rover,
@@ -219,7 +222,11 @@ void navigation_update_state()
 	{
 		if(navigation_targets.state[navigation_targets.current_index] == CURRENT)
 		{ //TODO: add conditions that may stop from changing state, for example low battery.
-			navigation_status.current_state = GO_TO_TARGET;
+
+			if(navigation_status.angle_valid)
+			{
+				navigation_status.current_state = GO_TO_TARGET;
+			}
 		}
 		else if(navigation_status.current_state == GO_TO_TARGET)
 		{

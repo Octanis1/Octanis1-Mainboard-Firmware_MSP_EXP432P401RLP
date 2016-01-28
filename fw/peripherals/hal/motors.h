@@ -12,14 +12,15 @@
 #define WHEEL_RADIUS		0.1 //[m]
 #define SPEED_FACTOR		0.00001875 //[rps/pwm value]
 
-//PWM speed scale (percentage) :
-#define PWM_SPEED_100	65535
-#define PWM_SPEED_80		52427
-#define PWM_SPEED_60		39320
-#define PWM_SPEED_50		32767
-#define PWM_SPEED_40		26213
-#define PWM_SPEED_20		13107
-#define PWM_SPEED_10		6553
+//PWM speed scale (time in us) :
+#define 	PWM_PERIOD		40
+#define PWM_SPEED_100	40
+#define PWM_SPEED_80		32
+#define PWM_SPEED_60		24
+#define PWM_SPEED_50		20
+#define PWM_SPEED_40		16
+#define PWM_SPEED_20		8
+#define PWM_SPEED_10		4
 #define PWM_SPEED_0		0
 
 #define PH_FORWARD		0

@@ -19,11 +19,19 @@ static int rn2483_initialised = 1;
 #ifdef CONFIG_MODE
 //responses from the modem are "encapsulated" in "\r\n"
 #define RN2483_CONFIG_LENGTH 50 //maximum length of the below 4 strings
-static const char rn_set_nwkskey[] ="mac set nwkskey 2B7E151628AED2A6ABF7158809CF4F3C\r\n";
-static const char rn_set_appskey[] ="mac set appskey 2B7E151628AED2A6ABF7158809CF4F3C\r\n";
-static const char rn_set_devaddr[] ="mac set devaddr 08050046\r\n";
-static const char rn_set_deveui[] ="mac set deveui F03D291000000046\r\n";
-static const char rn_save[] ="mac save\r\n";
+	#ifdef CONFIG_SWISSCOM
+		static const char rn_set_nwkskey[] ="mac set nwkskey A4F613D0D65CC3DA3D874D82E12265B8\r\n";
+		static const char rn_set_appskey[] ="mac set appskey 32BC3ABB9E1ADC0594811AEB1CCA704F\r\n";
+		static const char rn_set_devaddr[] ="mac set devaddr 08050046\r\n";
+		static const char rn_set_deveui[] ="mac set deveui F03D291000000046\r\n";
+		static const char rn_save[] ="mac save\r\n";
+	#else //thethingsnetwork login:
+		static const char rn_set_nwkskey[] ="mac set nwkskey 2B7E151628AED2A6ABF7158809CF4F3C\r\n";
+		static const char rn_set_appskey[] ="mac set appskey 2B7E151628AED2A6ABF7158809CF4F3C\r\n";
+		static const char rn_set_devaddr[] ="mac set devaddr 08050046\r\n";
+		static const char rn_set_deveui[] ="mac set deveui F03D291000000046\r\n";
+		static const char rn_save[] ="mac save\r\n";
+	#endif
 #endif
 
 

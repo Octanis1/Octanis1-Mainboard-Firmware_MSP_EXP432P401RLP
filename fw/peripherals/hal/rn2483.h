@@ -8,6 +8,7 @@
 #define __RN2483_H
 
 //#define CONFIG_MODE 1 //undefine for normal operation!
+//#define CONFIG_SWISSCOM 1
 //TODO: program crashes after a while in config_mode.
 //note: apply a reset (lora reset pin to gnd) before running this mode!
 

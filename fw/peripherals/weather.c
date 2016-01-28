@@ -89,6 +89,6 @@ void weather_task(){
 
 		//	windsensor_getvalue();
 
-		void weather_aggregate_data();
+		weather_aggregate_data();
 	}
 }
