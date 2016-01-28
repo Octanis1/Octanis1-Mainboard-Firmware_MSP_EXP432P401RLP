@@ -50,44 +50,50 @@ void imu_task(){
 
 	while(1){
 
-	imu_data.calib_status=bno055_check_calibration_status();
-//	if(calib_status > 8)
-//	{
-//
-//		GPIO_write(Board_LED_RED, Board_LED_OFF);
-//	}
-//	else
-//	{
-//		GPIO_write(Board_LED_RED, Board_LED_ON);
-//
-//	}
+		imu_data.calib_status=bno055_check_calibration_status();
+	//	if(calib_status > 8)
+	//	{
+	//
+	//		GPIO_write(Board_LED_RED, Board_LED_OFF);
+	//	}
+	//	else
+	//	{
+	//		GPIO_write(Board_LED_RED, Board_LED_ON);
+	//
+	//	}
 
 
-	bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r));
-//	if(d_euler_data_h > 180)
-//	{
-//		GPIO_write(Board_LED_GREEN, Board_LED_ON);
-//	}
-//	else
-//	{
-//		GPIO_write(Board_LED_GREEN, Board_LED_OFF);
-//	}
+		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r));
+	//	if(d_euler_data_h > 180)
+	//	{
+	//		GPIO_write(Board_LED_GREEN, Board_LED_ON);
+	//	}
+	//	else
+	//	{
+	//		GPIO_write(Board_LED_GREEN, Board_LED_OFF);
+	//	}
 
-	//	bno055_data_readout_template();
+		//	bno055_data_readout_template();
 
-	/*
-	if(drive_get_status() == NOT_MOVING){
-		//motion interrupts to process?
-		// block here if we're not driving.
-	}*/
+		/*
+		if(drive_get_status() == NOT_MOVING){
+			//motion interrupts to process?
+			// block here if we're not driving.
+		}*/
 
 
-		// BNO055 debug
-		//cli_printf("BNO begin \n", 0);
+			// BNO055 debug
+			//cli_printf("BNO begin \n", 0);
 
-	//	int b = bno055_begin(BNO055_MAIN, i2c_helper_handle);
+		//	int b = bno055_begin(BNO055_MAIN, i2c_helper_handle);
 
-	//	cli_printf("bno startup %d \n", b);
+		//	cli_printf("bno startup %d \n", b);
+
+
+		//only check every 10 seconds
+		static uint8_t i_since_last_measurement = 0;
+		if(!(i_since_last_measurement++ % 20))
+			motors_struts_get_position();
 
 		Task_sleep(500);
 

@@ -115,6 +115,7 @@ void motors_wheels_update_distance()
 {
 	static uint16_t sensor_values[N_WHEELS];
 
+	/* initialize to 0 to reset the running average inside the adc readout function */
 	sensor_values[0] = 0;
 	sensor_values[1] = 0;
 	sensor_values[2] = 0;
@@ -162,6 +163,26 @@ void motors_struts_move(int8_t front_left, int8_t front_right, int8_t rear_left,
 	GPIO_write(Board_M4_EN, (rear_right));
 }
 
+
+void motors_struts_get_position()
+{
+	static uint16_t motor_sensor_values[N_STRUTS];
+
+	/* initialize to 0 to reset the running average inside the adc readout function */
+	motor_sensor_values[0] = 0;
+	motor_sensor_values[1] = 0;
+	motor_sensor_values[2] = 0;
+	motor_sensor_values[3] = 0;
+
+	adc_read_strut_sensor_values(motor_sensor_values);
+
+	//TODO: remove test output.
+	static uint16_t degrees;
+	degrees = motor_sensor_values[0] / (N_ADC_AVG_STRUT*11.378);
+
+	cli_printf("%u\n",degrees);
+
+}
 
 void motors_wheels_stop()
 {

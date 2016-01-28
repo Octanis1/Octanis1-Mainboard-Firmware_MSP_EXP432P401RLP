@@ -14,11 +14,11 @@ static uint64_t adc_int_status;
 static uint16_t curADCResult;
 static double normalizedADCRes;
 
-static double battery_voltage;
-
 /* motor current sensor variables */
-static uint16_t motorvalues[N_WHEELS]; // for motors 5 to 8
-static uint8_t conversion_done;
+//static uint16_t motorvalues[N_WHEELS]; // for motors 5 to 8
+static uint8_t wheel_conversion_done;
+static uint8_t strut_conversion_done;
+
 
 void adc_isr()
 {
@@ -26,19 +26,17 @@ void adc_isr()
 	* that is finished for ADC_MEMx.
 	*/
 	adc_int_status = ADC14_getEnabledInterruptStatus();
-	if (ADC_INT1 & adc_int_status) //test for battery measurement; 1st priority
+	if (ADC_INT4 & adc_int_status) //strut4 current sensor measurement ready
 	{
-		/***** BEGIN OF CONVERSION SEQUENCE 1 *****/
-		curADCResult = ADC14MEM1;
-		battery_voltage = (curADCResult * 6.6) / 16384; // V_bat is divided by 2
-		ADC14_clearInterruptFlag(ADC_INT1);
-		ADC14_toggleConversionTrigger();
+		ADC14_clearInterruptFlag(ADC_INT4);
+		strut_conversion_done = 1;
+		/***** END OF CONVERSION SEQUENCE 1 *****/
 	}
 	else if (ADC_INT23 & adc_int_status) //motor5 current sensor; 2nd priority
 	{
-		motorvalues[0] = ADC14MEM23;
+//		motorvalues[0] = ADC14MEM23;
 		ADC14_clearInterruptFlag(ADC_INT23);
-		conversion_done = 1;
+		wheel_conversion_done = 1;
 		/***** END OF CONVERSION SEQUENCE 2 *****/
 	}
 
@@ -54,19 +52,19 @@ void adc_isr()
 	else if (ADC_INT20 & adc_int_status) //motor8 current sensor
 	{
 		/***** BEGIN OF CONVERSION SEQUENCE 2 *****/
-		motorvalues[3] = ADC14MEM20;
+//		motorvalues[3] = ADC14MEM20;
 		ADC14_clearInterruptFlag(ADC_INT20);
 		ADC14_toggleConversionTrigger();
 	}
 	else if (ADC_INT21 & adc_int_status) //motor7 current sensor
 	{
-		motorvalues[2] = ADC14MEM21;
+//		motorvalues[2] = ADC14MEM21;
 		ADC14_clearInterruptFlag(ADC_INT21);
 		ADC14_toggleConversionTrigger();
 	}
 	else if (ADC_INT22 & adc_int_status) //motor6 current sensor
 	{
-		motorvalues[1] = ADC14MEM22;
+//		motorvalues[1] = ADC14MEM22;
 		ADC14_clearInterruptFlag(ADC_INT22);
 		ADC14_toggleConversionTrigger();
 	}
@@ -77,7 +75,8 @@ void adc_isr()
 
 }
 
-uint8_t adc_read_motor_sensors(uint16_t sensor_values[N_WHEELS])
+
+uint8_t adc_read_motor_sensors(uint16_t wheel_sensor_values[N_WHEELS])
 {
 	static int i,j; //counter variables
 
@@ -87,10 +86,10 @@ uint8_t adc_read_motor_sensors(uint16_t sensor_values[N_WHEELS])
 	{
 		if(ADC14_enableConversion())
 		{
-			for(j=0;j<N_ADC_AVG;j++)
+			for(j=0;j<N_ADC_AVG_WHEEL;j++)
 			{
 				i = ADC14_toggleConversionTrigger();
-				conversion_done = 0;
+				wheel_conversion_done = 0;
 
 				while(i<N_WHEELS)
 				{
@@ -101,11 +100,50 @@ uint8_t adc_read_motor_sensors(uint16_t sensor_values[N_WHEELS])
 						i += (int)ADC14_toggleConversionTrigger();
 					}
 				}
-				sensor_values[3] += ADC14MEM20;
-				sensor_values[2] += ADC14MEM21;
-				sensor_values[1] += ADC14MEM22;
-				while(conversion_done == 0);
-				sensor_values[0] += ADC14MEM23;
+				wheel_sensor_values[3] += ADC14MEM20;
+				wheel_sensor_values[2] += ADC14MEM21;
+				wheel_sensor_values[1] += ADC14MEM22;
+				while(wheel_conversion_done == 0);
+				wheel_sensor_values[0] += ADC14MEM23;
+			}
+
+			ADC14_disableConversion();
+			return ADC_SUCCESS;
+		}
+	}
+	return ADC_ERROR;
+}
+
+
+uint8_t adc_read_strut_sensor_values(uint16_t strut_sensor_values[N_STRUTS])
+{
+	static int i,j; //counter variables
+
+	ADC14_disableConversion(); //just as a safety
+
+	if(ADC14_configureMultiSequenceMode(ADC_MEM1,ADC_MEM4, false)) //Last argument is "repeat mode". only has effect in AUTOMATIC_ITERATION. Silicon Bug present too!
+	{
+		if(ADC14_enableConversion())
+		{
+			for(j=0;j<N_ADC_AVG_STRUT;j++)
+			{
+				i = ADC14_toggleConversionTrigger();
+				strut_conversion_done = 0;
+
+				while(i<N_STRUTS)
+				{
+					if(ADC14_isBusy())
+					{continue;}
+					else
+					{
+						i += (int)ADC14_toggleConversionTrigger();
+					}
+				}
+				strut_sensor_values[0] += ADC14MEM1;
+				strut_sensor_values[1] += ADC14MEM2;
+				strut_sensor_values[2] += ADC14MEM3;
+				while(strut_conversion_done == 0);
+				strut_sensor_values[3] += ADC14MEM4;
 			}
 
 			ADC14_disableConversion();
@@ -126,22 +164,7 @@ void adc_init(void)
 	//ADC14_setPowerMode(ADC_EXTREME_LOW_POWER_MODE);
 	ADC14_setResolution(ADC_12BIT);
 
-	/***** External analog inputs ******/
-	/* Configuring GPIOs (5.4 A1) */
-	GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P5, GPIO_PIN4, GPIO_TERTIARY_MODULE_FUNCTION);
-	/* Configuring GPIOs (5.3 A2) */
-	GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P5, GPIO_PIN3, GPIO_TERTIARY_MODULE_FUNCTION);
-	/* Configuring ADC Memory */
-	ADC14_configureMultiSequenceMode(ADC_MEM1,ADC_MEM2, false); //Last argument is "repeat mode". not sure what effect it has.
-	//ADC14_configureSingleSampleMode(ADC_MEM2, true);
-	ADC14_configureConversionMemory(ADC_MEM1, ADC_VREFPOS_AVCC_VREFNEG_VSS,
-	ADC_INPUT_A1, ADC_NONDIFFERENTIAL_INPUTS);
-	ADC14_configureConversionMemory(ADC_MEM2, ADC_VREFPOS_AVCC_VREFNEG_VSS,
-	ADC_INPUT_A2, ADC_NONDIFFERENTIAL_INPUTS);
-
-
-
-	/******** Motor ADC inputs *********/
+	/******** Motor (wheel current sensor) ADC inputs *********/
 	/* Configuring GPIOs (8.5 A20) */
 	GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P8, GPIO_PIN5, GPIO_TERTIARY_MODULE_FUNCTION);
 	/* Configuring GPIOs (8.4 A21) */
@@ -161,14 +184,32 @@ void adc_init(void)
 	ADC14_configureConversionMemory(ADC_MEM23, ADC_VREFPOS_AVCC_VREFNEG_VSS,
 	ADC_INPUT_A23, ADC_NONDIFFERENTIAL_INPUTS);
 
+	/******** Strut position sensor ADC inputs *********/
+	/* Configuring GPIOs (8.5 A1) */
+	GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P5, GPIO_PIN4, GPIO_TERTIARY_MODULE_FUNCTION);
+	/* Configuring GPIOs (8.4 A2) */
+	GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P5, GPIO_PIN3, GPIO_TERTIARY_MODULE_FUNCTION);
+	/* Configuring GPIOs (8.3 A3) */
+	GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P5, GPIO_PIN2, GPIO_TERTIARY_MODULE_FUNCTION);
+	/* Configuring GPIOs (8.2 A4) */
+	GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P5, GPIO_PIN1, GPIO_TERTIARY_MODULE_FUNCTION);
+	/* Configuring ADC Memory */
+	ADC14_configureMultiSequenceMode(ADC_MEM1,ADC_MEM4, false); //Last argument is "repeat mode". only has effect in AUTOMATIC_ITERATION. Silicon Bug present too!
+	ADC14_configureConversionMemory(ADC_MEM1, ADC_VREFPOS_AVCC_VREFNEG_VSS,
+	ADC_INPUT_A1, ADC_NONDIFFERENTIAL_INPUTS);
+	ADC14_configureConversionMemory(ADC_MEM2, ADC_VREFPOS_AVCC_VREFNEG_VSS,
+	ADC_INPUT_A2, ADC_NONDIFFERENTIAL_INPUTS);
+	ADC14_configureConversionMemory(ADC_MEM3, ADC_VREFPOS_AVCC_VREFNEG_VSS,
+	ADC_INPUT_A3, ADC_NONDIFFERENTIAL_INPUTS);
+	ADC14_configureConversionMemory(ADC_MEM4, ADC_VREFPOS_AVCC_VREFNEG_VSS,
+	ADC_INPUT_A4, ADC_NONDIFFERENTIAL_INPUTS);
 
 	/* Configuring Sample Timer */
 	ADC14_enableSampleTimer(ADC_MANUAL_ITERATION);
 
 	/* Enable interrupt */
-	/*external*/
-	ADC14_enableInterrupt(ADC_INT1);
-	ADC14_enableInterrupt(ADC_INT2);
+	/* Struts */
+	ADC14_enableInterrupt(ADC_INT4);
 
 	/*motors*/
 	/*ADC14_enableInterrupt(ADC_INT20);
