@@ -10,6 +10,7 @@
 #include "cli.h"
 #include "system.h"
 #include "../peripherals/gps.h"
+#include "../peripherals/navigation.h"
 #include "../peripherals/hal/hx1.h"
 #include "../peripherals/hal/rockblock.h"
 #include "../lib/printf.h"
@@ -111,7 +112,14 @@ void cli_task(){
 		UART_read(uart, &input, sizeof(input));
 
 
-		if(strcmp("gps\n", input) == 0){
+		if(strncmp ("mot", input, 3) == 0){ //motor command was sent
+			if(navigation_bypass(input[3],(input[4]-'0')))
+				tfp_sprintf(output, "okm\n");
+			else
+				tfp_sprintf(output, "inv\n");
+			UART_write(uart, output, sizeof(output));
+		}
+		else if(strcmp("gps\n", input) == 0){
 		   tfp_sprintf(output, "fq %d", gps_get_fix_quality());
 		   UART_write(uart, output, sizeof(output));
 		}else if(strcmp("lat\n", input) == 0){

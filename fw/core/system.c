@@ -24,9 +24,10 @@ void system_dumpTask(Task_Handle task)
 
     Task_stat(task, &stat);
 
-
+#if VERBOSE==1
     cli_printf(Task_Handle_name(task), 0);
     cli_printf(" = %d \n\n", stat.mode);
+#endif
 
 }
 
@@ -112,7 +113,9 @@ int system_communicate_rover_status(){
     //post the buffer to the communications queue
 
 	    if(comm_post_message(frame)){
+	#if VERBOSE==1
     	cli_printf("posted comm to sbd\n",0);
+    #endif
     }
 
 

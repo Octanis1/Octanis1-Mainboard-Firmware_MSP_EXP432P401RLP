@@ -10,13 +10,17 @@
 
 
 // pitch Euler data in 100 degrees
-uint16_t imu_get_pitch();
+int16_t imu_get_pitch();
 
 // heading Euler data in 100 degrees
-uint16_t imu_get_heading();
+int16_t imu_get_heading();
+
+// heading Euler data
+float imu_get_fheading();
+
 
 // roll Euler data in 100 degrees
-uint16_t imu_get_roll();
+int16_t imu_get_roll();
 
 // return IMU calib status
 uint8_t imu_get_calib_status();

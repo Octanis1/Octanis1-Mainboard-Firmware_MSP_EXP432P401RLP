@@ -3,6 +3,11 @@
  *  Description: Model for gps module
  *  Author: Sam
  */
+
+
+/********************** TODO: this could maybe be merged to the navigation task ****************/
+
+
 #include "../../Board.h"
 #include "hal/ublox_6.h"
 #include "../lib/minmea/minmea.h"
@@ -52,6 +57,20 @@ int gps_get_hdop(){
 int gps_get_last_update_time(){
 	minmea_gettime(&gps_last_update, &gps_rmc_frame.date, &gps_rmc_frame.time);
 	return gps_last_update.tv_sec;
+}
+
+uint8_t gps_update_new_position(float* lat_, float* lon_)
+{
+	if(gps_get_validity())
+	{
+		(*lat_)=gps_get_lat();
+		(*lon_)=gps_get_lon();
+		//return 1 if the gps position has changed significatly.
+		return 1;
+	}
+
+	//else: no update performed.
+	return 0;
 }
 
 

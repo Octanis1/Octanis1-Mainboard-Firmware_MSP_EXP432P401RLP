@@ -6,6 +6,7 @@
 #include "../../Board.h"
 
 #include "weather.h"
+#include "hal/AS3935.h"
 #include "hal/bme280i2c.h"
 #include "hal/bmp180i2c.h"
 #include "hal/SHT2x.h"
@@ -72,13 +73,18 @@ void weather_task(){
 	windsensor_init();
 	mcp_init();
 
+	lightning_reset();
+	lightning_calibrate();
+
 	while(1){
 		Task_sleep(3000);
+
+		bmp180_data_readout_template(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
 
 		bme280_data_readout_template(&(weather_data.int_temp),&(weather_data.int_press),&(weather_data.int_humid));
 		//note: bme280 can give pressure, humidity and temperature
 
-		bmp180_data_readout_template(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
+
 
 		float uv = mcp_get_data();
 
@@ -87,6 +93,6 @@ void weather_task(){
 
 		//	windsensor_getvalue();
 
-		void weather_aggregate_data();
+		weather_aggregate_data();
 	}
 }

@@ -45,6 +45,9 @@
 #ifndef __MSP_EXP432P401RLP_H
 #define __MSP_EXP432P401RLP_H
 
+//#define VERSION_0_5 // define to use board v0.5 pin definitions, else undefin
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -60,7 +63,7 @@ extern "C" {
 typedef enum MSP_EXP432P401RLP_GPIOName {
 //    MSP_EXP432P401RLP_S1 = 0,
 //    MSP_EXP432P401RLP_S2,
-    Octanis05_ROCKBLOCK_NET,
+    Octanis_ROCKBLOCK_NET,
 	//MSP_EXP432P401RLP_ULTRASONIC_IN0,
 	Octanis05_LED0, //octanis led1
 	Octanis05_LED1, //octanis led2
@@ -93,6 +96,7 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
 	Octanis05_UV_EN,
 
 
+
     MSP_EXP432P401RLP_GPIOCOUNT
 } MSP_EXP432P401RLP_GPIOName;
 
@@ -111,10 +115,17 @@ typedef enum MSP_EXP432P401RLP_I2CName {
  *  @brief  Enum of PWM names on the MSP_EXP432P401RLP dev board
  */
 typedef enum MSP_EXP432P401RLP_PWMName {
-	Octanis05_PWM_TA1_2 = 0,
-	Octanis05_PWM_TA1_1,
-	Octanis05_PWM_TA1_3,
-	Octanis05_PWM_TA1_4,
+#ifdef VERSION_0_5
+	Octanis_PWM_TA1_2 = 0,
+	Octanis_PWM_TA1_1,
+	Octanis_PWM_TA1_3,
+	Octanis_PWM_TA1_4,
+#else
+	Octanis_PWM_TA1_1 = 0,
+	Octanis_PWM_TA1_3,
+	Octanis_PWM_TA1_2,
+	Octanis_PWM_TA1_4,
+#endif
 
     MSP_EXP432P401RLP_PWMCOUNT
 } MSP_EXP432P401RLP_PWMName;

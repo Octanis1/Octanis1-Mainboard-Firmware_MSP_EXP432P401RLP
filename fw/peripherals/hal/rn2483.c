@@ -19,11 +19,19 @@ static int rn2483_initialised = 1;
 #ifdef CONFIG_MODE
 //responses from the modem are "encapsulated" in "\r\n"
 #define RN2483_CONFIG_LENGTH 50 //maximum length of the below 4 strings
-static const char rn_set_nwkskey[] ="mac set nwkskey A4F613D0D65CC3DA3D874D82E12265B8\r\n";
-static const char rn_set_appskey[] ="mac set appskey 32BC3ABB9E1ADC0594811AEB1CCA704F\r\n";
-static const char rn_set_devaddr[] ="mac set devaddr 08050046\r\n";
-static const char rn_set_deveui[] ="mac set deveui F03D291000000046\r\n";
-static const char rn_save[] ="mac save\r\n";
+	#ifdef CONFIG_SWISSCOM
+		static const char rn_set_nwkskey[] ="mac set nwkskey A4F613D0D65CC3DA3D874D82E12265B8\r\n";
+		static const char rn_set_appskey[] ="mac set appskey 32BC3ABB9E1ADC0594811AEB1CCA704F\r\n";
+		static const char rn_set_devaddr[] ="mac set devaddr 08050046\r\n";
+		static const char rn_set_deveui[] ="mac set deveui F03D291000000046\r\n";
+		static const char rn_save[] ="mac save\r\n";
+	#else //thethingsnetwork login:
+		static const char rn_set_nwkskey[] ="mac set nwkskey 2B7E151628AED2A6ABF7158809CF4F3C\r\n";
+		static const char rn_set_appskey[] ="mac set appskey 2B7E151628AED2A6ABF7158809CF4F3C\r\n";
+		static const char rn_set_devaddr[] ="mac set devaddr 08050046\r\n";
+		static const char rn_set_deveui[] ="mac set deveui F03D291000000046\r\n";
+		static const char rn_save[] ="mac save\r\n";
+	#endif
 #endif
 
 
@@ -72,7 +80,10 @@ int rn2483_begin(){
 		cli_printf("rn2483 open error \n",0);
 		return 0;
 	}else{
+	#if VERBOSE==1
 		cli_printf("rn2483 opened\n",0);
+	#endif
+
 	}
 #endif
 
@@ -130,9 +141,17 @@ int rn2483_config()
 {
 	int comm_result = 0;
 
+	//	reset the rn2483
+    GPIO_write(Board_LORA_RESET_N, 0);
+    GPIO_write(Board_LORA_RESET_N, 1);
+    	char rxBuffer[RN2483_RXBUFFER_SIZE];
+
 	comm_result+=(!rn2483_open());
 
-	char rxBuffer[RN2483_RXBUFFER_SIZE];
+	Task_sleep(500);
+	UART_read(uart, rxBuffer, sizeof(rxBuffer)); //clean the reset message
+	UART_read(uart, rxBuffer, sizeof(rxBuffer));
+	memset(&rxBuffer, 0, sizeof(rxBuffer));
 
 	Task_sleep(500);
 	UART_write(uart, rn_set_devaddr, sizeof(rn_set_devaddr));
@@ -174,8 +193,13 @@ int rn2483_config()
 int rn2483_send_receive(char * tx_buffer, int tx_size)
 {
 	char rxBuffer[RN2483_RXBUFFER_SIZE];
+	UART_read(uart, rxBuffer, sizeof(rxBuffer)); //clear the buffer: after 1st "ok", it receives a \n before "ok".
+												// this is a pretty bad hack and we should look where the character comes from .
+
 	memset(&rxBuffer, 0, sizeof(rxBuffer));
 	char txBuffer[tx_size+18]; //18 for the aditionnal lora commands
+	memset(&txBuffer, 0, sizeof(txBuffer)); //important! always clean buffer before tx
+
 
 	if(!rn2483_initialised) return 0;
 
@@ -184,12 +208,13 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 	strcat(txBuffer, rn_txstop);
 
 	int tx_ret = UART_write(uart, txBuffer, strlen(txBuffer));
-	int rx_ret = UART_read(uart, rxBuffer, sizeof(rxBuffer)); //TODO: after 1st "ok", it receives a \n before "ok"
+	int rx_ret = UART_read(uart, rxBuffer, sizeof(rxBuffer));
 
-	cli_printf("tx %d \n", tx_ret);
+	//cli_printf("tx %d \n", tx_ret);
 
 	if(!strcmp("ok\r\n", rxBuffer))
 	{
+		GPIO_toggle(Board_LED_GREEN);
 		return 1; //modem can now communicate with us
 	}
 	else

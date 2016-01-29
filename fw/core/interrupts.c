@@ -10,6 +10,7 @@
 /* include all modules with interrupt service routines */
 #include "../peripherals/hal/ultrasonic.h"
 #include "../peripherals/hal/windsensor.h"
+#include "../peripherals/hal/AS3935.h"
 
 
 
@@ -29,8 +30,9 @@ void port1_isr()
 	        case P1IV__P1IFG3:                                       // Pin 3
 	        	__no_operation();
 	             break;
-	        case P1IV__P1IFG4:                                       // Pin 4 (button1)
-//	        	 GPIO_clearInt(Board_BUTTON1);
+	        case Board_LIGHTNING_INT_IV:                             // Pin 4 (lightning detector)
+	        		as3935_ISR();
+	        		GPIO_clearInt(Board_LIGHTNING_INT);
 	             break;
 	        case P1IV__P1IFG5:                                       // Pin 5
 	             __no_operation();
@@ -152,6 +154,15 @@ void timer_a0_isr()
 
 void timer_a2_isr()
 {
+	/* TODO: add detection of capture before previous event was read.
+	 * From the MSP430 users guide, p363:
+	 *
+	 * Overflow logic is provided in each capture/compare register to indicate if a second capture was
+	 * performed before the value from the first capture was read. Bit COV is set when this occurs as shown in
+	 * Figure 14-11. COV must be reset with software.
+	 */
+
+
 	switch( TA2IV ) {
 // check if board definitions are still the same
 #if(Board_ULTRASONIC_IN_0_TAx_MODULE==TIMER_A2_MODULE && Board_ULTRASONIC_IN_1_TAx_MODULE==TIMER_A2_MODULE)

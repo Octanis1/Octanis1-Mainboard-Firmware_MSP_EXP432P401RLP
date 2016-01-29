@@ -33,6 +33,8 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
+#define VERBOSE	1
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -109,23 +111,23 @@ extern "C" {
 
 //#define Board_BUTTON0               MSP_EXP432P401RLP_S1
 //#define Board_BUTTON1               MSP_EXP432P401RLP_S2
-#define Board_LED_RED               	Octanis05_LED0
-#define Board_LED_GREEN              Octanis05_LED1
+#define Board_LED_RED               	Octanis_LED0
+#define Board_LED_GREEN              Octanis_LED1
 
-#define Board_ROCKBLOCK_SLEEP		Octanis05_ROCKBLOCK_SLEEP
-#define Board_ROCKBLOCK_NET			Octanis05_ROCKBLOCK_NET
+#define Board_ROCKBLOCK_SLEEP		Octanis_ROCKBLOCK_SLEEP
+#define Board_ROCKBLOCK_NET			Octanis_ROCKBLOCK_NET
 
 /* LoRa module pin definitions */
-#define Board_LORA_RESET_N			Octanis05_LORA_RESET_N
+#define Board_LORA_RESET_N			Octanis_LORA_RESET_N
 
 
 /*Ultrasonic pin and timer definitions*/
-#define Board_ULTRASONIC_OR_SLEEP		Octanis05_ULTRASONIC_OR_SLEEP
-#define Board_ULTRASONIC_EN_0			Octanis05_ULTRASONIC_EN_0
-#define Board_ULTRASONIC_EN_1			Octanis05_ULTRASONIC_EN_1
+#define Board_ULTRASONIC_OR_SLEEP		Octanis_ULTRASONIC_OR_SLEEP
+#define Board_ULTRASONIC_EN_0			Octanis_ULTRASONIC_EN_0
+#define Board_ULTRASONIC_EN_1			Octanis_ULTRASONIC_EN_1
 
-#define Board_ULTRASONIC_OUT_0			Octanis05_ULTRASONIC_OUT_0
-#define Board_ULTRASONIC_OUT_1			Octanis05_ULTRASONIC_OUT_1
+#define Board_ULTRASONIC_OUT_0			Octanis_ULTRASONIC_OUT_0
+#define Board_ULTRASONIC_OUT_1			Octanis_ULTRASONIC_OUT_1
 
 #define Board_ULTRASONIC_IN_0_PORT		GPIO_PORT_P6
 #define Board_ULTRASONIC_IN_0_PIN		GPIO_PIN6
@@ -165,7 +167,7 @@ extern "C" {
 #define Board_UV_OFF 0
 
 /* Windsensor pins */
-#define Board_WINDSENSOR_SLEEP			Octanis05_WINDSENSOR_SLEEP
+#define Board_WINDSENSOR_SLEEP			Octanis_WINDSENSOR_SLEEP
 
 #define Board_WINDSENSOR_IN_PORT			GPIO_PORT_P7 //P7.3 (TA0CCR1 port mapped in PWM_init())
 #define Board_WINDSENSOR_IN_PIN			GPIO_PIN3
@@ -176,28 +178,39 @@ extern "C" {
 #define Board_WINDSENSOR_IN_IV			0x02
 
 
+/* Lightning sensor */
+#define Board_LIGHTNING_INT			Octanis_LIGHTNING_INT
+#define Board_LIGHTNING_INT_IV		P1IV__P1IFG4
+
 /* Motor pins */
-#define Board_M1234_SLEEP_N			Octanis05_M1234_SLEEP_N
-#define Board_M1_PH					Octanis05_M1_PH
-#define Board_M2_PH  				Octanis05_M2_PH
-#define Board_M3_PH 					Octanis05_M3_PH
-#define Board_M4_PH					Octanis05_M4_PH
-#define Board_M1_EN					Octanis05_M1_EN
-#define Board_M2_EN					Octanis05_M2_EN
-#define Board_M3_EN					Octanis05_M3_EN
-#define Board_M4_EN 					Octanis05_M4_EN
-#define Board_M5678_SLEEP_N 			Octanis05_M5678_SLEEP_N
-#define Board_M5_PH					Octanis05_M5_PH
-#define Board_M6_PH					Octanis05_M6_PH
-#define Board_M7_PH					Octanis05_M7_PH
-#define Board_M8_PH					Octanis05_M8_PH
+#define Board_M1234_SLEEP_N			Octanis_M1234_SLEEP_N
+#define Board_M1_PH					Octanis_M1_PH
+#define Board_M2_PH  				Octanis_M2_PH
+#define Board_M3_PH 					Octanis_M3_PH
+#define Board_M4_PH					Octanis_M4_PH
+#define Board_M1_EN					Octanis_M1_EN
+#define Board_M2_EN					Octanis_M2_EN
+#define Board_M3_EN					Octanis_M3_EN
+#define Board_M4_EN 					Octanis_M4_EN
+#define Board_M5678_SLEEP_N 			Octanis_M5678_SLEEP_N
+#define Board_M5_PH					Octanis_M5_PH
+#define Board_M6_PH					Octanis_M6_PH
+#define Board_M7_PH					Octanis_M7_PH
+#define Board_M8_PH					Octanis_M8_PH
 
-#define Board_M5_EN_PWM           	Octanis05_PWM_TA1_2
-#define Board_M6_EN_PWM           	Octanis05_PWM_TA1_1
-#define Board_M7_EN_PWM           	Octanis05_PWM_TA1_3
-#define Board_M8_EN_PWM           	Octanis05_PWM_TA1_4
+#ifdef VERSION_0_5
+	#define Board_M5_EN_PWM           	Octanis_PWM_TA1_2
+	#define Board_M6_EN_PWM           	Octanis_PWM_TA1_1
+	#define Board_M7_EN_PWM           	Octanis_PWM_TA1_3
+	#define Board_M8_EN_PWM           	Octanis_PWM_TA1_4
+#else
+	#define Board_M5_EN_PWM           	Octanis_PWM_TA1_1
+	#define Board_M6_EN_PWM           	Octanis_PWM_TA1_3
+	#define Board_M7_EN_PWM           	Octanis_PWM_TA1_2
+	#define Board_M8_EN_PWM           	Octanis_PWM_TA1_4
+#endif
 
-#define Board_M5678_CURR_SENS_EN 	Octanis05_M5678_CURR_SENS_EN
+#define Board_M5678_CURR_SENS_EN 	Octanis_M5678_CURR_SENS_EN
 
 
 #define Board_I2C0                  MSP_EXP432P401RLP_I2CB1

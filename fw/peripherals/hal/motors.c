@@ -7,30 +7,38 @@
 
 #include "motors.h"
 #include "../../../Board.h"
+#include "adc.h"
 
 PWM_Handle pwm5_handle, pwm6_handle, pwm7_handle, pwm8_handle;
 PWM_Params pwm5_params, pwm6_params, pwm7_params, pwm8_params;
 
 
+int motors_init()
+{
+	motors_pwm_init();
+	adc_init();
+
+	return 1;
+}
+
 int motors_pwm_init(){
-	uint32_t period = 1000; /* PWM period in microseconds -> 1kHz*/
+	uint32_t period = PWM_PERIOD; /* PWM period in microseconds -> 50kHz*/
 
 	PWM_Params_init(&pwm5_params);
 	pwm5_params.period = period;             	// Period in microseconds
-	pwm5_params.dutyMode = PWM_DUTY_SCALAR; 	// duty is an integer scaled to the period,
+	pwm5_params.dutyMode = PWM_DUTY_TIME; 	// duty is an integer scaled to the period,
 										  	  // 0 = 0% and 65535 = 100%
-
 	PWM_Params_init(&pwm6_params);
 	pwm6_params.period = period;             	// Period in microseconds
-	pwm6_params.dutyMode = PWM_DUTY_SCALAR; 	// duty is an integer scaled to the period,
-											  	  // 0 = 0% and 65535 = 100%
+	pwm6_params.dutyMode = PWM_DUTY_TIME; 		// duty is an integer scaled to the period,
+											// 0 = 0% and 65535 = 100%
 	PWM_Params_init(&pwm7_params);
 	pwm7_params.period = period;             	// Period in microseconds
-	pwm7_params.dutyMode = PWM_DUTY_SCALAR; 	// duty is an integer scaled to the period,
+	pwm7_params.dutyMode = PWM_DUTY_TIME; 	// duty is an integer scaled to the period,
 											  // 0 = 0% and 65535 = 100%
 	PWM_Params_init(&pwm8_params);
 	pwm8_params.period = period;             	// Period in microseconds
-	pwm8_params.dutyMode = PWM_DUTY_SCALAR; 	// duty is an integer scaled to the period,
+	pwm8_params.dutyMode = PWM_DUTY_TIME; 	// duty is an integer scaled to the period,
 												  // 0 = 0% and 65535 = 100%
 
 	pwm5_handle = PWM_open(Board_M5_EN_PWM, &pwm5_params);
@@ -57,42 +65,44 @@ int motors_pwm_init(){
  * arguments are integers scaled to the speed 0 = 0% and 65535 = 100% and the sign of the number
  * determines the direction of travel (negative: backwards, positive: forward).
  */
-void motors_wheels_move(int16_t front_left, int16_t front_right, int16_t rear_left, int16_t rear_right)
+void motors_wheels_move(int32_t front_left, int32_t front_right, int32_t rear_left, int32_t rear_right)
 {
+	GPIO_write(Board_M5678_CURR_SENS_EN, 1); //turn current sensors on
+
 	GPIO_write(Board_M5678_SLEEP_N, 1); //turn h-bridge on
 
 	/* determine direction of the wheel (forward/backward) */
 	if(front_left < 0)
 	{
-		GPIO_write(Board_M5_PH, 0); //set phase
+		GPIO_write(Board_M5_PH, PH_REVERSE); //set phase
 		front_left = -front_left;
 	}
 	else
-		GPIO_write(Board_M5_PH, 1); //set phase
+		GPIO_write(Board_M5_PH, PH_FORWARD); //set phase
 
 	if(front_right < 0)
 	{
-		GPIO_write(Board_M6_PH, 0); //set phase
+		GPIO_write(Board_M6_PH, PH_REVERSE); //set phase
 		front_right = -front_right;
 	}
 	else
-		GPIO_write(Board_M6_PH, 1); //set phase
+		GPIO_write(Board_M6_PH, PH_FORWARD); //set phase
 
 	if(rear_left < 0)
 	{
-		GPIO_write(Board_M7_PH, 0); //set phase
+		GPIO_write(Board_M7_PH, PH_REVERSE); //set phase
 		rear_left = -rear_left;
 	}
 	else
-		GPIO_write(Board_M7_PH, 1); //set phase
+		GPIO_write(Board_M7_PH, PH_FORWARD); //set phase
 
 	if(rear_right < 0)
 	{
-		GPIO_write(Board_M8_PH, 0); //set phase
+		GPIO_write(Board_M8_PH, PH_REVERSE); //set phase
 		rear_right = -rear_right;
 	}
 	else
-		GPIO_write(Board_M8_PH, 1); //set phase
+		GPIO_write(Board_M8_PH, PH_FORWARD); //set phase
 
 	PWM_setDuty(pwm5_handle, (front_left));
 	PWM_setDuty(pwm6_handle, (front_right));
@@ -100,9 +110,27 @@ void motors_wheels_move(int16_t front_left, int16_t front_right, int16_t rear_le
 	PWM_setDuty(pwm8_handle, (rear_right));
 }
 
+
+void motors_wheels_update_distance()
+{
+	static uint16_t sensor_values[N_WHEELS];
+
+	/* initialize to 0 to reset the running average inside the adc readout function */
+	sensor_values[0] = 0;
+	sensor_values[1] = 0;
+	sensor_values[2] = 0;
+	sensor_values[3] = 0;
+
+	adc_read_motor_sensors(sensor_values);
+
+
+
+}
+
+
 /*
  * arguments determine the direction of the struts movement
- * (negative: backwards, positive: forward, zero: stop).
+ * (negative: backwards, positive: forward, zero: stop). ????????????
  */
 void motors_struts_move(int8_t front_left, int8_t front_right, int8_t rear_left, int8_t rear_right)
 {
@@ -136,6 +164,26 @@ void motors_struts_move(int8_t front_left, int8_t front_right, int8_t rear_left,
 }
 
 
+void motors_struts_get_position()
+{
+	static uint16_t motor_sensor_values[N_STRUTS];
+
+	/* initialize to 0 to reset the running average inside the adc readout function */
+	motor_sensor_values[0] = 0;
+	motor_sensor_values[1] = 0;
+	motor_sensor_values[2] = 0;
+	motor_sensor_values[3] = 0;
+
+	adc_read_strut_sensor_values(motor_sensor_values);
+
+	//TODO: remove test output.
+	static uint16_t degrees;
+	degrees = motor_sensor_values[0] / (N_ADC_AVG_STRUT*11.378);
+
+	cli_printf("%u\n",degrees);
+
+}
+
 void motors_wheels_stop()
 {
 	PWM_setDuty(pwm5_handle, 0);
@@ -143,6 +191,7 @@ void motors_wheels_stop()
 	PWM_setDuty(pwm7_handle, 0);
 	PWM_setDuty(pwm8_handle, 0);
 
+	GPIO_write(Board_M5678_CURR_SENS_EN, 0); //turn current sensor off
 	GPIO_write(Board_M5678_SLEEP_N, 1); //turn h-bridge off
 }
 
