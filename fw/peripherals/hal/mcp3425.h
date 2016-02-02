@@ -8,19 +8,21 @@
 #ifndef FW_PERIPHERALS_HAL_MCP3425_H_
 #define FW_PERIPHERALS_HAL_MCP3425_H_
 
+#include <stdint.h>
+
 typedef struct cpt_data {
     float uv_value; //mW/cm^2
-    int uv_data; 
-    unsigned char status_register;
+    int16_t uv_data;
+    uint8_t status_register;
 }cpt_data;
 
-char mcp_read(unsigned char dev_addr, unsigned char* reg_data, unsigned char cnt);
+int8_t mcp_read(uint8_t dev_addr, uint8_t* reg_data, uint8_t cnt);
 /*
  * fetch the value of the converted data and the register of the mcp3425
  * return value determine if transaction was successful
  */
 
-char mcp_write (unsigned char dev_addr, unsigned char *reg_data, unsigned char cnt);
+int8_t mcp_write (uint8_t dev_addr, uint8_t *reg_data, uint8_t cnt);
 /*
  * write to the register of the mcp3425
  * return value determine if transaction was successful
@@ -32,12 +34,12 @@ void mcp_init ();
  * setting the conversion mode, SPS and gain to the appropriate value
  */
 
-void mcp_parse (unsigned char* reg_data, cpt_data* parsed_info);
+void mcp_parse (uint8_t* reg_data, cpt_data* parsed_info);
 /*
  * convert the buffer recived with the i2c for the cpt_data struct.
  */
 
-float mcp_convert_uv_data (int raw_data);
+float mcp_convert_uv_data (int16_t raw_data);
 /*
  * Convert the tension recived in mW/cm^2
  * The value returned by the UV captor varie depending on the outside temperature

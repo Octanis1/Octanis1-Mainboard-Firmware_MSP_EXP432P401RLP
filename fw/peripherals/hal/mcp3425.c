@@ -32,7 +32,7 @@
 #define MCP_PGA_8 0b00000011
 
 
-char mcp_read (unsigned char dev_addr, unsigned char* reg_data, unsigned char cnt) {
+int8_t mcp_read (uint8_t dev_addr, uint8_t* reg_data, uint8_t cnt) {
 	
     I2C_Transaction i2cTransaction;
 	
@@ -43,7 +43,7 @@ char mcp_read (unsigned char dev_addr, unsigned char* reg_data, unsigned char cn
     i2cTransaction.readCount = cnt;
 
 
-    int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
+    int8_t ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
     if (!ret) {
         //cli_printf("mcp3425 read error \n", 0);
@@ -52,7 +52,7 @@ char mcp_read (unsigned char dev_addr, unsigned char* reg_data, unsigned char cn
     return ret;
 }
 
-char mcp_write (unsigned char dev_addr, unsigned char* reg_data, unsigned char cnt) {
+int8_t mcp_write (uint8_t dev_addr, uint8_t* reg_data, uint8_t cnt) {
     I2C_Transaction i2cTransaction;
 
     i2cTransaction.slaveAddress = dev_addr; //MCP3425AD_I2CADDR
@@ -61,7 +61,7 @@ char mcp_write (unsigned char dev_addr, unsigned char* reg_data, unsigned char c
     i2cTransaction.writeBuf = reg_data;
     i2cTransaction.writeCount = cnt;
 
-    int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
+    int8_t ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
     if (!ret) {
         //cli_printf("SHT2x i2c bus write error\n", 0);
@@ -95,8 +95,8 @@ void mcp_init () {
      * because the device uses 0.1 micro-A when in sleep mode
      */
 
-    unsigned char read_buffer[MCP_OUTPUT_LENGTH];
-    unsigned char write_buffer = 0;
+    uint8_t read_buffer[MCP_OUTPUT_LENGTH];
+    uint8_t write_buffer = 0;
 
     mcp_read(MCP_ADDR, read_buffer, MCP_OUTPUT_LENGTH);
 
@@ -110,27 +110,20 @@ void mcp_init () {
     mcp_write(MCP_ADDR, &write_buffer, MCP_WRITE_LENGTH);
 }
 
-void mcp_parse (unsigned char* reg_data, cpt_data* parsed_info) {
+void mcp_parse (uint8_t* reg_data, cpt_data* parsed_info) {
     
-    int voltage = 0;
+    int16_t voltage = 0;
     
     voltage += reg_data[MSP_MSB_POS];
     voltage = (voltage << 8);
     voltage |= reg_data[MSP_MSB_POS+1];
 
-    //if int is 4 bytes long we have to fill the 2 bigger bytes with the MSB
-    if (sizeof(int) == 4){
-        if((reg_data[0] & 0x80) == 0x80)
-            voltage |= 0xFFFF0000;
-        else
-            voltage &= 0x0000FFFF;
-    }
     
     parsed_info->uv_data = voltage;
     parsed_info->status_register = reg_data[MCP_REG_POS];
 }
 
-float mcp_convert_uv_data (int raw_data){
+float mcp_convert_uv_data (int16_t raw_data){
     float converted = 0;
     
     //we adjust the raw data to fit our 0-3.3V range
@@ -145,7 +138,7 @@ float mcp_convert_uv_data (int raw_data){
 float mcp_get_data (){
 
     cpt_data uv_cpt;
-    unsigned char buffer[3];
+    uint8_t buffer[3];
 
     //turn on UV captor then wait 1msec
     GPIO_write(Board_UV_PIN, Board_UV_ON);
