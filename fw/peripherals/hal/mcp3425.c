@@ -30,7 +30,6 @@
 #define MCP_PGA_2 0b00000001
 #define MCP_PGA_4 0b00000010
 #define MCP_PGA_8 0b00000011
-#define MCP_BUFFER_LENGTH 3
 
 
 int8_t mcp_read (uint8_t dev_addr, uint8_t* reg_data, uint8_t cnt) {
@@ -56,23 +55,16 @@ int8_t mcp_read (uint8_t dev_addr, uint8_t* reg_data, uint8_t cnt) {
 int8_t mcp_write (uint8_t dev_addr, uint8_t* reg_data, uint8_t cnt) {
     I2C_Transaction i2cTransaction;
 
-    int16_t i = 0;
-    uint8_t writebuffer[MCP_BUFFER_LENGTH];
-
-    for (i=0;i<cnt;i++){
-        writebuffer[i]=reg_data[i];
-    }
-
+    i2cTransaction.slaveAddress = dev_addr; //MCP3425AD_I2CADDR
     i2cTransaction.readBuf = NULL;
     i2cTransaction.readCount = 0;
-    i2cTransaction.writeBuf = writebuffer;
+    i2cTransaction.writeBuf = reg_data;
     i2cTransaction.writeCount = cnt;
-    i2cTransaction.slaveAddress = dev_addr; //MCP3425AD_I2CADDR
 
     int8_t ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
     if (!ret) {
-        //cli_printf("mcp3425 i2c bus write error\n", 0);
+        //cli_printf("SHT2x i2c bus write error\n", 0);
     }
 
     return ret;
