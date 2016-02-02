@@ -12,7 +12,7 @@
  * *  Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *
+ *        
  * *  Neither the name of Texas Instruments Incorporated nor the names of
  *    its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -160,6 +160,11 @@ extern "C" {
 #define Board_ULTRASONIC_IN_3_CCR		TIMER_A_CAPTURECOMPARE_REGISTER_4
 #define Board_ULTRASONIC_IN_3_CCTL		TA3CCTL4
 #define Board_ULTRASONIC_IN_3_IV			0x08
+
+/* UV captor pins */
+#define Board_UV_PIN	Octanis05_UV_EN
+#define Board_UV_ON 1
+#define Board_UV_OFF 0
 
 /* Windsensor pins */
 #define Board_WINDSENSOR_SLEEP			Octanis_WINDSENSOR_SLEEP

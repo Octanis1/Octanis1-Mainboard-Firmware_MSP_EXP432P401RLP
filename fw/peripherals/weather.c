@@ -11,6 +11,7 @@
 #include "hal/bmp180i2c.h"
 #include "hal/SHT2x.h"
 #include "hal/windsensor.h"
+#include "hal/mcp3425.h"
 #include "hal/i2c_helper.h"
 #include "../lib/printf.h"
 
@@ -70,6 +71,7 @@ void weather_task(){
 
 	i2c_helper_init_handle();
 	windsensor_init();
+//	mcp_init();
 
 	lightning_reset();
 	lightning_calibrate();
@@ -83,6 +85,8 @@ void weather_task(){
 		//note: bme280 can give pressure, humidity and temperature
 
 
+
+//		float uv = mcp_get_data();
 
 //		weather_data.ext_temp_sht21 = sht2x_get_temp(); //TODO: fix the fact that program stops here if sensor is not connected.
 //		weather_data.ext_humid = sht2x_get_humidity();

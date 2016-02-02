@@ -18,13 +18,19 @@
 char SHT2x_I2C_write(unsigned char dev_addr, unsigned char *reg_data, unsigned char cnt){
 	I2C_Transaction i2cTransaction;
 
+    int i = 0;
+    unsigned char writebuffer[cnt];
 
-	i2cTransaction.slaveAddress = dev_addr; //SHT2x_ADR
+    for (i=0;i<cnt;i++){
+        writebuffer[i]=reg_data[i];
+    }
+
 	i2cTransaction.readBuf = NULL;
 	i2cTransaction.readCount = 0;
-	i2cTransaction.writeBuf = reg_data;
+	i2cTransaction.writeBuf = writebuffer;
 	i2cTransaction.writeCount = cnt;
 
+	i2cTransaction.slaveAddress = dev_addr; //SHT2x_ADR
 	int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
 	if (!ret) {
