@@ -18,12 +18,12 @@
 char SHT2x_I2C_write(unsigned char dev_addr, unsigned char *reg_data, unsigned char cnt){
 	I2C_Transaction i2cTransaction;
 
-        int i = 0;
-        unsigned char writebuffer[cnt];
+    int i = 0;
+    unsigned char writebuffer[cnt];
 
-        for (i=0;i<cnt;i++){
-            writebuffer[i]=reg_data[i];
-        }
+    for (i=0;i<cnt;i++){
+        writebuffer[i]=reg_data[i];
+    }
 
 	i2cTransaction.readBuf = NULL;
 	i2cTransaction.readCount = 0;

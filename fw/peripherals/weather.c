@@ -71,7 +71,7 @@ void weather_task(){
 
 	i2c_helper_init_handle();
 	windsensor_init();
-	mcp_init();
+//	mcp_init();
 
 	lightning_reset();
 	lightning_calibrate();
@@ -86,7 +86,7 @@ void weather_task(){
 
 
 
-		float uv = mcp_get_data();
+//		float uv = mcp_get_data();
 
 //		weather_data.ext_temp_sht21 = sht2x_get_temp(); //TODO: fix the fact that program stops here if sensor is not connected.
 //		weather_data.ext_humid = sht2x_get_humidity();
