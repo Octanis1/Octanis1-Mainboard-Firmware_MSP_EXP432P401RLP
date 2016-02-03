@@ -13,6 +13,7 @@ int main(void)
     Board_initUART();
     Board_initI2C();
     Board_initPWM();
+    Board_initSPI();
 
     /* Turn on user LED */
     GPIO_write(Board_LED_GREEN, Board_LED_ON);
