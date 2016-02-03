@@ -538,61 +538,61 @@ void MSP_EXP432P401RLP_initPWM(void)
 }
 
 /*
- *  =============================== SDSPI ===============================
- */
-/* Place into subsections to allow the TI linker to remove items properly */
-#if defined(__TI_COMPILER_VERSION__)
-#pragma DATA_SECTION(SDSPI_config, ".const:SDSPI_config")
-#pragma DATA_SECTION(sdspiMSP432HWAttrs, ".const:sdspiMSP432HWAttrs")
-#endif
-
-#include <ti/drivers/SDSPI.h>
-#include <ti/drivers/sdspi/SDSPIMSP432.h>
-
-/* SDSPI objects */
-SDSPIMSP432_Object sdspiMSP432Objects[MSP_EXP432P401RLP_SDSPICOUNT];
-
-/* SDSPI configuration structure, describing which pins are to be used */
-const SDSPIMSP432_HWAttrs sdspiMSP432HWAttrs[MSP_EXP432P401RLP_SDSPICOUNT] = {
-    {
-        .baseAddr = EUSCI_B0_BASE,
-        .clockSource = EUSCI_B_SPI_CLOCKSOURCE_SMCLK,
-
-        /* CLK, MOSI & MISO ports & pins */
-        .portSCK = GPIO_PORT_P1,
-        .pinSCK = GPIO_PIN5,
-        .sckMode = GPIO_PRIMARY_MODULE_FUNCTION,
-
-        .portMISO = GPIO_PORT_P1,
-        .pinMISO = GPIO_PIN7,
-        .misoMode = GPIO_PRIMARY_MODULE_FUNCTION,
-
-        .portMOSI = GPIO_PORT_P1,
-        .pinMOSI = GPIO_PIN6,
-        .mosiMode = GPIO_PRIMARY_MODULE_FUNCTION,
-
-        /* Chip select port & pin */
-        .portCS = GPIO_PORT_P4,
-        .pinCS = GPIO_PIN6
-    }
-};
-
-const SDSPI_Config SDSPI_config[] = {
-    {
-        .fxnTablePtr = &SDSPIMSP432_fxnTable,
-        .object = &sdspiMSP432Objects[0],
-        .hwAttrs = &sdspiMSP432HWAttrs[0]
-    },
-    {NULL, NULL, NULL}
-};
-
-/*
- *  ======== MSP_EXP432P401RLP_initSDSPI ========
- */
-void MSP_EXP432P401RLP_initSDSPI(void)
-{
-    SDSPI_init();
-}
+// *  =============================== SDSPI ===============================
+// */
+///* Place into subsections to allow the TI linker to remove items properly */
+//#if defined(__TI_COMPILER_VERSION__)
+//#pragma DATA_SECTION(SDSPI_config, ".const:SDSPI_config")
+//#pragma DATA_SECTION(sdspiMSP432HWAttrs, ".const:sdspiMSP432HWAttrs")
+//#endif
+//
+//#include <ti/drivers/SDSPI.h>
+//#include <ti/drivers/sdspi/SDSPIMSP432.h>
+//
+/////* SDSPI objects */
+////SDSPIMSP432_Object sdspiMSP432Objects[MSP_EXP432P401RLP_SDSPICOUNT];
+////
+///* SDSPI configuration structure, describing which pins are to be used */
+//const SDSPIMSP432_HWAttrs sdspiMSP432HWAttrs[MSP_EXP432P401RLP_SDSPICOUNT] = {
+//    {
+//        .baseAddr = EUSCI_B1_BASE,
+//        .clockSource = EUSCI_B_SPI_CLOCKSOURCE_SMCLK,
+//
+//        /* CLK, MOSI & MISO ports & pins */
+//        .portSCK = GPIO_PORT_P1,
+//        .pinSCK = GPIO_PIN5,
+//        .sckMode = GPIO_PRIMARY_MODULE_FUNCTION,
+//
+//        .portMISO = GPIO_PORT_P1,
+//        .pinMISO = GPIO_PIN7,
+//        .misoMode = GPIO_PRIMARY_MODULE_FUNCTION,
+//
+//        .portMOSI = GPIO_PORT_P1,
+//        .pinMOSI = GPIO_PIN6,
+//        .mosiMode = GPIO_PRIMARY_MODULE_FUNCTION,
+//
+//        /* Chip select port & pin */
+//        .portCS = GPIO_PORT_P4,
+//        .pinCS = GPIO_PIN6
+//    }
+//};
+//
+//const SDSPI_Config SDSPI_config[] = {
+//    {
+//        .fxnTablePtr = &SDSPIMSP432_fxnTable,
+//        .object = &sdspiMSP432Objects[0],
+//        .hwAttrs = &sdspiMSP432HWAttrs[0]
+//    },
+//    {NULL, NULL, NULL}
+//};
+//
+///*
+// *  ======== MSP_EXP432P401RLP_initSDSPI ========
+// */
+//void MSP_EXP432P401RLP_initSDSPI(void)
+//{
+//    SDSPI_init();
+//}
 
 /*
  *  =============================== SPI ===============================
@@ -607,34 +607,37 @@ void MSP_EXP432P401RLP_initSDSPI(void)
 #include <ti/drivers/spi/SPIMSP432DMA.h>
 
 /* SPI objects */
-SPIMSP432DMA_Object spiMSP432DMAObjects[MSP_EXP432P401RLP_SPICOUNT];
+SPIMSP432DMA_Object spiMSP432DMAObjects[Octanis_SPICOUNT];
 
 /* SPI configuration structure */
-const SPIMSP432DMA_HWAttrs spiMSP432DMAHWAttrs[MSP_EXP432P401RLP_SPICOUNT] = {
+const SPIMSP432DMA_HWAttrs spiMSP432DMAHWAttrs[Octanis_SPICOUNT] = {
     {
-        .baseAddr = EUSCI_B0_BASE,
+        .baseAddr = EUSCI_B1_BASE,
         .bitOrder = EUSCI_B_SPI_MSB_FIRST,
         .clockSource = EUSCI_B_SPI_CLOCKSOURCE_SMCLK,
 
         .defaultTxBufValue = 0,
 
         .dmaIntNum = INT_DMA_INT1,
+		/* note: DMA_INT1, DMA_INT2, DMA_INT3: Can be mapped to the DMA completion
+		 * event of any of the eight channels
+		 */
         .intPriority = ~0,
-        .rxDMAChannelIndex = DMA_CH1_EUSCIB0RX0,
-        .txDMAChannelIndex = DMA_CH0_EUSCIB0TX0
+        .rxDMAChannelIndex = DMA_CH1_EUSCIB1RX3,
+        .txDMAChannelIndex = DMA_CH0_EUSCIB1TX3
     },
-    {
-        .baseAddr = EUSCI_B2_BASE,
-        .bitOrder = EUSCI_B_SPI_MSB_FIRST,
-        .clockSource = EUSCI_B_SPI_CLOCKSOURCE_SMCLK,
-
-        .defaultTxBufValue = 0,
-
-        .dmaIntNum = INT_DMA_INT2,
-        .intPriority = ~0,
-        .rxDMAChannelIndex = DMA_CH5_EUSCIB2RX0,
-        .txDMAChannelIndex = DMA_CH4_EUSCIB2TX0
-    }
+//    {
+//        .baseAddr = EUSCI_B2_BASE,
+//        .bitOrder = EUSCI_B_SPI_MSB_FIRST,
+//        .clockSource = EUSCI_B_SPI_CLOCKSOURCE_SMCLK,
+//
+//        .defaultTxBufValue = 0,
+//
+//        .dmaIntNum = INT_DMA_INT2,
+//        .intPriority = ~0,
+//        .rxDMAChannelIndex = DMA_CH5_EUSCIB2RX0,
+//        .txDMAChannelIndex = DMA_CH4_EUSCIB2TX0
+//    }
 };
 
 const SPI_Config SPI_config[] = {
@@ -643,11 +646,11 @@ const SPI_Config SPI_config[] = {
         .object = &spiMSP432DMAObjects[0],
         .hwAttrs = &spiMSP432DMAHWAttrs[0]
     },
-    {
-        .fxnTablePtr = &SPIMSP432DMA_fxnTable,
-        .object = &spiMSP432DMAObjects[1],
-        .hwAttrs = &spiMSP432DMAHWAttrs[1]
-    },
+//    {
+//        .fxnTablePtr = &SPIMSP432DMA_fxnTable,
+//        .object = &spiMSP432DMAObjects[1],
+//        .hwAttrs = &spiMSP432DMAHWAttrs[1]
+//    },
     {NULL, NULL, NULL},
 };
 
@@ -662,19 +665,19 @@ void MSP_EXP432P401RLP_initSPI(void)
      * an application.  Modify the pin mux settings in this file and resolve the
      * conflict before running your the application.
      */
-    /* Configure CLK, MOSI & MISO for SPI0 (EUSCI_B0) */
-    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P1,
-        GPIO_PIN5 | GPIO_PIN6, GPIO_PRIMARY_MODULE_FUNCTION);
-    MAP_GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P1, GPIO_PIN7,
-        GPIO_PRIMARY_MODULE_FUNCTION);
+    /* Configure CLK, MOSI & MISO for SPI0 (EUSCI_B1) */
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P6,
+        GPIO_PIN3 | GPIO_PIN4, GPIO_PRIMARY_MODULE_FUNCTION);		//SCLK, MOSI
+    MAP_GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P6, GPIO_PIN5,
+        GPIO_PRIMARY_MODULE_FUNCTION);							// MISO
 
-    /* Configure CLK, MOSI & MISO for SPI1 (EUSCI_B2) */
-    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P3,
-        GPIO_PIN5 | GPIO_PIN6, GPIO_PRIMARY_MODULE_FUNCTION);
-    MAP_GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P3, GPIO_PIN7,
-        GPIO_PRIMARY_MODULE_FUNCTION);
+//    /* Configure CLK, MOSI & MISO for SPI1 (EUSCI_B2) */
+//    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P3,
+//        GPIO_PIN5 | GPIO_PIN6, GPIO_PRIMARY_MODULE_FUNCTION);
+//    MAP_GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P3, GPIO_PIN7,
+//        GPIO_PRIMARY_MODULE_FUNCTION);
 
-    MSP_EXP432P401RLP_initDMA();
+//    MSP_EXP432P401RLP_initDMA();
     SPI_init();
 }
 
