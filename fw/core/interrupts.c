@@ -11,6 +11,7 @@
 #include "../peripherals/hal/ultrasonic.h"
 #include "../peripherals/hal/windsensor.h"
 #include "../peripherals/hal/AS3935.h"
+#include "../peripherals/geiger.h"
 
 
 
@@ -19,7 +20,7 @@ void port1_isr()
 	switch( P1IV ) {
 	        case P1IV__NONE:   break;                               // None
 	        case P1IV__P1IFG0:                                      // Pin 0
-	             __no_operation();
+	             geiger_count();
 	             break;
 	        case P1IV__P1IFG1:                                       // Pin 1 (button0)
 //	        	 GPIO_clearInt(Board_BUTTON0);
