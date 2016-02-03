@@ -30,7 +30,9 @@
 #define MCP_PGA_2 0b00000001
 #define MCP_PGA_4 0b00000010
 #define MCP_PGA_8 0b00000011
-
+#define V_MINUS 0
+#define UV_SLOPE 8
+#define UV_OFFSET 8
 
 int8_t mcp_read (uint8_t dev_addr, uint8_t* reg_data, uint8_t cnt) {
 	
@@ -124,13 +126,18 @@ void mcp_parse (uint8_t* reg_data, cpt_data* parsed_info) {
 }
 
 float mcp_convert_uv_data (int16_t raw_data){
+    //the raw data is, in mV, the difference between Vin+ and Vin- (assuming 240SPS)
+    //If the difference is greater than +/-2.048V, the captor return 2.048V.
+    //Currently we have V_MINUS = 0, so we can't detect the full range of the UV output
+    
     float converted = 0;
     
     //we adjust the raw data to fit our 0-3.3V range
-    
+    converted = ((float)raw_data)*0.001 + V_MINUS;
 
-    //conversion to mW, numbers have to be determined experimentaly
-    
+    //conversion to mW, the constant are choosen using the datasheet of the UV captor
+    //It may be better to experimentally determine them
+    converted = converted*UV_SLOPE - UV_OFFSET;
 
     return converted;
 }
@@ -163,5 +170,5 @@ float mcp_get_data (){
     mcp_parse (buffer, &uv_cpt);
     uv_cpt.uv_value = mcp_convert_uv_data (uv_cpt.uv_data);
 
-    return uv_cpt.uv_data;
+    return uv_cpt.uv_value;
 }

@@ -16,7 +16,12 @@ int main(void)
 
     /* Turn on user LED */
     GPIO_write(Board_LED_GREEN, Board_LED_ON);
-
+    
+    /* Install callback and enable interrupts */
+    GPIO_setCallback(Board_GEIGER_COUNTER, geiger_count());
+    
+    GPIO_enableInt(Board_GEIGER_COUNTER);
+    
     /* Start BIOS */
     BIOS_start();
 

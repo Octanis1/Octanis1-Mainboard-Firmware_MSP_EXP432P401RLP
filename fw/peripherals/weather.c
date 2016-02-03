@@ -76,9 +76,11 @@ void weather_task(){
 	lightning_reset();
 	lightning_calibrate();
 
+
+
 	while(1){
 		Task_sleep(3000);
-
+		int i = Seconds_get();
 		bmp180_data_readout_template(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
 
 		bme280_data_readout_template(&(weather_data.int_temp),&(weather_data.int_press),&(weather_data.int_humid));

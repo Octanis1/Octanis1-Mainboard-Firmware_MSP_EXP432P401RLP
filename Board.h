@@ -162,7 +162,7 @@ extern "C" {
 #define Board_ULTRASONIC_IN_3_IV			0x08
 
 /* UV captor pins */
-#define Board_UV_PIN	Octanis05_UV_EN
+#define Board_UV_PIN	Octanis_UV_EN
 #define Board_UV_ON 1
 #define Board_UV_OFF 0
 
@@ -182,17 +182,20 @@ extern "C" {
 #define Board_LIGHTNING_INT			Octanis_LIGHTNING_INT
 #define Board_LIGHTNING_INT_IV		P1IV__P1IFG4
 
+/*Geiger counter */
+#define Board_GEIGER_COUNTER		Octanis_GEIGER_COUNTER
+
 /* Motor pins */
 #define Board_M1234_SLEEP_N			Octanis_M1234_SLEEP_N
 #define Board_M1_PH					Octanis_M1_PH
 #define Board_M2_PH  				Octanis_M2_PH
-#define Board_M3_PH 					Octanis_M3_PH
+#define Board_M3_PH 				Octanis_M3_PH
 #define Board_M4_PH					Octanis_M4_PH
 #define Board_M1_EN					Octanis_M1_EN
 #define Board_M2_EN					Octanis_M2_EN
 #define Board_M3_EN					Octanis_M3_EN
-#define Board_M4_EN 					Octanis_M4_EN
-#define Board_M5678_SLEEP_N 			Octanis_M5678_SLEEP_N
+#define Board_M4_EN 				Octanis_M4_EN
+#define Board_M5678_SLEEP_N 		Octanis_M5678_SLEEP_N
 #define Board_M5_PH					Octanis_M5_PH
 #define Board_M6_PH					Octanis_M6_PH
 #define Board_M7_PH					Octanis_M7_PH
