@@ -14,6 +14,7 @@
 #include "hal/mcp3425.h"
 #include "hal/i2c_helper.h"
 #include "../lib/printf.h"
+#include "geiger.h"
 
 
 static struct _weather_data {
@@ -72,6 +73,7 @@ void weather_task(){
 	i2c_helper_init_handle();
 	windsensor_init();
 //	mcp_init();
+//	geiger_init();
 
 	lightning_reset();
 	lightning_calibrate();

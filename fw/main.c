@@ -17,8 +17,6 @@ int main(void)
     /* Turn on user LED */
     GPIO_write(Board_LED_GREEN, Board_LED_ON);
     
-
-    
     /* Start BIOS */
     BIOS_start();
 
