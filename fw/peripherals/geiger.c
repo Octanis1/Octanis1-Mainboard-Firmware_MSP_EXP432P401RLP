@@ -27,14 +27,20 @@ void geiger_count(){
 	static uint16_t start_sec = 0;
 	static uint8_t first_time = 1;
 	static uint16_t current_count = 0;
+	uint16_t current_time = Seconds_get();
 
+	//Taking care of the overflow. The max value of uint16 is 65535
+	if (!first_time && (current_time < start_sec)){
+		start_sec = 0;
+		current_time += (65535 - start_sec) + 1;
+	}
 
 	if (first_time){
 		first_time = 0;
 		start_sec = Seconds_get();
-		current_count++;
+		current_count = 1;
 	}
-	else if(start_sec - Seconds_get() <= 60){
+	else if(start_sec - current_time <= 60){
 		current_count++;
 	}
 	else{
