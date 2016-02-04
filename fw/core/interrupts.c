@@ -147,6 +147,8 @@ void timer_a0_isr()
 			windsensor_ccr_ISR(ccr_timestamp,ccr_edgetype);
 			Timer_A_clearCaptureCompareInterrupt(TIMER_A0_MODULE,Board_WINDSENSOR_IN_CCR);
 			break;
+#endif
+
 #if(Board_ULTRASONIC_IN_4_TAx_MODULE==TIMER_A0_MODULE && Board_ULTRASONIC_IN_6_TAx_MODULE==TIMER_A0_MODULE && Board_ULTRASONIC_IN_7_TAx_MODULE==TIMER_A0_MODULE)
 	case Board_ULTRASONIC_IN_4_IV:                                      // ultrasonic input capture 4
 			/* record timestamp and logic state of input pin to get edgetype */
