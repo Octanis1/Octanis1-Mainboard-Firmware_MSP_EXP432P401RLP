@@ -180,7 +180,7 @@ void motors_struts_get_position()
 	static uint16_t degrees;
 	degrees = motor_sensor_values[0] / (N_ADC_AVG_STRUT*11.378);
 
-	cli_printf("%u\n",degrees);
+//	cli_printf("%u\n",degrees);
 
 }
 
