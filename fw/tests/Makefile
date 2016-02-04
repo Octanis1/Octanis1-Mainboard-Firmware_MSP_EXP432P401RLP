@@ -13,5 +13,5 @@ clean:
 	rm -f $(TESTS)
 
 flash_test: flash_test.c ../peripherals/flash.c
-	gcc -Wall -I../ flash_test.c ../peripherals/flash.c -o $@
+	gcc -Wall -I../ -DFLASH_TEST=1 flash_test.c ../peripherals/flash.c -o $@
 

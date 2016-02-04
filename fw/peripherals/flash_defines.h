@@ -15,50 +15,50 @@
 // Flash instructions
 
 // Configuration
-#define NOP             0x00 // No Operation
-#define RSTEN           0x66 // Reset Enable
-#define RST             0x99 // Reset Memory
-#define EQIO            0x38 // Enable Quad I/O
-#define RSTQIO5         0xff // Reset Quad I/O
-#define RDSR            0x05 // Read Status Register
-#define WRSR            0x01 // Write Status Register
-#define RDCR            0x35 // Read Configuration Register
+#define FLASH_NOP             0x00 // No Operation
+#define FLASH_RSTEN           0x66 // Reset Enable
+#define FLASH_RST             0x99 // Reset Memory
+#define FLASH_EQIO            0x38 // Enable Quad I/O
+#define FLASH_RSTQIO5         0xff // Reset Quad I/O
+#define FLASH_RDSR            0x05 // Read Status Register
+#define FLASH_WRSR            0x01 // Write Status Register
+#define FLASH_RDCR            0x35 // Read Configuration Register
 
 // Read
-#define READ            0x03 // Read Memory
-#define READ_HS         0x0b // Read Memory at Higher Speed
-#define SQOR6           0x6b // SPI Quad Output Read
-#define SQIOR7          0xeb // SPI Quad I/O Read
-#define SDOR8           0x3b // SPI Dual Output Read
-#define SDIOR9          0xbb // SPI Dual I/O Read
-#define SB              0xc0 // Set Burst Length
-#define RBSQI           0x0c // SQI Read Burst with Wrap
-#define RBSPI7          0xec // SPI Read Burst with Wrap
+#define FLASH_READ            0x03 // Read Memory
+#define FLASH_READ_HS         0x0b // Read Memory at Higher Speed
+#define FLASH_SQOR6           0x6b // SPI Quad Output Read
+#define FLASH_SQIOR7          0xeb // SPI Quad I/O Read
+#define FLASH_SDOR8           0x3b // SPI Dual Output Read
+#define FLASH_SDIOR9          0xbb // SPI Dual I/O Read
+#define FLASH_SB              0xc0 // Set Burst Length
+#define FLASH_RBSQI           0x0c // SQI Read Burst with Wrap
+#define FLASH_RBSPI7          0xec // SPI Read Burst with Wrap
 
 // Identification
-#define JEDEC_ID        0x9f // JEDEC-ID Read
-#define QUAD_J_ID       0xaf // Quad I/O J-ID Read
-#define SFDP            0x5a // Serial Flash Discoverable Parameters
+#define FLASH_JEDEC_ID        0x9f // JEDEC-ID Read
+#define FLASH_QUAD_J_ID       0xaf // Quad I/O J-ID Read
+#define FLASH_SFDP            0x5a // Serial Flash Discoverable Parameters
 
 // Write
-#define WREN            0x06 // Write Enable
-#define WRDI            0x04 // Write Disable
-#define SE10            0x20 // Erase 4 KBytes of Memory Array
-#define BE11            0xd8 // Erase 64, 32 or 8 KBytes of Memory Array
-#define CE              0xc7 // Erase Full Array
-#define PP              0x02 // Page Program
-#define SPI_QUAD_PP6    0x32 // SQI Quad Page Program
-#define WRSU            0xb0 // Suspends Program/Erase
-#define WRRE            0x30 // Resumes Program/Erase
+#define FLASH_WREN            0x06 // Write Enable
+#define FLASH_WRDI            0x04 // Write Disable
+#define FLASH_SE10            0x20 // Erase 4 KBytes of Memory Array
+#define FLASH_BE11            0xd8 // Erase 64, 32 or 8 KBytes of Memory Array
+#define FLASH_CE              0xc7 // Erase Full Array
+#define FLASH_PP              0x02 // Page Program
+#define FLASH_SPI_QUAD_PP6    0x32 // SQI Quad Page Program
+#define FLASH_WRSU            0xb0 // Suspends Program/Erase
+#define FLASH_WRRE            0x30 // Resumes Program/Erase
 
 // Protection
-#define RBPR            0x72 // Read Block-Protection Register
-#define WBPR            0x42 // Write Block-Protection Register
-#define LBPR            0x8d // Lock Down Block-Protection Register
-#define nVWLDR          0xe8 // non-Volatile Write Lock- Down Register
-#define ULBPR           0x98 // Global Block Protection Unlock
-#define RSID            0x88 // Read Security ID
-#define PSID            0xa5 // Program User Security ID area
-#define LSID            0x85 // Lockout Security ID Pro- gramming
+#define FLASH_RBPR            0x72 // Read Block-Protection Register
+#define FLASH_WBPR            0x42 // Write Block-Protection Register
+#define FLASH_LBPR            0x8d // Lock Down Block-Protection Register
+#define FLASH_nVWLDR          0xe8 // non-Volatile Write Lock- Down Register
+#define FLASH_ULBPR           0x98 // Global Block Protection Unlock
+#define FLASH_RSID            0x88 // Read Security ID
+#define FLASH_PSID            0xa5 // Program User Security ID area
+#define FLASH_LSID            0x85 // Lockout Security ID Pro- gramming
 
 #endif /* FLASH_DEFINES_H */
