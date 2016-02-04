@@ -208,8 +208,9 @@ void ultrasonic_check_distance(int32_t distance_values[], int8_t directions_arra
  */
 void ultrasonic_send_pulses(uint8_t index)
 {
-	const static uint8_t enable_pins[2] = {Board_ULTRASONIC_EN_0,Board_ULTRASONIC_EN_1};
-	const static uint8_t trigger_pins[2] = {Board_ULTRASONIC_OUT_0,Board_ULTRASONIC_OUT_1};
+	// TODO: this part of the code is only left here in case we have two different triggers
+	const static uint8_t enable_pins[2] = {Board_ULTRASONIC_SLEEP,Board_ULTRASONIC_SLEEP};
+	const static uint8_t trigger_pins[2] = {Board_ULTRASONIC_TRIGGER,Board_ULTRASONIC_TRIGGER};
 
 	uint32_t start_time;
 	uint32_t stop_time;
