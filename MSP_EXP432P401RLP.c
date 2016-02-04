@@ -659,7 +659,7 @@ void MSP_EXP432P401RLP_initSPI(void)
 //    MAP_GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P3, GPIO_PIN7,
 //        GPIO_PRIMARY_MODULE_FUNCTION);
 
-//    MSP_EXP432P401RLP_initDMA();
+    MSP_EXP432P401RLP_initDMA();
     SPI_init();
 }
 

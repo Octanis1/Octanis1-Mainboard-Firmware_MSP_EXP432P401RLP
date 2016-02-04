@@ -8,6 +8,8 @@
 #include "motors.h"
 #include "../../../Board.h"
 #include "adc.h"
+#include "spi_helper.h"
+#include "AS5050A.h"
 
 PWM_Handle pwm5_handle, pwm6_handle, pwm7_handle, pwm8_handle;
 PWM_Params pwm5_params, pwm6_params, pwm7_params, pwm8_params;
@@ -17,6 +19,8 @@ int motors_init()
 {
 	motors_pwm_init();
 	adc_init();
+	spi_helper_init_handle();
+	spi_helper_init_handle();
 
 	return 1;
 }
@@ -181,6 +185,8 @@ void motors_struts_get_position()
 	//TODO: remove test output.
 	static uint16_t degrees;
 	degrees = motor_sensor_values[0] / (N_ADC_AVG_STRUT*11.378);
+
+	as5050_read_data();
 
 //	cli_printf("%u\n",degrees);
 
