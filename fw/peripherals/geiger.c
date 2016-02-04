@@ -11,12 +11,11 @@
 #include <stdlib.h>
 #include "../../fw/core/interrupts.h"
 
-static uint16_t last_minute_count;
+static uint16_t last_minute_count = 0;
+static uint16_t start_sec = 0;
 
 void geiger_init(){
     /* Install callback and enable interrupts */
-    GPIO_setCallback(Board_GEIGER_COUNTER, port1_isr);
-
     GPIO_enableInt(Board_GEIGER_COUNTER);
 
     last_minute_count = 0;
@@ -24,7 +23,6 @@ void geiger_init(){
 
 void geiger_count(){
 
-	static uint16_t start_sec = 0;
 	static uint8_t first_time = 1;
 	static uint16_t current_count = 0;
 	uint16_t current_time = Seconds_get();
@@ -40,7 +38,7 @@ void geiger_count(){
 		start_sec = Seconds_get();
 		current_count = 1;
 	}
-	else if(start_sec - current_time <= 60){
+	else if((current_time - start_sec) <= 60){
 		current_count++;
 	}
 	else{
@@ -51,5 +49,10 @@ void geiger_count(){
 }
 
 uint16_t get_last_minute_count(){
+	/* If there's no "tick" during 1 minutes, we will return
+	 * The count number of 2 minutes before ---> fixed */
+	if ((Seconds_get() - start_sec) >= 120)
+		last_minute_count = 0;
+
 	return last_minute_count;
 }
