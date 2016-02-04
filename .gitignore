@@ -41,5 +41,5 @@ src/makefile.libs
 src/sysbios/makefile
 src/sysbios/sysbios.am4fg
 .launches/Octanis1-Mainboard-Firmware_MSP_EXP432P401RLP.launch
-
+.cproject
 /Release/
