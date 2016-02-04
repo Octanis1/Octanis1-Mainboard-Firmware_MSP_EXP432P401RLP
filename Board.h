@@ -215,6 +215,9 @@ extern "C" {
 
 /*Geiger counter */
 #define Board_GEIGER_COUNTER		Octanis_GEIGER_COUNTER
+#define Board_GEIGER_EN				Octanis_GEIGER_EN
+#define Board_GEIGER_ON 1
+#define Board_GEIGER_OFF 0
 
 /* Motor pins */
 #define Board_M1234_SLEEP_N			Octanis_M1234_SLEEP_N

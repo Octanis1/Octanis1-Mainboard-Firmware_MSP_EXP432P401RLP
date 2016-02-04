@@ -94,6 +94,7 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
 #endif
 	Octanis_M5678_CURR_SENS_EN,
 	Octanis_UV_EN,
+	Octanis_GEIGER_EN,
 
 
 

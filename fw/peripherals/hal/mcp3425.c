@@ -33,6 +33,8 @@
 #define V_MINUS 0
 #define UV_SLOPE 8
 #define UV_OFFSET 8
+#define NOP10() __asm__("nop;nop;nop;nop;nop;nop;nop;nop;nop;nop")
+
 
 int8_t mcp_read (uint8_t dev_addr, uint8_t* reg_data, uint8_t cnt) {
 	
@@ -144,12 +146,14 @@ float mcp_convert_uv_data (int16_t raw_data){
 
 float mcp_get_data (){
 
+	uint8_t i = 0;
     cpt_data uv_cpt;
     uint8_t buffer[3];
 
     //turn on UV captor then wait 1msec
     GPIO_write(Board_UV_PIN, Board_UV_ON);
-    Task_sleep(1200);
+    for (i=0;i<5000;i++)
+    	NOP10();
     
     mcp_read(MCP_ADDR, buffer, 3);
 
