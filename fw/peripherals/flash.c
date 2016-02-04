@@ -9,24 +9,57 @@ void flash_spi_unselect(void);
 int flash_spi_send(const void *txbuf, size_t len);
 int flash_spi_receive(void *rxbuf, size_t len);
 
+static int flash_read_status(uint8_t *sr)
+{
+    // todo
+    return 0;
+}
+
+// wait until the flash program/erase operation is finished
+static int flash_wait_until_done(void)
+{
+    // todo
+    return 0;
+}
+
+static int flash_cmd(uint8_t cmd)
+{
+    int ret;
+    flash_spi_select();
+    ret = flash_spi_send(&cmd, sizeof(cmd));
+    flash_spi_unselect();
+    return ret;
+}
+
+static int flash_cmd_w_addr(uint8_t cmd, uint32_t addr)
+{
+    if (addr >= (1<<24)) {
+        return -1;
+    }
+    int ret;
+    uint8_t buf[4] = {cmd, (addr>>16) & 0xff,
+                      (addr>>8) & 0xff, addr & 0xff};
+    flash_spi_select();
+    ret = flash_spi_send(buf, sizeof(buf));
+    flash_spi_unselect();
+    return ret;
+}
+
 int flash_write_enable(void)
 {
-    return 0;
+    return flash_cmd(FLASH_WREN);
 }
 
 int flash_write_disable(void)
 {
-    return 0;
+    return flash_cmd(FLASH_WRDI);
 }
 
 int flash_read(uint32_t addr, void *buf, size_t len)
 {
-    // FLASH_ASSERT(addr < (1<<24));
     int ret;
-    uint8_t cmd[4] = {FLASH_READ, (addr>>16) & 0xff,
-                      (addr>>8) & 0xff, addr & 0xff};
     flash_spi_select();
-    ret = flash_spi_send(cmd, sizeof(cmd));
+    ret = flash_cmd_w_addr(FLASH_READ, addr);
     if (ret == 0) {
         ret = flash_spi_receive(buf, len);
     }
@@ -35,49 +68,77 @@ int flash_read(uint32_t addr, void *buf, size_t len)
 }
 
 #if FLASH_TEST
-// defined externally for unit testing.
+// defined externally for unit testing
 int flash_page_program(uint32_t addr, const void *buf, size_t len);
 #else
+
 static int flash_page_program(uint32_t addr, const void *buf, size_t len)
 {
-    // FLASH_ASSERT(addr < (1<<24));
-    // FLASH_ASSERT(addr % FLASH_PAGE_SIZE + len <= FLASH_PAGE_SIZE);
+    if (addr % FLASH_PAGE_SIZE + len > FLASH_PAGE_SIZE) {
+        return -1;
+    }
     int ret;
-    uint8_t cmd[4] = {FLASH_PP, (addr>>16) & 0xff,
-                      (addr>>8) & 0xff, addr & 0xff};
     flash_spi_select();
-    ret = flash_spi_send(cmd, sizeof(cmd));
+    ret = flash_cmd_w_addr(FLASH_PP, addr);
     if (ret == 0) {
         ret = flash_spi_send(buf, len);
     }
     flash_spi_unselect();
+    if (ret == 0) {
+        ret = flash_wait_until_done();
+    }
     return ret;
 }
+
 #endif // FLASH_TEST
 
 int flash_write(uint32_t addr, const void *buf, size_t len)
 {
-    // todo
-    flash_page_program(addr, buf, len);
-    return 0;
+    int ret;
+    size_t align = FLASH_PAGE_SIZE - addr % FLASH_PAGE_SIZE;
+    align = align < len ? align : len;
+    const uint8_t *p = (const uint8_t *) buf;
+    ret = flash_page_program(addr, p, align);
+    if (ret == 0) {
+        size_t pos = align;
+        while (pos < len) {
+            size_t n = len - pos < FLASH_PAGE_SIZE ? len - pos : FLASH_PAGE_SIZE;
+            ret = flash_page_program(addr + pos, p + pos, n);
+            if (ret != 0) {
+                break;
+            }
+            pos += n;
+        }
+    }
+    return ret;
 }
 
 int flash_sector_erase(uint32_t addr)
 {
-    return 0;
-}
-
-int flash_page_erase(uint32_t addr)
-{
-    return 0;
+    int ret;
+    ret = flash_cmd_w_addr(FLASH_SE, addr);
+    if (ret == 0) {
+        ret = flash_wait_until_done();
+    }
+    return ret;
 }
 
 int flash_block_erase(uint32_t addr)
 {
-    return 0;
+    int ret;
+    ret = flash_cmd_w_addr(FLASH_BE, addr);
+    if (ret == 0) {
+        ret = flash_wait_until_done();
+    }
+    return ret;
 }
 
 int flash_chip_erase(void)
 {
-    return 0;
+    int ret;
+    ret = flash_cmd(FLASH_CE);
+    if (ret == 0) {
+        ret = flash_wait_until_done();
+    }
+    return ret;
 }

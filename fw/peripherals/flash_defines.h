@@ -1,7 +1,7 @@
 #ifndef FLASH_DEFINES_H
 #define FLASH_DEFINES_H
 
-#define STATUS_BUSY     ((1<<0) | (1<<7))
+#define STATUS_BUSY     (1<<0)
 #define STATUS_WEL      (1<<1) // Write-Enable Latch status
 #define STATUS_WSE      (1<<2) // Write Suspend-Erase status
 #define STATUS_WSP      (1<<3) // Write Suspend-Program status
@@ -19,7 +19,7 @@
 #define FLASH_RSTEN           0x66 // Reset Enable
 #define FLASH_RST             0x99 // Reset Memory
 #define FLASH_EQIO            0x38 // Enable Quad I/O
-#define FLASH_RSTQIO5         0xff // Reset Quad I/O
+#define FLASH_RSTQIO          0xff // Reset Quad I/O
 #define FLASH_RDSR            0x05 // Read Status Register
 #define FLASH_WRSR            0x01 // Write Status Register
 #define FLASH_RDCR            0x35 // Read Configuration Register
@@ -27,13 +27,13 @@
 // Read
 #define FLASH_READ            0x03 // Read Memory
 #define FLASH_READ_HS         0x0b // Read Memory at Higher Speed
-#define FLASH_SQOR6           0x6b // SPI Quad Output Read
-#define FLASH_SQIOR7          0xeb // SPI Quad I/O Read
-#define FLASH_SDOR8           0x3b // SPI Dual Output Read
-#define FLASH_SDIOR9          0xbb // SPI Dual I/O Read
+#define FLASH_SQOR            0x6b // SPI Quad Output Read
+#define FLASH_SQIOR           0xeb // SPI Quad I/O Read
+#define FLASH_SDOR            0x3b // SPI Dual Output Read
+#define FLASH_SDIOR           0xbb // SPI Dual I/O Read
 #define FLASH_SB              0xc0 // Set Burst Length
 #define FLASH_RBSQI           0x0c // SQI Read Burst with Wrap
-#define FLASH_RBSPI7          0xec // SPI Read Burst with Wrap
+#define FLASH_RBSPI           0xec // SPI Read Burst with Wrap
 
 // Identification
 #define FLASH_JEDEC_ID        0x9f // JEDEC-ID Read
@@ -43,11 +43,11 @@
 // Write
 #define FLASH_WREN            0x06 // Write Enable
 #define FLASH_WRDI            0x04 // Write Disable
-#define FLASH_SE10            0x20 // Erase 4 KBytes of Memory Array
-#define FLASH_BE11            0xd8 // Erase 64, 32 or 8 KBytes of Memory Array
+#define FLASH_SE              0x20 // Erase 4 KBytes of Memory Array
+#define FLASH_BE              0xd8 // Erase 64, 32 or 8 KBytes of Memory Array
 #define FLASH_CE              0xc7 // Erase Full Array
 #define FLASH_PP              0x02 // Page Program
-#define FLASH_SPI_QUAD_PP6    0x32 // SQI Quad Page Program
+#define FLASH_SPI_QUAD_PP     0x32 // SQI Quad Page Program
 #define FLASH_WRSU            0xb0 // Suspends Program/Erase
 #define FLASH_WRRE            0x30 // Resumes Program/Erase
 

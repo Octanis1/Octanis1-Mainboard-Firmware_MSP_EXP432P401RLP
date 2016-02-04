@@ -2,23 +2,14 @@
 #include <peripherals/flash.h>
 
 // function stubs
-void flash_spi_select(void)
-{
-    return;
-}
-
-void flash_spi_unselect(void)
-{
-    return;
-}
-
+void flash_spi_select(void) {}
+void flash_spi_unselect(void) {}
 int flash_spi_send(const void *txbuf, size_t len)
 {
     (void)txbuf;
     (void)len;
     return 0;
 }
-
 int flash_spi_receive(void *rxbuf, size_t len)
 {
     (void)rxbuf;
@@ -30,6 +21,7 @@ int flash_spi_receive(void *rxbuf, size_t len)
 size_t flash_bytes_written;
 int flash_page_program(uint32_t addr, const void *buf, size_t len)
 {
+    // Assert that the page program operation is always inside one page (no overlapping)
     ASSERT_OR_LONGJMP(len <= FLASH_PAGE_SIZE);
     size_t bytes_till_end_of_page = FLASH_PAGE_SIZE - addr % FLASH_PAGE_SIZE;
     ASSERT_OR_LONGJMP(len <= bytes_till_end_of_page);
@@ -46,7 +38,7 @@ TEST write_multiple_unaligned_pages(void)
     PASS();
 }
 
-TEST write_one_unaligned_pages(void)
+TEST write_one_unaligned_page(void)
 {
     size_t len = FLASH_PAGE_SIZE;
     int ret = flash_write(123, NULL, len);
@@ -64,6 +56,15 @@ TEST write_one_aligned_page(void)
     PASS();
 }
 
+TEST write_less_than_one_page(void)
+{
+    size_t len = FLASH_PAGE_SIZE / 2;
+    int ret = flash_write(12, NULL, len);
+    ASSERT(ret == 0);
+    ASSERT(flash_bytes_written == len);
+    PASS();
+}
+
 void setup_cb(void *p)
 {
     (void)p;
@@ -73,8 +74,9 @@ void setup_cb(void *p)
 SUITE(flash_test_suite)
 {
     SET_SETUP(setup_cb, NULL);
+    RUN_TEST(write_less_than_one_page);
     RUN_TEST(write_one_aligned_page);
-    RUN_TEST(write_one_unaligned_pages);
+    RUN_TEST(write_one_unaligned_page);
     RUN_TEST(write_multiple_unaligned_pages);
 }
 

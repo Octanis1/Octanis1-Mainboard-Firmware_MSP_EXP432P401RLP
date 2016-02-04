@@ -18,10 +18,15 @@ int flash_write_disable(void);
 
 int flash_write(uint32_t addr, const void *buf, size_t len);
 
-int flash_page_erase(uint32_t addr);
+// erase a 4 KByte sector at address addr
+// Note: the address least significant bits addr[11:0] do not matter.
+int flash_sector_erase(uint32_t addr);
 
+// erase a 8 KByte, 32 KByte or 64 KByte block
+// Note: check out the memory map in the datasheet
 int flash_block_erase(uint32_t addr);
 
+// erase the chip
 int flash_chip_erase(void);
 
 #ifdef __cplusplus
