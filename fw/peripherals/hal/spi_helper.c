@@ -13,6 +13,7 @@
 SPI_Handle spi_helper_handle=0;
 
 /*Place this function in every task that needs spi. It will know by itself if the handle has been opened already*/
+
 void spi_helper_init_handle(){
 
 	if(!spi_helper_handle) //only initialize for the first time.
@@ -43,6 +44,7 @@ uint8_t spi_helper_transfer(uint8_t nBytes, uint8_t* txBufferPointer, uint8_t* r
 	ret = SPI_transfer(spi_helper_handle, &spiTransaction);
 	if (!ret) {
 //	   cli_printf("Unsuccessful SPI transfer");
+
 	}
 
 	return ret;
