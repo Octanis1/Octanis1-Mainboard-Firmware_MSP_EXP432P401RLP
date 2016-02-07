@@ -74,6 +74,18 @@ int flash_write_disable(void)
     return flash_cmd(FLASH_WRDI);
 }
 
+int flash_id_read(uint8_t *id)
+{
+    int ret;
+    flash_spi_select();
+    ret = flash_cmd(FLASH_JEDEC_ID);
+    if (ret == 0) {
+        ret = flash_spi_receive(id, 3);
+    }
+    flash_spi_unselect();
+    return ret;
+}
+
 int flash_read(uint32_t addr, void *buf, size_t len)
 {
     int ret;
@@ -86,7 +98,7 @@ int flash_read(uint32_t addr, void *buf, size_t len)
     return ret;
 }
 
-#if FLASH_TEST
+#if defined(FLASH_TEST)
 // defined externally for unit testing
 int flash_page_program(uint32_t addr, const void *buf, size_t len);
 #else
