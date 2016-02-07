@@ -18,7 +18,7 @@ static uint16_t start_sec = 0;
 static uint8_t valid_data = 0;
 
 void geiger_turn_on_off(uint8_t on_off){
-	uint8_t i = 0;
+	uint16_t i = 0;
 
 	if (on_off == ON){
 		//turn on geiger counter then wait 200 microsec
