@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdint.h>
 
 void flash_spi_select(void)
 {
@@ -20,7 +21,8 @@ int flash_spi_receive(void *rxbuf, size_t len)
     return 0;
 }
 
-int flash_spi_exchange(const void *txbuf, void *rxbuf, size_t len)
+void flash_os_sleep_ms(uint32_t ms)
 {
-    return 0;
+    (void)ms;
+    return;
 }

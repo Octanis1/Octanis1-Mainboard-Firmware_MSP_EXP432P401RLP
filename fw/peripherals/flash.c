@@ -3,23 +3,42 @@
 #include "flash_defines.h"
 #include "flash.h"
 
+#define FLASH_BUSY_TIMEOUT_MS 100 // the longest op is about 50ms, double that
+
 // defined in hal/flash_spi.c
 void flash_spi_select(void);
 void flash_spi_unselect(void);
 int flash_spi_send(const void *txbuf, size_t len);
 int flash_spi_receive(void *rxbuf, size_t len);
+void flash_os_sleep_ms(uint32_t ms);
 
 static int flash_read_status(uint8_t *sr)
 {
-    // todo
-    return 0;
+    int ret;
+    uint8_t cmd = FLASH_RDSR;
+    flash_spi_select();
+    ret = flash_spi_send(&cmd, 1);
+    if (ret == 0) {
+        ret = flash_spi_receive(sr, 1);
+    }
+    flash_spi_unselect();
+    return ret;
 }
 
 // wait until the flash program/erase operation is finished
 static int flash_wait_until_done(void)
 {
-    // todo
-    return 0;
+    int ret;
+    uint32_t timeout_ms = FLASH_BUSY_TIMEOUT_MS;
+    while (timeout_ms-- > 0) {
+        uint8_t status;
+        ret = flash_read_status(&status);
+        if (ret != 0 || (status & STATUS_BUSY) == 0) {
+            break;
+        }
+        flash_os_sleep_ms(1);
+    }
+    return ret;
 }
 
 static int flash_cmd(uint8_t cmd)
