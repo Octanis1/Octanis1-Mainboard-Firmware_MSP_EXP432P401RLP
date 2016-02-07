@@ -43,11 +43,7 @@ static int flash_wait_until_done(void)
 
 static int flash_cmd(uint8_t cmd)
 {
-    int ret;
-    flash_spi_select();
-    ret = flash_spi_send(&cmd, sizeof(cmd));
-    flash_spi_unselect();
-    return ret;
+    return flash_spi_send(&cmd, sizeof(cmd));
 }
 
 static int flash_cmd_w_addr(uint8_t cmd, uint32_t addr)
@@ -55,23 +51,26 @@ static int flash_cmd_w_addr(uint8_t cmd, uint32_t addr)
     if (addr >= (1<<24)) {
         return -1;
     }
-    int ret;
-    uint8_t buf[4] = {cmd, (addr>>16) & 0xff,
-                      (addr>>8) & 0xff, addr & 0xff};
-    flash_spi_select();
-    ret = flash_spi_send(buf, sizeof(buf));
-    flash_spi_unselect();
-    return ret;
+    uint8_t buf[4] = {cmd, (addr>>16) & 0xff, (addr>>8) & 0xff, addr & 0xff};
+    return flash_spi_send(buf, sizeof(buf));
 }
 
 int flash_write_enable(void)
 {
-    return flash_cmd(FLASH_WREN);
+    int ret;
+    flash_spi_select();
+    ret = flash_cmd(FLASH_WREN);
+    flash_spi_unselect();
+    return ret;
 }
 
 int flash_write_disable(void)
 {
-    return flash_cmd(FLASH_WRDI);
+    int ret;
+    flash_spi_select();
+    ret = flash_cmd(FLASH_WRDI);
+    flash_spi_unselect();
+    return ret;
 }
 
 int flash_id_read(uint8_t *id)
@@ -147,7 +146,9 @@ int flash_write(uint32_t addr, const void *buf, size_t len)
 int flash_sector_erase(uint32_t addr)
 {
     int ret;
+    flash_spi_select();
     ret = flash_cmd_w_addr(FLASH_SE, addr);
+    flash_spi_unselect();
     if (ret == 0) {
         ret = flash_wait_until_done();
     }
@@ -157,7 +158,9 @@ int flash_sector_erase(uint32_t addr)
 int flash_block_erase(uint32_t addr)
 {
     int ret;
+    flash_spi_select();
     ret = flash_cmd_w_addr(FLASH_BE, addr);
+    flash_spi_unselect();
     if (ret == 0) {
         ret = flash_wait_until_done();
     }
@@ -167,7 +170,9 @@ int flash_block_erase(uint32_t addr)
 int flash_chip_erase(void)
 {
     int ret;
+    flash_spi_select();
     ret = flash_cmd(FLASH_CE);
+    flash_spi_unselect();
     if (ret == 0) {
         ret = flash_wait_until_done();
     }
