@@ -45,7 +45,7 @@
 #ifndef __MSP_EXP432P401RLP_H
 #define __MSP_EXP432P401RLP_H
 
-//#define VERSION_0_5 // define to use board v0.5 pin definitions, else undefin
+#define VERSION_0_5 // define to use board v0.5 pin definitions, else undefin
 
 
 #ifdef __cplusplus
@@ -91,6 +91,7 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
 
 	Octanis_M5678_CURR_SENS_EN,
 	Octanis_UV_EN,
+	Octanis_GEIGER_EN,
 
 
 

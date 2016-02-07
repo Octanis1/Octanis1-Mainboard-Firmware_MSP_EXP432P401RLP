@@ -73,7 +73,7 @@ void weather_task(){
 	i2c_helper_init_handle();
 	windsensor_init();
 //	mcp_init();
-//	geiger_init();
+	geiger_turn_on_off(ON);
 
 	lightning_reset();
 	lightning_calibrate();
@@ -82,7 +82,6 @@ void weather_task(){
 
 	while(1){
 		Task_sleep(3000);
-		int i = Seconds_get();
 		bmp180_data_readout_template(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
 
 		bme280_data_readout_template(&(weather_data.int_temp),&(weather_data.int_press),&(weather_data.int_humid));
