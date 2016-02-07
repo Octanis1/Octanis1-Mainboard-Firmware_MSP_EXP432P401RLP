@@ -34,11 +34,11 @@ static int flash_wait_until_done(void)
         uint8_t status;
         ret = flash_read_status(&status);
         if (ret != 0 || (status & STATUS_BUSY) == 0) {
-            break;
+            return ret;
         }
         flash_os_sleep_ms(1);
     }
-    return ret;
+    return -1;
 }
 
 static int flash_cmd(uint8_t cmd)
