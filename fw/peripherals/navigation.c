@@ -152,7 +152,7 @@ uint8_t navigation_bypass(char command, uint8_t index)
 		case 'b': motors_wheels_move(-PWM_SPEED_100, -PWM_SPEED_100, -PWM_SPEED_100, -PWM_SPEED_100);break;
 		case 'l': motors_wheels_move(PWM_SPEED_60, PWM_SPEED_100, PWM_SPEED_60, PWM_SPEED_100);break;
 		case 'r': motors_wheels_move(PWM_SPEED_100, PWM_SPEED_60, PWM_SPEED_100, PWM_SPEED_60);break;
-		case 'x': motors_wheels_move(0, 0, 0, 0);break;
+		case 'x': motors_wheels_stop();break;
 		default: return 0;
 		}
 	}

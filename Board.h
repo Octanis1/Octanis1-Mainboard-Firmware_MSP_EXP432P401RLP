@@ -220,17 +220,17 @@ extern "C" {
 #define Board_M1234_SLEEP_N			Octanis_M1234_SLEEP_N
 #define Board_M1_PH					Octanis_M1_PH
 #define Board_M2_PH  				Octanis_M2_PH
-#define Board_M3_PH 				Octanis_M3_PH
+#define Board_M3_PH 					Octanis_M3_PH
 #define Board_M4_PH					Octanis_M4_PH
 #define Board_M1_EN					Octanis_M1_EN
 #define Board_M2_EN					Octanis_M2_EN
 #define Board_M3_EN					Octanis_M3_EN
-#define Board_M4_EN 				Octanis_M4_EN
-#define Board_M5678_SLEEP_N 		Octanis_M5678_SLEEP_N
-#define Board_M5_PH					Octanis_M5_PH
-#define Board_M6_PH					Octanis_M6_PH
-#define Board_M7_PH					Octanis_M7_PH
-#define Board_M8_PH					Octanis_M8_PH
+#define Board_M4_EN 					Octanis_M4_EN
+#define Board_M5678_ON	 			Octanis_M5678_ON
+#define Board_M5_IN2					Octanis_M5_IN2
+#define Board_M6_IN2					Octanis_M6_IN2
+#define Board_M7_IN2					Octanis_M7_IN2
+#define Board_M8_IN2					Octanis_M8_IN2
 
 #ifdef VERSION_0_5
 	#define Board_M5_EN_PWM           	Octanis_PWM_TA1_2
@@ -239,8 +239,8 @@ extern "C" {
 	#define Board_M8_EN_PWM           	Octanis_PWM_TA1_4
 #else
 	#define Board_M5_EN_PWM           	Octanis_PWM_TA1_1
-	#define Board_M6_EN_PWM           	Octanis_PWM_TA1_3
-	#define Board_M7_EN_PWM           	Octanis_PWM_TA1_2
+	#define Board_M6_EN_PWM           	Octanis_PWM_TA1_2
+	#define Board_M7_EN_PWM           	Octanis_PWM_TA1_3
 	#define Board_M8_EN_PWM           	Octanis_PWM_TA1_4
 #endif
 

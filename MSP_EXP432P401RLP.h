@@ -83,15 +83,12 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
 	Octanis_M2_EN,
 	Octanis_M3_EN,
 	Octanis_M4_EN,
-	Octanis_M5678_SLEEP_N,
-	Octanis_M5_PH,
-	Octanis_M6_PH,
-	Octanis_M7_PH,
-	Octanis_M8_PH,
-#ifndef VERSION_0_5
-	UNCONNECTED1,
-	UNCONNECTED2,
-#endif
+	Octanis_M5678_ON,
+	Octanis_M5_IN2,
+	Octanis_M6_IN2,
+	Octanis_M7_IN2,
+	Octanis_M8_IN2,
+
 	Octanis_M5678_CURR_SENS_EN,
 	Octanis_UV_EN,
 
@@ -122,8 +119,8 @@ typedef enum MSP_EXP432P401RLP_PWMName {
 	Octanis_PWM_TA1_4,
 #else
 	Octanis_PWM_TA1_1 = 0,
-	Octanis_PWM_TA1_3,
 	Octanis_PWM_TA1_2,
+	Octanis_PWM_TA1_3,
 	Octanis_PWM_TA1_4,
 #endif
 
