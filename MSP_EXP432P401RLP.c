@@ -605,8 +605,8 @@ const SPIMSP432DMA_HWAttrs spiMSP432DMAHWAttrs[Octanis_SPICOUNT] = {
 		 * event of any of the eight channels
 		 */
         .intPriority = ~0,
-        .rxDMAChannelIndex = DMA_CH1_EUSCIB1RX3,
-        .txDMAChannelIndex = DMA_CH0_EUSCIB1TX3
+        .rxDMAChannelIndex = DMA_CH3_EUSCIB1RX0,
+        .txDMAChannelIndex = DMA_CH2_EUSCIB1TX0
     },
 //    {
 //        .baseAddr = EUSCI_B2_BASE,

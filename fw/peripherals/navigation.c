@@ -194,6 +194,8 @@ void navigation_update_position()
 		//we didn't get a new gps position --> update position using odometry.
 		//TODO
 		motors_wheels_update_distance();
+
+		motors_struts_get_position();
 	}
 
 	navigation_status.angle_valid = (imu_get_calib_status()>6);

@@ -20,7 +20,7 @@ int motors_init()
 	motors_pwm_init();
 	adc_init();
 	spi_helper_init_handle();
-	spi_helper_init_handle();
+//	spi_helper_init_handle();
 
 	return 1;
 }
@@ -180,7 +180,7 @@ void motors_struts_get_position()
 	motor_sensor_values[2] = 0;
 	motor_sensor_values[3] = 0;
 
-	adc_read_strut_sensor_values(motor_sensor_values);
+//	adc_read_strut_sensor_values(motor_sensor_values);
 
 	//TODO: remove test output.
 	static uint16_t degrees;

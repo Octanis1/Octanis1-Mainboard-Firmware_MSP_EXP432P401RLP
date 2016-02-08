@@ -31,6 +31,11 @@ void spi_helper_init_handle(){
 		spi_helper_handle = SPI_open(Board_SPI, &params);
 	}
 
+	if(spi_helper_handle == NULL)
+	{
+		GPIO_toggle(Board_LED_GREEN);
+	}
+
 }
 
 uint8_t spi_helper_transfer(uint8_t nBytes, uint8_t* txBufferPointer, uint8_t* rxBufferPointer)
@@ -41,6 +46,7 @@ uint8_t spi_helper_transfer(uint8_t nBytes, uint8_t* txBufferPointer, uint8_t* r
 	spiTransaction.rxBuf = rxBufferPointer;
 	static uint8_t ret;
 	ret = SPI_transfer(spi_helper_handle, &spiTransaction);
+
 	if (!ret) {
 //	   cli_printf("Unsuccessful SPI transfer");
 	}

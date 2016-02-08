@@ -50,7 +50,7 @@ void imu_task(){
 
 	while(1){
 
-		imu_data.calib_status=bno055_check_calibration_status();
+//		imu_data.calib_status=bno055_check_calibration_status();
 	//	if(calib_status > 8)
 	//	{
 	//
@@ -63,7 +63,7 @@ void imu_task(){
 	//	}
 
 
-		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r));
+//		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r));
 	//	if(d_euler_data_h > 180)
 	//	{
 	//		GPIO_write(Board_LED_GREEN, Board_LED_ON);
@@ -91,9 +91,9 @@ void imu_task(){
 
 
 		//only check every 10 seconds
-		static uint8_t i_since_last_measurement = 0;
-		if(!(i_since_last_measurement++ % 20))
-			motors_struts_get_position();
+//		static uint8_t i_since_last_measurement = 0;
+//		if(!(i_since_last_measurement++ % 20))
+//		motors_struts_get_position();
 
 		Task_sleep(500);
 
