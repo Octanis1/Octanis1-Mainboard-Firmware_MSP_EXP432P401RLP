@@ -76,6 +76,8 @@ uint8_t gps_update_new_position(float* lat_, float* lon_)
 
  void gps_task(){
 
+	 char *saveptr1, *saveptr2;
+
 	while (1) {
 
 		//initialise GPS device, open UART
@@ -85,7 +87,7 @@ uint8_t gps_update_new_position(float* lat_, float* lon_)
 
 		//get data from device (blocking call)
 		char * nmeabuffer = ublox_6_read();
-		char * nmeaframes = strtok(nmeabuffer, "\n");
+		char * nmeaframes = strtok_r(nmeabuffer, "\n", &saveptr1);
 
 		//parse gps data, this is non-deterministic as data just flys in on the serial line.
 		// this then looks for a valid nmea frame
@@ -107,7 +109,7 @@ uint8_t gps_update_new_position(float* lat_, float* lon_)
 				}break;
 			}
 
-			nmeaframes = strtok(NULL, "\n");
+			nmeaframes = strtok_r(NULL, "\n", &saveptr2);
 		}
 
 		ublox_6_close();
