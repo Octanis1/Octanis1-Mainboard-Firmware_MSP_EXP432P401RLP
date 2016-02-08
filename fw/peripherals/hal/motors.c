@@ -14,6 +14,21 @@
 PWM_Handle pwm5_handle, pwm6_handle, pwm7_handle, pwm8_handle;
 PWM_Params pwm5_params, pwm6_params, pwm7_params, pwm8_params;
 
+static uint16_t motors_struts_degrees[N_STRUTS];
+
+void motors_struts_degrees_set (uint16_t* set_values){
+	uint8_t i = 0;
+
+	for(i=0; i<N_STRUTS; i++)
+		motors_struts_degrees[i] = set_values[i];
+}
+
+void motors_struts_degrees_get (uint16_t* get_values){
+	uint8_t i = 0;
+
+	for (i=0; i<N_STRUTS; i++)
+		get_value[i] = motors_struts_degrees[i];
+}
 
 int motors_init()
 {
@@ -21,6 +36,7 @@ int motors_init()
 	adc_init();
 	spi_helper_init_handle();
 //	spi_helper_init_handle();
+	memset(motors_struts_degrees, 0, N_STRUTS);
 
 	return 1;
 }
@@ -183,8 +199,7 @@ void motors_struts_get_position()
 	adc_read_strut_sensor_values(motor_sensor_values);
 
 	//TODO: remove test output.
-	static uint16_t degrees;
-	degrees = motor_sensor_values[0] / (N_ADC_AVG_STRUT*11.378);
+	motors_struts_degrees[0] = motor_sensor_values[0] / (N_ADC_AVG_STRUT*11.378);
 
 	uint16_t angle = 0;
 	as5050_read_data(angle);

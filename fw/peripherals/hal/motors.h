@@ -37,6 +37,9 @@ int motors_init();
 int motors_pwm_init();
 void motors_pwm_close();
 
+void motors_struts_degrees_set (uint16_t* set_values);
+void motors_struts_degrees_get (uint16_t* get_values);
+
 /*
  * arguments are integers scaled to the speed 0 = 0% and 65535 = 100% and the sign of the number
  * determines the direction of travel (negative: backwards, positive: forward).
