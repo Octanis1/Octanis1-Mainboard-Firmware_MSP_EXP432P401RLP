@@ -230,6 +230,9 @@ extern "C" {
 #define Board_M2_EN					Octanis_M2_EN
 #define Board_M3_EN					Octanis_M3_EN
 #define Board_M4_EN 					Octanis_M4_EN
+
+#define Board_M1_ANGLE_ENCODER_CS	Octanis_M1_ANGLE_ENCODER_CS
+
 #define Board_M5678_ON	 			Octanis_M5678_ON
 #define Board_M5_IN2					Octanis_M5_IN2
 #define Board_M6_IN2					Octanis_M6_IN2

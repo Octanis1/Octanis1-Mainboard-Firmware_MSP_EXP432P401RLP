@@ -22,47 +22,43 @@
 
 uint8_t spiCalcEvenParity(uint16_t value);
 
-void as5050_read_data() {
-	UShort tx_dat[2]; // 16-bit data buffer for SPI communication
-	UShort rx_dat[2]; // 16-bit data buffer for SPI communication
-//    uint16_t angle, agcreg;
-//    uint16_t agc;
-//    uint16_t value;
-//    uint16_t alarmHi, alarmLo;
-
-    spi_helper_transfer(sizeof(uint16_t),tx_dat, rx_dat);
-
+void as5050_read_data(uint16_t* angle) {
+	uint16_t tx_dat; // 16-bit data buffer for SPI communication
+	uint16_t rx_dat; // 16-bit data buffer for SPI communication
+    uint16_t agcreg;
+    uint16_t agc;
+    uint16_t value;
+    uint16_t alarmHi, alarmLo;
 
 /* Send READ AGC command. Received data is thrown away: this data comes from the precedent command (unknown)*/
-//    tx_dat  = SPI_CMD_READ | SPI_REG_AGC;
-//    tx_dat |= spiCalcEvenParity(tx_dat);
-//    spi_helper_transfer(sizeof(uint16_t),(uint8_t*)&tx_dat, (uint8_t*)&rx_dat);
-///* Send READ ANGLE command. Received data is the AGC value, from the precedent command */
-//    tx_dat  = SPI_CMD_READ | SPI_REG_DATA;
-//    tx_dat |= spiCalcEvenParity(tx_dat);
-//    spi_helper_transfer(sizeof(uint16_t),(uint8_t*)&tx_dat, (uint8_t*)&rx_dat);
-//    agcreg = rx_dat;
-//
-///* Send NOP command. Received data is the ANGLE value, from the precedent command */
-//    tx_dat = 0x0000; // NOP command.
-//    spi_helper_transfer(sizeof(uint16_t),(uint8_t*)&tx_dat, (uint8_t*)&rx_dat);
-//    angle = rx_dat >> 2;
-//
-//    if (((rx_dat >> 1) & 0x1) || ((agcreg >> 1) & 0x1))
-//    {
-//		/* error flag set - need to reset it */
-//		tx_dat  = SPI_CMD_READ | SPI_REG_CLRERR;
-//		tx_dat |= spiCalcEvenParity(tx_dat);
-//	    spi_helper_transfer(sizeof(uint16_t),(uint8_t*)&tx_dat, (uint8_t*)&rx_dat);
-//    }
-//    else
-//    {
-//		agc = (agcreg >> 2) & 0x3f; 		// AGC value (0..63)
-//		value = (rx_dat >> 2) & 0x3fff;		// Angle value (0..4095 for AS5055)
-//		angle = (value * 360) / 4095; 	// Angle value in degree (0..359.9°)
-//		alarmLo = (rx_dat >> 14) & 0x1;
-//		alarmHi = (rx_dat >> 15) & 0x1;
-//    }
+    tx_dat  = SPI_CMD_READ | SPI_REG_AGC;
+    tx_dat |= spiCalcEvenParity(tx_dat);
+    spi_helper_transfer(sizeof(uint16_t),(uint8_t*)&tx_dat, (uint8_t*)&rx_dat, Board_M1_ANGLE_ENCODER_CS);
+/* Send READ ANGLE command. Received data is the AGC value, from the precedent command */
+    tx_dat  = SPI_CMD_READ | SPI_REG_DATA;
+    tx_dat |= spiCalcEvenParity(tx_dat);
+    spi_helper_transfer(sizeof(uint16_t),(uint8_t*)&tx_dat, (uint8_t*)&rx_dat, Board_M1_ANGLE_ENCODER_CS);
+    agcreg = rx_dat;
+
+/* Send NOP command. Received data is the ANGLE value, from the precedent command */
+    tx_dat = 0x0000; // NOP command.
+    spi_helper_transfer(sizeof(uint16_t),(uint8_t*)&tx_dat, (uint8_t*)&rx_dat, Board_M1_ANGLE_ENCODER_CS);
+
+    if (((rx_dat >> 1) & 0x1) || ((agcreg >> 1) & 0x1))
+    {
+		/* error flag set - need to reset it */
+		tx_dat  = SPI_CMD_READ | SPI_REG_CLRERR;
+		tx_dat |= spiCalcEvenParity(tx_dat);
+	    spi_helper_transfer(sizeof(uint16_t),(uint8_t*)&tx_dat, (uint8_t*)&rx_dat, Board_M1_ANGLE_ENCODER_CS);
+    }
+    else
+    {
+		agc = (agcreg >> 2) & 0x3f; 		// AGC value (0..63)
+		value = (rx_dat >> 2) & 0x3fff;		// Angle value (0..4095 for AS5055)
+		(*angle) = (value * 360) / 4095; 	// Angle value in degree (0..359.9°)
+		alarmLo = (rx_dat >> 14) & 0x1;
+		alarmHi = (rx_dat >> 15) & 0x1;
+    }
 }
 
 /*! *****************************************************************************

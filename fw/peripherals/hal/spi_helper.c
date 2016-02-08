@@ -17,7 +17,7 @@ void spi_helper_init_handle(){
 
 	if(!spi_helper_handle) //only initialize for the first time.
 	{
-		/* Initialise I2C Bus */
+		/* Initialise SPI Bus */
 		SPI_Params      params;
 		params.transferTimeout = 100;
 		SPI_Params_init(&params); /*	Defaults values are:
@@ -38,14 +38,16 @@ void spi_helper_init_handle(){
 
 }
 
-uint8_t spi_helper_transfer(uint8_t nBytes, uint8_t* txBufferPointer, uint8_t* rxBufferPointer)
+uint8_t spi_helper_transfer(uint8_t nBytes, uint8_t* txBufferPointer, uint8_t* rxBufferPointer, uint8_t CS_pin)
 {
 	static SPI_Transaction spiTransaction;
 	spiTransaction.count = nBytes;
 	spiTransaction.txBuf = txBufferPointer;
 	spiTransaction.rxBuf = rxBufferPointer;
 	static uint8_t ret;
+	GPIO_write(CS_pin, 0);
 	ret = SPI_transfer(spi_helper_handle, &spiTransaction);
+	GPIO_write(CS_pin, 1);
 
 	if (!ret) {
 //	   cli_printf("Unsuccessful SPI transfer");
