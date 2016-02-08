@@ -60,6 +60,7 @@ extern "C" {
 #include <ti/drivers/UART.h>
 #include <ti/drivers/I2C.h>
 #include <ti/drivers/PWM.h>
+#include <ti/drivers/SPI.h>
 
 #include <stdint.h>
 #include <string.h>
@@ -229,6 +230,9 @@ extern "C" {
 #define Board_M2_EN					Octanis_M2_EN
 #define Board_M3_EN					Octanis_M3_EN
 #define Board_M4_EN 					Octanis_M4_EN
+
+#define Board_M1_ANGLE_ENCODER_CS	Octanis_M1_ANGLE_ENCODER_CS
+
 #define Board_M5678_ON	 			Octanis_M5678_ON
 #define Board_M5_IN2					Octanis_M5_IN2
 #define Board_M6_IN2					Octanis_M6_IN2
@@ -250,15 +254,11 @@ extern "C" {
 #define Board_M5678_CURR_SENS_EN 	Octanis_M5678_CURR_SENS_EN
 
 
-#define Board_I2C0                  MSP_EXP432P401RLP_I2CB1
+#define Board_I2C0                  	Octanis_I2CB0
+#define Board_SPI                  	Octanis_SPIB1
 
-
-
-#define Board_SPI0                  MSP_EXP432P401RLP_SPIB0
-#define Board_SPI1                  MSP_EXP432P401RLP_SPIB2
-
-#define Board_UART0_DEBUG           MSP_EXP432P401RLP_UARTA0 //"backchannel UART"
-#define Board_UART1_GPS             MSP_EXP432P401RLP_UARTA1 //P9.6,9.7
+#define Board_UART0_DEBUG           	MSP_EXP432P401RLP_UARTA0 //"backchannel UART"
+#define Board_UART1_GPS             	MSP_EXP432P401RLP_UARTA1 //P9.6,9.7
 #define Board_UART2_COMM  			MSP_EXP432P401RLP_UARTA2 //P3.2,3.3
 #define Board_UART3_LORACOMM			MSP_EXP432P401RLP_UARTA3 //P2.2=RX,2.3=TX
 

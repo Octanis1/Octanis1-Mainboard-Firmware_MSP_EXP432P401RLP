@@ -96,6 +96,7 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
 	Octanis_M8_IN2,
 
 	Octanis_M5678_CURR_SENS_EN,
+	Octanis_M1_ANGLE_ENCODER_CS,
 	Octanis_UV_EN,
 	Octanis_GEIGER_EN,
 
@@ -109,7 +110,7 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
  *  @brief  Enum of I2C names on the MSP_EXP432P401RLP dev board
  */
 typedef enum MSP_EXP432P401RLP_I2CName {
-    MSP_EXP432P401RLP_I2CB1 = 0,
+    Octanis_I2CB0 = 0,
 
     MSP_EXP432P401RLP_I2CCOUNT
 } MSP_EXP432P401RLP_I2CName;
@@ -134,26 +135,25 @@ typedef enum MSP_EXP432P401RLP_PWMName {
     MSP_EXP432P401RLP_PWMCOUNT
 } MSP_EXP432P401RLP_PWMName;
 
-/*!
- *  @def    MSP_EXP432P401RLP_SDSPIName
- *  @brief  Enum of SDSPI names on the MSP_EXP432P401RLP dev board
- */
-typedef enum MSP_EXP432P401RLP_SDSPIName {
-    MSP_EXP432P401RLP_SDSPIB0 = 0,
-
-    MSP_EXP432P401RLP_SDSPICOUNT
-} EMSP_EXP432P401RLP_SDSPIName;
+///*!
+// *  @def    MSP_EXP432P401RLP_SDSPIName
+// *  @brief  Enum of SDSPI names on the MSP_EXP432P401RLP dev board
+// */
+//typedef enum MSP_EXP432P401RLP_SDSPIName {
+//    Octanis_SD_SPI_UCB0 = 0,
+//
+//    MSP_EXP432P401RLP_SDSPICOUNT
+//} EMSP_EXP432P401RLP_SDSPIName;
 
 /*!
  *  @def    MSP_EXP432P401RLP_SPIName
  *  @brief  Enum of SPI names on the MSP_EXP432P401RLP dev board
  */
 typedef enum MSP_EXP432P401RLP_SPIName {
-    MSP_EXP432P401RLP_SPIB0 = 0,
-    MSP_EXP432P401RLP_SPIB2,
+    Octanis_SPIB1 = 0,
 
-    MSP_EXP432P401RLP_SPICOUNT
-} MSP_EXP432P401RLP_SPIName;
+    Octanis_SPICOUNT
+} Octanis_SPIName;
 
 /*!
  *  @def    MSP_EXP432P401RLP_UARTName
