@@ -146,7 +146,7 @@ float mcp_convert_uv_data (int16_t raw_data){
 
 float mcp_get_data (){
 
-	uint8_t i = 0;
+	uint16_t i = 0;
     cpt_data uv_cpt;
     uint8_t buffer[3];
 
