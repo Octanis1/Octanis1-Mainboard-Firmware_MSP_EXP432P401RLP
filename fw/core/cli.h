@@ -15,7 +15,7 @@ void cli_register_command(void (*command_cb)(char*), char* commandstring);
 void cli_task();
 
 //allows sending log messages to the console
-void cli_printf(char *print_format, int number);
+void cli_printf(char *print_format, ...);
 
 //swi to process print requests from other modules
 void cli_print_swi();
