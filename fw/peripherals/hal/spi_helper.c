@@ -19,7 +19,6 @@ void spi_helper_init_handle(){
 	{
 		/* Initialise SPI Bus */
 		SPI_Params      params;
-		params.transferTimeout = 100;
 		SPI_Params_init(&params); /*	Defaults values are:
 									transferMode = SPI_MODE_BLOCKING
 									(transferTimeout = SPI_WAIT_FOREVER), overwritten
@@ -28,6 +27,8 @@ void spi_helper_init_handle(){
 									bitRate = 1000000 (Hz)
 									dataSize = 8 (bits); dataSize can range from 4 to 8 bits
 									frameFormat = SPI_POL0_PHA0 */
+		params.transferTimeout = 100;
+		params.frameFormat = SPI_POL0_PHA1;
 		spi_helper_handle = SPI_open(Board_SPI, &params);
 	}
 

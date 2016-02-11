@@ -8,8 +8,9 @@
 #ifndef FW_PERIPHERALS_HAL_AS5050A_H_
 #define FW_PERIPHERALS_HAL_AS5050A_H_
 
+#include <stdbool.h>
 
-void as5050_read_data();
+bool as5050_read_data();
 
 
 #endif /* FW_PERIPHERALS_HAL_AS5050A_H_ */
