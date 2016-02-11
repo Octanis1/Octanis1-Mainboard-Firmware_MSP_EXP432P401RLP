@@ -27,7 +27,7 @@ void motors_struts_degrees_get (uint16_t* get_values){
 	uint8_t i = 0;
 
 	for (i=0; i<N_STRUTS; i++)
-		get_value[i] = motors_struts_degrees[i];
+		get_values[i] = motors_struts_degrees[i];
 }
 
 int motors_init()
@@ -204,7 +204,7 @@ void motors_struts_get_position()
 	uint16_t angle = 0;
 	as5050_read_data(angle);
 
-	cli_printf("%u\n",degrees);
+	cli_printf("%u\n",motors_struts_degrees[0]);
 
 }
 
