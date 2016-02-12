@@ -20,6 +20,7 @@
 #define SPI_REG_DATA 	0x7ffe	/*!< data register when using SPI */
 #define SPI_REG_AGC  	0x7ff0	/*!< agc register when using SPI */
 #define SPI_REG_CLRERR 	0x6700	/*!< clear error register when using SPI */
+#define SPI_MASTER_RESET 0x33A5
 
 uint8_t spiCalcEvenParity(uint16_t value);
 
@@ -47,7 +48,7 @@ bool as5050_read_data(uint16_t* angle) {
 /* Send READ ANGLE command. Received data is the AGC value, from the precedent command */
     agcreg = as5050_command(SPI_CMD_READ | SPI_REG_DATA);
 
-    Task_sleep(1);
+    Task_sleep(10); // wait till the result is valid.
 /* Send NOP command. Received data is the ANGLE value, from the precedent command */
     rx_dat = as5050_command(SPI_CMD_NOP);
 
@@ -57,11 +58,16 @@ bool as5050_read_data(uint16_t* angle) {
 		as5050_command(SPI_CMD_READ | SPI_REG_CLRERR);
 		return false;
     }
+    else if((rx_dat & 0xC000) == 0xC000) //system error occured... perform master reset.
+    {
+		as5050_command(SPI_MASTER_RESET);
+		return false;
+    }
     else
     {
 		agc = (agcreg >> 2) & 0x3f; 		// AGC value (0..63)
-		value = (rx_dat >> 2) & 0x3fff;		// Angle value (0..4095 for AS5055)
-		(*angle) = ((uint64_t)value * 360) / 0x3fff; 	// Angle value in degree (0..359.9°)
+		value = (rx_dat >> 2) & 0x03ff;		// Angle value (0..4095 for AS5055)
+		(*angle) = ((uint64_t)value * 360) / 0x03ff; 	// Angle value in degree (0..359.9°)
 		alarmLo = (rx_dat >> 14) & 0x1;
 		alarmHi = (rx_dat >> 15) & 0x1;
     }
