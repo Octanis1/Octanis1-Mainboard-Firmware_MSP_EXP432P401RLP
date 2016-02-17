@@ -187,8 +187,6 @@ bool ultrasonic_get_distance(int32_t distance_values[])
 			{ //compensate for the overflow
 				distance_values[i]=(int32_t)pulse_falling_time[i] - (int32_t)pulse_rising_time[i] + 0xFFFFFFFF;
 			}
-
-			cli_printf("d%d : %d \n", i, distance_values[i]);
 		}
 	}
 
@@ -250,11 +248,6 @@ void ultrasonic_send_pulses(uint8_t index)
 	{ //wait 10us
 		stop_time = Timestamp_get32();
 	}
-
-	GPIO_write(Board_WINDSENSOR_SLEEP, 1);
-	Task_sleep(10);
-	GPIO_write(Board_WINDSENSOR_SLEEP, 0);
-
 	GPIO_write(trigger_pins[index], 0);
 
 	/* Wait for all pulses to arrive and ISR to finish (max pulse lenght: 23ms) */
