@@ -8,8 +8,8 @@
 #ifndef FW_PERIPHERALS_HAL_ULTRASONIC_H_
 #define FW_PERIPHERALS_HAL_ULTRASONIC_H_
 
-#define N_ULTRASONIC_ARRAYS				2
-#define N_ULTRASONIC_SENSORS_PER_ARRAY	4
+#define N_ULTRASONIC_ARRAYS				1
+#define N_ULTRASONIC_SENSORS				8 //total number of sensors
 
 #define CRITICAL_DISTANCE_THRESHOLD_METERS	1
 #define SOUND_SPEED	343 // in m/s, at 20C (so change it for antartica)

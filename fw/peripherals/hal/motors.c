@@ -189,7 +189,7 @@ void motors_struts_get_position()
 	uint16_t angle = 0;
 	as5050_read_data(angle);
 
-	cli_printf("%u\n",degrees);
+	//cli_printf("%u\n",degrees);
 
 }
 

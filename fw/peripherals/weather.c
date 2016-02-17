@@ -71,7 +71,7 @@ void weather_aggregate_data()
 void weather_task(){
 
 	i2c_helper_init_handle();
-	windsensor_init();
+//	windsensor_init();
 //	mcp_init();
 	geiger_turn_on_off(ON);
 

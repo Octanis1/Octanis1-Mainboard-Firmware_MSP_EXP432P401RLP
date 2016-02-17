@@ -16,8 +16,8 @@
 #include "driverlib.h"
 
 
-uint16_t pulse_rising_time[N_ULTRASONIC_SENSORS_PER_ARRAY*N_ULTRASONIC_ARRAYS]; //record timestamp when pulse was sent out
-uint16_t pulse_falling_time[N_ULTRASONIC_SENSORS_PER_ARRAY*N_ULTRASONIC_ARRAYS]; //record timestamp when the interrupt was triggered by the echoed pulse
+uint16_t pulse_rising_time[N_ULTRASONIC_SENSORS]; //record timestamp when pulse was sent out
+uint16_t pulse_falling_time[N_ULTRASONIC_SENSORS]; //record timestamp when the interrupt was triggered by the echoed pulse
 
 //uint16_t
 
@@ -95,7 +95,7 @@ void ultrasonic_init()
 	Timer_A_initCapture(Board_ULTRASONIC_IN_7_TAx_MODULE, &captureModeConfig);
 
 	/* Enabling global timer interrupts and starting timer */
-#if(Board_ULTRASONIC_IN_0_TAx_MODULE==TIMER_A2_MODULE && Board_ULTRASONIC_IN_1_TAx_MODULE==TIMER_A2_MODULE && Board_ULTRASONIC_IN_5_TAx_MODULE==TIMER_A2_MODULE)
+#if(Board_ULTRASONIC_IN_4_TAx_MODULE==TIMER_A2_MODULE && Board_ULTRASONIC_IN_0_TAx_MODULE==TIMER_A2_MODULE && Board_ULTRASONIC_IN_1_TAx_MODULE==TIMER_A2_MODULE && Board_ULTRASONIC_IN_5_TAx_MODULE==TIMER_A2_MODULE)
 	MAP_Interrupt_enableInterrupt(INT_TA2_N);
 	/* Starting the Timer_A2 in continuous mode */
 	MAP_Timer_A_startCounter(TIMER_A2_MODULE, TIMER_A_CONTINUOUS_MODE);
@@ -111,7 +111,7 @@ void ultrasonic_init()
 	#error("Timer module changed. Check this code section and adapt the interrupt enables")
 #endif
 
-#if(Board_ULTRASONIC_IN_4_TAx_MODULE==TIMER_A0_MODULE && Board_ULTRASONIC_IN_6_TAx_MODULE==TIMER_A0_MODULE && Board_ULTRASONIC_IN_7_TAx_MODULE==TIMER_A0_MODULE)
+#if(Board_ULTRASONIC_IN_6_TAx_MODULE==TIMER_A0_MODULE && Board_ULTRASONIC_IN_7_TAx_MODULE==TIMER_A0_MODULE)
 	MAP_Interrupt_enableInterrupt(INT_TA0_N);
 	/* Starting the Timer_A0 in continuous mode */
 	MAP_Timer_A_startCounter(TIMER_A0_MODULE, TIMER_A_CONTINUOUS_MODE);
@@ -124,10 +124,10 @@ void ultrasonic_init()
 	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_1_TAx_MODULE, Board_ULTRASONIC_IN_1_CCR );
 	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_2_TAx_MODULE, Board_ULTRASONIC_IN_2_CCR );
 	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_3_TAx_MODULE, Board_ULTRASONIC_IN_3_CCR );
-	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_0_TAx_MODULE, Board_ULTRASONIC_IN_4_CCR );
-	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_1_TAx_MODULE, Board_ULTRASONIC_IN_5_CCR );
-	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_2_TAx_MODULE, Board_ULTRASONIC_IN_6_CCR );
-	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_3_TAx_MODULE, Board_ULTRASONIC_IN_7_CCR );
+	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_4_TAx_MODULE, Board_ULTRASONIC_IN_4_CCR );
+	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_5_TAx_MODULE, Board_ULTRASONIC_IN_5_CCR );
+	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_6_TAx_MODULE, Board_ULTRASONIC_IN_6_CCR );
+	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_7_TAx_MODULE, Board_ULTRASONIC_IN_7_CCR );
 
 	/* Enabling MASTER interrupts */
 	MAP_Interrupt_enableMaster();
@@ -150,55 +150,46 @@ void ultrasonic_init()
 
 }
 
-
-
 /*
  * distance_values: integer times of flight in ms for each sensor
  */
 bool ultrasonic_get_distance(int32_t distance_values[])
 {
 	bool retval=1;
-	uint8_t j=0,
-			i=0,
-			arrayoffset=0; //the index offset to store the distance_value's for each array
+	uint8_t j=0, i=0;
 
-
+	for(i=0; i < N_ULTRASONIC_SENSORS; i++)
+	{
+		pulse_rising_time[i]=0;
+		pulse_falling_time[i]=0;
+	}
 	/* iterate over the number of sensor arrays */
 	for(j=0; j<N_ULTRASONIC_ARRAYS; j++)
 	{
-		arrayoffset = j*N_ULTRASONIC_SENSORS_PER_ARRAY;
-		for(i=0; i < N_ULTRASONIC_SENSORS_PER_ARRAY; i++)
-		{
-			pulse_rising_time[i+arrayoffset]=0;
-			pulse_falling_time[i+arrayoffset]=0;
-		}
-
 		ultrasonic_send_pulses(j);
-
-		for(i=0; i < N_ULTRASONIC_SENSORS_PER_ARRAY; i++)
+	}
+	for(i=0; i < N_ULTRASONIC_SENSORS; i++)
+	{
+		/* Check if pulse was detected and timestamp recorded */
+		if(pulse_rising_time[i]==0 || pulse_falling_time[i]==0) //assuming timestamp = 0 is very unlikely
 		{
-			/* Check if pulse was detected and timestamp recorded */
-			if(pulse_rising_time[i+arrayoffset]==0 || pulse_falling_time[i+arrayoffset]==0) //assuming timestamp = 0 is very unlikely
-			{
-				distance_values[i+arrayoffset]=0;
-				//retval = 0; //return ERROR
+			distance_values[i]=0;
+			retval = 0; //return ERROR
+		}
+		else
+		{
+			/* Check that no timer overflow happened */
+			if(pulse_rising_time[i] < pulse_falling_time[i])
+			{ //calculate time difference normally
+				distance_values[i]=(int32_t)pulse_falling_time[i] - (int32_t)pulse_rising_time[i];
 			}
 			else
-			{
-				/* Check that no timer overflow happened */
-				if(pulse_rising_time[i+arrayoffset] < pulse_falling_time[i+arrayoffset])
-				{ //calculate time difference normally
-					distance_values[i+arrayoffset]=(int32_t)pulse_falling_time[i+arrayoffset] - (int32_t)pulse_rising_time[i+arrayoffset];
-				}
-				else
-				{ //compensate for the overflow
-					distance_values[i+arrayoffset]=(int32_t)pulse_falling_time[i+arrayoffset] - (int32_t)pulse_rising_time[i+arrayoffset] + 0xFFFF;
-				}
-
-			//	cli_printf("us : distance : %d \n", distance_values[i+arrayoffset]);
+			{ //compensate for the overflow
+				distance_values[i]=(int32_t)pulse_falling_time[i] - (int32_t)pulse_rising_time[i] + 0xFFFFFFFF;
 			}
-		}
 
+			cli_printf("d%d : %d \n", i, distance_values[i]);
+		}
 	}
 
 	return retval;
@@ -211,28 +202,21 @@ bool ultrasonic_get_distance(int32_t distance_values[])
  */
 void ultrasonic_check_distance(int32_t distance_values[], int8_t directions_array[])
 {
-	uint8_t j=0,
-			i=0,
-			arrayoffset=0; //the index offset to store the distance_value's for each array
+	uint8_t	i=0;
 
 
 	/* iterate over the number of sensor arrays */
-	for(j=0; j<N_ULTRASONIC_ARRAYS; j++)
+	for(i=0; i<N_ULTRASONIC_SENSORS; i++)
 	{
-		arrayoffset = j*N_ULTRASONIC_SENSORS_PER_ARRAY;
-		for(i=0; i < N_ULTRASONIC_SENSORS_PER_ARRAY; i++)
+		if(distance_values[i] <= CRITICAL_DISTANCE_THRESHOLD_TIMESTAMP)
 		{
-			if(distance_values[i+arrayoffset] <= CRITICAL_DISTANCE_THRESHOLD_TIMESTAMP)
-			{
-				directions_array[i+arrayoffset] = 0;
-			}
-			else
-			{
-				directions_array[i+arrayoffset] = 1;
-			}
-		//	cli_printf("us: cleared? - for %d \n", directions_array[i+arrayoffset]);
+			directions_array[i] = 0;
 		}
-
+		else
+		{
+			directions_array[i] = 1;
+		}
+	//	cli_printf("us: cleared? - for %d \n", directions_array[i+arrayoffset]);
 	}
 }
 
@@ -246,17 +230,14 @@ void ultrasonic_check_distance(int32_t distance_values[], int8_t directions_arra
 void ultrasonic_send_pulses(uint8_t index)
 {
 	// TODO: this part of the code is only left here in case we have two different triggers
-	const static uint8_t enable_pins[2] = {Board_ULTRASONIC_SLEEP,Board_ULTRASONIC_SLEEP};
+	const static uint8_t sleep_pins[2] = {Board_ULTRASONIC_SLEEP,Board_ULTRASONIC_SLEEP};
 	const static uint8_t trigger_pins[2] = {Board_ULTRASONIC_TRIGGER,Board_ULTRASONIC_TRIGGER};
 
 	uint32_t start_time;
 	uint32_t stop_time;
 
-	/* Turn on logic OR gate */
-//	GPIO_write(Board_ULTRASONIC_OR_SLEEP, 0);
-
 	/* Turn on sensors 0-3 */
-	GPIO_write(enable_pins[index], 1);
+	GPIO_write(sleep_pins[index], 0);
 	Task_sleep(600); //assure supply voltage could rise high.
 
 	//TODO: maybe would be useful to turn on/off CCR interrupts
@@ -269,38 +250,20 @@ void ultrasonic_send_pulses(uint8_t index)
 	{ //wait 10us
 		stop_time = Timestamp_get32();
 	}
-//	Task_sleep(60); //todo remove
+
+	GPIO_write(Board_WINDSENSOR_SLEEP, 1);
+	Task_sleep(10);
+	GPIO_write(Board_WINDSENSOR_SLEEP, 0);
+
 	GPIO_write(trigger_pins[index], 0);
 
 	/* Wait for all pulses to arrive and ISR to finish (max pulse lenght: 23ms) */
 	Task_sleep(80);
 
 	/* Turn off sensors 0-3 (or 4-7) */
-	GPIO_write(enable_pins[index], 0);
-
-	/* Turn off logic OR gate */
-//	GPIO_write(Board_ULTRASONIC_OR_SLEEP, 1);
+	GPIO_write(sleep_pins[index], 0);
 }
 
-/* TODO: this code is just here for reference. remove later
-UInt32 time;
-
-void ultrasonic_ISR(uint8_t index){
-	if(running)
-	{
-		//pulse_falling_time[index]=Timer_getCount(timer);
-		pulse_falling_time[index]=TA2CCR2;
-		TA2CCTL2 &= ~CCIFG;
-		running=0;
-	}
-	else
-	{
-		//pulse_rising_time[index]=Timer_getCount(timer);
-		pulse_rising_time[index]=TA2CCR2;
-		TA2CCTL2 &= ~CCIFG;
-		running=1;
-	}
-}*/
 
 int16_t diff=0;
 

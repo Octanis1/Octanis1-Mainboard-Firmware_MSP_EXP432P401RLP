@@ -174,7 +174,7 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	GPIOMSP432_PJ_3 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
 	/* Octanis_ULTRASONIC_SLEEP */
-	GPIOMSP432_PJ_2 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+	GPIOMSP432_PJ_2 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
 
 	/* Octanis_WINDSENSOR_SLEEP */
 	GPIOMSP432_P7_2 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
@@ -475,8 +475,8 @@ void MSP_EXP432P401RLP_initPWM(void)
 	};
 #else
     const uint8_t port7Map [] = {
-        PM_NONE, PM_NONE, PM_NONE, PM_TA0CCR1A, //note: P7.3 was defined as windsensor input
-        PM_NONE, PM_NONE, PM_NONE, PM_TA1CCR1A
+    		PM_TA0CCR2A, PM_TA0CCR3A, PM_NONE, PM_TA0CCR1A, //note: P7.3 was defined as windsensor input
+        PM_NONE, PM_NONE, PM_NONE, PM_TA1CCR1A //P7.0, 7.1 are ultrasonic inputs.
     };
 
     const uint8_t port3Map [] = {
