@@ -66,7 +66,15 @@ void weather_aggregate_data()
 }
 
 
-
+void log_weather(struct _weather_data *d)
+{
+    struct logger *l = logger_get("weather");
+    cmp_write_array(l->ctx, 8);
+    cmp_write_integer(l->ctx, d->int_temp);
+    cmp_write_uinteger(l->ctx, d->int_press);
+    // ...
+    logger_finish(l);
+}
 
 void weather_task(){
 
@@ -97,5 +105,7 @@ void weather_task(){
 		//	windsensor_getvalue();
 
 		weather_aggregate_data();
+
+        log_weather(&weather_data);
 	}
 }
