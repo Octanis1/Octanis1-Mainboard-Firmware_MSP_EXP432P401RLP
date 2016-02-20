@@ -28,6 +28,15 @@ like the following structure:
 - string: data type
 - data: MessagePack encoded data structure
 
+Idea: keep at the beginning of the flash a table to store the last write position
+
+todo:
+- get flash driver to work
+- flash writer thread (get buffer & write to flash)
+- thread message passing of logging buffers (FIFO)
+- block allocator
+- crc8 function
+- serialization functions for different sensor values
 */
 
 struct logger *cmp_logger_get(const char *name)
