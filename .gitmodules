@@ -1,0 +1,6 @@
+[submodule "fw/lib/cmp"]
+	path = fw/lib/cmp
+	url = https://github.com/camgunz/cmp.git
+[submodule "fw/lib/cmp_mem_access"]
+	path = fw/lib/cmp_mem_access
+	url = https://github.com/Stapelzeiger/cmp_mem_access.git
