@@ -48,17 +48,25 @@ void cli_init(){
 }
 
 
+static void putc_callback(void* p,char c){
+	*(*((char**)p))++ = c;
+}
+
 //can be called from any function to queue output strings (currently only integer support)
-void cli_printf(char *print_format, int number){
+void cli_printf(char *print_format, ...){
+	static char printf_output_buffer[PRINTF_BUFFER];
+	char *strp = &printf_output_buffer[0];
 
-	char printf_output_buffer[PRINTF_BUFFER];
+	// clear buffer from any previous messages
+	memset(strp, 0, sizeof(printf_output_buffer));
 
-    //clear buffer from any previous messages
-	memset(&printf_output_buffer[0], 0, sizeof(printf_output_buffer));
+	va_list ap;
+	va_start(ap, print_format);
+	tfp_format(&strp, putc_callback, print_format, ap);
+	putc_callback(&strp, 0);
+	va_end(ap);
 
 	//post message to mailbox
-    tfp_sprintf(printf_output_buffer, print_format, number);
-
     Mailbox_post(cli_print_mailbox, printf_output_buffer, BIOS_NO_WAIT);  //from this context, timeouts are not allowed
 }
 
