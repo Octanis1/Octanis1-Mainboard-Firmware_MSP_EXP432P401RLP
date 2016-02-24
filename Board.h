@@ -54,6 +54,7 @@ extern "C" {
 #include <ti/sysbios/hal/Seconds.h>
 #include <ti/sysbios/hal/Timer.h>
 #include <ti/sysbios/knl/Mailbox.h>
+#include <ti/sysbios/knl/Queue.h>
 
 /* TI-RTOS Header files */
 #include <ti/drivers/GPIO.h>

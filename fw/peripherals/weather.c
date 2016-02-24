@@ -15,6 +15,7 @@
 #include "hal/i2c_helper.h"
 #include "../lib/printf.h"
 #include "geiger.h"
+#include "../core/log.h"
 
 
 static struct _weather_data {

@@ -4,14 +4,6 @@
  *  Author: Michael and Eloi
  */
 #include "log.h"
-#include <cmp/cmp.h>
-#include <stdint.h>
-
-struct logger {
-    cmp_ctx_t ctx;
-    cmp_mem_access_t cma;
-    uint8_t data;
-}
 
 #define LOGGING_BUFFER_SIZE 100
 
@@ -54,8 +46,24 @@ struct logger *cmp_logger_get(const char *name)
 
 void logger_finish(struct logger *l)
 {
+    logging_passing_pointer log;
+    log.l_point = l;
+
     // calculate crc
 
-    // pass buffer to flash_writer thread
+    // load pointer l to the logging_queue
+    Queue_put(logging_queue, &(log.elem));
 }
 
+/* Should be used in flash_write like that
+ * while(!Queue_empty(logging_queue)){
+ *  to_write = logger_pop();
+ *  spi_write_to_flash(to_write);
+ * } */
+struct logger* logger_pop()
+{
+    struct logger* popped = NULL;
+
+    popped = Queue_dequeue(logging_queue);
+    return popped;
+}
