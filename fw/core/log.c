@@ -1,7 +1,7 @@
 /*
  *  File: log.c
  *  Description: High-level module for data logging
- *  Author:
+ *  Author: Michael and Eloi
  */
 #include "log.h"
 #include <cmp/cmp.h>
