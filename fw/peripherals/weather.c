@@ -18,6 +18,14 @@
 #include "../core/log.h"
 #include "../lib/cmp/cmp.h"
 #include "../lib/cmp_mem_access/cmp_mem_access.h"
+#include "../hardware_test/mailbox_test.h"
+
+typedef struct Types_FreqHz {
+    Bits32 hi;
+    // most significant 32-bits of frequency
+    Bits32 lo;
+    // least significant 32-bits of frequency
+} Types_FreqHz;
 
 static struct _weather_data {
 	int int_temp; //in 0.01 degree Centigrade
@@ -98,6 +106,9 @@ void weather_task(){
 		bme280_data_readout_template(&(weather_data.int_temp),&(weather_data.int_press),&(weather_data.int_humid));
 		//note: bme280 can give pressure, humidity and temperature
 
+		uint32_t time = Timestamp_get32();
+		Types_FreqHz freq1;
+		Timestamp_getFreq(&freq1);
 
 
 //		float uv = mcp_get_data();

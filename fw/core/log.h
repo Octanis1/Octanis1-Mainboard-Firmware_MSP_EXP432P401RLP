@@ -4,6 +4,7 @@
  *  Author: Michael and Eloi
  */
 
+#include "../../Board.h"
 #include "../lib/cmp/cmp.h"
 #include "../lib/cmp_mem_access/cmp_mem_access.h"
 #include <stdint.h>

@@ -38,7 +38,11 @@ struct logger *cmp_logger_get(const char *name)
     size_t size = LOGGING_BUFFER_SIZE - ((uintptr_t)&l->data + (uintptr_t)l);
     cmp_mem_access_init(&l->cma, &l->ctx, &l->data, size);
 
-    uint32_t t = timestamp_get();
+    //Get number of clock tick since beginning
+    //frequency : 48MHz
+    uint32_t t = Timestamp_get32();
+    t = t/48000; //converted in ms here
+
     cmp_write_uinteger(&l->ctx, t);
     cmp_write_str(&l->ctx, name);
     return l;
