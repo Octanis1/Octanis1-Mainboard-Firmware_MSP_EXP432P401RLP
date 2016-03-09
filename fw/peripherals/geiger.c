@@ -20,7 +20,7 @@ static uint8_t valid_data = 0;
 void geiger_turn_on_off(uint8_t on_off){
 	uint16_t i = 0;
 
-	if (on_off == ON){
+	if (on_off == GEIGER_ON){
 		//turn on geiger counter then wait 200 microsec
 		GPIO_write(Board_GEIGER_EN, Board_GEIGER_ON);
 		for (i=0;i<1000;i++)

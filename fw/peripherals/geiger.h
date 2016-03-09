@@ -3,8 +3,8 @@
 
 #define SAMPLING_TIME 60
 #define TOO_SOON -1
-#define ON 1
-#define OFF 0
+#define GEIGER_ON 	1
+#define GEIGER_OFF 	0
 
 /* Enable/disable interrupt on geiger pin
  * Also turn ON/OFF the geiger counter
@@ -21,5 +21,7 @@ void geiger_count();
  * return TOO_SOON if called before he could do the 1st
  * SAMPLING_TIME count */
 uint16_t get_last_minute_count();
+
+void geiger_turn_on_off(uint8_t on_off);
 
 #endif

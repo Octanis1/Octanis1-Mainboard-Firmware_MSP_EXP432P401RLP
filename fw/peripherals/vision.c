@@ -9,16 +9,19 @@
 
 #include "hal/ultrasonic.h"
 #include "../../Board.h"
+#include "../core/eps.h"
 
 
 void vision_task(){
 //	ultrasonic_init();
+	eps_init();
+
 	int32_t distance_values[N_ULTRASONIC_SENSORS_PER_ARRAY*N_ULTRASONIC_ARRAYS];
 	int8_t directions_result[N_ULTRASONIC_SENSORS_PER_ARRAY*N_ULTRASONIC_ARRAYS] = {(int8_t) 1}; //all ok
 
 
 	while(1){
-
+		eps_switch_module(M3V3_1_ON);
 //		if(ultrasonic_get_distance(distance_values))
 //		{
 //		//successfully read the sensor values
@@ -30,6 +33,9 @@ void vision_task(){
 //		//not all or none of the sensors returned a pulse
 //		}
 		Task_sleep(5000);
+		eps_switch_module(M3V3_1_OFF);
+		Task_sleep(5000);
+
 	}
 
 }
