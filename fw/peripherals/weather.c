@@ -16,7 +16,8 @@
 #include "../lib/printf.h"
 #include "geiger.h"
 #include "../core/log.h"
-
+#include "../lib/cmp/cmp.h"
+#include "../lib/cmp_mem_access/cmp_mem_access.h"
 
 static struct _weather_data {
 	int int_temp; //in 0.01 degree Centigrade
@@ -69,12 +70,13 @@ void weather_aggregate_data()
 
 void log_weather(struct _weather_data *d)
 {
-    struct logger *l = logger_get("weather");
+/*    struct logger *l = logger_get("weather");
     cmp_write_array(l->ctx, 8);
     cmp_write_integer(l->ctx, d->int_temp);
     cmp_write_uinteger(l->ctx, d->int_press);
     // ...
     logger_finish(l);
+    */
 }
 
 void weather_task(){

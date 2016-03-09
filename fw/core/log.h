@@ -4,7 +4,8 @@
  *  Author: Michael and Eloi
  */
 
-#include <../lib/cmp/cmp.h>
+#include "../lib/cmp/cmp.h"
+#include "../lib/cmp_mem_access/cmp_mem_access.h"
 #include <stdint.h>
 
 /* The following objects are created statically. See app.cfg */
@@ -19,16 +20,13 @@ struct logger {
     cmp_ctx_t ctx;
     cmp_mem_access_t cma;
     uint8_t data;
-}
+};
 
-typedef struct logging_passing_pointer {
-    /* Necessary for queue usage, 
-     * impostant that elem is the
-     * first element of the struct */
-    Queue_elem elem;
-    struct logger* l_point;
-}logging_passing_pointer;
 
 struct logger *cmp_logger_get(const char *name);
-void logger_finish(struct logger *l);
 
+/*Respectively calculate crc and push the message
+ * or pop the message and check crc
+ * return true if operation succeed, false if fail*/
+uint8_t logger_finish(struct logger *l);
+uint8_t logger_pop (struct logger *l);

@@ -26,7 +26,7 @@ todo:
 - get flash driver to work
 - flash writer thread (get buffer & write to flash)
 - thread message passing of logging buffers (FIFO)
-- block allocator
+- block allocator <---- currently replaced by the mailboc function. Can hold 20 32-bytes message.
 - crc8 function
 - serialization functions for different sensor values
 */
@@ -44,26 +44,23 @@ struct logger *cmp_logger_get(const char *name)
     return l;
 }
 
-void logger_finish(struct logger *l)
+uint8_t logger_finish(struct logger *l)
 {
     logging_passing_pointer log;
     log.l_point = l;
 
     // calculate crc
 
-    // load pointer l to the logging_queue
-    Queue_put(logging_queue, &(log.elem));
+    // Save the logging info (whole struct) into the mailbox
+    // return true is saving succeeded, fase if mailbox full
+    return Mailbox_post(logging_mailbox, l, BIOS_NO_WAIT);
 }
 
-/* Should be used in flash_write like that
- * while(!Queue_empty(logging_queue)){
- *  to_write = logger_pop();
- *  spi_write_to_flash(to_write);
- * } */
-struct logger* logger_pop()
-{
-    struct logger* popped = NULL;
 
-    popped = Queue_dequeue(logging_queue);
-    return popped;
+uint8_t logger_pop(struct logger *l)
+{
+    uint8_t ret = Mailbox_pend(logging_mailbox, l, BIOS_NO_WAIT);
+
+    // check crc
+    return ret;
 }

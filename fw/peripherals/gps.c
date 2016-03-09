@@ -76,7 +76,8 @@ uint8_t gps_update_new_position(float* lat_, float* lon_)
 
  void gps_task(){
 
-	 char *saveptr1, *saveptr2;
+	char *saveptr1 = NULL; 
+    char *saveptr2 = NULL;
 
 	while (1) {
 
