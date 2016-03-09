@@ -73,7 +73,7 @@ void weather_task(){
 	i2c_helper_init_handle();
 	windsensor_init();
 //	mcp_init();
-	geiger_turn_on_off(ON);
+	geiger_turn_on_off(GEIGER_ON);
 
 	lightning_reset();
 	lightning_calibrate();
