@@ -7,6 +7,9 @@
 
 /********************** TODO: this could maybe be merged to the navigation task ****************/
 
+/*
+ * dummy comment
+ * */
 
 #include "../../Board.h"
 #include "hal/ublox_6.h"
