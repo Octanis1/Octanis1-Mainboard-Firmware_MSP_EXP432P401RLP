@@ -11,6 +11,7 @@
 #include "../../Board.h"
 #include "../peripherals/hal/i2c_helper.h"
 #include "eps.h"
+#include "cli.h"
 
 /* Commands */
 
@@ -86,7 +87,9 @@ uint8_t eps_switch_module(uint8_t command) //use commands defined in eps.h
 		{
 			resp = sendEpsCommand(command);
 			if(resp == EPS_OK) {return ON;}
-			else if(resp == LOW_VOLTAGE) {return OFF};
+			else if(resp == LOW_VOLTAGE) {
+				cli_printf("Battery too low \n",0);
+				return OFF};
 			//else try again or abandon after 3 times
 		}
 		return OFF; // = error = 0
