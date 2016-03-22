@@ -95,29 +95,29 @@ void ultrasonic_init()
 	Timer_A_initCapture(Board_ULTRASONIC_IN_7_TAx_MODULE, &captureModeConfig);
 
 	/* Enabling global timer interrupts and starting timer */
-#if(Board_ULTRASONIC_IN_0_TAx_MODULE==TIMER_A2_MODULE && Board_ULTRASONIC_IN_1_TAx_MODULE==TIMER_A2_MODULE && Board_ULTRASONIC_IN_5_TAx_MODULE==TIMER_A2_MODULE)
+	//#if(Board_ULTRASONIC_IN_0_TAx_MODULE==TIMER_A2_BASE && Board_ULTRASONIC_IN_1_TAx_MODULE==TIMER_A2_BASE && Board_ULTRASONIC_IN_5_TAx_MODULE==TIMER_A2_BASE)
 	MAP_Interrupt_enableInterrupt(INT_TA2_N);
 	/* Starting the Timer_A2 in continuous mode */
-	MAP_Timer_A_startCounter(TIMER_A2_MODULE, TIMER_A_CONTINUOUS_MODE);
-#else
-	#error("Timer module changed. Check this code section and adapt the interrupt enables")
-#endif
+	MAP_Timer_A_startCounter(TIMER_A2_BASE, TIMER_A_CONTINUOUS_MODE);
+	//#else
+	//#error("Timer module changed. Check this code section and adapt the interrupt enables")
+	//#endif
 
-#if(Board_ULTRASONIC_IN_2_TAx_MODULE==TIMER_A3_MODULE && Board_ULTRASONIC_IN_3_TAx_MODULE==TIMER_A3_MODULE)
+	//#if(Board_ULTRASONIC_IN_2_TAx_MODULE==TIMER_A3_BASE && Board_ULTRASONIC_IN_3_TAx_MODULE==TIMER_A3_BASE)
 	MAP_Interrupt_enableInterrupt(INT_TA3_N);
 	/* Starting the Timer_A3 in continuous mode */
-	MAP_Timer_A_startCounter(TIMER_A3_MODULE, TIMER_A_CONTINUOUS_MODE);
-#else
-	#error("Timer module changed. Check this code section and adapt the interrupt enables")
-#endif
+	MAP_Timer_A_startCounter(TIMER_A3_BASE, TIMER_A_CONTINUOUS_MODE);
+	//#else
+	//#error("Timer module changed. Check this code section and adapt the interrupt enables")
+	//#endif
 
-#if(Board_ULTRASONIC_IN_4_TAx_MODULE==TIMER_A0_MODULE && Board_ULTRASONIC_IN_6_TAx_MODULE==TIMER_A0_MODULE && Board_ULTRASONIC_IN_7_TAx_MODULE==TIMER_A0_MODULE)
+	//#if(Board_ULTRASONIC_IN_4_TAx_MODULE==TIMER_A0_BASE && Board_ULTRASONIC_IN_6_TAx_MODULE==TIMER_A0_BASE && Board_ULTRASONIC_IN_7_TAx_MODULE==TIMER_A0_BASE)
 	MAP_Interrupt_enableInterrupt(INT_TA0_N);
 	/* Starting the Timer_A0 in continuous mode */
-	MAP_Timer_A_startCounter(TIMER_A0_MODULE, TIMER_A_CONTINUOUS_MODE);
-#else
-	#error("Timer module changed. Check this code section and adapt the interrupt enables")
-#endif
+	MAP_Timer_A_startCounter(TIMER_A0_BASE, TIMER_A_CONTINUOUS_MODE);
+	//#else
+	//#error("Timer module changed. Check this code section and adapt the interrupt enables")
+	//#endif
 
 	/* Enable each CCR interrupt */
 	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_0_TAx_MODULE, Board_ULTRASONIC_IN_0_CCR );
@@ -145,7 +145,7 @@ void ultrasonic_init()
 	Timer_getFreq(timer, &freq);
 
 
-	TA2CCTL2 |= CM__BOTH + CCIE + CAP;// CCIS__CCIA;
+	TIMER_A2->CCTL[2] |= TIMER_A_CCTLN_CM__BOTH + CCIE + CAP;// TIMER_A_CCTLN_CCIS__CCIA;
 	*/
 
 }
@@ -289,15 +289,15 @@ void ultrasonic_ISR(uint8_t index){
 	if(running)
 	{
 		//pulse_falling_time[index]=Timer_getCount(timer);
-		pulse_falling_time[index]=TA2CCR2;
-		TA2CCTL2 &= ~CCIFG;
+		pulse_falling_time[index]=TIMER_A2->CCR[2];
+		TIMER_A2->CCTL[2] &= ~TIMER_A_CCTLN_CCIFG;
 		running=0;
 	}
 	else
 	{
 		//pulse_rising_time[index]=Timer_getCount(timer);
-		pulse_rising_time[index]=TA2CCR2;
-		TA2CCTL2 &= ~CCIFG;
+		pulse_rising_time[index]=TIMER_A2->CCR[2];
+		TIMER_A2->CCTL[2] &= ~TIMER_A_CCTLN_CCIFG;
 		running=1;
 	}
 }*/

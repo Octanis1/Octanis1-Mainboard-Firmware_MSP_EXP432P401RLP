@@ -12,7 +12,7 @@
 #include "../../../Board.h"
 #include <xdc/runtime/Timestamp.h>
 //#include <xdc/runtime/Types.h>
-#include <msp432.h> //to access the registers
+//#include <msp432.h> //to access the registers
 //#include <driverlib/timer_a.h>
 
 /* DriverLib Includes */
@@ -54,13 +54,13 @@ void windsensor_init()
 	Timer_A_initCapture(Board_WINDSENSOR_IN_TAx_MODULE, &captureWindModeConfig);
 
 	/* Enabling global timer interrupts and starting timer */
-#if(Board_WINDSENSOR_IN_TAx_MODULE==TIMER_A0_MODULE)
+//#if(Board_WINDSENSOR_IN_TAx_MODULE==TIMER_A0_MODULE)
 	Interrupt_enableInterrupt(INT_TA0_N);
 	/* Starting the Timer_A0 in continuous mode */
-	Timer_A_startCounter(TIMER_A0_MODULE, TIMER_A_CONTINUOUS_MODE);
-#else
-	#error("Timer module changed. Check this code section and adapt the interrupt enables")
-#endif
+	Timer_A_startCounter(TIMER_A0_BASE, TIMER_A_CONTINUOUS_MODE);
+	//#else
+	//#error("Timer module changed. Check this code section and adapt the interrupt enables")
+	//#endif
 
 	/* Enable CCR interrupt */
 	Timer_A_enableCaptureCompareInterrupt(Board_WINDSENSOR_IN_TAx_MODULE, Board_WINDSENSOR_IN_CCR );

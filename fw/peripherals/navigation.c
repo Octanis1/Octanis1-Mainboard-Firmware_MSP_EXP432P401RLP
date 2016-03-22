@@ -150,8 +150,8 @@ uint8_t navigation_bypass(char command, uint8_t index)
 		{
 		case 'f': motors_wheels_move(PWM_SPEED_100, PWM_SPEED_100, PWM_SPEED_100, PWM_SPEED_100);break;
 		case 'b': motors_wheels_move(-PWM_SPEED_100, -PWM_SPEED_100, -PWM_SPEED_100, -PWM_SPEED_100);break;
-		case 'l': motors_wheels_move(PWM_SPEED_60, PWM_SPEED_100, PWM_SPEED_60, PWM_SPEED_100);break;
-		case 'r': motors_wheels_move(PWM_SPEED_100, PWM_SPEED_60, PWM_SPEED_100, PWM_SPEED_60);break;
+		case 'l': motors_wheels_move(PWM_SPEED_80, PWM_SPEED_100, PWM_SPEED_80, PWM_SPEED_100);break;
+		case 'r': motors_wheels_move(PWM_SPEED_100, PWM_SPEED_80, PWM_SPEED_100, PWM_SPEED_80);break;
 		case 'x': motors_wheels_stop();break;
 		default: return 0;
 		}

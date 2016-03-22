@@ -34,7 +34,7 @@ void adc_isr()
 	}
 	else if (ADC_INT23 & adc_int_status) //motor5 current sensor; 2nd priority
 	{
-//		motorvalues[0] = ADC14MEM23;
+//		motorvalues[0] = ADC14->MEM[23];
 		ADC14_clearInterruptFlag(ADC_INT23);
 		wheel_conversion_done = 1;
 		/***** END OF CONVERSION SEQUENCE 2 *****/
@@ -42,7 +42,7 @@ void adc_isr()
 
 	else if (ADC_INT2 & adc_int_status) //test only
 	{
-		curADCResult = ADC14MEM2;
+		curADCResult = ADC14->MEM[2];
 		normalizedADCRes = (curADCResult * 3.3) / 16384;
 		ADC14_clearInterruptFlag(ADC_INT2);
 		/***** END OF CONVERSION SEQUENCE 1 *****/
@@ -52,19 +52,19 @@ void adc_isr()
 	else if (ADC_INT20 & adc_int_status) //motor8 current sensor
 	{
 		/***** BEGIN OF CONVERSION SEQUENCE 2 *****/
-//		motorvalues[3] = ADC14MEM20;
+//		motorvalues[3] = ADC14->MEM[20];
 		ADC14_clearInterruptFlag(ADC_INT20);
 		ADC14_toggleConversionTrigger();
 	}
 	else if (ADC_INT21 & adc_int_status) //motor7 current sensor
 	{
-//		motorvalues[2] = ADC14MEM21;
+//		motorvalues[2] = ADC14->MEM[21];
 		ADC14_clearInterruptFlag(ADC_INT21);
 		ADC14_toggleConversionTrigger();
 	}
 	else if (ADC_INT22 & adc_int_status) //motor6 current sensor
 	{
-//		motorvalues[1] = ADC14MEM22;
+//		motorvalues[1] = ADC14->MEM[22];
 		ADC14_clearInterruptFlag(ADC_INT22);
 		ADC14_toggleConversionTrigger();
 	}
@@ -100,11 +100,11 @@ uint8_t adc_read_motor_sensors(uint16_t wheel_sensor_values[N_WHEELS])
 						i += (int)ADC14_toggleConversionTrigger();
 					}
 				}
-				wheel_sensor_values[3] += ADC14MEM20;
-				wheel_sensor_values[2] += ADC14MEM21;
-				wheel_sensor_values[1] += ADC14MEM22;
+				wheel_sensor_values[3] += ADC14->MEM[20];
+				wheel_sensor_values[2] += ADC14->MEM[21];
+				wheel_sensor_values[1] += ADC14->MEM[22];
 				while(wheel_conversion_done == 0);
-				wheel_sensor_values[0] += ADC14MEM23;
+				wheel_sensor_values[0] += ADC14->MEM[23];
 			}
 
 			ADC14_disableConversion();
@@ -139,11 +139,11 @@ uint8_t adc_read_strut_sensor_values(uint16_t strut_sensor_values[N_STRUTS])
 						i += (int)ADC14_toggleConversionTrigger();
 					}
 				}
-				strut_sensor_values[0] += ADC14MEM1;
-				strut_sensor_values[1] += ADC14MEM2;
-				strut_sensor_values[2] += ADC14MEM3;
+				strut_sensor_values[0] += ADC14->MEM[1];
+				strut_sensor_values[1] += ADC14->MEM[2];
+				strut_sensor_values[2] += ADC14->MEM[3];
 				while(strut_conversion_done == 0);
-				strut_sensor_values[3] += ADC14MEM4;
+				strut_sensor_values[3] += ADC14->MEM[4];
 			}
 
 			ADC14_disableConversion();
