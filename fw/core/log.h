@@ -10,6 +10,9 @@
 #include <stdint.h>
 
 #define LOGGING_BUFFER_SIZE 42
+#define GPS 0
+#define IMU 1
+#define WEATHER 2
 
 /* The following objects are created statically. See app.cfg */
 // extern Semaphore_Handle logging_sem; <---since we don't want to
@@ -31,6 +34,28 @@ struct logger {
     uint8_t data [LOGGING_BUFFER_SIZE];
 };
 
+/* This struct is used to pass
+ * the decoded info of a MessagePack buffer
+ * It either contain the weather info, the imu
+ * info OR the gps info, depending of the value of
+ * data_type. */
+typedef struct log_data_t {
+    uint8_t data_type;
+    float lat;
+    float lon;
+    uint8_t fix_qual;
+    uint8_t imu_calib;
+    uint16_t imu_head;
+    uint16_t imu_roll;
+    uint16_t imu_pitch;
+    unsigned int int_press;
+    int int_temp;
+    unsigned int int_humi;
+    unsigned int ex_press;
+    int ex_temp;
+    unsigned int ex_humi;
+}log_data_t;
+
 //Given a name (gps, wea, etc.), serialize the current data into a buffer
 void logger_make(const char *name);
 
@@ -39,6 +64,12 @@ void cmp_logger_get(const char *name, struct logger *l);
 void logging_gps_serialize(struct logger *l);
 void logging_imu_serialize(struct logger *l);
 void logging_weather_serialize(struct logger *l);
+
+//decode a buffer encoded with MessagePack
+void logging_parse_buffer (uint8_t *buffer, log_data * decoded);
+void logging_parse_gps (uint8_t *buffer, log_data * decoded);
+void logging_parse_weather (uint8_t *buffer, log_data * decoded);
+void logging_parse_imu (uint8_t *buffer, log_data * decoded);
 
 /*Respectively calculate crc and push the message
  * or pop the message and check crc

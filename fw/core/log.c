@@ -47,6 +47,9 @@ void cmp_logger_get(const char *name, struct logger *l)
 {
     cmp_mem_access_init(&l->cma, &l->ctx, l->data, sizeof(l->buffer));
     
+    //write name first to identify the entry easily when decoding.
+    cmp_write_str(&l->ctx, name);
+   
     switch(name){
         case "gps":
             logging_gps_serialize(l);
@@ -67,7 +70,6 @@ void cmp_logger_get(const char *name, struct logger *l)
     t = t/TIMESTAMP_TO_MILLISEC; //converted in ms here
 
     cmp_write_uinteger(&l->ctx, t);
-    cmp_write_str(&l->ctx, name);
     return l;
 }
 
@@ -133,4 +135,31 @@ uint8_t logger_pop(struct logger *l)
     return ret;
 }
 
+void logging_parse_buffer (uint8_t *buffer, log_data * decoded)
+{
+    cmp_ctx_t ctx;
+    cmp_mem_access_t cma;
+    char str_buf[4];
+    uint32_t str_buf_sz = sizeof(str_buf);
 
+
+    cmp_mem_access_ro_init(&ctx, &cma, buffer, sizeof(buffer));
+    cmp_read_str(&log.ctx, str_buf, &str_buf_sz);
+
+    //using the sting, we know how to parse the data
+    switch(str_buf){
+        case "gps":
+            decoded->data_type = GPS;
+            logging_parse_gps(buffer, decoded);
+            break;
+        case "wea":
+            decoded->data_type = WEATHER;
+            logging_parse_weather(buffer, decoded);
+            break;
+        case "imu":
+            decoded->data_type = IMU;
+            logging_parse_imu(buffer, decoded)
+            break;
+        default:
+    }
+}
