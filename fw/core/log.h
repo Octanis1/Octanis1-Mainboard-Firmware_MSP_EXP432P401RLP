@@ -66,10 +66,10 @@ void logging_imu_serialize(struct logger *l);
 void logging_weather_serialize(struct logger *l);
 
 //decode a buffer encoded with MessagePack
-void logging_parse_buffer (uint8_t *buffer, log_data * decoded);
-void logging_parse_gps (uint8_t *buffer, log_data * decoded);
-void logging_parse_weather (uint8_t *buffer, log_data * decoded);
-void logging_parse_imu (uint8_t *buffer, log_data * decoded);
+void logging_parse_buffer (uint8_t *buffer, log_data_t * decoded);
+void logging_parse_gps (uint8_t *buffer, log_data_t * decoded);
+void logging_parse_weather (uint8_t *buffer, log_data_t * decoded);
+void logging_parse_imu (uint8_t *buffer, log_data_t * decoded);
 
 /*Respectively calculate crc and push the message
  * or pop the message and check crc
