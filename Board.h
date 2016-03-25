@@ -211,9 +211,9 @@ extern "C" {
 /* Lightning sensor */
 #define Board_LIGHTNING_INT			Octanis_LIGHTNING_INT
 #ifdef VERSION_1
-	#define Board_LIGHTNING_INT_IV		P2IV__P2IFG0
+	#define Board_LIGHTNING_INT_IV		DIO_PORT_IV__IFG0
 #else
-	#define Board_LIGHTNING_INT_IV		P1IV__P1IFG4
+	#define Board_LIGHTNING_INT_IV		DIO_PORT_IV__IFG4
 #endif
 
 /*Geiger counter */
