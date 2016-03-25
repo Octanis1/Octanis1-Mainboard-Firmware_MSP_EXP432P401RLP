@@ -4,11 +4,17 @@
  *  Author: Michael and Eloi
  */
 #include "log.h"
-#include "../peripherals/weather.h"
-#include "../peripherals/gps.h"
-#include "--/peripherals/imu.h"
+#include <string.h>
+//#include "../peripherals/weather.h"
+//#include "../peripherals/gps.h"
+//#include "--/peripherals/imu.h"
+#include <stdint.h>
+#include "../lib/cmp/cmp.h"
+#include "../lib/cmp_mem_access/cmp_mem_access.h"
 
 #define TIMESTAMP_TO_MILLISEC 48000
+
+#define BIOS_NO_WAIT 0
 /*
 
 TODO:test serialization, write crc8
@@ -39,29 +45,23 @@ void logger_make(const char *name)
 {
     struct logger log;
 
-    cmp_logger_get (name, *log);
-    logger_finish(*log);
+    cmp_logger_get (name, &log);
+    logger_finish(&log);
 }
 
 void cmp_logger_get(const char *name, struct logger *l)
 {
-    cmp_mem_access_init(&l->cma, &l->ctx, l->data, sizeof(l->buffer));
+    cmp_mem_access_init(&l->ctx, &l->cma, l->data, sizeof(l->data));
     
     //write name first to identify the entry easily when decoding.
-    cmp_write_str(&l->ctx, name);
+    cmp_write_str(&l->ctx, name, strlen(name));
    
-    switch(name){
-        case "gps":
-            logging_gps_serialize(l);
-            break;
-        case "imu":
-            logging_imu_serialize(l);
-            break;
-        case "wea":
-            logging_weather_serialize(l);
-            break;
-        default:
-    }
+    if (strcmp(name, "gps") == 0)
+        logging_gps_serialize(l);
+    else if (strcmp(name, "imu") == 0)
+        logging_imu_serialize(l);
+    else if (strcmp(name, "wea") == 0)
+        logging_weather_serialize(l);
 
 
     //Get number of clock tick since beginning
@@ -70,7 +70,6 @@ void cmp_logger_get(const char *name, struct logger *l)
     t = t/TIMESTAMP_TO_MILLISEC; //converted in ms here
 
     cmp_write_uinteger(&l->ctx, t);
-    return l;
 }
 
 void logging_gps_serialize (struct logger *l){
@@ -116,9 +115,7 @@ void logging_weather_serialize (struct logger *l){
 
 uint8_t logger_finish(struct logger *l)
 {
-    logging_passing_pointer log;
-    log.l_point = l;
-
+    Queue_Handle logging_mailbox;
     // calculate crc
 
     // Save the logging info (whole struct) into the mailbox
@@ -129,6 +126,7 @@ uint8_t logger_finish(struct logger *l)
 
 uint8_t logger_pop(struct logger *l)
 {
+    Queue_Handle logging_mailbox;
     uint8_t ret = Mailbox_pend(logging_mailbox, l, BIOS_NO_WAIT);
 
     // check crc
@@ -144,24 +142,22 @@ void logging_parse_buffer (uint8_t *buffer, log_data_t * decoded)
 
 
     cmp_mem_access_ro_init(&ctx, &cma, buffer, sizeof(buffer));
-    cmp_read_str(&log.ctx, str_buf, &str_buf_sz);
+    cmp_read_str(&ctx, str_buf, &str_buf_sz);
 
     //using the sting, we know how to parse the data
-    switch(str_buf){
-        case "gps":
-            decoded->data_type = GPS;
-            logging_parse_gps(buffer, decoded);
-            break;
-        case "wea":
-            decoded->data_type = WEATHER;
-            logging_parse_weather(buffer, decoded);
-            break;
-        case "imu":
-            decoded->data_type = IMU;
-            logging_parse_imu(buffer, decoded)
-            break;
-        default:
+     if (strcmp(str_buf, "gps") == 0){
+        decoded->data_type = GPS;
+        logging_parse_gps(buffer, decoded);
+     }
+    else if (strcmp(str_buf, "imu") == 0){
+        decoded->data_type = IMU;
+        logging_parse_imu(buffer, decoded);
     }
+    else if (strcmp(str_buf, "wea") == 0){
+        decoded->data_type = WEATHER;
+        logging_parse_weather(buffer, decoded);
+    }
+
 }
 
 void logging_parse_gps (uint8_t *buffer, log_data_t * decoded)

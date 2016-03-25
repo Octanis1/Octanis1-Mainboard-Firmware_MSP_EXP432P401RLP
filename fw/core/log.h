@@ -4,10 +4,12 @@
  *  Author: Michael and Eloi
  */
 
-#include "../../Board.h"
+//#include "../../Board.h"
 #include "../lib/cmp/cmp.h"
 #include "../lib/cmp_mem_access/cmp_mem_access.h"
 #include <stdint.h>
+//mock fun for testing
+#include "../tests/log_mock_fun.h"
 
 #define LOGGING_BUFFER_SIZE 42
 #define GPS 0
