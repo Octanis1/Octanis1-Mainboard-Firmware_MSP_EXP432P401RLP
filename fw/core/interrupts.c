@@ -31,10 +31,12 @@ void port1_isr()
 	        case P1IV__P1IFG3:                                       // Pin 3
 	        	__no_operation();
 	             break;
+#ifndef VERSION_1
 	        case Board_LIGHTNING_INT_IV:                             // Pin 4 (lightning detector)
 	        		as3935_ISR();
 	        		GPIO_clearInt(Board_LIGHTNING_INT);
 	             break;
+#endif
 	        case P1IV__P1IFG5:                                       // Pin 5
 	             __no_operation();
 	             break;
@@ -45,11 +47,20 @@ void port1_isr()
 	             __no_operation();
 	             break;
 	        default:   break;
-	    }
+	}
+}
 
-
-	System_printf("port1\n");
-	System_flush();
+void port2_isr()
+{
+	switch( P2->IV ) {
+#ifdef VERSION_1
+	        case Board_LIGHTNING_INT_IV:                             // Pin 4 (lightning detector)
+	        		as3935_ISR();
+	        		GPIO_clearInt(Board_LIGHTNING_INT);
+	            break;
+#endif
+	        default:   break;
+	}
 }
 
 
@@ -84,10 +95,6 @@ void port4_isr()
 	             break;
 	        default:   break;
 	    }
-
-
-	System_printf("port4\n");
-	System_flush();
 }
 
 
@@ -124,11 +131,7 @@ void port5_isr()
 //	        	__no_operation();
 //	             break;
 	        default:   break;
-	    }
-
-
-	System_printf("port7\n");
-	System_flush();
+	}
 }
 
 

@@ -110,7 +110,9 @@ s32 bme280_init()
 		com_rslt += bme280_set_oversamp_temperature(BME280_OVERSAMP_1X);
 
 
-		/************************* END INITIALIZATION *************************/}
+		/************************* END INITIALIZATION *************************/
+		return com_rslt;
+}
 
 
 

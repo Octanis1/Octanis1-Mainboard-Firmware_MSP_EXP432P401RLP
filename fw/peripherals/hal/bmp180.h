@@ -626,7 +626,7 @@ struct bmp180_t {
  *
  *
 */
-BMP180_RETURN_FUNCTION_TYPE bmp180_init(struct bmp180_t *bmp180);
+BMP180_RETURN_FUNCTION_TYPE bmp180_start(struct bmp180_t *bmp180);
 /**************************************************************/
 /**\name	FUNCTION FOR TEMPERATURE AND PRESSURE READ */
 /**************************************************************/

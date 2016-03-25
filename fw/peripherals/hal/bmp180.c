@@ -77,7 +77,7 @@ static struct bmp180_t *p_bmp180;
  *
  *
 */
-BMP180_RETURN_FUNCTION_TYPE bmp180_init(struct bmp180_t *bmp180)
+BMP180_RETURN_FUNCTION_TYPE bmp180_start(struct bmp180_t *bmp180)
 {
 	/* used to return the bus communication results*/
 	BMP180_RETURN_FUNCTION_TYPE v_com_rslt_s8 = E_BMP_COMM_RES;

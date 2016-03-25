@@ -85,6 +85,11 @@ s8 BMP180_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt);
 */
 s8 bmp180I2C_routine(void);
 /********************End of I2C function declarations***********************/
+
+
+s32 bmp180_init();
+
+
 /*	Brief : The delay routine
  *	\param : delay in ms
 */
@@ -93,7 +98,7 @@ void BMP180_delay_msek(u32 msek);
  *	\param: None
  *	\return: communication result
  */
-s32 bmp180_data_readout_template(int* temp_s32, unsigned int* press_u32);
+s32 bmp180_data_readout(int* temp_s32, unsigned int* press_u32);
 /*----------------------------------------------------------------------------
  struct bmp180_t parameters can be accessed by using bmp180
  *	bmp180_t having the following parameters
