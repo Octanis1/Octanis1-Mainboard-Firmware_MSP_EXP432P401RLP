@@ -75,16 +75,17 @@ void weather_task(){
 //	mcp_init();
 	geiger_turn_on_off(ON);
 
-	lightning_reset();
-	lightning_calibrate();
+//	lightning_reset();
+//	lightning_calibrate();
 
-
+	// Initialize pressure and temperature sensors.
+	bme280_init();
 
 	while(1){
 		Task_sleep(3000);
-		bmp180_data_readout_template(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
+//		bmp180_data_readout_template(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
 
-		bme280_data_readout_template(&(weather_data.int_temp),&(weather_data.int_press),&(weather_data.int_humid));
+		bme280_data_readout(&(weather_data.int_temp),&(weather_data.int_press),&(weather_data.int_humid));
 		//note: bme280 can give pressure, humidity and temperature
 
 

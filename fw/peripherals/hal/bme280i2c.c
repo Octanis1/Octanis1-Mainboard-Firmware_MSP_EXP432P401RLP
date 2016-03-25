@@ -65,8 +65,56 @@
  *---------------------------------------------------------------------------*/
 struct bme280_t bme280;
 
+s32 bme280_init()
+{
+	/* result of communication results*/
+		s32 com_rslt = ERROR;
 
-s32 bme280_data_readout_template(int* temp_s32, unsigned int* press_u32, unsigned int* humity_u32)
+
+
+	 /*********************** START INITIALIZATION ************************/
+	  /*	Based on the user need configure I2C or SPI interface.
+	  *	It is example code to explain how to use the bme280 API*/
+		bme280I2C_routine();
+
+	/*--------------------------------------------------------------------------*
+	 *  This function used to assign the value/reference of
+	 *	the following parameters
+	 *	I2C address
+	 *	Bus Write
+	 *	Bus read
+	 *	Chip id
+	*-------------------------------------------------------------------------*/
+		com_rslt = bme280_start(&bme280);
+
+
+		/*	For initialization it is required to set the mode of
+		 *	the sensor as "NORMAL"
+		 *	data acquisition/read/write is possible in this mode
+		 *	by using the below API able to set the power mode as NORMAL*/
+		com_rslt += bme280_set_power_mode(BME280_NORMAL_MODE);
+
+		/*	For reading the pressure, humidity and temperature data it is required to
+		 *	set the OSS setting of humidity, pressure and temperature
+		 * The "BME280_CTRLHUM_REG_OSRSH" register sets the humidity
+		 * data acquisition options of the device.
+		 * changes to this registers only become effective after a write operation to
+		 * "BME280_CTRLMEAS_REG" register.
+		 * In the code automated reading and writing of "BME280_CTRLHUM_REG_OSRSH"
+		 * register first set the "BME280_CTRLHUM_REG_OSRSH" and then read and write
+		 * the "BME280_CTRLMEAS_REG" register in the function*/
+		com_rslt += bme280_set_oversamp_humidity(BME280_OVERSAMP_1X);
+		/* set the pressure oversampling*/
+		com_rslt += bme280_set_oversamp_pressure(BME280_OVERSAMP_1X);
+		/* set the temperature oversampling*/
+		com_rslt += bme280_set_oversamp_temperature(BME280_OVERSAMP_1X);
+
+
+		/************************* END INITIALIZATION *************************/}
+
+
+
+s32 bme280_data_readout(int* temp_s32, unsigned int* press_u32, unsigned int* humity_u32)
 {
 	/* The variable used to read real temperature*/
 	(*temp_s32) = BME280_INIT_VALUE;
@@ -79,88 +127,23 @@ s32 bme280_data_readout_template(int* temp_s32, unsigned int* press_u32, unsigne
 
 
 
- /*********************** START INITIALIZATION ************************/
-  /*	Based on the user need configure I2C or SPI interface.
-  *	It is example code to explain how to use the bme280 API*/
-	bme280I2C_routine();
-
-/*--------------------------------------------------------------------------*
- *  This function used to assign the value/reference of
- *	the following parameters
- *	I2C address
- *	Bus Write
- *	Bus read
- *	Chip id
-*-------------------------------------------------------------------------*/
-	com_rslt = bme280_init(&bme280);
-
-	/*	For initialization it is required to set the mode of
-	 *	the sensor as "NORMAL"
-	 *	data acquisition/read/write is possible in this mode
-	 *	by using the below API able to set the power mode as NORMAL*/
-	/* Set the power mode as NORMAL*/
-	com_rslt += bme280_set_power_mode(BME280_NORMAL_MODE);
-	/*	For reading the pressure, humidity and temperature data it is required to
-	 *	set the OSS setting of humidity, pressure and temperature
-	 * The "BME280_CTRLHUM_REG_OSRSH" register sets the humidity
-	 * data acquisition options of the device.
-	 * changes to this registers only become effective after a write operation to
-	 * "BME280_CTRLMEAS_REG" register.
-	 * In the code automated reading and writing of "BME280_CTRLHUM_REG_OSRSH"
-	 * register first set the "BME280_CTRLHUM_REG_OSRSH" and then read and write
-	 * the "BME280_CTRLMEAS_REG" register in the function*/
-	com_rslt += bme280_set_oversamp_humidity(BME280_OVERSAMP_1X);
-
-	/* set the pressure oversampling*/
-	com_rslt += bme280_set_oversamp_pressure(BME280_OVERSAMP_2X);
-	/* set the temperature oversampling*/
-	com_rslt += bme280_set_oversamp_temperature(BME280_OVERSAMP_4X);
-/*--------------------------------------------------------------------------*/
-/*------------------------------------------------------------------------*
-************************* START GET and SET FUNCTIONS DATA ****************
-*---------------------------------------------------------------------------*/
-	/* This API used to Write the standby time of the sensor input
-	 *	value have to be given
-	 *	Normal mode comprises an automated perpetual cycling between an (active)
-	 *	Measurement period and an (inactive) standby period.
-	 *	The standby time is determined by the contents of the register t_sb.
-	 *	Standby time can be set using BME280_STANDBYTIME_125_MS.
-	 *	Usage Hint : bme280_set_standbydur(BME280_STANDBYTIME_125_MS)*/
-
-	com_rslt += bme280_set_standby_durn(BME280_STANDBY_TIME_1_MS);
-
-	/* This API used to read back the written value of standby time*/
-//	com_rslt += bme280_get_standby_durn(&v_stand_by_time_u8);
-/*-----------------------------------------------------------------*
-************************* END GET and SET FUNCTIONS ****************
-*------------------------------------------------------------------*/
-
-/************************* END INITIALIZATION *************************/
 
 /*------------------------------------------------------------------*
 ************ START READ TRUE PRESSURE, TEMPERATURE
 AND HUMIDITY DATA ********
 *---------------------------------------------------------------------*/
+	/* Set the power mode as FORCED:
+	 * When the measurement is finished, the sensor returns to sleep mode and
+	 * the measurement results can be obtained from the data registers.
+	 * For a next measurement, forced mode needs to be selected again*/
+	com_rslt += bme280_set_power_mode(BME280_FORCED_MODE);
+
 	/* API is used to read the true temperature, humidity and pressure*/
 	com_rslt += bme280_read_pressure_temperature_humidity(press_u32, temp_s32, humity_u32);
 /*--------------------------------------------------------------------*
 ************ END READ TRUE PRESSURE, TEMPERATURE AND HUMIDITY ********
 *-------------------------------------------------------------------------*/
 
-/*-----------------------------------------------------------------------*
-************************* START DE-INITIALIZATION ***********************
-*-------------------------------------------------------------------------*/
-	/*	For de-initialization it is required to set the mode of
-	 *	the sensor as "SLEEP"
-	 *	the device reaches the lowest power consumption only
-	 *	In SLEEP mode no measurements are performed
-	 *	All registers are accessible
-	 *	by using the below API able to set the power mode as SLEEP*/
-	 /* Set the power mode as SLEEP*/
-	com_rslt += bme280_set_power_mode(BME280_SLEEP_MODE);
-/*---------------------------------------------------------------------*
-************************* END DE-INITIALIZATION **********************
-*---------------------------------------------------------------------*/
 return com_rslt;
 }
 

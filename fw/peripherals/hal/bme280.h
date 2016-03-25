@@ -862,7 +862,7 @@ struct bme280_t {
  *
  *
 */
-BME280_RETURN_FUNCTION_TYPE bme280_init(struct bme280_t *bme280);
+BME280_RETURN_FUNCTION_TYPE bme280_start(struct bme280_t *bme280);
 /**************************************************************/
 /**\name	FUNCTION FOR  INTIALIZATION UNCOMPENSATED TEMPERATURE */
 /**************************************************************/
