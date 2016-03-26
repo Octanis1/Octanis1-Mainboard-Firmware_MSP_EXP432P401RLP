@@ -1,0 +1,2 @@
+gcc -Wall -I../ -DFLASH_TEST=1 log_test.c ../core/log.c -o serialisation_test
+gcc -Wall -I../ -DFLASH_TEST=1 log_test.c ../core/log.c -o serialisation_test
