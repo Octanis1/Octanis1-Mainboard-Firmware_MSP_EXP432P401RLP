@@ -5,9 +5,9 @@
  */
 #include "log.h"
 #include <string.h>
-//#include "../peripherals/weather.h"
-//#include "../peripherals/gps.h"
-//#include "--/peripherals/imu.h"
+#include "../peripherals/weather.h"
+#include "../peripherals/gps.h"
+#include "--/peripherals/imu.h"
 #include <stdint.h>
 #include "../lib/cmp/cmp.h"
 #include "../lib/cmp_mem_access/cmp_mem_access.h"
@@ -115,7 +115,8 @@ void logging_weather_serialize (struct logger *l){
 
 uint8_t logger_finish(struct logger *l)
 {
-    Queue_Handle logging_mailbox;
+    //var for testing
+  //  Queue_Handle logging_mailbox;
     // calculate crc
 
     // Save the logging info (whole struct) into the mailbox
@@ -126,7 +127,8 @@ uint8_t logger_finish(struct logger *l)
 
 uint8_t logger_pop(struct logger *l)
 {
-    Queue_Handle logging_mailbox;
+    //var for testing
+//    Queue_Handle logging_mailbox;
     uint8_t ret = Mailbox_pend(logging_mailbox, l, BIOS_NO_WAIT);
 
     // check crc
