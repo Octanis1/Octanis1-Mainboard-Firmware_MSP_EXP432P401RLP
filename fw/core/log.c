@@ -133,69 +133,57 @@ uint8_t logger_pop(struct logger *l)
     return ret;
 }
 
-void logging_parse_buffer (uint8_t *buffer, log_data_t * decoded)
+void logging_parse_buffer (char *buffer, log_data_t * decoded)
 {
-    cmp_ctx_t ctx;
-    cmp_mem_access_t cma;
+    struct logger l;
+    strcpy(l.data, buffer);
     char str_buf[4];
     uint32_t str_buf_sz = sizeof(str_buf);
 
 
-    cmp_mem_access_ro_init(&ctx, &cma, buffer, sizeof(buffer));
-    cmp_read_str(&ctx, str_buf, &str_buf_sz);
+    cmp_mem_access_ro_init(&l.ctx, &l.cma, l.data, sizeof(l.data));
+    cmp_read_str(&l.ctx, str_buf, &str_buf_sz);
 
     //using the sting, we know how to parse the data
      if (strcmp(str_buf, "gps") == 0){
         decoded->data_type = GPS;
-        logging_parse_gps(buffer, decoded);
+        logging_parse_gps(&l, decoded);
      }
     else if (strcmp(str_buf, "imu") == 0){
         decoded->data_type = IMU;
-        logging_parse_imu(buffer, decoded);
+        logging_parse_imu(&l, decoded);
     }
     else if (strcmp(str_buf, "wea") == 0){
         decoded->data_type = WEATHER;
-        logging_parse_weather(buffer, decoded);
+        logging_parse_weather(&l, decoded);
     }
 
 }
 
-void logging_parse_gps (uint8_t *buffer, log_data_t * decoded)
+void logging_parse_gps (struct logger * l, log_data_t * decoded)
 {
-    cmp_mem_access_t cma;
-    cmp_ctx_t ctx;
 
-    cmp_mem_access_ro_init(&ctx, &cma, buffer, sizeof(buffer));
-        
-    cmp_read_float(&ctx, &decoded->lat);
-    cmp_read_float(&ctx, &decoded->lon);
-    cmp_read_u8(&ctx, &decoded->fix_qual);
+    cmp_read_float(&l->ctx, &decoded->lat);
+    cmp_read_float(&l->ctx, &decoded->lon);
+    cmp_read_u8(&l->ctx, &decoded->fix_qual);
+}
+  
+
+void logging_parse_weather (struct logger *l, log_data_t * decoded)
+{
+
+    cmp_read_uint(&l->ctx, &decoded->int_press);;
+    cmp_read_int(&l->ctx, &decoded->int_temp);
+    cmp_read_uint(&l->ctx, &decoded->int_humi);
+    cmp_read_uint(&l->ctx, &decoded->ex_press);
+    cmp_read_int(&l->ctx, &decoded->ex_temp);
+    cmp_read_uint(&l->ctx, &decoded->ex_humi);
 }
 
-void logging_parse_weather (uint8_t *buffer, log_data_t * decoded)
+void logging_parse_imu (struct logger *l, log_data_t * decoded)
 {
-    cmp_mem_access_t cma;
-    cmp_ctx_t ctx;
-
-    cmp_mem_access_ro_init(&ctx, &cma, buffer, sizeof(buffer));
-        
-    cmp_read_uint(&ctx, &decoded->int_press);;
-    cmp_read_int(&ctx, &decoded->int_temp);
-    cmp_read_uint(&ctx, &decoded->int_humi);
-    cmp_read_uint(&ctx, &decoded->ex_press);
-    cmp_read_int(&ctx, &decoded->ex_temp);
-    cmp_read_uint(&ctx, &decoded->ex_humi);
-}
-
-void logging_parse_imu (uint8_t *buffer, log_data_t * decoded)
-{
-    cmp_mem_access_t cma;
-    cmp_ctx_t ctx;
-
-    cmp_mem_access_ro_init(&ctx, &cma, buffer, sizeof(buffer));
-
-    cmp_read_u8(&ctx, &decoded->imu_calib);
-    cmp_read_u16(&ctx, &decoded->imu_head);
-    cmp_read_u16(&ctx, &decoded->imu_roll);
-    cmp_read_u16(&ctx, &decoded->imu_pitch);
+    cmp_read_u8(&l->ctx, &decoded->imu_calib);
+    cmp_read_u16(&l->ctx, &decoded->imu_head);
+    cmp_read_u16(&l->ctx, &decoded->imu_roll);
+    cmp_read_u16(&l->ctx, &decoded->imu_pitch);
 }

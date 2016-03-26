@@ -11,7 +11,7 @@
 //mock fun for testing
 #include "../tests/log_mock_fun.h"
 
-#define LOGGING_BUFFER_SIZE 42
+#define LOGGING_BUFFER_SIZE 50
 #define GPS 0
 #define IMU 1
 #define WEATHER 2
@@ -33,7 +33,7 @@ extern Queue_Handle logging_queue;
 struct logger {
     cmp_ctx_t ctx;
     cmp_mem_access_t cma;
-    uint8_t data [LOGGING_BUFFER_SIZE];
+    char data [LOGGING_BUFFER_SIZE];
 };
 
 /* This struct is used to pass
@@ -68,10 +68,10 @@ void logging_imu_serialize(struct logger *l);
 void logging_weather_serialize(struct logger *l);
 
 //decode a buffer encoded with MessagePack
-void logging_parse_buffer (uint8_t *buffer, log_data_t * decoded);
-void logging_parse_gps (uint8_t *buffer, log_data_t * decoded);
-void logging_parse_weather (uint8_t *buffer, log_data_t * decoded);
-void logging_parse_imu (uint8_t *buffer, log_data_t * decoded);
+void logging_parse_buffer (char *buffer, log_data_t * decoded);
+void logging_parse_gps (struct logger *l, log_data_t * decoded);
+void logging_parse_weather (struct logger *l, log_data_t * decoded);
+void logging_parse_imu (struct logger *l, log_data_t * decoded);
 
 /*Respectively calculate crc and push the message
  * or pop the message and check crc
