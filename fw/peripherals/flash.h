@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define FLASH_PAGE_SIZE 256
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -24,10 +22,10 @@ int flash_write_disable(void);
 int flash_write(uint32_t addr, const void *buf, size_t len);
 
 // erase a 4 KByte sector at address addr
-// Note: the address least significant bits addr[11:0] do not matter.
+// Note: does not work for Spansion S25FL127S, use flash_block_erase() instead
 int flash_sector_erase(uint32_t addr);
 
-// erase a 8 KByte, 32 KByte or 64 KByte block
+// erase a block (64 KByte for Spansion S25FL127S)
 // Note: check out the memory map in the datasheet
 int flash_block_erase(uint32_t addr);
 

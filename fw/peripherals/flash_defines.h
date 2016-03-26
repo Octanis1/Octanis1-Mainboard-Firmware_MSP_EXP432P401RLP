@@ -1,6 +1,8 @@
 #ifndef FLASH_DEFINES_H
 #define FLASH_DEFINES_H
 
+#define FLASH_PAGE_SIZE 256 // may depend on flash chip
+
 #define STATUS_BUSY     (1<<0)
 #define STATUS_WEL      (1<<1) // Write-Enable Latch status
 #define STATUS_WSE      (1<<2) // Write Suspend-Erase status

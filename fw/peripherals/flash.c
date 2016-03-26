@@ -3,7 +3,19 @@
 #include "flash_defines.h"
 #include "flash.h"
 
-#define FLASH_BUSY_TIMEOUT_MS 100 // the longest op is about 50ms, double that
+/* Timing (max values): from Spansion S25FL127S (Datasheet Rev06, Chapter 10.10)
+    - Page Programming: 1480us (512 bytes)
+    - Page Programming: 1185us (256 bytes)
+    - Sector Erase Time: 780ms (64-kB / 4-kB physical sectors)
+    - Sector Erase Time: 12600ms (64 kB Top/Bottom: logical sector = 16 x 4-kB physical sectors)
+    - Sector Erase Time: 3120ms (256-kB logical sectors = 4 x 64-kB physical sectors)
+    - Bulk Erase Time: 210s
+*/
+
+#define FLASH_PAGE_PROGRAM_TIMEOUT_MS   (2)
+#define FLASH_SECTOR_ERASE_TIMEOUT_MS   (780)
+#define FLASH_BLOCK_ERASE_TIMEOUT_MS    (12600)
+#define FLASH_CHIP_ERASE_TIMEOUT_MS     (210000)
 
 // defined in hal/flash_spi.c
 void flash_spi_select(void);
@@ -26,10 +38,9 @@ static int flash_read_status(uint8_t *sr)
 }
 
 // wait until the flash program/erase operation is finished
-static int flash_wait_until_done(void)
+static int flash_wait_until_done(uint32_t timeout_ms)
 {
     int ret;
-    uint32_t timeout_ms = FLASH_BUSY_TIMEOUT_MS;
     while (timeout_ms-- > 0) {
         uint8_t status;
         ret = flash_read_status(&status);
@@ -115,7 +126,7 @@ static int flash_page_program(uint32_t addr, const void *buf, size_t len)
     }
     flash_spi_unselect();
     if (ret == 0) {
-        ret = flash_wait_until_done();
+        ret = flash_wait_until_done(FLASH_PAGE_PROGRAM_TIMEOUT_MS);
     }
     return ret;
 }
@@ -150,7 +161,7 @@ int flash_sector_erase(uint32_t addr)
     ret = flash_cmd_w_addr(FLASH_SE, addr);
     flash_spi_unselect();
     if (ret == 0) {
-        ret = flash_wait_until_done();
+        ret = flash_wait_until_done(FLASH_SECTOR_ERASE_TIMEOUT_MS);
     }
     return ret;
 }
@@ -162,7 +173,7 @@ int flash_block_erase(uint32_t addr)
     ret = flash_cmd_w_addr(FLASH_BE, addr);
     flash_spi_unselect();
     if (ret == 0) {
-        ret = flash_wait_until_done();
+        ret = flash_wait_until_done(FLASH_BLOCK_ERASE_TIMEOUT_MS);
     }
     return ret;
 }
@@ -174,7 +185,7 @@ int flash_chip_erase(void)
     ret = flash_cmd(FLASH_CE);
     flash_spi_unselect();
     if (ret == 0) {
-        ret = flash_wait_until_done();
+        ret = flash_wait_until_done(FLASH_CHIP_ERASE_TIMEOUT_MS);
     }
     return ret;
 }
