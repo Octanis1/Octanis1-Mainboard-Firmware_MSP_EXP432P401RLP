@@ -1,9 +1,11 @@
 #include "greatest/greatest.h"
 #include <peripherals/flash.h>
+#include <peripherals/flash_defines.h>
 
 // function stubs
 void flash_spi_select(void) {}
 void flash_spi_unselect(void) {}
+void flash_os_sleep_ms(uint32_t ms) {(void)ms;}
 int flash_spi_send(const void *txbuf, size_t len)
 {
     (void)txbuf;
