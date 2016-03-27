@@ -85,7 +85,7 @@ void motors_wheels_move(int32_t front_left, int32_t front_right, int32_t rear_le
 	}
 	else	{
 		GPIO_write(Board_M5_IN2, PH_FORWARD);}
-
+	Task_sleep(50); //wait delay the other turn-on's to limit current peak
 	if(front_right < 0)
 	{
 		GPIO_write(Board_M6_IN2, PH_REVERSE);
@@ -93,6 +93,7 @@ void motors_wheels_move(int32_t front_left, int32_t front_right, int32_t rear_le
 	}
 	else{
 		GPIO_write(Board_M6_IN2, PH_FORWARD);}
+	Task_sleep(50); //wait delay the other turn-on's to limit current peak
 
 	if(rear_left < 0)
 	{
@@ -101,6 +102,7 @@ void motors_wheels_move(int32_t front_left, int32_t front_right, int32_t rear_le
 	}
 	else{
 		GPIO_write(Board_M7_IN2, PH_FORWARD);}
+	Task_sleep(50); //wait delay the other turn-on's to limit current peak
 
 	if(rear_right < 0)
 	{
@@ -109,6 +111,7 @@ void motors_wheels_move(int32_t front_left, int32_t front_right, int32_t rear_le
 	}
 	else{
 		GPIO_write(Board_M8_IN2, PH_FORWARD);}
+	Task_sleep(50); //wait delay the other turn-on's to limit current peak
 
 	PWM_setDuty(pwm5_handle, (front_left));
 	PWM_setDuty(pwm6_handle, (front_right));
@@ -189,7 +192,7 @@ void motors_struts_get_position()
 	uint16_t angle = 0;
 	as5050_read_data(angle);
 
-//	cli_printf("%u\n",degrees);
+		//cli_printf("%u\n",degrees);
 
 }
 
