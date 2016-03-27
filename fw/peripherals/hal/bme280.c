@@ -79,7 +79,7 @@ static struct bme280_t *p_bme280; /**< pointer to BME280 */
  *
  *
 */
-BME280_RETURN_FUNCTION_TYPE bme280_init(struct bme280_t *bme280)
+BME280_RETURN_FUNCTION_TYPE bme280_start(struct bme280_t *bme280)
 {
 	/* used to return the communication result*/
 	BME280_RETURN_FUNCTION_TYPE com_rslt = ERROR;

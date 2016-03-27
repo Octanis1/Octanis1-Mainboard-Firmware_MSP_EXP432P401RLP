@@ -11,6 +11,9 @@
  * (consume approx 50 mA when on) */
 void geiger_init(uint8_t on_off);
 
+void geiger_turn_on_off(uint8_t on_off);
+
+
 /* Keep track of the count this minute and last minute */
 void geiger_count();
 

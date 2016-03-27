@@ -192,9 +192,9 @@ extern "C" {
 #define Board_ULTRASONIC_IN_7_IV			0x06
 
 /* UV captor pins */
-#define Board_UV_PIN	Octanis_UV_EN
-#define Board_UV_ON 1
-#define Board_UV_OFF 0
+#define Board_UV_PIN		Octanis_UV_EN
+#define Board_UV_ON 		1
+#define Board_UV_OFF		0
 
 /* Windsensor pins */
 #define Board_WINDSENSOR_SLEEP			Octanis_WINDSENSOR_SLEEP
@@ -210,7 +210,11 @@ extern "C" {
 
 /* Lightning sensor */
 #define Board_LIGHTNING_INT			Octanis_LIGHTNING_INT
-#define Board_LIGHTNING_INT_IV		P1IV__P1IFG4
+#ifdef VERSION_1
+	#define Board_LIGHTNING_INT_IV		DIO_PORT_IV__IFG0
+#else
+	#define Board_LIGHTNING_INT_IV		DIO_PORT_IV__IFG4
+#endif
 
 /*Geiger counter */
 #define Board_GEIGER_COUNTER		Octanis_GEIGER_COUNTER

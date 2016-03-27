@@ -45,13 +45,19 @@
 #ifndef __MSP_EXP432P401RLP_H
 #define __MSP_EXP432P401RLP_H
 
-//#define VERSION_0_5 // define to use board v0.5 pin definitions, else undefin
+//#define VERSION_0_5 // define to use board v0.5 pin definitions, else undefine
+//#define VERSION_0_6
+#define VERSION_1
+
 #ifdef VERSION_0_5
 	#warning "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Use board v0.5 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 #else
-	#warning ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Use board v0.6 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+	#ifndef VERSION_0_6
+		#warning "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Use board v1.0 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!>"
+	#else
+		#warning ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Use board v0.6 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+	#endif
 #endif
-
 
 
 #ifdef __cplusplus

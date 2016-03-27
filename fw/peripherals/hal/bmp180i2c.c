@@ -70,49 +70,63 @@ struct bmp180_t bmp180;
  *	\param: None
  *	\return: communication result
  */
-s32 bmp180_data_readout_template(int* temp_s32, unsigned int* press_u32)
+
+
+s32 bmp180_init()
+{
+	s32 com_rslt = E_BMP_COMM_RES;
+
+	/*********************** START INITIALIZATION ************************/
+		/**************Call the I2C init routine ***************/
+
+	bmp180I2C_routine();
+	/*--------------------------------------------------------------------------
+	 *  This function used to assign the value/reference of
+	 *	the following parameters
+	 *	I2C address
+	 *	Bus Write
+	 *	Bus read
+	 *	Chip id
+	 *	Calibration values
+	-------------------------------------------------------------------------*/
+	com_rslt = bmp180_start(&bmp180);
+
+	/************************* END INITIALIZATION *************************/
+
+	/*------------------------------------------------------------------*
+	************************* START CALIPRATION ********
+	*---------------------------------------------------------------------*/
+		/*  This function used to read the calibration values of following
+		 *	these values are used to calculate the true pressure and temperature
+		 *	Parameter		MSB		LSB		bit
+		 *		AC1			0xAA	0xAB	0 to 7
+		 *		AC2			0xAC	0xAD	0 to 7
+		 *		AC3			0xAE	0xAF	0 to 7
+		 *		AC4			0xB0	0xB1	0 to 7
+		 *		AC5			0xB2	0xB3	0 to 7
+		 *		AC6			0xB4	0xB5	0 to 7
+		 *		B1			0xB6	0xB7	0 to 7
+		 *		B2			0xB8	0xB9	0 to 7
+		 *		MB			0xBA	0xBB	0 to 7
+		 *		MC			0xBC	0xBD	0 to 7
+		 *		MD			0xBE	0xBF	0 to 7*/
+		com_rslt += bmp180_get_calib_param();
+	/*------------------------------------------------------------------*
+	************************* END CALIPRATION ********
+	*---------------------------------------------------------------------*/
+
+	return com_rslt;
+}
+
+
+s32 bmp180_data_readout(int* temp_s32, unsigned int* press_u32)
 {
  /* result of communication results*/
 	s32 com_rslt = E_BMP_COMM_RES;
 	u16 v_uncomp_temp_u16 = BMP180_INIT_VALUE;
 	u32 v_uncomp_press_u32 = BMP180_INIT_VALUE;
-/*********************** START INITIALIZATION ************************/
-    /**************Call the I2C init routine ***************/
 
-	bmp180I2C_routine();
-/*--------------------------------------------------------------------------
- *  This function used to assign the value/reference of
- *	the following parameters
- *	I2C address
- *	Bus Write
- *	Bus read
- *	Chip id
- *	Calibration values
--------------------------------------------------------------------------*/
-	com_rslt = bmp180_init(&bmp180);
 
-/************************* END INITIALIZATION *************************/
-/*------------------------------------------------------------------*
-************************* START CALIPRATION ********
-*---------------------------------------------------------------------*/
-	/*  This function used to read the calibration values of following
-	 *	these values are used to calculate the true pressure and temperature
-	 *	Parameter		MSB		LSB		bit
-	 *		AC1			0xAA	0xAB	0 to 7
-	 *		AC2			0xAC	0xAD	0 to 7
-	 *		AC3			0xAE	0xAF	0 to 7
-	 *		AC4			0xB0	0xB1	0 to 7
-	 *		AC5			0xB2	0xB3	0 to 7
-	 *		AC6			0xB4	0xB5	0 to 7
-	 *		B1			0xB6	0xB7	0 to 7
-	 *		B2			0xB8	0xB9	0 to 7
-	 *		MB			0xBA	0xBB	0 to 7
-	 *		MC			0xBC	0xBD	0 to 7
-	 *		MD			0xBE	0xBF	0 to 7*/
-	com_rslt += bmp180_get_calib_param();
-/*------------------------------------------------------------------*
-************************* END CALIPRATION ********
-*---------------------------------------------------------------------*/
 /************************* START READ UNCOMPENSATED TEMPERATURE AND PRESSURE********/
 
 

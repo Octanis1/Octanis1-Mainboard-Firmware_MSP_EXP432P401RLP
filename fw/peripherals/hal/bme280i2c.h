@@ -86,11 +86,15 @@ s8 bme280I2C_routine(void);
  *	\param : delay in ms
 */
 void BME280_delay_msek(u32 msek);
+
+
+s32 bme280_init();
+
 /* This function is an example for reading sensor data
  *	\param: None
  *	\return: communication result
  */
-s32 bme280_data_readout_template(int* temp_s32, unsigned int* press_u32, unsigned int* humity_u32);
+s32 bme280_data_readout(int* temp_s32, unsigned int* press_u32, unsigned int* humity_u32);
 /*----------------------------------------------------------------------------*
  *  struct bme280_t parameters can be accessed by using bme280
  *	bme280_t having the following parameters
