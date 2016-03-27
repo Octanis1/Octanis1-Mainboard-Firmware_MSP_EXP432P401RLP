@@ -11,9 +11,9 @@
 #include "system.h"
 #include "../peripherals/gps.h"
 #include "../peripherals/navigation.h"
-#include "../peripherals/hal/hx1.h"
 #include "../peripherals/hal/rockblock.h"
 #include "../lib/printf.h"
+#include "../peripherals/hal/sim800.h"
 
 
 //which uart index to use for the CLI
@@ -109,7 +109,8 @@ void cli_task(){
 	//prints welcome message
 	UART_write(uart, consolePrompt, sizeof(consolePrompt));
 
-	/* loop forever */
+
+
 	while (1) {
 
 		//clears buffers

@@ -8,9 +8,6 @@
 #ifndef __CLI_H
 #define __CLI_H
 
-//register a command line command here. will be called when "commandstring [argument]" was typed into cli.
-void cli_register_command(void (*command_cb)(char*), char* commandstring);
-
 //runs with lowest priority
 void cli_task();
 

@@ -483,7 +483,7 @@ void MSP_EXP432P401RLP_initPWM(void)
     };
 
     const uint8_t port3Map [] = {
-    		PM_TA1CCR2A, PM_NONE, PM_NONE, PM_NONE,
+    		PM_TA1CCR2A, PM_NONE, PM_UCA2RXD, PM_UCA2TXD,
 		PM_TA1CCR3A, PM_NONE, PM_TA1CCR4A, PM_NONE
 	};
 
@@ -692,14 +692,20 @@ unsigned char uartMSP432RingBuffer[32];
  */
 const UARTMSP432_BaudrateConfig uartMSP432Baudrates[] = {
     /* {baudrate, input clock, prescalar, UCBRFx, UCBRSx, oversampling} - EUSCI */
-    {115200, 12000000,  6,  8,  32, 1},
+	{
+		.outputBaudrate = 115200,
+		.inputClockFreq = 12000000,
+		.prescalar = 6,
+		.hwRegUCBRFx = 8,
+		.hwRegUCBRSx = 32,
+		.oversampling = 1
+	},
     {115200, 6000000,   3,  4,   2, 1},
     {115200, 3000000,   1, 10,   0, 1},
 
     {57600, 12000000,  13,  0,  37, 1},
     {57600, 6000000,    6,  8,  32, 1},
     {57600, 3000000,  3, 4, 2, 1},
-
 
     {19200, 12000000,  39,  1,  0, 1},
     {19200, 6000000,   19,  8,   85, 1},

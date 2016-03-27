@@ -19,40 +19,8 @@
 #define COMM_STRING_SIZE 175
 
 
-//available destinations
-typedef enum {COMM_CLI, COMM_IRIDIUM, COMM_GSM, COMM_VHF} comm_destination_t;
 
-/* Enum definitions */
-/* Struct definitions */
-typedef struct _rover_status_comm {
-	float gps_lat;
-	float gps_long;
-	uint32_t system_seconds;
-	uint8_t gps_fix_quality;
-	uint8_t imu_calib_status;
-	int16_t imu_heading; //converted from double
-	int16_t imu_roll; //converted from double
-	int16_t imu_pitch; //converted from double
-	int int_temperature;
-	unsigned int int_pressure;
-	unsigned int int_humidity;
-	int ext_temperature;
-	unsigned int ext_pressure;
-	unsigned int ext_humidity; //converted from float
-} rover_status_comm;
-
-
-//public communications frame for encapsulation
-typedef struct {
-	comm_destination_t destination;
-	int message_length;
-	uint8_t message_buffer[COMM_MO_SIZE];
-} comm_frame_t;
-
-
-void comm_init();
 void comm_task();
 
-int comm_post_message(comm_frame_t frame);
 
 #endif

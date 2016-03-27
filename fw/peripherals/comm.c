@@ -9,19 +9,34 @@
 #include "comm.h"
 #include "hal/rockblock.h"
 #include "hal/rn2483.h"
+#include "hal/sim800.h"
 #include "../lib/printf.h"
 
-
-//protobuf DEBUG TO REMOVE
-
-#include "../lib/nanopb/pb_encode.h"
-#include "../lib/nanopb/pb_decode.h"
-#include "../protobuf/rover_status.pb.h"
 
 /* libraries to get status info from other peripherals */
 #include "gps.h"
 #include "imu.h"
 #include "weather.h"
+
+
+/* Struct definitions */
+typedef struct _rover_status_comm {
+	float gps_lat;
+	float gps_long;
+	uint32_t system_seconds;
+	uint8_t gps_fix_quality;
+	uint8_t imu_calib_status;
+	int16_t imu_heading; //converted from double
+	int16_t imu_roll; //converted from double
+	int16_t imu_pitch; //converted from double
+	int int_temperature;
+	unsigned int int_pressure;
+	unsigned int int_humidity;
+	int ext_temperature;
+	unsigned int ext_pressure;
+	unsigned int ext_humidity; //converted from float
+} rover_status_comm;
+
 
 void comm_init(rover_status_comm* stat)
 {
@@ -30,10 +45,21 @@ void comm_init(rover_status_comm* stat)
 
 	if(rn2483_begin()){
 	#if VERBOSE==1
-		cli_printf("rn2483.\n", 0);
+		cli_printf("rn2483 begin OK.\n", 0);
 	#endif
 	}else{
-		cli_printf("adiedrn2483.\n", 0);
+		cli_printf("rn2483 begin NOK\n", 0);
+		rn2483_end();
+	}
+
+
+	if(sim800_begin()){
+	#if VERBOSE==1
+		cli_printf("sim800 begin OK.\n", 0);
+	#endif
+	}else{
+		cli_printf("sim800 begin NOK\n", 0);
+		sim800_end();
 	}
 
 
@@ -51,140 +77,6 @@ void comm_init(rover_status_comm* stat)
 	stat->ext_temperature = -274;
 	stat->ext_pressure = -1;
 	stat->ext_humidity = -1;
-}
-
-//dispatches the message to its destination where it will be sent
-int dispatch_message(comm_destination_t dest, size_t message_length,
-													uint8_t * message_buffer){
-
-	switch(dest){
-		case COMM_CLI:
-			cli_printf("COMM msg received: %d \n", message_length);
-		break;
-
-
-		case COMM_IRIDIUM:
-			cli_printf("RB open \n",0);
-
-					if(rockblock_open()){
-
-						if(rockblock_begin()){ //can timeout
-
-							cli_printf("RB begin done \n",0);
-
-							int csq = rockblock_get_signal_quality();
-
-							cli_printf("RB sig: %d \n", csq);
-
-							if(csq > 1){
-//TODO:debug							    GPIO_write(Board_LED_GREEN, Board_LED_ON);
-							}
-
-							//send msg here
-
-
-
-							//check for RX messages
-						}else{
-							cli_printf("RB begin problem \n",0);
-
-						}
-
-						rockblock_close();
-					}
-
-		break;
-
-
-		case COMM_GSM:
-			//RESERVED FOR FUTURE
-		break;
-
-
-		case COMM_VHF:
-			//TODO, LOW PRIO
-		break;
-	}
-
-	return 1;
-}
-
-
-//waits for message to arrive on queue, unpacks frame, dispatches message.
-// BLOCKS UNTIL MESSAGE ARRIVES IN MAILBOX AND IS SUBSEQUENTLY SENT
-int pend_message(){
-
-	char frame_buffer[COMM_FRAME_SIZE];
-	comm_frame_t frame;
-
-	Mailbox_pend(comm_tx_mailbox, frame_buffer, BIOS_WAIT_FOREVER);
-
-	//is this memcpy dodgy?
-	memcpy(&frame, frame_buffer, sizeof(frame));
-	#if VERBOSE==1
-	cli_printf("rxmsgl %d \n", frame.message_length);
-	#endif
-
-	/* But because we are lazy, we will just decode it immediately. */
-	{
-		/* Allocate space for the decoded message. */
-		rover_status message;
-
-		/* Create a stream that reads from the buffer. */
-		pb_istream_t stream = pb_istream_from_buffer(frame.message_buffer, frame.message_length);
-
-		/* Now we are ready to decode the message. */
-		int status = pb_decode(&stream, rover_status_fields, &message);
-
-		/* Check for errors... */
-		if (!status)
-		{
-			cli_printf("fail\n", 0);
-			return 1;
-		}
-
-		/* Print the data contained in the message. */
-		#if VERBOSE==1
-		cli_printf("bv %d!\n", message.bv);
-		cli_printf("rb %d!\n", message.rockblock_health);
-		cli_printf("gps %d!\n", message.gps_health);
-		#endif
-	}
-
-
-
-
-
-	/*
-	//hardcode CLI for now
-	dispatch_message(COMM_CLI, frame.message_length, frame.message_buffer);
-
-	cli_printf("msg pended  \n",0);
-	*/
-
-	//DISPATCH TEST
-	//rockblock_send_receive_SBD(NULL,NULL,NULL,NULL);
-
-	return 1;
-}
-
-//this command is posted by any task that wishes to send a message
-int comm_post_message(comm_frame_t frame){
-
-
-	unsigned char frame_buffer[COMM_FRAME_SIZE];
-	int frame_size = sizeof(frame);
-
-	//copy frame struct to frame buffer
-	memcpy(frame_buffer, &frame, frame_size);
-
-	//cli_printf("frame size %d \n", frame_size);
-
-	//post the frame
-    return Mailbox_post(comm_tx_mailbox, frame_buffer, BIOS_NO_WAIT);
-
-	return 1;
-
 }
 
 
@@ -252,16 +144,9 @@ void comm_send_status_over_lora(rover_status_comm* stat)
 	}
 
 
-
 	//lora test
-
-
-
-
 	rn2483_send_receive(hex_string, 2*stringlength);
-
-
-	//rn2483_end(); //TODO: do we have to close the uart handle?
+	rn2483_end();
 	//lora test end
 }
 
@@ -269,32 +154,31 @@ void comm_send_status_over_lora(rover_status_comm* stat)
 
 void comm_task(){
 
-#ifdef CONFIG_MODE
-	int comm_result=rn2483_config();
-	if(comm_result)
-		cli_printf("LoRa config failed: %d", comm_result);
-	else
-		cli_printf("LoRa config success: %d", comm_result);
-#endif
+	#ifdef CONFIG_MODE
+		int comm_result=rn2483_config();
+		if(comm_result)
+			cli_printf("LoRa config failed: %d", comm_result);
+		else
+			cli_printf("LoRa config success: %d", comm_result);
+	#endif
+
 
 	rover_status_comm my_rover_status;
+    comm_init(&my_rover_status);
 
-	comm_init(&my_rover_status);
-	while(1){
-//TODO:debug 	    GPIO_write(Board_LED_RED, Board_LED_ON);
+    while(1){
 
-//		pend_message();
 
 		comm_gather_status_info(&my_rover_status);
-
-		comm_send_status_over_lora(&my_rover_status);
-
-
-//TODO:debug		GPIO_write(Board_LED_RED, Board_LED_OFF);
-
-		Task_sleep(20000);
+		//comm_send_status_over_lora(&my_rover_status);  //if rn2483 not connected or not responding, then this line causes the os to crash
 
 
+		/* GSM SANDBOX */
+		sim800_send_http("test", 1,1);
+		/* GSM SANDBOX END */
+
+
+		Task_sleep(30000);
 
 	}
 
