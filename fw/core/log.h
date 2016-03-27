@@ -43,6 +43,7 @@ struct logger {
  * data_type. */
 typedef struct log_data_t {
     uint8_t data_type;
+    uint32_t timestamp;
     float lat;
     float lon;
     uint8_t fix_qual;

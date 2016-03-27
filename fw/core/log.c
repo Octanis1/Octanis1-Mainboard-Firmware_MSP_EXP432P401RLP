@@ -69,7 +69,7 @@ void cmp_logger_get(const char *name, struct logger *l)
     uint32_t t = Timestamp_get32();
     t = t/TIMESTAMP_TO_MILLISEC; //converted in ms here
 
-    cmp_write_uinteger(&l->ctx, t);
+    cmp_write_u32(&l->ctx, t);
 }
 
 void logging_gps_serialize (struct logger *l){
@@ -159,6 +159,8 @@ void logging_parse_buffer (char *buffer, log_data_t * decoded)
         decoded->data_type = WEATHER;
         logging_parse_weather(&l, decoded);
     }
+    
+    cmp_read_u32(&l->ctx, &decoded->timestamp);
 
 }
 
