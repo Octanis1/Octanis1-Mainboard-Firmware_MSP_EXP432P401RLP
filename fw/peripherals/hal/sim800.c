@@ -13,7 +13,8 @@
 #define SIM800_RXBUFFER_SIZE 100
 
 static const char sim800_at[] = "AT\r\n";
-static const char sim800_at_restart[] = "AT+CFUN=1,1";
+static const char sim800_at_restart[] = "AT+CFUN=1,1\r\n";
+static const char sim800_at_cbc[] = "AT+CBC\r\n";
 static const char sim800_at_echo_off[] = "ATE0\r\n";
 static const char sim800_at_sapbr_apn[] = "AT+SAPBR=3,1,\"APN\",\"gprs.swisscom.ch\"\r\n";
 static const char sim800_at_sapbr[] = "AT+SAPBR=1,1\r\n"; //gives an error if already executed
@@ -30,6 +31,26 @@ static const char sim800_at_httpterm[] = "AT+HTTPTERM\r\n";
 static UART_Handle uart;
 static UART_Params uartParams;
 static int sim800_initialised = 0;
+static int sim800_locked = 0;
+
+
+const char* sim800_get_battery_voltage(){
+	static char rxBuffer[SIM800_RXBUFFER_SIZE];
+	memset(&rxBuffer, 0, sizeof(rxBuffer));
+
+	if(sim800_initialised && !sim800_locked){
+		UART_write(uart, sim800_at_cbc, sizeof(sim800_at_cbc));
+		UART_read(uart, rxBuffer, sizeof(rxBuffer));
+		Task_sleep(500);
+		return rxBuffer;
+	}else{
+		cli_printf("sim800 not initialised",0);
+		return 0;
+	}
+}
+
+
+
 
 int sim800_open(){
 
@@ -121,7 +142,7 @@ void sim800_init_http(){
 	}
 }
 
-void sim800_buffermessage_http(char * tx_buffer, int tx_size, int download_time){
+void sim800_buffermessage_http(char * tx_buffer, int tx_size){
 	if(!sim800_initialised){
 		cli_printf("sim800 not initialised",0);
 	}else{
@@ -130,40 +151,31 @@ void sim800_buffermessage_http(char * tx_buffer, int tx_size, int download_time)
 
 		UART_write(uart, sim800_at_httpdata, sizeof(sim800_at_httpdata));
 		Task_sleep(600);
-		UART_write(uart, "na na na na na", strlen("na na na na na"));
+		UART_write(uart, tx_buffer, tx_size);
 		UART_read(uart, rxBuffer, sizeof(rxBuffer));
 		cli_printf("%s", rxBuffer);
-		memset(&rxBuffer, 0, sizeof(rxBuffer));
+
 
 		Task_sleep(5000);
-
 		UART_write(uart, sim800_at_httpaction, strlen(sim800_at_httpaction));
-		UART_read(uart, rxBuffer, sizeof(rxBuffer));
-		cli_printf("%s", rxBuffer);
-		memset(&rxBuffer, 0, sizeof(rxBuffer));
 
 		Task_sleep(300);
 		UART_write(uart, sim800_at_httpread, strlen(sim800_at_httpread));
-		UART_read(uart, rxBuffer, sizeof(rxBuffer));
-		cli_printf("%s", rxBuffer);
-		memset(&rxBuffer, 0, sizeof(rxBuffer));
 
 		Task_sleep(300);
 		UART_write(uart, sim800_at_httpterm, strlen(sim800_at_httpterm));
 		UART_read(uart, rxBuffer, sizeof(rxBuffer));
-		cli_printf("%s", rxBuffer);
-		memset(&rxBuffer, 0, sizeof(rxBuffer));
-
-		Task_sleep(300);
 
 	}
 }
 
-void sim800_send_http(char * tx_buffer, int tx_size, int download_time){
+void sim800_send_http(char * tx_buffer, int tx_size){
 	if(!sim800_initialised){
 		cli_printf("sim800 not initialised",0);
 	}else{
+		sim800_locked = 1;
 		sim800_init_http();
-		sim800_buffermessage_http("test",1,1);
+		sim800_buffermessage_http(tx_buffer,strlen(tx_buffer));
+		sim800_locked = 0;
 	}
 }

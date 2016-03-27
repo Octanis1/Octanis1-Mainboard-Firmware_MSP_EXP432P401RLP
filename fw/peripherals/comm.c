@@ -80,7 +80,7 @@ void comm_init(rover_status_comm* stat)
 }
 
 
-void comm_gather_status_info(rover_status_comm* stat)
+void comm_poll_status(rover_status_comm* stat)
 {
 	/*Fill in struct with status information */
 	stat->gps_lat = gps_get_lat();
@@ -100,7 +100,7 @@ void comm_gather_status_info(rover_status_comm* stat)
 }
 
 
-void comm_send_status_over_lora(rover_status_comm* stat)
+void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 {
 	/* create Hexstring buffer from struct */
 	int stringlength=0;
@@ -128,7 +128,7 @@ void comm_send_status_over_lora(rover_status_comm* stat)
 
 	if(stringlength > COMM_FRAME_SIZE) //should never happen! corrupt memory will be the result!
 	{
-		cli_printf("LoRa status string overflow! %u",stringlength);
+		cli_printf("status string overflow! %u",stringlength);
 		stringlength = COMM_FRAME_SIZE;
 	}
 
@@ -144,10 +144,21 @@ void comm_send_status_over_lora(rover_status_comm* stat)
 	}
 
 
-	//lora test
-	rn2483_send_receive(hex_string, 2*stringlength);
-	rn2483_end();
-	//lora test end
+
+	switch(destination) {
+	   case DESTINATION_LORA_TTN:
+	      //lora test
+		  rn2483_send_receive(hex_string, 2*stringlength);
+		  rn2483_end();
+		  //lora test end
+	      break;
+
+	   case DESTINATION_GSM:
+		  sim800_send_http(hex_string, 2*stringlength);
+	      break;
+
+	}
+
 }
 
 
@@ -169,16 +180,11 @@ void comm_task(){
     while(1){
 
 
-		comm_gather_status_info(&my_rover_status);
-		//comm_send_status_over_lora(&my_rover_status);  //if rn2483 not connected or not responding, then this line causes the os to crash
+		comm_poll_status(&my_rover_status);
+		comm_send_status(&my_rover_status, DESTINATION_GSM);
 
 
-		/* GSM SANDBOX */
-		sim800_send_http("test", 1,1);
-		/* GSM SANDBOX END */
-
-
-		Task_sleep(30000);
+		Task_sleep(10000);
 
 	}
 

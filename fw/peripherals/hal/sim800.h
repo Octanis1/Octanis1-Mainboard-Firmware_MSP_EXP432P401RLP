@@ -11,7 +11,7 @@
 int sim800_begin(); //returns 1 if modem responds with OK
 void sim800_end();
 
-void sim800_send_http(char * tx_buffer, int tx_size, int download_time);
-
+void sim800_send_http(char * tx_buffer, int tx_size);
+const char* sim800_get_battery_voltage();
 
 #endif
