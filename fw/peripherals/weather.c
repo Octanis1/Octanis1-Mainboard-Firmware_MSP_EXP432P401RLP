@@ -16,12 +16,15 @@
 #include "../lib/printf.h"
 #include "geiger.h"
 #include "driverlib.h"
+#include <string.h>
 
 //Logging includes:
 #include "../core/log.h"
 #include "../lib/cmp/cmp.h"
 #include "../lib/cmp_mem_access/cmp_mem_access.h"
 #include "../hardware_test/mailbox_test.h"
+#include "flash.h"
+#include "hal/spi_helper.h"
 
 typedef struct Types_FreqHz {
     Bits32 hi;
@@ -121,6 +124,49 @@ void weather_task(){
 
 	// Initialize on-board sensors
 	bme280_init();
+
+
+
+	/************* flash test START ****************/
+	spi_helper_init_handle();
+
+	static uint8_t buf[250];
+	flash_id_read(buf);
+	const uint8_t flash_id[] = {0x01,0x20,0x18}; // S25FL127S ID
+	if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
+		// flash answers with correct ID
+		cli_printf("Flash ID OK\n");
+		uint32_t addr = 0x00007ff0 ;
+		const char write_buf[] = "hello world! hello world! hello world! hello world! hello world! hello world! hello world!hello world!hello world!hello world!";
+		size_t write_len = strlen(write_buf) + 1;
+		int ret;
+
+		flash_write_enable();
+		ret = flash_block_erase(addr);
+		if (ret != 0) {
+					cli_printf("Flash erase failed\n");
+				}
+		ret = flash_write(addr, write_buf, write_len);
+		if (ret != 0) {
+			cli_printf("Flash write failed\n");
+		}
+		flash_write_disable();
+
+
+
+		ret = flash_read(addr, buf, sizeof(buf));
+		if (memcmp(buf, write_buf, write_len) == 0) {
+			cli_printf("Flash write OK\n");
+			cli_printf("read: %s\n", buf);
+		} else {
+			cli_printf("Flash read != write, FAIL\n");
+		}
+	} else {
+		cli_printf("Flash ID read FAIL\n");
+	}
+
+	/************* flash test END ****************/
+
 
 	while(1){
 		Task_sleep(3000);

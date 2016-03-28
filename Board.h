@@ -97,6 +97,11 @@ extern "C" {
  */
 
 
+/* Board specific SPI CS pins */
+#define Board_Flash_CS				Octanis_Flash_CS
+
+
+
 /* General board mappings */
 #define Board_initGeneral           MSP_EXP432P401RLP_initGeneral
 #define Board_initGPIO              MSP_EXP432P401RLP_initGPIO
