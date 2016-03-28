@@ -17,6 +17,18 @@
 #include "geiger.h"
 #include "driverlib.h"
 
+//Logging includes:
+#include "../core/log.h"
+#include "../lib/cmp/cmp.h"
+#include "../lib/cmp_mem_access/cmp_mem_access.h"
+#include "../hardware_test/mailbox_test.h"
+
+typedef struct Types_FreqHz {
+    Bits32 hi;
+    // most significant 32-bits of frequency
+    Bits32 lo;
+    // least significant 32-bits of frequency
+} Types_FreqHz;
 
 static struct _weather_data {
 	int int_temp; //in 0.01 degree Centigrade
@@ -79,6 +91,17 @@ uint8_t weather_check_external_connected()
 }
 
 
+void log_weather(struct _weather_data *d)
+{
+/*    struct logger *l = logger_get("weather");
+    cmp_write_array(l->ctx, 8);
+    cmp_write_integer(l->ctx, d->int_temp);
+    cmp_write_uinteger(l->ctx, d->int_press);
+    // ...
+    logger_finish(l);
+    */
+}
+
 void weather_task(){
 	static uint8_t external_board_connected = 0;
 	external_board_connected = weather_check_external_connected();
@@ -114,6 +137,12 @@ void weather_task(){
 		bme280_data_readout(&(weather_data.int_temp),&(weather_data.int_press),&(weather_data.int_humid));
 		//note: bme280 can give pressure, humidity and temperature
 
+		// Logging:
+
+		uint32_t time = Seconds_get();
+//		Types_FreqHz freq1;
+//		Timestamp_getFreq(&freq1);
+
 
 
 
@@ -122,5 +151,7 @@ void weather_task(){
 		weather_aggregate_data();
 		cli_printf("W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
 
+
+        log_weather(&weather_data);
 	}
 }
