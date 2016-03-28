@@ -1,2 +1,0 @@
-makefile:11: warning: overriding commands for target `.PHONY'
-makefile:4: warning: ignoring old commands for target `.PHONY'
