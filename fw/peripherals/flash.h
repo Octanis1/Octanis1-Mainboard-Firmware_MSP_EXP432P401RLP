@@ -14,10 +14,6 @@ int flash_id_read(uint8_t *id);
 // reads data from flash
 int flash_read(uint32_t addr, void *buf, size_t len);
 
-// enable/disable flash write & erase access
-int flash_write_enable(void);
-int flash_write_disable(void);
-
 // write data to flash
 int flash_write(uint32_t addr, const void *buf, size_t len);
 

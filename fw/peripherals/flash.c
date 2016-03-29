@@ -66,22 +66,18 @@ static int flash_cmd_w_addr(uint8_t cmd, uint32_t addr)
     return flash_spi_send(buf, sizeof(buf));
 }
 
-int flash_write_enable(void)
+static void flash_write_enable(void)
 {
-    int ret;
     flash_spi_select();
-    ret = flash_cmd(FLASH_WREN);
+    flash_cmd(FLASH_WREN);
     flash_spi_unselect();
-    return ret;
 }
 
-int flash_write_disable(void)
+static void flash_write_disable(void)
 {
-    int ret;
     flash_spi_select();
-    ret = flash_cmd(FLASH_WRDI);
+    flash_cmd(FLASH_WRDI);
     flash_spi_unselect();
-    return ret;
 }
 
 int flash_id_read(uint8_t *id)
@@ -119,6 +115,7 @@ static int flash_page_program(uint32_t addr, const void *buf, size_t len)
         return -1;
     }
     int ret;
+    flash_write_enable();
     flash_spi_select();
     ret = flash_cmd_w_addr(FLASH_PP, addr);
     if (ret == 0) {
@@ -128,6 +125,7 @@ static int flash_page_program(uint32_t addr, const void *buf, size_t len)
     if (ret == 0) {
         ret = flash_wait_until_done(FLASH_PAGE_PROGRAM_TIMEOUT_MS);
     }
+    flash_write_disable();
     return ret;
 }
 
@@ -157,35 +155,41 @@ int flash_write(uint32_t addr, const void *buf, size_t len)
 int flash_sector_erase(uint32_t addr)
 {
     int ret;
+    flash_write_enable();
     flash_spi_select();
     ret = flash_cmd_w_addr(FLASH_SE, addr);
     flash_spi_unselect();
     if (ret == 0) {
         ret = flash_wait_until_done(FLASH_SECTOR_ERASE_TIMEOUT_MS);
     }
+    flash_write_disable();
     return ret;
 }
 
 int flash_block_erase(uint32_t addr)
 {
     int ret;
+    flash_write_enable();
     flash_spi_select();
     ret = flash_cmd_w_addr(FLASH_BE, addr);
     flash_spi_unselect();
     if (ret == 0) {
         ret = flash_wait_until_done(FLASH_BLOCK_ERASE_TIMEOUT_MS);
     }
+    flash_write_disable();
     return ret;
 }
 
 int flash_chip_erase(void)
 {
     int ret;
+    flash_write_enable();
     flash_spi_select();
     ret = flash_cmd(FLASH_CE);
     flash_spi_unselect();
     if (ret == 0) {
         ret = flash_wait_until_done(FLASH_CHIP_ERASE_TIMEOUT_MS);
     }
+    flash_write_disable();
     return ret;
 }
