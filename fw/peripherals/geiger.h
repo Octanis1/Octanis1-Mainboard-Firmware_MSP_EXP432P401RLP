@@ -6,6 +6,8 @@
 #define ON 1
 #define OFF 0
 
+void geiger_turn_on_off(uint8_t on_off);
+
 /* Enable/disable interrupt on geiger pin
  * Also turn ON/OFF the geiger counter
  * (consume approx 50 mA when on) */

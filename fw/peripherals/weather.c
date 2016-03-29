@@ -16,7 +16,22 @@
 #include "../lib/printf.h"
 #include "geiger.h"
 #include "driverlib.h"
+#include <string.h>
 
+//Logging includes:
+#include "../core/log.h"
+#include "../lib/cmp/cmp.h"
+#include "../lib/cmp_mem_access/cmp_mem_access.h"
+#include "../hardware_test/mailbox_test.h"
+#include "flash.h"
+#include "hal/spi_helper.h"
+
+typedef struct Types_FreqHz {
+    Bits32 hi;
+    // most significant 32-bits of frequency
+    Bits32 lo;
+    // least significant 32-bits of frequency
+} Types_FreqHz;
 
 static struct _weather_data {
 	int int_temp; //in 0.01 degree Centigrade
@@ -79,6 +94,17 @@ uint8_t weather_check_external_connected()
 }
 
 
+void log_weather(struct _weather_data *d)
+{
+/*    struct logger *l = logger_get("weather");
+    cmp_write_array(l->ctx, 8);
+    cmp_write_integer(l->ctx, d->int_temp);
+    cmp_write_uinteger(l->ctx, d->int_press);
+    // ...
+    logger_finish(l);
+    */
+}
+
 void weather_task(){
 	static uint8_t external_board_connected = 0;
 	external_board_connected = weather_check_external_connected();
@@ -99,6 +125,49 @@ void weather_task(){
 	// Initialize on-board sensors
 	bme280_init();
 
+
+
+	/************* flash test START ****************/
+	spi_helper_init_handle();
+
+	static uint8_t buf[250];
+	flash_id_read(buf);
+	const uint8_t flash_id[] = {0x01,0x20,0x18}; // S25FL127S ID
+	if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
+		// flash answers with correct ID
+		cli_printf("Flash ID OK\n");
+		uint32_t addr = 0x00007ff0 ;
+		const char write_buf[] = "hello world! hello world! hello world! hello world! hello world! hello world! hello world!hello world!hello world!hello world!";
+		size_t write_len = strlen(write_buf) + 1;
+		int ret;
+
+		flash_write_enable();
+		ret = flash_block_erase(addr);
+		if (ret != 0) {
+					cli_printf("Flash erase failed\n");
+				}
+		ret = flash_write(addr, write_buf, write_len);
+		if (ret != 0) {
+			cli_printf("Flash write failed\n");
+		}
+		flash_write_disable();
+
+
+
+		ret = flash_read(addr, buf, sizeof(buf));
+		if (memcmp(buf, write_buf, write_len) == 0) {
+			cli_printf("Flash write OK\n");
+			cli_printf("read: %s\n", buf);
+		} else {
+			cli_printf("Flash read != write, FAIL\n");
+		}
+	} else {
+		cli_printf("Flash ID read FAIL\n");
+	}
+
+	/************* flash test END ****************/
+
+
 	while(1){
 		Task_sleep(3000);
 		if(external_board_connected)
@@ -114,6 +183,12 @@ void weather_task(){
 		bme280_data_readout(&(weather_data.int_temp),&(weather_data.int_press),&(weather_data.int_humid));
 		//note: bme280 can give pressure, humidity and temperature
 
+		// Logging:
+
+		uint32_t time = Seconds_get();
+//		Types_FreqHz freq1;
+//		Timestamp_getFreq(&freq1);
+
 
 
 
@@ -122,5 +197,7 @@ void weather_task(){
 		weather_aggregate_data();
 		cli_printf("W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
 
+
+        log_weather(&weather_data);
 	}
 }

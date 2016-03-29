@@ -50,6 +50,8 @@ extern "C" {
 #include <ti/sysbios/hal/Seconds.h>
 #include <ti/sysbios/hal/Timer.h>
 #include <ti/sysbios/knl/Mailbox.h>
+#include <ti/sysbios/knl/Queue.h>
+
 
 /* TI-RTOS Header files */
 #include <ti/drivers/GPIO.h>
@@ -93,6 +95,11 @@ extern "C" {
 /* The default I�C address of the BNO055 device is (0x29).
  * The alternative address (0x28), can be selected by pulling COM3 down.
  */
+
+
+/* Board specific SPI CS pins */
+#define Board_Flash_CS				Octanis_Flash_CS
+
 
 
 /* General board mappings */

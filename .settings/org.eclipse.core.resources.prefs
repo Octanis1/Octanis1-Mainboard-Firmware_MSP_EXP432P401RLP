@@ -1,6 +1,16 @@
 eclipse.preferences.version=1
 encoding//Debug/fw/core/subdir_rules.mk=UTF-8
 encoding//Debug/fw/core/subdir_vars.mk=UTF-8
+encoding//Debug/fw/hardware_test/subdir_rules.mk=UTF-8
+encoding//Debug/fw/hardware_test/subdir_vars.mk=UTF-8
+encoding//Debug/fw/lib/cmp/examples/subdir_rules.mk=UTF-8
+encoding//Debug/fw/lib/cmp/examples/subdir_vars.mk=UTF-8
+encoding//Debug/fw/lib/cmp/subdir_rules.mk=UTF-8
+encoding//Debug/fw/lib/cmp/subdir_vars.mk=UTF-8
+encoding//Debug/fw/lib/cmp/test/subdir_rules.mk=UTF-8
+encoding//Debug/fw/lib/cmp/test/subdir_vars.mk=UTF-8
+encoding//Debug/fw/lib/cmp_mem_access/subdir_rules.mk=UTF-8
+encoding//Debug/fw/lib/cmp_mem_access/subdir_vars.mk=UTF-8
 encoding//Debug/fw/lib/minmea/subdir_rules.mk=UTF-8
 encoding//Debug/fw/lib/minmea/subdir_vars.mk=UTF-8
 encoding//Debug/fw/lib/nanopb/subdir_rules.mk=UTF-8

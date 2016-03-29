@@ -1,0 +1,62 @@
+diff --git a/.config/xconfig_app/config.bld b/.config/xconfig_app/config.bld
+index 70a9cdc..918c36b 100644
+--- a/.config/xconfig_app/config.bld
++++ b/.config/xconfig_app/config.bld
+@@ -16,7 +16,7 @@ if (!(target instanceof xdc.module("xdc.bld.ITarget").Module)) {
+ }
+ 
+ /* configuro was passed compiler options explicitly */
+-target.ccOpts.prefix = unescape("-mcpu%3Dcortex-m4%20-march%3Darmv7e-m%20-mthumb%20-mfloat-abi%3Dhard%20-mfpu%3Dfpv4-sp-d16%20-D__MSP432P401R__%20-DTARGET_IS_FALCON%20-Dgcc%20-DMSP432WARE%20-Dtimegm%3Dmktime%20-I%5C%22/opt/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/arm-none-eabi/include%5C%22%20-I%5C%22/opt/ti/ccsv6/ccs_base/arm/include%5C%22%20-I%5C%22/opt/ti/ccsv6/ccs_base/arm/include/CMSIS%5C%22%20-I%5C%22/opt/ti/tirtos_msp43x_2_14_03_28/products/MSPWare_2_00_00_40c/driverlib/MSP432P4xx%5C%22%20-O0%20-ffunction-sections%20-fdata-sections%20-g%20-gdwarf-3%20-gstrict-dwarf%20-Wall%20%20%20") + target.ccOpts.prefix;
++target.ccOpts.prefix = unescape("-mcpu%3Dcortex-m4%20-march%3Darmv7e-m%20-mthumb%20-mfloat-abi%3Dhard%20-mfpu%3Dfpv4-sp-d16%20-D__MSP432P401R__%20-Dpedantic%20-DTARGET_IS_FALCON%20-Dgcc%20-DMSP432WARE%20-Dtimegm%3Dmktime%20-I%5C%22/opt/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3/arm-none-eabi/include%5C%22%20-I%5C%22/opt/ti/ccsv6/ccs_base/arm/include%5C%22%20-I%5C%22/opt/ti/ccsv6/ccs_base/arm/include/CMSIS%5C%22%20-I%5C%22/opt/ti/tirtos_msp43x_2_14_03_28/products/MSPWare_2_00_00_40c/driverlib/MSP432P4xx%5C%22%20-O0%20-ffunction-sections%20-fdata-sections%20-g%20-gdwarf-3%20-gstrict-dwarf%20-Wall%20%20%20") + target.ccOpts.prefix;
+ 
+ /* configuro was passed the target's rootDir explicitly */
+ target.rootDir = '/opt/ti/ccsv6/tools/compiler/gcc-arm-none-eabi-4_8-2014q3';
+diff --git a/app.cfg b/app.cfg
+index c570ff9..87056f1 100644
+--- a/app.cfg
++++ b/app.cfg
+@@ -52,6 +52,8 @@ var Clock = xdc.useModule('ti.sysbios.knl.Clock');
+ var Seconds = xdc.useModule('ti.sysbios.hal.Seconds');
+ var Mailbox = xdc.useModule('ti.sysbios.knl.Mailbox');
+ var Timer = xdc.useModule('ti.sysbios.hal.Timer');
++var Semaphore = xdc.useModule('ti.sysbios.knl.Semaphore');
++var Queue = xdc.useModule('ti.sysbios.knl.Queue');
+ 
+ 
+ /*
+@@ -267,3 +269,11 @@ Program.global.comm_tx_mailbox = Mailbox.create(340, 5, comm_tx_mailboxParams);
+ 
+ 
+ 
++Semaphore.supportsEvents = true;
++var queue0Params = new Queue.Params();
++queue0Params.instance.name = "logging_queue";
++Program.global.logging_queue = Queue.create(queue0Params);
++var semaphore0Params = new Semaphore.Params();
++semaphore0Params.instance.name = "logging_sem";
++semaphore0Params.mode = Semaphore.Mode_BINARY;
++Program.global.logging_sem = Semaphore.create(null, semaphore0Params);
+diff --git a/fw/core/log.c b/fw/core/log.c
+index 4bc95d4..86a56f6 100644
+--- a/fw/core/log.c
++++ b/fw/core/log.c
+@@ -1,7 +1,7 @@
+ /*
+  *  File: log.c
+  *  Description: High-level module for data logging
+- *  Author:
++ *  Author: Michael and Eloi
+  */
+ #include "log.h"
+ #include <cmp/cmp.h>
+diff --git a/fw/core/log.h b/fw/core/log.h
+index 827fb40..052d75f 100644
+--- a/fw/core/log.h
++++ b/fw/core/log.h
+@@ -1,5 +1,5 @@
+ /*
+  *  File: log.h
+  *  Description: High-level module for data logging
+- *  Author:
++ *  Author: Michael and Eloi
+  */
