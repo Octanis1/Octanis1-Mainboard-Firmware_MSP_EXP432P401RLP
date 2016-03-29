@@ -10,6 +10,7 @@
 #include "hal/bno055_support.h"
 #include "hal/i2c_helper.h"
 
+/*
 static struct _imu_data {
 	double d_euler_data_p;
 	double d_euler_data_h;
@@ -39,17 +40,18 @@ int16_t imu_get_roll(){
 // return IMU calib status
 uint8_t imu_get_calib_status(){
 	return (uint8_t)(imu_data.calib_status);
-}
+}*/
 
 void imu_task(){
 
+	/*
 	i2c_helper_init_handle();
 //	cli_printf("BNO begin \n", 0);
 	imu_init();
 //	motors_pwm_init(); //!!!! is already called in motors.c. caused segfault.
-
+*/
 	while(1){
-
+/*
 		imu_data.calib_status=bno055_check_calibration_status();
 	//	if(calib_status > 8)
 	//	{
@@ -74,6 +76,8 @@ void imu_task(){
 	//	}
 
 		//	bno055_data_readout_template();
+
+		 */
 
 		/*
 		if(drive_get_status() == NOT_MOVING){

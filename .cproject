@@ -45,10 +45,11 @@
 								<option id="com.ti.ccstudio.buildDefinitions.MSP432_GNU_4.0.compilerID.STRICT_DWARF.1802257630" name="Do not emit DWARF additions beyond selected version (-gstrict-dwarf)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_GNU_4.0.compilerID.STRICT_DWARF" value="true" valueType="boolean"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP432_GNU_4.0.compilerID.MFLOAT_ABI.1997232823" name="Specify if floating point hardware should be used (-mfloat-abi)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_GNU_4.0.compilerID.MFLOAT_ABI" value="hard" valueType="string"/>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP432_GNU_4.0.compilerID.INCLUDE_PATH.588409574" name="Include paths (-I)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_GNU_4.0.compilerID.INCLUDE_PATH" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}/fw/lib&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${CG_TOOL_INCLUDE_PATH}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${CCS_BASE_ROOT}/arm/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${CCS_BASE_ROOT}/arm/include/CMSIS&quot;"/>
-									<listOptionValue builtIn="false" value="/Applications/ti/tirtos_msp43x_2_16_00_08/products/msp432_driverlib_3_10_00_09/driverlib/MSP432P4xx"/>
+									<listOptionValue builtIn="false" value="&quot;${COM_TI_RTSC_TIRTOSMSP430_INSTALL_DIR}/products/msp432_driverlib_3_10_00_09/driverlib/MSP432P4xx&quot;"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP432_GNU_4.0.compilerID.DEFINE.161475783" name="Define symbols (-D)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_GNU_4.0.compilerID.DEFINE" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__MSP432P401R__"/>
@@ -86,6 +87,7 @@
 									<listOptionValue builtIn="false" value="&quot;rdimon&quot;"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP432_GNU_4.0.linkerID.SEARCH_PATH.1866463557" name="Library search path (-L, --library-path)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_GNU_4.0.linkerID.SEARCH_PATH" valueType="stringList">
+									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}/fw/lib&quot;"/>
 									<listOptionValue builtIn="false" value="/Applications/ti/tirtos_msp43x_2_16_00_08/products"/>
 									<listOptionValue builtIn="false" value="/Applications/ti/tirtos_msp43x_2_16_00_08/products/msp432_driverlib_3_10_00_09/driverlib/MSP432P4xx/gcc"/>
 									<listOptionValue builtIn="false" value="&quot;${COM_TI_RTSC_TIRTOSMSP430_INSTALL_DIR}/products/bios_6_41_03_51/packages/gnu/targets/arm/libs/install-native/arm-none-eabi/lib/armv7e-m/fpu&quot;"/>

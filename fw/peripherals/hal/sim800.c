@@ -24,7 +24,7 @@ static const char sim800_at_httppara_cid[] = "at+httppara=\"cid\",1\r\n";
 static const char sim800_at_httppara_content_stream[] = "AT+HTTPPARA=\"CONTENT\",\"application/octet-stream\"\r\n";
 static const char sim800_at_httppara_content_text[] = "AT+HTTPPARA=\"CONTENT\",\"text/plain\"\r\n";
 
-static const char sim800_at_httpdata[] = "at+httpdata=6000,6000\r\n";
+static const char sim800_at_httpdata[] = "at+httpdata=10000,10000\r\n";
 static const char sim800_at_httpaction[] = "AT+HTTPACTION=1\r\n";
 static const char sim800_at_httpread[] = "AT+HTTPREAD\r\n";
 static const char sim800_at_httpterm[] = "AT+HTTPTERM\r\n";
@@ -164,7 +164,7 @@ void sim800_buffermessage_http(char * tx_buffer, int tx_size){
 		cli_printf("%s", rxBuffer);
 
 
-		Task_sleep(8000);
+		Task_sleep(11000);
 		UART_write(uart, sim800_at_httpaction, strlen(sim800_at_httpaction));
 
 		Task_sleep(300);

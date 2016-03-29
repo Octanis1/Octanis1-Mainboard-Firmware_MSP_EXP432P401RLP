@@ -13,7 +13,7 @@
 
 #define VC0706_BAUD_RATE 115200
 #define VC0706_READ_TIMEOUT 1500
-#define VC0706_RXBUFFER_SIZE 5000
+#define VC0706_RXBUFFER_SIZE 5000  //TODO: in which stack is this placed?
 
 
 static UART_Handle uart;
@@ -56,16 +56,44 @@ int vc0706_begin(){
 
 		cli_printf("vc0706 cam on",0);
 
+		static char vc0706_sleep[] = {0x56, 0x00, 0x3E, 0x03, 0x00, 0x01, 0x01}; //go into power save move
+		static char vc0706_wake[] = {0x56, 0x00, 0x3E, 0x03, 0x00, 0x01, 0x00}; //wake up from power save
+
 		static char vc0706_reset[4] = {0x56, 0x00, 0x26, 0x00}; //works!
 		static char vc0706_takepic[5] = {0x56, 0x00, 0x36, 0x01, 0x00};
 		static char vc0706_getfilesize[4] = {0x56, 0x00, 0x34, 0x00};
+		static char vc0706_compression_36[] = {0x56,0x00,0x31,0x05,0x01,0x01,0x12,0x04,0x36};
+
+
+		static char vc0706_setres160x120[] = {0x56, 0x00, 0x31, 0x05, 0x04, 0x01, 0x00, 0x19, 0x22};
+		static char vc0706_setres320x240[] = {0x56, 0x00, 0x31, 0x05, 0x04, 0x01, 0x00, 0x19, 0x11};
+		static char vc0706_setres640x480[] = {0x56, 0x00, 0x31, 0x05, 0x04, 0x01, 0x00, 0x19, 0x00};
+
 		static char vc0706_downloadpic[16] = {0x56, 0x00, 0x32, 0x0C, 0x00, 0x0A,0x00,0x00,0x00, 0x00, 0x00, 0x00, 0x13, 0x88, 0x00, 0x0A};
 
-		//get fw version
+		//wake camera
+		UART_write(uart, vc0706_wake, sizeof(vc0706_wake));
+		UART_read(uart, rxBuffer, sizeof(rxBuffer));
+		memset(&rxBuffer, 0, sizeof(rxBuffer));
+		Task_sleep(500);
+
+		//reset camera
 		UART_write(uart, vc0706_reset, sizeof(vc0706_reset));
 		UART_read(uart, rxBuffer, sizeof(rxBuffer));
 		memset(&rxBuffer, 0, sizeof(rxBuffer));
 		Task_sleep(500);
+
+		//set compression
+		UART_write(uart, vc0706_compression_36, sizeof(vc0706_compression_36));
+		UART_read(uart, rxBuffer, sizeof(rxBuffer));
+		memset(&rxBuffer, 0, sizeof(rxBuffer));
+		Task_sleep(500);
+
+		//set resolution
+		UART_write(uart, vc0706_setres160x120, sizeof(vc0706_setres160x120));
+		UART_read(uart, rxBuffer, sizeof(rxBuffer));
+		memset(&rxBuffer, 0, sizeof(rxBuffer));
+		Task_sleep(1000);
 
 		//take pic
 		UART_write(uart, vc0706_takepic, sizeof(vc0706_takepic));
@@ -82,6 +110,9 @@ int vc0706_begin(){
 		UART_write(uart, vc0706_downloadpic, sizeof(vc0706_downloadpic));
 		UART_read(uart, rxBuffer, sizeof(rxBuffer));
 		Task_sleep(5000);
+
+		UART_write(uart, vc0706_sleep, sizeof(vc0706_sleep));
+		Task_sleep(500);
 
 
 		return 1;

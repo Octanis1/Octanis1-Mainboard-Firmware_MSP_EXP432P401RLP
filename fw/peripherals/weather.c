@@ -105,6 +105,48 @@ void log_weather(struct _weather_data *d)
     */
 }
 
+
+
+
+/*************** IMU stuff moved here ******************/
+#include "imu.h"
+#include "hal/motors.h"
+#include "hal/bno055_support.h"
+#include "hal/i2c_helper.h"
+
+	static struct _imu_data {
+		double d_euler_data_p;
+		double d_euler_data_h;
+		double d_euler_data_r;
+		unsigned char calib_status;
+	} imu_data;
+
+	// pitch Euler data in 100 degrees
+	int16_t imu_get_pitch(){
+		return (int16_t)(100*imu_data.d_euler_data_p);
+	}
+
+	// heading Euler data in 100 degrees
+	int16_t imu_get_heading(){
+		return (int16_t)(100*imu_data.d_euler_data_h);
+	}
+
+	float imu_get_fheading(){
+		return (float)imu_data.d_euler_data_h;
+	}
+
+	// roll Euler data in 100 degrees
+	int16_t imu_get_roll(){
+		return (int16_t)(100*imu_data.d_euler_data_r);
+	}
+
+	// return IMU calib status
+	uint8_t imu_get_calib_status(){
+		return (uint8_t)(imu_data.calib_status);
+	}
+
+/************** END IMU stuff *******************/
+
 void weather_task(){
 	static uint8_t external_board_connected = 0;
 	external_board_connected = weather_check_external_connected();
@@ -137,12 +179,17 @@ void weather_task(){
 		// flash answers with correct ID
 		cli_printf("Flash ID OK\n");
 		uint32_t addr = 0x00007ff0 ;
-		const char write_buf[] = "hello world! hello world! hello world! hello world! hello world! hello world! hello world!hello world!hello world!hello world!";
+		const char write_buf[] = "hello world!";
 		size_t write_len = strlen(write_buf) + 1;
 		int ret;
 
 		flash_write_enable();
 		ret = flash_block_erase(addr);
+
+		//Task_sleep(100);
+		flash_write_enable();
+
+
 		if (ret != 0) {
 					cli_printf("Flash erase failed\n");
 				}
@@ -150,9 +197,12 @@ void weather_task(){
 		if (ret != 0) {
 			cli_printf("Flash write failed\n");
 		}
+
+		//Task_sleep(100);
 		flash_write_disable();
 
 
+		Task_sleep(100);
 
 		ret = flash_read(addr, buf, sizeof(buf));
 		if (memcmp(buf, write_buf, write_len) == 0) {
@@ -168,7 +218,22 @@ void weather_task(){
 	/************* flash test END ****************/
 
 
+
+
+
+/************* IMU STUFF moved here *************/
+
+	imu_init();
+
 	while(1){
+
+
+		imu_data.calib_status=bno055_check_calibration_status();
+		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r));
+
+/************** END IMU stuff *******************/
+
+
 		Task_sleep(3000);
 		if(external_board_connected)
 		{
