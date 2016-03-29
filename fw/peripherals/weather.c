@@ -178,7 +178,7 @@ void weather_task(){
 	if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
 		// flash answers with correct ID
 		cli_printf("Flash ID OK\n");
-		uint32_t addr = 0x00007ff0 ;
+		uint32_t addr = 0x0; //0x00007ff0 ;
 		const char write_buf[] = "hello world!";
 		size_t write_len = strlen(write_buf) + 1;
 		int ret;

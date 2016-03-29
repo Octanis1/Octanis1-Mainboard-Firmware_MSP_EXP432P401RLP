@@ -25,6 +25,6 @@ int flash_spi_receive(void *rxbuf, size_t len)
 
 void flash_os_sleep_ms(uint32_t ms)
 {
-    (void)ms;
+    Task_sleep(ms);
     return;
 }
