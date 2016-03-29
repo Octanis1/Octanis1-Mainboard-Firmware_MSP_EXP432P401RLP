@@ -183,26 +183,15 @@ void weather_task(){
 		size_t write_len = strlen(write_buf) + 1;
 		int ret;
 
-		flash_write_enable();
 		ret = flash_block_erase(addr);
 
-		//Task_sleep(100);
-		flash_write_enable();
-
-
 		if (ret != 0) {
-					cli_printf("Flash erase failed\n");
-				}
+			cli_printf("Flash erase failed\n");
+		}
 		ret = flash_write(addr, write_buf, write_len);
 		if (ret != 0) {
 			cli_printf("Flash write failed\n");
 		}
-
-		//Task_sleep(100);
-		flash_write_disable();
-
-
-		Task_sleep(100);
 
 		ret = flash_read(addr, buf, sizeof(buf));
 		if (memcmp(buf, write_buf, write_len) == 0) {
