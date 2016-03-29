@@ -10,6 +10,7 @@
 #include "hal/rockblock.h"
 #include "hal/rn2483.h"
 #include "hal/sim800.h"
+#include "hal/vc0706.h"
 #include "../lib/printf.h"
 
 
@@ -154,7 +155,7 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 	      break;
 
 	   case DESTINATION_GSM:
-		  sim800_send_http(hex_string, 2*stringlength);
+		  sim800_send_http(hex_string, strlen(hex_string), MIME_TEXT_PLAIN);
 	      break;
 
 	}
@@ -179,12 +180,19 @@ void comm_task(){
 
     while(1){
 
-
 		comm_poll_status(&my_rover_status);
 		comm_send_status(&my_rover_status, DESTINATION_GSM);
+		//comm_send_status(&my_rover_status, DESTINATION_LORA_TTN);
 
 
-		Task_sleep(10000);
+		//camera instead of lora module
+		if(vc0706_begin()){
+			vc0706_gprs_upload_jpeg();
+		}
+		vc0706_end();
+
+
+		Task_sleep(5000);
 
 	}
 

@@ -21,8 +21,10 @@ static const char sim800_at_sapbr[] = "AT+SAPBR=1,1\r\n"; //gives an error if al
 static const char sim800_at_httpinit[] = "AT+HTTPINIT\r\n";
 static const char sim800_at_httppara_url[] = "at+httppara=\"url\",\"http://basestation.octanis.org:9999/gsm_packets/Aeho4Zuze7Muc1\"\r\n";
 static const char sim800_at_httppara_cid[] = "at+httppara=\"cid\",1\r\n";
-static const char sim800_at_httppara_content[] = "AT+HTTPPARA=\"CONTENT\",\"text/plain\"\r\n";
-static const char sim800_at_httpdata[] = "at+httpdata=100,2000\r\n";
+static const char sim800_at_httppara_content_stream[] = "AT+HTTPPARA=\"CONTENT\",\"application/octet-stream\"\r\n";
+static const char sim800_at_httppara_content_text[] = "AT+HTTPPARA=\"CONTENT\",\"text/plain\"\r\n";
+
+static const char sim800_at_httpdata[] = "at+httpdata=6000,6000\r\n";
 static const char sim800_at_httpaction[] = "AT+HTTPACTION=1\r\n";
 static const char sim800_at_httpread[] = "AT+HTTPREAD\r\n";
 static const char sim800_at_httpterm[] = "AT+HTTPTERM\r\n";
@@ -113,7 +115,7 @@ void sim800_end(){
 }
 
 
-void sim800_init_http(){
+void sim800_init_http(SIM800_MIME mime_type){
 	if(!sim800_initialised){
 		cli_printf("sim800 not initialised",0);
 	}else{
@@ -126,15 +128,21 @@ void sim800_init_http(){
 			sim800_at_httpinit,
 			sim800_at_httppara_url,
 			sim800_at_httppara_cid,
-			sim800_at_httppara_content
+			""
 		};
+
+		//set selected mime type
+		if(mime_type == MIME_OCTET_STREAM){
+			init_http_cmdseq[5] = sim800_at_httppara_content_stream;
+		}else{
+			init_http_cmdseq[5] = sim800_at_httppara_content_text;
+		}
+
 
 		for(i=0; i<6; i++){
 			memset(&rxBuffer, 0, sizeof(rxBuffer));
-			UART_write(uart, init_http_cmdseq[i], strlen(init_http_cmdseq[i])); //hardcoded size...
+			UART_write(uart, init_http_cmdseq[i], strlen(init_http_cmdseq[i]));
 			UART_read(uart, rxBuffer, sizeof(rxBuffer));
-
-			//cli_printf("%d - %s", i, rxBuffer);
 			Task_sleep(200);
 		}
 
@@ -156,7 +164,7 @@ void sim800_buffermessage_http(char * tx_buffer, int tx_size){
 		cli_printf("%s", rxBuffer);
 
 
-		Task_sleep(5000);
+		Task_sleep(8000);
 		UART_write(uart, sim800_at_httpaction, strlen(sim800_at_httpaction));
 
 		Task_sleep(300);
@@ -169,13 +177,13 @@ void sim800_buffermessage_http(char * tx_buffer, int tx_size){
 	}
 }
 
-void sim800_send_http(char * tx_buffer, int tx_size){
+void sim800_send_http(char * tx_buffer, int tx_size, SIM800_MIME mime_type){
 	if(!sim800_initialised){
 		cli_printf("sim800 not initialised",0);
 	}else{
 		sim800_locked = 1;
-		sim800_init_http();
-		sim800_buffermessage_http(tx_buffer,strlen(tx_buffer));
+		sim800_init_http(mime_type);
+		sim800_buffermessage_http(tx_buffer, tx_size);
 		sim800_locked = 0;
 	}
 }

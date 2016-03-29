@@ -11,7 +11,18 @@
 int sim800_begin(); //returns 1 if modem responds with OK
 void sim800_end();
 
-void sim800_send_http(char * tx_buffer, int tx_size);
+
+typedef enum sim800_mime {
+	MIME_OCTET_STREAM,
+	MIME_TEXT_PLAIN
+} SIM800_MIME;
+
+
+
+void sim800_send_http(char * tx_buffer, int tx_size, SIM800_MIME mime_type);
 const char* sim800_get_battery_voltage();
+
+
+
 
 #endif
