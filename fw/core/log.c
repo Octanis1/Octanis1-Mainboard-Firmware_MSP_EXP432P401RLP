@@ -31,6 +31,7 @@ todo:
 #include <stdbool.h>
 #include "../lib/cmp/cmp.h"
 #include "../lib/cmp_mem_access/cmp_mem_access.h"
+#include "../lib/crc8.h"
 #include "../peripherals/flash.h"
 
 #if !defined(LOG_TEST) // Production code
@@ -60,7 +61,7 @@ LOG_INTERNAL cmp_ctx_t *_log_entry_create(struct logger *l, const char *name)
 LOG_INTERNAL void _log_entry_write_to_flash(struct logger *l)
 {
     size_t len = cmp_mem_access_get_pos(&l->cma);
-    uint8_t crc = crc8(0, &l->buffer[LOG_ENTRY_HEADER_LEN], len);
+    uint8_t crc = crc8(0, (unsigned char *)&l->buffer[LOG_ENTRY_HEADER_LEN], len);
     l->buffer[0] = len;
     l->buffer[1] = crc;
     _log_flash_write(l, l->buffer, len + LOG_ENTRY_HEADER_LEN);
@@ -75,6 +76,17 @@ cmp_ctx_t *log_entry_create(const char *name)
 void log_entry_write_to_flash(void)
 {
     _log_entry_write_to_flash(&logger);
+}
+
+bool log_read_entry(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len)
+{
+    return false;
+}
+
+bool log_read_entry_cmp_reader(uint32_t addr, cmp_ctx_t **ctx, char *name, uint32_t *timestamp)
+{
+    // todo
+    return false;
 }
 
 // assumes that len < FLASH_BLOCK_SIZE
@@ -113,5 +125,6 @@ bool log_init(void)
 // erases all previous entry
 void log_reset(void)
 {
-
+    flash_block_erase(0x00000000);
+    log_init();
 }
