@@ -76,7 +76,6 @@ TEST test_entry_header(void)
 
 TEST test_entry_crc_and_length(void)
 {
-    test_logger.flash_write_pos = 0;
     cmp_ctx_t *ctx = _log_entry_create(&test_logger, "entry");
     cmp_write_integer(ctx, 42);
     _log_entry_write_to_flash(&test_logger);
@@ -101,7 +100,8 @@ TEST test_can_read_entry(void)
     flash_array[0] = entry_len;
     flash_array[1] = crc8(0, &flash_array[2], entry_len);
     size_t len = 0;
-    if (!log_read_entry(0, buf, &len)) {
+    uint32_t next_entry = 0;
+    if (!log_read_entry(0, buf, &len, &next_entry)) {
         FAILm("broken CRC check");
     }
     ASSERT_EQ(entry_len, len);
@@ -119,8 +119,9 @@ TEST test_crc_mismatch(void)
     flash_array[0] = entry_len;
     // write false crc
     flash_array[1] = crc8(0, &flash_array[2], entry_len) ^ 0xff;
+    uint32_t next_entry = 0;
     size_t len;
-    if (log_read_entry(0, buf, &len)) {
+    if (log_read_entry(0, buf, &len, &next_entry)) {
         FAILm("broken CRC check");
     }
     PASS();
@@ -133,10 +134,12 @@ TEST test_entry_write_and_readback(void)
     _log_entry_write_to_flash(&test_logger);
 
     uint8_t buf[LOG_ENTRY_DATA_LEN];
+    uint32_t next_entry = 0;
     size_t len = 0;
-    if (!log_read_entry(0, buf, &len)) {
+    if (!log_read_entry(0, buf, &len, &next_entry)) {
         FAILm("CRC missmatch");
     }
+    ASSERT_EQ(test_logger.flash_write_pos, next_entry);
 
     // readback entry
     cmp_ctx_t reader;
@@ -167,6 +170,7 @@ void setup_cb(void *p)
     (void)p;
     memset(&flash_array, 0xff, sizeof(flash_array));
     memset(&test_logger, 0, sizeof(test_logger));
+    test_logger.flash_write_pos = 0;
 }
 
 SUITE(log_entry_test)

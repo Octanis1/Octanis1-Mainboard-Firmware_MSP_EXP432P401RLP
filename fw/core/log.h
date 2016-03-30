@@ -37,8 +37,8 @@ struct logger {
 
 cmp_ctx_t *log_entry_create(const char *name);
 void log_entry_write_to_flash(void);
-bool log_read_entry(uint32_t addr, uint8_t buf[LOG_ENTRY_HEADER_LEN + LOG_ENTRY_DATA_LEN], size_t *entry_size);
-bool log_read_entry_cmp_reader(uint32_t addr, cmp_ctx_t **ctx, char *name, uint32_t *timestamp);
+bool log_read_entry(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry);
+bool log_read_entry_cmp_reader(uint32_t addr, cmp_ctx_t **ctx, char *name, uint32_t *timestamp, uint32_t *next_entry);
 bool log_init(void);
 void log_reset(void);
 

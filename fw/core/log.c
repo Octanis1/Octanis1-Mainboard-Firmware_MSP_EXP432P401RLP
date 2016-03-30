@@ -78,12 +78,29 @@ void log_entry_write_to_flash(void)
     _log_entry_write_to_flash(&logger);
 }
 
-bool log_read_entry(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len)
+bool log_read_entry(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry)
 {
-    return false;
+    uint8_t header[2];
+    if (flash_read(addr, header, 2) != 0) {
+        return false;
+    }
+    size_t len = header[0];
+    uint8_t crc = header[1];
+    if (len == 0) {
+        return false;
+    }
+    if (flash_read(addr + 2, buf, len) != 0) {
+        return false;
+    }
+    if (crc8(0, buf, len) != crc) {
+        return false;
+    }
+    *entry_len = len;
+    *next_entry = len + 2;
+    return true;
 }
 
-bool log_read_entry_cmp_reader(uint32_t addr, cmp_ctx_t **ctx, char *name, uint32_t *timestamp)
+bool log_read_entry_cmp_reader(uint32_t addr, cmp_ctx_t **ctx, char *name, uint32_t *timestamp, uint32_t *next_entry)
 {
     // todo
     return false;
