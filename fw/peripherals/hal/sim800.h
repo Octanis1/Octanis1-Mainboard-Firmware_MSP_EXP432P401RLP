@@ -21,7 +21,7 @@ typedef enum sim800_mime {
 
 void sim800_send_http(char * tx_buffer, int tx_size, SIM800_MIME mime_type);
 const char* sim800_get_battery_voltage();
-
+void sim800_send_sms(char * tx_buffer, int tx_size);
 
 
 

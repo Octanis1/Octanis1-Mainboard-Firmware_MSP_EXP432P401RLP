@@ -14,10 +14,16 @@ int gps_get_satellites_tracked();
 float gps_get_lat();
 float gps_get_lon();
 
+float gps_get_speed();
+float gps_get_altitude();
+float gps_get_course();
+
+
 int gps_get_lat_scale();
 int gps_get_lon_scale();
 
 int gps_get_validity();
+int gps_get_dgps_age();
 int gps_get_hdop();
 
 int gps_get_last_update_time();

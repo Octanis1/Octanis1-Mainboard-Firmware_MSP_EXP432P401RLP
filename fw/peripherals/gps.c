@@ -7,9 +7,6 @@
 
 /********************** TODO: this could maybe be merged to the navigation task ****************/
 
-/*
- * dummy comment
- * */
 
 #include "../../Board.h"
 #include "hal/ublox_6.h"
@@ -40,6 +37,18 @@ float gps_get_lon(){
 	return minmea_tocoord(&gps_rmc_frame.longitude);
 }
 
+float gps_get_speed(){
+	return minmea_tocoord(&gps_rmc_frame.speed);
+}
+
+float gps_get_course(){
+	return minmea_tocoord(&gps_rmc_frame.course);
+}
+
+float gps_get_altitude(){
+	return minmea_tofloat(&gps_gga_frame.altitude);
+}
+
 int gps_get_lat_scale(){
 	return gps_gga_frame.latitude.scale;
 }
@@ -56,6 +65,9 @@ int gps_get_hdop(){
 	return gps_gga_frame.hdop.value;
 }
 
+int gps_get_dgps_age(){
+	return gps_gga_frame.dgps_age;
+}
 
 int gps_get_last_update_time(){
 	minmea_gettime(&gps_last_update, &gps_rmc_frame.date, &gps_rmc_frame.time);
@@ -108,6 +120,7 @@ uint8_t gps_update_new_position(float* lat_, float* lon_)
 					if(minmea_parse_rmc(&gps_rmc_frame, nmeaframes)){
 						//update system time when valid RMC frame arrives
 						Seconds_set(gps_get_last_update_time());
+
 					}
 
 				}break;
@@ -115,6 +128,8 @@ uint8_t gps_update_new_position(float* lat_, float* lon_)
 
 			nmeaframes = strtok_r(NULL, "\n", &saveptr2);
 		}
+
+		cli_printf("dgps_age:%d\n", gps_get_hdop());
 
 		ublox_6_close();
 		Task_sleep(6000);

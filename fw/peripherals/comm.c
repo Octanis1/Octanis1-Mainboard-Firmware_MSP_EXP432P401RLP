@@ -158,6 +158,10 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 		  sim800_send_http(hex_string, strlen(hex_string), MIME_TEXT_PLAIN);
 	      break;
 
+	   case DESTINATION_GSM_SMS:
+		  sim800_send_sms(txdata, strlen(txdata));
+		  break;
+
 	}
 
 }
@@ -178,12 +182,22 @@ void comm_task(){
 	rover_status_comm my_rover_status;
     comm_init(&my_rover_status);
 
+    int i = 11;
     while(1){
 
 		comm_poll_status(&my_rover_status);
 		comm_send_status(&my_rover_status, DESTINATION_GSM);
+
+
+		if(i > 10){
+			Task_sleep(2000);
+			comm_send_status(&my_rover_status, DESTINATION_GSM_SMS);
+			i=0;
+		}
+
 		//comm_send_status(&my_rover_status, DESTINATION_LORA_TTN);
 
+		Task_sleep(5000);
 
 		//camera instead of lora module
 		if(vc0706_begin()){
@@ -193,7 +207,7 @@ void comm_task(){
 
 
 		Task_sleep(5000);
-
+		i++;
 	}
 
 }

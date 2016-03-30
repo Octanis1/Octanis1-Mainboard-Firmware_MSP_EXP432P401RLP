@@ -19,15 +19,22 @@ static const char sim800_at_echo_off[] = "ATE0\r\n";
 static const char sim800_at_sapbr_apn[] = "AT+SAPBR=3,1,\"APN\",\"gprs.swisscom.ch\"\r\n";
 static const char sim800_at_sapbr[] = "AT+SAPBR=1,1\r\n"; //gives an error if already executed
 static const char sim800_at_httpinit[] = "AT+HTTPINIT\r\n";
-static const char sim800_at_httppara_url[] = "at+httppara=\"url\",\"http://basestation.octanis.org:9999/gsm_packets/Aeho4Zuze7Muc1\"\r\n";
+static const char sim800_at_httppara_url[] = "at+httppara=\"url\",\"http://basestation.octanis.org:9999/gsm_packets/Aeho4Zuze7Muc1?board=1\"\r\n";
 static const char sim800_at_httppara_cid[] = "at+httppara=\"cid\",1\r\n";
 static const char sim800_at_httppara_content_stream[] = "AT+HTTPPARA=\"CONTENT\",\"application/octet-stream\"\r\n";
 static const char sim800_at_httppara_content_text[] = "AT+HTTPPARA=\"CONTENT\",\"text/plain\"\r\n";
 
+//http
 static const char sim800_at_httpdata[] = "at+httpdata=10000,10000\r\n";
 static const char sim800_at_httpaction[] = "AT+HTTPACTION=1\r\n";
 static const char sim800_at_httpread[] = "AT+HTTPREAD\r\n";
 static const char sim800_at_httpterm[] = "AT+HTTPTERM\r\n";
+
+//sms
+static const char sim800_at_smgf[] = "AT+CMGF=1\r\n";
+static const char sim800_at_smgs[] = "AT+CMGS=\"+41798690718\"\r";
+static const char sim800_ctrl_z[] = "\x1A";
+static const char sim800_testsms[] = "\xD test \xD";
 
 
 static UART_Handle uart;
@@ -35,6 +42,34 @@ static UART_Params uartParams;
 static int sim800_initialised = 0;
 static int sim800_locked = 0;
 
+
+
+void sim800_send_sms(char * tx_buffer, int tx_size){
+	char rxBuffer[SIM800_RXBUFFER_SIZE];
+
+	 if(sim800_initialised  && !sim800_locked){
+		sim800_locked = 1;
+
+		UART_write(uart, sim800_at_smgf, sizeof(sim800_at_smgf));
+		Task_sleep(500);
+
+		UART_write(uart, sim800_at_smgs, strlen(sim800_at_smgs));
+		Task_sleep(1000);
+
+		UART_write(uart, tx_buffer, tx_size);
+		Task_sleep(5000);
+
+		memset(&rxBuffer, 0, sizeof(rxBuffer));
+		UART_write(uart, sim800_ctrl_z, sizeof(sim800_ctrl_z));
+		UART_read(uart, rxBuffer, sizeof(rxBuffer));
+		cli_printf("sms:%s", rxBuffer);
+
+		sim800_locked = 0;
+	 }else{
+		cli_printf("sim800 not initialised",0);
+	}
+
+}
 
 const char* sim800_get_battery_voltage(){
 	static char rxBuffer[SIM800_RXBUFFER_SIZE];
