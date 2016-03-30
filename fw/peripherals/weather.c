@@ -153,7 +153,8 @@ void weather_task(){
 
 	i2c_helper_init_handle();
 	windsensor_init();
-	geiger_turn_on_off(ON);
+//	mcp_init();
+	geiger_turn_on_off(GEIGER_ON);
 
 	// Initialize external sensors
 	if(external_board_connected)
@@ -178,31 +179,20 @@ void weather_task(){
 	if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
 		// flash answers with correct ID
 		cli_printf("Flash ID OK\n");
-		uint32_t addr = 0x00007ff0 ;
+		uint32_t addr = 0x0; //0x00007ff0 ;
 		const char write_buf[] = "hello world!";
 		size_t write_len = strlen(write_buf) + 1;
 		int ret;
 
-		flash_write_enable();
 		ret = flash_block_erase(addr);
 
-		//Task_sleep(100);
-		flash_write_enable();
-
-
 		if (ret != 0) {
-					cli_printf("Flash erase failed\n");
-				}
+			cli_printf("Flash erase failed\n");
+		}
 		ret = flash_write(addr, write_buf, write_len);
 		if (ret != 0) {
 			cli_printf("Flash write failed\n");
 		}
-
-		//Task_sleep(100);
-		flash_write_disable();
-
-
-		Task_sleep(100);
 
 		ret = flash_read(addr, buf, sizeof(buf));
 		if (memcmp(buf, write_buf, write_len) == 0) {

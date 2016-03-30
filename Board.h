@@ -84,6 +84,7 @@ extern "C" {
 
 
 /* Board specific I2C addresses */
+#define Board_EPS_I2CADDR					(0x48)
 #define Board_BMP180_I2CADDR					(0x77) //temp/pres
 #define Board_BNO055_MAINBOARD_I2CADDR			(0x28) //IMU 1
 #define Board_BNO055_WEATHERSTRIP_I2CADDR		(0x29) //IMU 2
