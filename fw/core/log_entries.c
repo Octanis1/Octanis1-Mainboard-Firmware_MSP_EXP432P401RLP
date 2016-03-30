@@ -27,7 +27,7 @@ void logging_gps_serialize(void)
     cmp_write_array(ctx, 3);
     cmp_write_float(ctx, lat);
     cmp_write_float(ctx, lon);
-    cmp_write_u8(ctx, fix_qual);
+    cmp_write_uinteger(ctx, fix_qual);
 
     log_entry_write_to_flash();
 }
@@ -35,17 +35,17 @@ void logging_gps_serialize(void)
 void logging_imu_serialize(void)
 {
     uint8_t imu_calib = imu_get_calib_status();
-    uint16_t imu_head = imu_get_heading();
-    uint16_t imu_roll = imu_get_roll();
-    uint16_t imu_pitch = imu_get_pitch();
+    int16_t imu_head = imu_get_heading();
+    int16_t imu_roll = imu_get_roll();
+    int16_t imu_pitch = imu_get_pitch();
 
     cmp_ctx_t *ctx = log_entry_create("imu");
 
     cmp_write_array(ctx, 4);
-    cmp_write_u8(ctx, imu_calib);
-    cmp_write_u16(ctx, imu_head);
-    cmp_write_u16(ctx, imu_roll);
-    cmp_write_u16(ctx, imu_pitch);
+    cmp_write_uinteger(ctx, imu_calib);
+    cmp_write_integer(ctx, imu_head);
+    cmp_write_integer(ctx, imu_roll);
+    cmp_write_integer(ctx, imu_pitch);
 
     log_entry_write_to_flash();
 }
@@ -59,15 +59,15 @@ void logging_weather_serialize(void)
     int ex_temp = weather_get_ex_temp();
     unsigned int ex_humi = weahter_get_ext_humid();
 
-    cmp_ctx_t *ctx = log_entry_create("weather");
+    cmp_ctx_t *ctx = log_entry_create("wea");
 
     cmp_write_array(ctx, 6);
-    cmp_write_u32(ctx, int_press);
-    cmp_write_s32(ctx, int_temp);
-    cmp_write_u32(ctx, int_humi);
-    cmp_write_u32(ctx, ex_press);
-    cmp_write_s32(ctx, ex_temp);
-    cmp_write_u32(ctx, ex_humi);
+    cmp_write_uinteger(ctx, int_press);
+    cmp_write_integer(ctx, int_temp);
+    cmp_write_uinteger(ctx, int_humi);
+    cmp_write_uinteger(ctx, ex_press);
+    cmp_write_integer(ctx, ex_temp);
+    cmp_write_uinteger(ctx, ex_humi);
 
     log_entry_write_to_flash();
 }

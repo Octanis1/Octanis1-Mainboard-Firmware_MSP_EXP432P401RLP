@@ -4,9 +4,14 @@
  *  Author: Michael and Eloi
  */
 
+#ifndef LOG_H
+#define LOG_H
+
+#include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
 #include "../lib/cmp/cmp.h"
 #include "../lib/cmp_mem_access/cmp_mem_access.h"
-#include <stdint.h>
 
 #define LOG_ENTRY_HEADER_LEN    2 // length byte + crc8
 #define LOG_ENTRY_DATA_LEN      255
@@ -24,7 +29,15 @@ struct logger {
     cmp_mem_access_t cma;
     char buffer[LOG_ENTRY_HEADER_LEN + LOG_ENTRY_DATA_LEN];
     // flash state
-    uint32_t flash_write_pos;
+    uint32_t flash_write_pos; // points at the next empty flash position
+    uint32_t backup_pos; // points at the last valid backup position
+    bool ready;
 };
 
 
+cmp_ctx_t *log_entry_create(const char *name);
+void log_entry_write_to_flash(void);
+bool log_init(void);
+void log_reset(void);
+
+#endif /* LOG_H */
