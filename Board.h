@@ -97,6 +97,9 @@ extern "C" {
  * The alternative address (0x28), can be selected by pulling COM3 down.
  */
 
+/* EPS pins */
+#define Board_EPS_ALIVE_REQ			Octanis_EPS_ALIVE_REQ
+#define Board_EPS_ALIVE_REQ_IV		DIO_PORT_IV__IFG1 // pin 2.1
 
 /* Board specific SPI CS pins */
 #define Board_Flash_CS				Octanis_Flash_CS

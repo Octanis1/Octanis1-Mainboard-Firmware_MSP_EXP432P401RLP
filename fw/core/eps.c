@@ -84,7 +84,7 @@ void eps_init()
 	rover_status_eps.i_out = 0;
 
 	i2c_helper_init_handle();
-	//GPIO_enableInt(Board_LIGHTNING_INT)
+	GPIO_enableInt(Board_EPS_ALIVE_REQ);
 }
 
 uint8_t sendEpsCommand(uint8_t command)
@@ -149,6 +149,16 @@ uint16_t eps_get_vsolar()
 	return rover_status_eps.v_solar;
 }
 
+uint16_t eps_get_iin()
+{
+	return rover_status_eps.i_in;
+}
+
+uint16_t eps_get_iout()
+{
+	return rover_status_eps.i_out;
+}
+
 void eps_task(){
 	eps_init();
 	give_life_sign = 0;
@@ -169,7 +179,17 @@ void eps_task(){
 		rover_status_eps.i_out = (uint16_t)sendEpsCommand(I_OUT);
 
 
-		Task_sleep(1000);
+		Task_sleep(500);
+
+		// check if we need to confirm that we are alive. (do it twice per second)
+		if(give_life_sign)
+		{
+			sendEpsCommand(ALIVE);
+			give_life_sign = 0;
+		}
+
+		Task_sleep(500);
+
 
 	}
 }
@@ -179,5 +199,4 @@ void eps_ISR()
 {
  //TODO
 	give_life_sign = 1;
-
 }

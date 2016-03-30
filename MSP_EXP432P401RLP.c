@@ -159,6 +159,9 @@ GPIO_PinConfig gpioPinConfigs[] = {
 #else
 	GPIOMSP432_P1_4 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
 #endif
+	/* Octanis_EPS_ALIVE_REQ */
+	GPIOMSP432_P2_1 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
+
 	/*Octanis_GEIGER_COUNTER*/
 	GPIOMSP432_P1_0 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
 
@@ -287,6 +290,7 @@ GPIO_PinConfig gpioPinConfigs[] = {
 
 	/* Octanis_Flash_CS */
 	GPIOMSP432_P5_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
+
 
 };
 
