@@ -10,7 +10,7 @@
 #include "adc.h"
 #include "spi_helper.h"
 #include "AS5050A.h"
-#include "../../core/eps.h"
+//#include "../../core/eps.h"
 
 
 PWM_Handle pwm5_handle, pwm6_handle, pwm7_handle, pwm8_handle;
@@ -19,7 +19,7 @@ PWM_Params pwm5_params, pwm6_params, pwm7_params, pwm8_params;
 
 int motors_init()
 {
-	eps_init();
+//	eps_init();
 	motors_pwm_init();
 	adc_init();
 	spi_helper_init_handle();
@@ -74,7 +74,7 @@ int motors_pwm_init(){
  */
 void motors_wheels_move(int32_t front_left, int32_t front_right, int32_t rear_left, int32_t rear_right)
 {
-	eps_switch_module(M11V_ON);
+//	eps_switch_module(M11V_ON);
 
 	GPIO_write(Board_M5678_CURR_SENS_EN, 1); //turn current sensors on
 
@@ -215,7 +215,7 @@ void motors_wheels_stop()
 
 	GPIO_write(Board_M5678_CURR_SENS_EN, 0); //turn current sensor off
 	GPIO_write(Board_M5678_ON, 0); //turn h-bridge off
-	eps_switch_module(M11V_OFF); // turn supply off
+//	eps_switch_module(M11V_OFF); // turn supply off
 
 }
 

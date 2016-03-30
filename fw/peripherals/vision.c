@@ -9,7 +9,7 @@
 
 #include "hal/ultrasonic.h"
 #include "../../Board.h"
-#include "../core/eps.h"
+//#include "../core/eps.h"
 
 
 void vision_task(){
@@ -21,7 +21,7 @@ void vision_task(){
 
 
 	while(1){
-		eps_switch_module(M3V3_1_ON);
+//		eps_switch_module(M3V3_1_ON);
 //		if(ultrasonic_get_distance(distance_values))
 //		{
 //		//successfully read the sensor values
@@ -33,7 +33,7 @@ void vision_task(){
 //		//not all or none of the sensors returned a pulse
 //		}
 		Task_sleep(5000);
-		eps_switch_module(M3V3_1_OFF);
+//		eps_switch_module(M3V3_1_OFF);
 		Task_sleep(5000);
 
 	}

@@ -110,7 +110,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="msp432p401r.lds|fw/tests|fw/peripherals/hal/bmp180old.c|fw/lib/nanopb/docs|fw/lib/nanopb/generator" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="fw/lib/cmp_mem_access/example.c|fw/lib/cmp_mem_access/cmp_mem_access_test.cpp|fw/lib/cmp/test|fw/lib/cmp/examples|msp432p401r.lds|fw/tests|fw/peripherals/hal/bmp180old.c|fw/lib/nanopb/docs|fw/lib/nanopb/generator" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
