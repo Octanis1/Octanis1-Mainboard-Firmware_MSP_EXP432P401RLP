@@ -173,10 +173,10 @@ void eps_task(){
 		}
 
 		// get status data (TODO: do correct conversion)
-		rover_status_eps.v_bat = (uint16_t)sendEpsCommand(V_BAT);
-		rover_status_eps.v_solar = (uint16_t)sendEpsCommand(V_SC);
-		rover_status_eps.i_in = (uint16_t)sendEpsCommand(I_IN);
-		rover_status_eps.i_out = (uint16_t)sendEpsCommand(I_OUT);
+		rover_status_eps.v_bat = (uint16_t)((float)sendEpsCommand(V_BAT)*6.67+2500);
+		rover_status_eps.v_solar = (uint16_t)((float)sendEpsCommand(V_SC)*27.5);
+		rover_status_eps.i_in = (uint16_t)((float)sendEpsCommand(I_IN)*1.19);
+		rover_status_eps.i_out = (uint16_t)((float)sendEpsCommand(I_OUT)*4.76);
 
 
 		Task_sleep(500);

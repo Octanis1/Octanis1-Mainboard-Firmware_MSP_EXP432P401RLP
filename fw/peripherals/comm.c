@@ -199,14 +199,17 @@ void comm_task(){
 
 		comm_poll_status(&my_rover_status);
 		comm_send_status(&my_rover_status, DESTINATION_GSM);
-		//comm_send_status(&my_rover_status, DESTINATION_LORA_TTN);
+#ifndef CAMERA_BOARD
+		comm_send_status(&my_rover_status, DESTINATION_LORA_TTN);
+#endif
 
-
+#ifdef CAMERA_BOARD
 		//camera instead of lora module
 		if(vc0706_begin()){
 			vc0706_gprs_upload_jpeg();
 		}
 		vc0706_end();
+#endif
 
 
 		Task_sleep(5000);
