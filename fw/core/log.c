@@ -80,30 +80,22 @@ void log_entry_write_to_flash(void)
 
 bool log_read_entry(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry)
 {
+    int ret;
     uint8_t header[2];
-    if (flash_read(addr, header, 2) != 0) {
-        return false;
-    }
+    logger_lock();
+    ret = flash_read(addr, header, 2);
     size_t len = header[0];
     uint8_t crc = header[1];
-    if (len == 0) {
-        return false;
+    if (ret == 0 && len > 0) {
+        ret = flash_read(addr + 2, buf, len);
     }
-    if (flash_read(addr + 2, buf, len) != 0) {
-        return false;
-    }
-    if (crc8(0, buf, len) != crc) {
+    logger_unlock();
+    if (len == 0 || ret != 0 || crc8(0, buf, len) != crc) {
         return false;
     }
     *entry_len = len;
     *next_entry = len + 2;
     return true;
-}
-
-bool log_read_entry_cmp_reader(uint32_t addr, cmp_ctx_t **ctx, char *name, uint32_t *timestamp, uint32_t *next_entry)
-{
-    // todo
-    return false;
 }
 
 // Tells if a flash block must be erased before a flash_write(addr, len) call.
@@ -143,9 +135,42 @@ LOG_INTERNAL bool _log_backup_table_pos(uint32_t *addr)
     return false;
 }
 
+// search end of flash log
+// the end is considered found if len consecutive bytes are unwritten (=0xff)
 LOG_INTERNAL bool _log_seek_end(uint32_t base_addr, uint32_t *end_addr, uint8_t *buf, size_t len)
 {
+    uint32_t addr = base_addr;
+    while (addr + len < FLASH_SIZE) {
+        flash_read(addr, buf, len);
+        bool might_be_end = false;
+        size_t possible_end_index = 0;
+        size_t i;
+        for (i = 0; i < len; i++) {
+            if (buf[i] == 0xff) {
+                if (!might_be_end) {
+                    possible_end_index = i;
+                }
+                might_be_end = true;
+            } else {
+                might_be_end = false;
+            }
+        }
+        if (might_be_end) {
+            if (possible_end_index == 0) {
+                *end_addr = addr + possible_end_index;
+                return true;
+            }
+            addr += possible_end_index;
+        } else {
+            addr += len;
+        }
+    }
     return false;
+}
+
+void log_position_backup(void)
+{
+
 }
 
 // returns false on error

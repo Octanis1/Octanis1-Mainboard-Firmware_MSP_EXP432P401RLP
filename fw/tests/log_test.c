@@ -226,13 +226,92 @@ TEST test_no_flash_erase_if_inside_block(void)
     PASS();
 }
 
+TEST test_does_find_backup_pos(void)
+{
+    FAIL();
+}
+
+TEST test_seek_at_base_address(void)
+{
+    // end at base address
+    uint8_t seek_buffer[4];
+    bool is_end;
+    uint32_t end = 0;
+    uint32_t end_addr = 0;
+    memset(flash_array, 0, end);
+    is_end = _log_seek_end(0x0000, &end_addr, seek_buffer, sizeof(seek_buffer));
+    ASSERT(is_end);
+    ASSERT_EQ(end, end_addr);
+    PASS();
+}
+
+TEST test_seek_aligned_with_seek_buffer(void)
+{
+    // aligned with seek buffer
+    uint8_t seek_buffer[4];
+    bool is_end;
+    uint32_t end = sizeof(seek_buffer);
+    uint32_t end_addr = 0;
+    memset(flash_array, 0, end);
+    is_end = _log_seek_end(0x0000, &end_addr, seek_buffer, sizeof(seek_buffer));
+    ASSERT(is_end);
+    ASSERT_EQ(end, end_addr);
+    PASS();
+}
+
+TEST test_seek_unaligned_plus_one(void)
+{
+    // not aligned with seek buffer, +1
+    uint8_t seek_buffer[4];
+    bool is_end;
+    uint32_t end = sizeof(seek_buffer) + 1;
+    uint32_t end_addr = 0;
+    memset(flash_array, 0, end);
+    is_end = _log_seek_end(0x0000, &end_addr, seek_buffer, sizeof(seek_buffer));
+    ASSERT(is_end);
+    ASSERT_EQ(end, end_addr);
+    PASS();
+}
+
+TEST test_seek_unaligned_minus_one(void)
+{
+    // not aligned with seek buffer, -1
+    uint8_t seek_buffer[4];
+    bool is_end;
+    uint32_t end = sizeof(seek_buffer) - 1;
+    uint32_t end_addr = 0;
+    memset(flash_array, 0, end);
+    is_end = _log_seek_end(0x0000, &end_addr, seek_buffer, sizeof(seek_buffer));
+    ASSERT(is_end);
+    ASSERT_EQ(end, end_addr);
+    PASS();
+}
+
+TEST test_seek_when_flash_is_full(void)
+{
+    // not aligned with seek buffer, -1
+    uint8_t seek_buffer[4];
+    bool is_end;
+    uint32_t end = FLASH_SIZE;
+    uint32_t end_addr;
+    memset(flash_array, 0, end);
+    is_end = _log_seek_end(0x0000, &end_addr, seek_buffer, sizeof(seek_buffer));
+    ASSERT(!is_end);
+    PASS();
+}
+
 SUITE(log_flash_test)
 {
     SET_SETUP(setup_cb, NULL);
     RUN_TEST(test_flash_erase_at_start_of_block);
     RUN_TEST(test_flash_erase_over_end_of_block);
     RUN_TEST(test_no_flash_erase_if_inside_block);
-    // RUN_TEST(test_does_find_last_pos);
+    RUN_TEST(test_does_find_backup_pos);
+    RUN_TEST(test_seek_at_base_address);
+    RUN_TEST(test_seek_aligned_with_seek_buffer);
+    RUN_TEST(test_seek_unaligned_plus_one);
+    RUN_TEST(test_seek_unaligned_minus_one);
+    RUN_TEST(test_seek_when_flash_is_full);
 }
 
 GREATEST_MAIN_DEFS();
