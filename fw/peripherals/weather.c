@@ -153,7 +153,8 @@ void weather_task(){
 
 	i2c_helper_init_handle();
 	windsensor_init();
-	geiger_turn_on_off(ON);
+//	mcp_init();
+	geiger_turn_on_off(GEIGER_ON);
 
 	// Initialize external sensors
 	if(external_board_connected)
