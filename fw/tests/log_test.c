@@ -179,45 +179,55 @@ SUITE(log_entry_test)
     RUN_TEST(test_entry_write_and_readback);
 }
 
-TEST test_page_erase_addr(void)
+TEST test_flash_erase_at_start_of_block(void)
 {
-    bool erase;
-    uint32_t erase_addr, addr;
-    size_t len;
-
-    erase_addr = 0;
-    len = 1;
-    addr = FLASH_BLOCK_SIZE;
-    erase = _log_flash_erase_addr(addr, len, &erase_addr);
+    // start of a flash block
+    size_t len = 1;
+    uint32_t addr = FLASH_BLOCK_SIZE;
+    uint32_t erase_addr = 0;
+    bool erase = _log_flash_erase_addr(addr, len, &erase_addr);
     ASSERT_EQ(erase, true);
     ASSERT_EQ(erase_addr, addr);
+    PASS();
+}
 
-    erase_addr = 0;
-    len = 3;
-    addr = 2*FLASH_BLOCK_SIZE - 1;
-    erase = _log_flash_erase_addr(addr, len, &erase_addr);
+TEST test_flash_erase_over_end_of_block(void)
+{
+    // end passes over to a new flash block
+    size_t len = 3;
+    uint32_t addr = 2*FLASH_BLOCK_SIZE - len + 1;
+    uint32_t erase_addr = 0;
+    bool erase = _log_flash_erase_addr(addr, len, &erase_addr);
     ASSERT_EQ(erase, true);
     ASSERT_EQ(erase_addr, 2*FLASH_BLOCK_SIZE);
 
-    len = 1;
-    addr = FLASH_BLOCK_SIZE + 1;
-    erase = _log_flash_erase_addr(addr, len, &erase_addr);
-    ASSERT_EQ(erase, false);
-
+    // write over end of a flash block
     erase_addr = 0;
     len = 2;
     addr = FLASH_BLOCK_SIZE - 1;
     erase = _log_flash_erase_addr(addr, len, &erase_addr);
     ASSERT_EQ(erase, true);
     ASSERT_EQ(erase_addr, FLASH_BLOCK_SIZE);
+    PASS();
+}
 
+TEST test_no_flash_erase_if_inside_block(void)
+{
+    // write inside a already erased flash block
+    size_t len = 1;
+    uint32_t addr = FLASH_BLOCK_SIZE + 1;
+    uint32_t erase_addr;
+    bool erase = _log_flash_erase_addr(addr, len, &erase_addr);
+    ASSERT_EQ(erase, false);
     PASS();
 }
 
 SUITE(log_flash_test)
 {
     SET_SETUP(setup_cb, NULL);
-    RUN_TEST(test_page_erase_addr);
+    RUN_TEST(test_flash_erase_at_start_of_block);
+    RUN_TEST(test_flash_erase_over_end_of_block);
+    RUN_TEST(test_no_flash_erase_if_inside_block);
     // RUN_TEST(test_does_find_last_pos);
 }
 

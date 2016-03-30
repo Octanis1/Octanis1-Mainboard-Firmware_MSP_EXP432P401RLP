@@ -89,17 +89,32 @@ bool log_read_entry_cmp_reader(uint32_t addr, cmp_ctx_t **ctx, char *name, uint3
     return false;
 }
 
-// assumes that len < FLASH_BLOCK_SIZE
+// Tells if a flash block must be erased before a flash_write(addr, len) call.
 // returns true if flash block at erase_addr must be erased first.
+// Note: assumes that len < FLASH_BLOCK_SIZE
 LOG_INTERNAL bool _log_flash_erase_addr(uint32_t addr, size_t len, uint32_t *erase_addr)
 {
+    if (addr % FLASH_BLOCK_SIZE == 0) {
+        // at start of new flash block
+        *erase_addr = addr;
+        return true;
+    }
+    uint32_t end = (addr + len - 1);
+    if (addr % FLASH_BLOCK_SIZE != end % FLASH_BLOCK_SIZE) {
+        // write length passes into a new flash block
+        *erase_addr = end - end % FLASH_BLOCK_SIZE;
+        return true;
+    }
     return false;
 }
 
 LOG_INTERNAL void _log_flash_write(struct logger *l, void *data, size_t len)
 {
-    // todo: erase block if necessary
+    uint32_t erase_addr;
     uint32_t addr = l->flash_write_pos;
+    if (_log_flash_erase_addr(addr, len, &erase_addr)) {
+        flash_block_erase(erase_addr);
+    }
     flash_write(addr, data, len);
     l->flash_write_pos += len;
 }
