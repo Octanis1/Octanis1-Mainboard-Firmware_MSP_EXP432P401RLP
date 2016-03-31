@@ -64,7 +64,9 @@ LOG_INTERNAL void _log_entry_write_to_flash(struct logger *l)
     uint8_t crc = crc8(0, (unsigned char *)&l->buffer[LOG_ENTRY_HEADER_LEN], len);
     l->buffer[0] = len;
     l->buffer[1] = crc;
-    _log_flash_write(l, l->buffer, len + LOG_ENTRY_HEADER_LEN);
+    len += LOG_ENTRY_HEADER_LEN;
+    _log_flash_write(l->flash_write_pos, l->buffer, len);
+    l->flash_write_pos += len;
     logger_unlock();
 }
 
@@ -87,14 +89,14 @@ bool log_read_entry(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entr
     size_t len = header[0];
     uint8_t crc = header[1];
     if (ret == 0 && len > 0) {
-        ret = flash_read(addr + 2, buf, len);
+        ret = flash_read(addr + LOG_ENTRY_HEADER_LEN, buf, len);
     }
     logger_unlock();
     if (len == 0 || ret != 0 || crc8(0, buf, len) != crc) {
         return false;
     }
     *entry_len = len;
-    *next_entry = len + 2;
+    *next_entry = addr + len + 2;
     return true;
 }
 
@@ -109,7 +111,7 @@ LOG_INTERNAL bool _log_flash_erase_addr(uint32_t addr, size_t len, uint32_t *era
         return true;
     }
     uint32_t end = (addr + len - 1);
-    if (addr % FLASH_BLOCK_SIZE != end % FLASH_BLOCK_SIZE) {
+    if (addr - addr % FLASH_BLOCK_SIZE != end - end % FLASH_BLOCK_SIZE) {
         // write length passes into a new flash block
         *erase_addr = end - end % FLASH_BLOCK_SIZE;
         return true;
@@ -117,21 +119,31 @@ LOG_INTERNAL bool _log_flash_erase_addr(uint32_t addr, size_t len, uint32_t *era
     return false;
 }
 
-LOG_INTERNAL void _log_flash_write(struct logger *l, void *data, size_t len)
+LOG_INTERNAL void _log_flash_write(uint32_t addr, void *data, size_t len)
 {
     uint32_t erase_addr;
-    uint32_t addr = l->flash_write_pos;
     if (_log_flash_erase_addr(addr, len, &erase_addr)) {
         flash_block_erase(erase_addr);
     }
     flash_write(addr, data, len);
-    l->flash_write_pos += len;
 }
 
 // get the latest position in the backup
-// returns true if addr is valid, otherwise assume empty or corrupt backup table
-LOG_INTERNAL bool _log_backup_table_pos(uint32_t *addr)
+// returns true if backup_addr is valid, otherwise assume empty or corrupt backup table
+LOG_INTERNAL bool _log_backup_table_get_last(uint32_t *backup_addr)
 {
+    uint32_t addr = 0;
+    while(addr < FLASH_BLOCK_SIZE) {
+        uint32_t val;
+        logger_lock();
+        flash_read(addr, (uint8_t *)&val, 4);
+        logger_unlock();
+        if (val == 0xffffffff) { // empty position
+            *backup_addr = addr;
+            return true;
+        }
+        addr += 4;
+    }
     return false;
 }
 
@@ -168,14 +180,48 @@ LOG_INTERNAL bool _log_seek_end(uint32_t base_addr, uint32_t *end_addr, uint8_t 
     return false;
 }
 
+LOG_INTERNAL void _log_position_backup(struct logger *l)
+{
+    logger_lock();
+    uint32_t write_pos = l->flash_write_pos;
+    uint32_t bkup_pos = l->backup_pos;
+    if (bkup_pos + 4 <= FLASH_BLOCK_SIZE) {
+        flash_write(bkup_pos, (uint8_t *)&write_pos, 4);
+        l->backup_pos += 4;
+    }
+    logger_unlock();
+}
+
 void log_position_backup(void)
 {
-
+    _log_position_backup(&logger);
 }
 
 // returns false on error
 bool log_init(void)
 {
+    logger.flash_write_pos = FLASH_BLOCK_SIZE; // second block
+    logger.backup_pos = 0;
+    uint32_t bkup_pos = 0;
+    if (!_log_backup_table_get_last(&bkup_pos) || bkup_pos == 0) {
+        // either empty flash or backup table full (very unlikely)
+        // erase & restart logging at beginning of flash
+        flash_block_erase(0x00000000);
+        _log_position_backup(&logger);
+    }
+
+    uint32_t pos = 0;
+    logger_lock();
+    flash_read(bkup_pos - 4, &pos, 4);
+    logger_unlock();
+    if (pos < FLASH_SIZE && pos >= FLASH_BLOCK_SIZE) {
+        // if valid position
+        if (_log_seek_end(pos, &pos, &logger.buffer[0], sizeof(logger.buffer))) {
+            logger.flash_write_pos = pos;
+            logger.backup_pos = bkup_pos;
+            return true;
+        }
+    }
     return false;
 }
 

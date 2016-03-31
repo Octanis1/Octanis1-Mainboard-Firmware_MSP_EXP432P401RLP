@@ -27,11 +27,10 @@ struct logger {
     // entry buffer
     cmp_ctx_t ctx;
     cmp_mem_access_t cma;
-    char buffer[LOG_ENTRY_HEADER_LEN + LOG_ENTRY_DATA_LEN];
+    uint8_t buffer[LOG_ENTRY_HEADER_LEN + LOG_ENTRY_DATA_LEN];
     // flash state
     uint32_t flash_write_pos; // points at the next empty flash position
     uint32_t backup_pos; // points at the next empty backup position
-    bool ready;
 };
 
 
