@@ -20,11 +20,18 @@
 
 //Logging includes:
 #include "../core/log.h"
+#include "../core/log_entries.h"
 #include "../lib/cmp/cmp.h"
 #include "../lib/cmp_mem_access/cmp_mem_access.h"
 #include "../hardware_test/mailbox_test.h"
 #include "flash.h"
 #include "hal/spi_helper.h"
+
+// NOTE: set to 0 if it should not be logged
+#define LOG_GPS_TIMESTEP     5
+#define LOG_IMU_TIMESTEP     1
+#define LOG_WEATHER_TIMESTEP 5
+#define LOG_BACKUP_TIMESTEP  250
 
 typedef struct Types_FreqHz {
     Bits32 hi;
@@ -192,38 +199,26 @@ void weather_task(){
 	/************* flash test START ****************/
 	spi_helper_init_handle();
 
+    // force enable logging
+    bool logging_enabled = true;
+
+
 	static uint8_t buf[250];
 	flash_id_read(buf);
 	const uint8_t flash_id[] = {0x01,0x20,0x18}; // S25FL127S ID
 	if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
 		// flash answers with correct ID
 		cli_printf("Flash ID OK\n");
-		uint32_t addr = 0x0; //0x00007ff0 ;
-		const char write_buf[] = "hello world!";
-		size_t write_len = strlen(write_buf) + 1;
-		int ret;
-
-		ret = flash_block_erase(addr);
-
-		if (ret != 0) {
-			cli_printf("Flash erase failed\n");
-		}
-		ret = flash_write(addr, write_buf, write_len);
-		if (ret != 0) {
-			cli_printf("Flash write failed\n");
-		}
-
-		ret = flash_read(addr, buf, sizeof(buf));
-		if (memcmp(buf, write_buf, write_len) == 0) {
-			cli_printf("Flash write OK\n");
-			cli_printf("read: %s\n", buf);
-		} else {
-			cli_printf("Flash read != write, FAIL\n");
-		}
 	} else {
-		cli_printf("Flash ID read FAIL\n");
+		cli_printf("Flash ID ERROR\n");
 	}
 
+    if (logging_enabled) {
+        if (!log_init()) {
+            cli_printf("log_init failed\n");
+            log_reset();
+        }
+    }
 	/************* flash test END ****************/
 
 
@@ -234,6 +229,7 @@ void weather_task(){
 
 	imu_init();
 
+    uint32_t log_counter = 0;
 	while(1){
 
 
@@ -246,6 +242,27 @@ void weather_task(){
 
 
 		Task_sleep(3000);
+
+        log_counter++;
+        if (logging_enabled) {
+            if (LOG_GPS_TIMESTEP > 0 && log_counter % LOG_GPS_TIMESTEP == 0) {
+                log_write_gps();
+                cli_printf("log gps, %x\n", log_write_pos());
+            }
+            if (LOG_IMU_TIMESTEP > 0 && log_counter % LOG_IMU_TIMESTEP == 0) {
+                log_write_imu();
+                cli_printf("log imu, %x\n", log_write_pos());
+            }
+            if (LOG_WEATHER_TIMESTEP > 0 && log_counter % LOG_WEATHER_TIMESTEP == 0) {
+                log_write_weather();
+                cli_printf("log weather, %x\n", log_write_pos());
+            }
+            if (LOG_BACKUP_TIMESTEP > 0 && log_counter % LOG_BACKUP_TIMESTEP == 0) {
+                log_position_backup();
+                cli_printf("log backup, %x\n", log_write_pos());
+            }
+        }
+
 		if(external_board_connected)
 		{
 			bmp180_data_readout(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));

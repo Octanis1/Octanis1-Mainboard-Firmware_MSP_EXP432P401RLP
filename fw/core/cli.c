@@ -9,6 +9,7 @@
 
 #include "cli.h"
 #include "system.h"
+#include "log.h"
 #include "../peripherals/gps.h"
 #include "../peripherals/navigation.h"
 #include "../peripherals/hal/rockblock.h"
@@ -157,7 +158,14 @@ void cli_task(){
 		}else if(strcmp("rbn\n", input) == 0){
 			   tfp_sprintf(output, "rb net? %d \n", rockblock_get_net_availability());
 			   UART_write(uart, output, sizeof(output));
-		}
+		}else if (strcmp("logrst\n", input) == 0){
+               log_reset();
+               tfp_sprintf(output, "ok");
+               UART_write(uart, output, sizeof(output));
+        }else if (strcmp("logpos\n", input) == 0){
+               tfp_sprintf(output, "logpos %u", log_write_pos());
+               UART_write(uart, output, sizeof(output));
+        }
 //		else if(strcmp("hoff\n", input) == 0){
 //			   hx1_off();
 //		}else if(strcmp("hon\n", input) == 0){

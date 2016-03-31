@@ -3,191 +3,238 @@
  *  Description: High-level module for data logging
  *  Author: Michael and Eloi
  */
-#include "log.h"
-#include <string.h>
-#include "../peripherals/weather.h"
-#include "../peripherals/gps.h"
-#include "../peripherals/imu.h"
-#include <stdint.h>
-#include "../lib/cmp/cmp.h"
-#include "../lib/cmp_mem_access/cmp_mem_access.h"
 
-#define TIMESTAMP_TO_MILLISEC 48000
-
-#define BIOS_NO_WAIT 0
 /*
-
-TODO:test serialization, write crc8
-
 Logging format:
 - 1byte: length = n
 - 1byte: crc8
 - nbytes: log data
 
-the log data is MessagePack encoded, http://msgpack.org/index.html
+The log data is MessagePack encoded, http://msgpack.org/index.html
 like the following structure:
 - timestamp: unsigned integer
 - string: data type
 - data: MessagePack encoded data structure
 
-Idea: keep at the beginning of the flash a table to store the last write position
+CHANGE:
+simplify logger: don't use a logging thread, use mutex instead (logger_lock(), logger_unlock())
 
 todo:
-- get flash driver to work
-- flash writer thread (get buffer & write to flash)
-- thread message passing of logging buffers (FIFO)
-- block allocator <---- currently replaced by the mailboc function. Can hold 20 32-bytes message.
-- crc8 function
-- serialization functions for different sensor values
+- unit tests
+- finish/fix serialization functions
 */
 
-void logger_make(const char *name)
-{
-    struct logger log;
+#include "log.h"
+#include "log_internal.h"
+#include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include "../lib/cmp/cmp.h"
+#include "../lib/cmp_mem_access/cmp_mem_access.h"
+#include "../lib/crc8.h"
+#include "../peripherals/flash.h"
 
-    cmp_logger_get (name, &log);
-    logger_finish(&log);
+#if !defined(LOG_TEST) // Production code
+// todo: add mutex if logger needs to be threadsafe
+LOG_INTERNAL void logger_lock(void){}
+LOG_INTERNAL void logger_unlock(void){}
+
+#include <ti/sysbios/hal/Seconds.h>
+LOG_INTERNAL uint32_t logger_timestamp_sec(void)
+{
+    return Seconds_get();
 }
+#endif // LOG_TEST
 
-void cmp_logger_get(const char *name, struct logger *l)
+LOG_INTERNAL struct logger logger;
+
+LOG_INTERNAL cmp_ctx_t *_log_entry_create(struct logger *l, const char *name)
 {
-    cmp_mem_access_init(&l->ctx, &l->cma, l->data, sizeof(l->data));
-    
-    //write name first to identify the entry easily when decoding.
+    logger_lock();
+    cmp_mem_access_init(&l->ctx, &l->cma, &l->buffer[LOG_ENTRY_HEADER_LEN], LOG_ENTRY_DATA_LEN);
+    cmp_write_array(&l->ctx, 3);
+    cmp_write_uinteger(&l->ctx, logger_timestamp_sec());
     cmp_write_str(&l->ctx, name, strlen(name));
-   
-    if (strcmp(name, "gps") == 0)
-        logging_gps_serialize(l);
-    else if (strcmp(name, "imu") == 0)
-        logging_imu_serialize(l);
-    else if (strcmp(name, "wea") == 0)
-        logging_weather_serialize(l);
-
-
-    //Get number of clock tick since beginning
-    //frequency : 48MHz
-    uint32_t t = Timestamp_get32();
-    t = t/TIMESTAMP_TO_MILLISEC; //converted in ms here
-
-    cmp_write_u32(&l->ctx, t);
+    return &l->ctx;
 }
 
-void logging_gps_serialize (struct logger *l){
-    float lat = gps_get_lat();
-    float lon = gps_get_lon();
-    uint8_t fix_qual = gps_get_fix_quality();
-
-    cmp_write_float (&l->ctx, lat);
-    cmp_write_float (&l->ctx, lon);
-    cmp_write_u8 (&l->ctx, fix_qual);
-}
-
-void logging_imu_serialize (struct logger *l){
-    uint8_t imu_calib = imu_get_calib_status();
-    uint16_t imu_head = imu_get_heading();
-    uint16_t imu_roll = imu_get_roll();
-    uint16_t imu_pitch = imu_get_pitch();
-
-    cmp_write_u8 (&l->ctx, imu_calib);
-    cmp_write_u16 (&l->ctx, imu_head);
-    cmp_write_u16 (&l->ctx, imu_roll);
-    cmp_write_u16 (&l->ctx, imu_pitch);
-
-}
-    
-void logging_weather_serialize (struct logger *l){
-
-    unsigned int int_press = weather_get_int_press();
-    int int_temp = weather_get_int_temp();
-    unsigned int int_humi = weather_get_int_humid();
-    unsigned int ex_press = weather_get_ext_press();
-    int ex_temp = weather_get_ex_temp();
-    unsigned int ex_humi = weahter_get_ext_humid();
-
-    cmp_write_u32 (&l->ctx, int_press);
-    cmp_write_s32 (&l->ctx, int_temp);
-    cmp_write_u32 (&l->ctx, int_humi);
-    cmp_write_u32 (&l->ctx, ex_press);
-    cmp_write_s32 (&l->ctx, ex_temp);
-    cmp_write_u32 (&l->ctx, ex_humi);
-
-}
-
-uint8_t logger_finish(struct logger *l)
+LOG_INTERNAL void _log_entry_write_to_flash(struct logger *l)
 {
-    //var for testing
-  //  Queue_Handle logging_mailbox;
-    // calculate crc
-
-    // Save the logging info (whole struct) into the mailbox
-    // return true is saving succeeded, fase if mailbox full
-    return Mailbox_post(logging_mailbox, l, BIOS_NO_WAIT);
+    size_t len = cmp_mem_access_get_pos(&l->cma);
+    uint8_t crc = crc8(0, (unsigned char *)&l->buffer[LOG_ENTRY_HEADER_LEN], len);
+    l->buffer[0] = len;
+    l->buffer[1] = crc;
+    len += LOG_ENTRY_HEADER_LEN;
+    _log_flash_write(l->flash_write_pos, l->buffer, len);
+    l->flash_write_pos += len;
+    logger_unlock();
 }
 
-
-uint8_t logger_pop(struct logger *l)
+cmp_ctx_t *log_entry_create(const char *name)
 {
-    //var for testing
-//    Queue_Handle logging_mailbox;
-    uint8_t ret = Mailbox_pend(logging_mailbox, l, BIOS_NO_WAIT);
-
-    // check crc
-    return ret;
+    return _log_entry_create(&logger, name);
 }
 
-void logging_parse_buffer (char *buffer, log_data_t * decoded)
+void log_entry_write_to_flash(void)
 {
-    struct logger l;
-    strcpy(l.data, buffer);
-    char str_buf[4];
-    uint32_t str_buf_sz = sizeof(str_buf);
+    _log_entry_write_to_flash(&logger);
+}
 
-
-    cmp_mem_access_ro_init(&l.ctx, &l.cma, l.data, sizeof(l.data));
-    cmp_read_str(&l.ctx, str_buf, &str_buf_sz);
-
-    //using the sting, we know how to parse the data
-     if (strcmp(str_buf, "gps") == 0){
-        decoded->data_type = GPS;
-        logging_parse_gps(&l, decoded);
-     }
-    else if (strcmp(str_buf, "imu") == 0){
-        decoded->data_type = IMU;
-        logging_parse_imu(&l, decoded);
+bool log_read_entry(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry)
+{
+    int ret;
+    uint8_t header[2];
+    logger_lock();
+    ret = flash_read(addr, header, 2);
+    size_t len = header[0];
+    uint8_t crc = header[1];
+    if (ret == 0 && len > 0) {
+        ret = flash_read(addr + LOG_ENTRY_HEADER_LEN, buf, len);
     }
-    else if (strcmp(str_buf, "wea") == 0){
-        decoded->data_type = WEATHER;
-        logging_parse_weather(&l, decoded);
+    logger_unlock();
+    if (len == 0 || ret != 0 || crc8(0, buf, len) != crc) {
+        return false;
     }
-    
-    cmp_read_u32(&l.ctx, &decoded->timestamp);
-
+    *entry_len = len;
+    *next_entry = addr + len + 2;
+    return true;
 }
 
-void logging_parse_gps (struct logger * l, log_data_t * decoded)
+// Tells if a flash block must be erased before a flash_write(addr, len) call.
+// returns true if flash block at erase_addr must be erased first.
+// Note: assumes that len < FLASH_BLOCK_SIZE
+LOG_INTERNAL bool _log_flash_erase_addr(uint32_t addr, size_t len, uint32_t *erase_addr)
 {
-
-    cmp_read_float(&l->ctx, &decoded->lat);
-    cmp_read_float(&l->ctx, &decoded->lon);
-    cmp_read_u8(&l->ctx, &decoded->fix_qual);
+    if (addr % FLASH_BLOCK_SIZE == 0) {
+        // at start of new flash block
+        *erase_addr = addr;
+        return true;
+    }
+    uint32_t end = (addr + len - 1);
+    if (addr - addr % FLASH_BLOCK_SIZE != end - end % FLASH_BLOCK_SIZE) {
+        // write length passes into a new flash block
+        *erase_addr = end - end % FLASH_BLOCK_SIZE;
+        return true;
+    }
+    return false;
 }
-  
 
-void logging_parse_weather (struct logger *l, log_data_t * decoded)
+LOG_INTERNAL void _log_flash_write(uint32_t addr, void *data, size_t len)
 {
-
-    cmp_read_uint(&l->ctx, &decoded->int_press);;
-    cmp_read_int(&l->ctx, &decoded->int_temp);
-    cmp_read_uint(&l->ctx, &decoded->int_humi);
-    cmp_read_uint(&l->ctx, &decoded->ex_press);
-    cmp_read_int(&l->ctx, &decoded->ex_temp);
-    cmp_read_uint(&l->ctx, &decoded->ex_humi);
+    uint32_t erase_addr;
+    if (_log_flash_erase_addr(addr, len, &erase_addr)) {
+        flash_block_erase(erase_addr);
+    }
+    flash_write(addr, data, len);
 }
 
-void logging_parse_imu (struct logger *l, log_data_t * decoded)
+// get the latest position in the backup
+// returns true if backup_addr is valid, otherwise assume empty or corrupt backup table
+LOG_INTERNAL bool _log_backup_table_get_last(uint32_t *backup_addr)
 {
-    cmp_read_u8(&l->ctx, &decoded->imu_calib);
-    cmp_read_u16(&l->ctx, &decoded->imu_head);
-    cmp_read_u16(&l->ctx, &decoded->imu_roll);
-    cmp_read_u16(&l->ctx, &decoded->imu_pitch);
+    uint32_t addr = 0;
+    while(addr < FLASH_BLOCK_SIZE) {
+        uint32_t val;
+        logger_lock();
+        flash_read(addr, (uint8_t *)&val, 4);
+        logger_unlock();
+        if (val == 0xffffffff) { // empty position
+            *backup_addr = addr;
+            return true;
+        }
+        addr += 4;
+    }
+    return false;
+}
+
+// search end of flash log
+// the end is considered found if len consecutive bytes are unwritten (=0xff)
+LOG_INTERNAL bool _log_seek_end(uint32_t base_addr, uint32_t *end_addr, uint8_t *buf, size_t len)
+{
+    uint32_t addr = base_addr;
+    while (addr + len < FLASH_SIZE) {
+        flash_read(addr, buf, len);
+        bool might_be_end = false;
+        size_t possible_end_index = 0;
+        size_t i;
+        for (i = 0; i < len; i++) {
+            if (buf[i] == 0xff) {
+                if (!might_be_end) {
+                    possible_end_index = i;
+                }
+                might_be_end = true;
+            } else {
+                might_be_end = false;
+            }
+        }
+        if (might_be_end) {
+            if (possible_end_index == 0) {
+                *end_addr = addr + possible_end_index;
+                return true;
+            }
+            addr += possible_end_index;
+        } else {
+            addr += len;
+        }
+    }
+    return false;
+}
+
+// note: leaves the last entry empty to simplify recovering from a full table
+LOG_INTERNAL void _log_position_backup(struct logger *l)
+{
+    logger_lock();
+    uint32_t write_pos = l->flash_write_pos;
+    uint32_t bkup_pos = l->backup_pos;
+    if (bkup_pos + 4 < FLASH_BLOCK_SIZE) {
+        flash_write(bkup_pos, (uint8_t *)&write_pos, 4);
+        l->backup_pos += 4;
+    } // if backup table is full, just continue without
+    logger_unlock();
+}
+
+void log_position_backup(void)
+{
+    _log_position_backup(&logger);
+}
+
+// returns false on error
+bool log_init(void)
+{
+    logger.flash_write_pos = FLASH_BLOCK_SIZE; // second block
+    logger.backup_pos = 0;
+    uint32_t bkup_pos = 0;
+    if (!_log_backup_table_get_last(&bkup_pos) || bkup_pos == 0) {
+        // either empty flash or backup table full (very unlikely)
+        // erase & restart logging at beginning of flash
+        flash_block_erase(0x00000000);
+        _log_position_backup(&logger);
+        return true;
+    }
+
+    uint32_t pos = 0;
+    logger_lock();
+    flash_read(bkup_pos - 4, &pos, 4);
+    logger_unlock();
+    if (pos < FLASH_SIZE && pos >= FLASH_BLOCK_SIZE) {
+        // if valid position
+        if (_log_seek_end(pos, &pos, &logger.buffer[0], sizeof(logger.buffer))) {
+            logger.flash_write_pos = pos;
+            logger.backup_pos = bkup_pos;
+            return true;
+        }
+    }
+    return false;
+}
+
+// erases all previous entry
+void log_reset(void)
+{
+    flash_block_erase(0x00000000);
+    log_init();
+}
+
+uint32_t log_write_pos(void)
+{
+    return logger.flash_write_pos;
 }

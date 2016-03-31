@@ -1,5 +1,5 @@
 
-TESTS = flash_test
+TESTS = flash_test log_test
 
 .PHONY: test
 test: $(TESTS)
@@ -15,3 +15,5 @@ clean:
 flash_test: flash_test.c ../peripherals/flash.c
 	gcc -Wall -I../ -DFLASH_TEST=1 flash_test.c ../peripherals/flash.c -o $@
 
+log_test: log_test.c ../core/log.c
+	gcc -Wall -I../ -I../lib -DLOG_TEST=1 log_test.c ../core/log.c ../lib/crc8.c ../lib/cmp/cmp.c ../lib/cmp_mem_access/cmp_mem_access.c -o $@
