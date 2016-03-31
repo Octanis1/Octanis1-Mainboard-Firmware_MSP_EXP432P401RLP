@@ -247,19 +247,19 @@ void weather_task(){
         if (logging_enabled) {
             if (LOG_GPS_TIMESTEP > 0 && log_counter % LOG_GPS_TIMESTEP == 0) {
                 log_write_gps();
-                cli_printf("log gps, %x\n", log_write_pos());
+                // cli_printf("log gps, %x\n", log_write_pos());
             }
             if (LOG_IMU_TIMESTEP > 0 && log_counter % LOG_IMU_TIMESTEP == 0) {
                 log_write_imu();
-                cli_printf("log imu, %x\n", log_write_pos());
+                // cli_printf("log imu, %x\n", log_write_pos());
             }
             if (LOG_WEATHER_TIMESTEP > 0 && log_counter % LOG_WEATHER_TIMESTEP == 0) {
                 log_write_weather();
-                cli_printf("log weather, %x\n", log_write_pos());
+                // cli_printf("log weather, %x\n", log_write_pos());
             }
             if (LOG_BACKUP_TIMESTEP > 0 && log_counter % LOG_BACKUP_TIMESTEP == 0) {
                 log_position_backup();
-                cli_printf("log backup, %x\n", log_write_pos());
+                // cli_printf("log backup, %x\n", log_write_pos());
             }
         }
 
