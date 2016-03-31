@@ -173,38 +173,21 @@ void weather_task(){
 	/************* flash test START ****************/
 	spi_helper_init_handle();
 
+    bool logging_enabled = false;
 	static uint8_t buf[250];
 	flash_id_read(buf);
 	const uint8_t flash_id[] = {0x01,0x20,0x18}; // S25FL127S ID
 	if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
 		// flash answers with correct ID
 		cli_printf("Flash ID OK\n");
-		uint32_t addr = 0x0; //0x00007ff0 ;
-		const char write_buf[] = "hello world!";
-		size_t write_len = strlen(write_buf) + 1;
-		int ret;
-
-		ret = flash_block_erase(addr);
-
-		if (ret != 0) {
-			cli_printf("Flash erase failed\n");
-		}
-		ret = flash_write(addr, write_buf, write_len);
-		if (ret != 0) {
-			cli_printf("Flash write failed\n");
-		}
-
-		ret = flash_read(addr, buf, sizeof(buf));
-		if (memcmp(buf, write_buf, write_len) == 0) {
-			cli_printf("Flash write OK\n");
-			cli_printf("read: %s\n", buf);
-		} else {
-			cli_printf("Flash read != write, FAIL\n");
-		}
+        logging_enabled = true;
 	} else {
-		cli_printf("Flash ID read FAIL\n");
+		cli_printf("Flash ID ERROR\n");
 	}
 
+    if (logging_enabled) {
+        log_init();
+    }
 	/************* flash test END ****************/
 
 

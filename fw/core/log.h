@@ -39,5 +39,6 @@ void log_entry_write_to_flash(void);
 bool log_read_entry(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry);
 bool log_init(void);
 void log_reset(void);
+uint32_t log_write_pos(void);
 
 #endif /* LOG_H */

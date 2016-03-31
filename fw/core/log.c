@@ -232,3 +232,8 @@ void log_reset(void)
     flash_block_erase(0x00000000);
     log_init();
 }
+
+uint32_t log_write_pos(void)
+{
+    return logger.flash_write_pos;
+}
