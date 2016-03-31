@@ -167,7 +167,7 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 	   case DESTINATION_LORA_TTN:
 	      //lora test
 		  rn2483_send_receive(hex_string, 2*stringlength);
-		  rn2483_end();
+//		  rn2483_end(); --> IDIOT
 		  //lora test end
 	      break;
 
