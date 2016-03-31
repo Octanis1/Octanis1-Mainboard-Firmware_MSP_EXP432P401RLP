@@ -16,7 +16,7 @@ void imu_log(struct imu_data* imu)
 }
 */
 
-void logging_gps_serialize(void)
+void log_write_gps(void)
 {
     float lat = gps_get_lat();
     float lon = gps_get_lon();
@@ -32,7 +32,7 @@ void logging_gps_serialize(void)
     log_entry_write_to_flash();
 }
 
-void logging_imu_serialize(void)
+void log_write_imu(void)
 {
     uint8_t imu_calib = imu_get_calib_status();
     int16_t imu_head = imu_get_heading();
@@ -50,14 +50,14 @@ void logging_imu_serialize(void)
     log_entry_write_to_flash();
 }
 
-void logging_weather_serialize(void)
+void log_write_weather(void)
 {
     unsigned int int_press = weather_get_int_press();
     int int_temp = weather_get_int_temp();
     unsigned int int_humi = weather_get_int_humid();
     unsigned int ex_press = weather_get_ext_press();
-    int ex_temp = weather_get_ex_temp();
-    unsigned int ex_humi = weahter_get_ext_humid();
+    int ex_temp = weather_get_ext_temp();
+    unsigned int ex_humi = weather_get_ext_humid();
 
     cmp_ctx_t *ctx = log_entry_create("wea");
 

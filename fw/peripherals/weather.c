@@ -20,11 +20,18 @@
 
 //Logging includes:
 #include "../core/log.h"
+#include "../core/log_entries.h"
 #include "../lib/cmp/cmp.h"
 #include "../lib/cmp_mem_access/cmp_mem_access.h"
 #include "../hardware_test/mailbox_test.h"
 #include "flash.h"
 #include "hal/spi_helper.h"
+
+// NOTE: set to 0 if it should not be logged
+#define LOG_GPS_TIMESTEP     10
+#define LOG_IMU_TIMESTEP     1
+#define LOG_WEATHER_TIMESTEP 10
+#define LOG_BACKUP_TIMESTEP  500
 
 typedef struct Types_FreqHz {
     Bits32 hi;
@@ -186,7 +193,9 @@ void weather_task(){
 	}
 
     if (logging_enabled) {
-        log_init();
+        if (!log_init()) {
+            logging_enabled = false;
+        }
     }
 	/************* flash test END ****************/
 
@@ -198,6 +207,7 @@ void weather_task(){
 
 	imu_init();
 
+    uint32_t log_counter = 0;
 	while(1){
 
 
@@ -208,6 +218,27 @@ void weather_task(){
 
 
 		Task_sleep(3000);
+
+        log_counter++;
+        if (logging_enabled) {
+            if (LOG_GPS_TIMESTEP > 0 && log_counter % LOG_GPS_TIMESTEP == 0) {
+                log_write_gps();
+                cli_printf("log gps, %x\n", log_write_pos());
+            }
+            if (LOG_IMU_TIMESTEP > 0 && log_counter % LOG_IMU_TIMESTEP == 0) {
+                log_write_imu();
+                cli_printf("log imu, %x\n", log_write_pos());
+            }
+            if (LOG_WEATHER_TIMESTEP > 0 && log_counter % LOG_WEATHER_TIMESTEP == 0) {
+                log_write_weather();
+                cli_printf("log weather, %x\n", log_write_pos());
+            }
+            if (LOG_BACKUP_TIMESTEP > 0 && log_counter % LOG_BACKUP_TIMESTEP == 0) {
+                log_position_backup();
+                cli_printf("log backup, %x\n", log_write_pos());
+            }
+        }
+
 		if(external_board_connected)
 		{
 			bmp180_data_readout(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
