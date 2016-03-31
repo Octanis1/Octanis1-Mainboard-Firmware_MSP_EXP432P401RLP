@@ -14,5 +14,12 @@
 void eps_init();
 uint8_t eps_switch_module(uint8_t command);
 
+uint16_t eps_get_vbat();
+uint16_t eps_get_vsolar();
+uint16_t eps_get_iin();
+uint16_t eps_get_iout();
+
+void eps_ISR();
+
 
 #endif /* FW_CORE_EPS_H_ */

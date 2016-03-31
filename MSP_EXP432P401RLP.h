@@ -48,6 +48,7 @@
 //#define VERSION_0_5 // define to use board v0.5 pin definitions, else undefine
 //#define VERSION_0_6
 #define VERSION_1
+#define CAMERA_BOARD 1
 
 #ifdef VERSION_0_5
 	#warning "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Use board v0.5 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
@@ -78,6 +79,7 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
     Octanis_ROCKBLOCK_NET,
 	//MSP_EXP432P401RLP_ULTRASONIC_IN0,
 	Octanis_LIGHTNING_INT,
+	Octanis_EPS_ALIVE_REQ,
 	Octanis_GEIGER_COUNTER,
 	Octanis_LED0, //octanis led1
 	Octanis_LED1, //octanis led2
@@ -106,8 +108,6 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
 	Octanis_UV_EN,
 	Octanis_GEIGER_EN,
 	Octanis_Flash_CS,
-
-
 
     MSP_EXP432P401RLP_GPIOCOUNT
 } MSP_EXP432P401RLP_GPIOName;

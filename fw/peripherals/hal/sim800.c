@@ -19,7 +19,15 @@ static const char sim800_at_echo_off[] = "ATE0\r\n";
 static const char sim800_at_sapbr_apn[] = "AT+SAPBR=3,1,\"APN\",\"gprs.swisscom.ch\"\r\n";
 static const char sim800_at_sapbr[] = "AT+SAPBR=1,1\r\n"; //gives an error if already executed
 static const char sim800_at_httpinit[] = "AT+HTTPINIT\r\n";
+
+
+#ifndef CAMERA_BOARD
+static const char sim800_at_httppara_url[] = "at+httppara=\"url\",\"http://basestation.octanis.org:9999/gsm_packets/Aeho4Zuze7Muc1?board=2\"\r\n";
+#else
 static const char sim800_at_httppara_url[] = "at+httppara=\"url\",\"http://basestation.octanis.org:9999/gsm_packets/Aeho4Zuze7Muc1?board=1\"\r\n";
+#endif
+
+
 static const char sim800_at_httppara_cid[] = "at+httppara=\"cid\",1\r\n";
 static const char sim800_at_httppara_content_stream[] = "AT+HTTPPARA=\"CONTENT\",\"application/octet-stream\"\r\n";
 static const char sim800_at_httppara_content_text[] = "AT+HTTPPARA=\"CONTENT\",\"text/plain\"\r\n";

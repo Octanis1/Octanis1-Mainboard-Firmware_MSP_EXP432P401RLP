@@ -18,14 +18,19 @@
 #include "gps.h"
 #include "imu.h"
 #include "weather.h"
+#include "../core/eps.h"
 
 
 /* Struct definitions */
 typedef struct _rover_status_comm {
 	float gps_lat;
 	float gps_long;
-	uint32_t system_seconds;
 	uint8_t gps_fix_quality;
+	uint32_t system_seconds;
+	uint16_t v_bat;
+	uint16_t v_solar;
+	uint16_t i_in;
+	uint16_t i_out;
 	uint8_t imu_calib_status;
 	int16_t imu_heading; //converted from double
 	int16_t imu_roll; //converted from double
@@ -68,6 +73,10 @@ void comm_init(rover_status_comm* stat)
 	stat->gps_long = -1.0;
 	stat->gps_fix_quality = -1;
 	stat->system_seconds = -1;
+	stat->v_bat = 0;
+	stat->v_solar = 0;
+	stat->i_in = 0;
+	stat->i_out = 0;
 	stat->imu_calib_status = 0;
 	stat->imu_heading = -1;
 	stat->imu_roll = -1;
@@ -88,6 +97,10 @@ void comm_poll_status(rover_status_comm* stat)
 	stat->gps_long = gps_get_lon();
 	stat->gps_fix_quality = gps_get_fix_quality();
 	stat->system_seconds = Seconds_get();
+	stat->v_bat = eps_get_vbat();
+	stat->v_solar = eps_get_vsolar();
+	stat->i_in = eps_get_iin();
+	stat->i_out = eps_get_iout();
 	stat->imu_calib_status = imu_get_calib_status();
 	stat->imu_heading = imu_get_heading();
 	stat->imu_roll = imu_get_roll();
@@ -113,9 +126,13 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 	stringlength += ftoa(stat->gps_long, &txdata[stringlength], 7); //convert gps long to string with sign and 7 afterpoint
 	txdata[stringlength++] = ','; 					//plus a comma
 
-	stringlength += tfp_sprintf(&(txdata[stringlength]), "%d,%u,%u,%d,%d,%d,%d,%u,%u,%d,%d",
+	stringlength += tfp_sprintf(&(txdata[stringlength]), "%d,%u,%u,%u,%u,%u,%u,%d,%d,%d,%d,%u,%u,%d,%d",
 											stat->gps_fix_quality,
 											stat->system_seconds,
+											stat->v_bat,
+											stat->v_solar,
+											stat->i_in,
+											stat->i_out,
 											stat->imu_calib_status,
 											stat->imu_heading,
 											stat->imu_roll,
@@ -195,16 +212,19 @@ void comm_task(){
 			i=0;
 		}
 
-		//comm_send_status(&my_rover_status, DESTINATION_LORA_TTN);
-
 		Task_sleep(5000);
 
+#ifndef CAMERA_BOARD
+		comm_send_status(&my_rover_status, DESTINATION_LORA_TTN);
+#endif
+
+#ifdef CAMERA_BOARD
 		//camera instead of lora module
 		if(vc0706_begin()){
 			vc0706_gprs_upload_jpeg();
 		}
 		vc0706_end();
-
+#endif
 
 		Task_sleep(5000);
 		i++;
