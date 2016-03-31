@@ -15,8 +15,6 @@
 #define FLASH_SIZE          0x1000000 // 16M
 #endif
 
-extern struct logger logger;
-
 LOG_INTERNAL void logger_lock(void);
 LOG_INTERNAL void logger_unlock(void);
 LOG_INTERNAL uint32_t logger_timestamp_sec(void);
