@@ -209,6 +209,7 @@ bool log_init(void)
         // erase & restart logging at beginning of flash
         flash_block_erase(0x00000000);
         _log_position_backup(&logger);
+        return true;
     }
 
     uint32_t pos = 0;
