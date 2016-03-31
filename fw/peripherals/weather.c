@@ -28,10 +28,10 @@
 #include "hal/spi_helper.h"
 
 // NOTE: set to 0 if it should not be logged
-#define LOG_GPS_TIMESTEP     10
+#define LOG_GPS_TIMESTEP     5
 #define LOG_IMU_TIMESTEP     1
-#define LOG_WEATHER_TIMESTEP 10
-#define LOG_BACKUP_TIMESTEP  500
+#define LOG_WEATHER_TIMESTEP 5
+#define LOG_BACKUP_TIMESTEP  250
 
 typedef struct Types_FreqHz {
     Bits32 hi;
@@ -180,21 +180,24 @@ void weather_task(){
 	/************* flash test START ****************/
 	spi_helper_init_handle();
 
-    bool logging_enabled = false;
+    // force enable logging
+    bool logging_enabled = true;
+
+
 	static uint8_t buf[250];
 	flash_id_read(buf);
 	const uint8_t flash_id[] = {0x01,0x20,0x18}; // S25FL127S ID
 	if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
 		// flash answers with correct ID
 		cli_printf("Flash ID OK\n");
-        logging_enabled = true;
 	} else {
 		cli_printf("Flash ID ERROR\n");
 	}
 
     if (logging_enabled) {
         if (!log_init()) {
-            logging_enabled = false;
+            cli_printf("log_init failed\n");
+            log_reset();
         }
     }
 	/************* flash test END ****************/
