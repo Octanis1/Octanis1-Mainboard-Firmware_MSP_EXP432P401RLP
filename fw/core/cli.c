@@ -159,6 +159,7 @@ void cli_task(){
 			   tfp_sprintf(output, "rb net? %d \n", rockblock_get_net_availability());
 			   UART_write(uart, output, sizeof(output));
 		}else if (strcmp("logrst\n", input) == 0){
+               log_reset();
                tfp_sprintf(output, "ok");
                UART_write(uart, output, sizeof(output));
         }else if (strcmp("logpos\n", input) == 0){
