@@ -113,7 +113,7 @@ s32 imu_init() //function to be called before starting the imu task.
 
 
 
-s32 bno055_get_heading(double *d_euler_data_h, double *d_euler_data_p, double *d_euler_data_r)
+s8 bno055_get_heading(double *d_euler_data_h, double *d_euler_data_p, double *d_euler_data_r)
 {
 	/* Variable used to return value of
 	communication routine*/
@@ -142,6 +142,43 @@ s32 bno055_get_heading(double *d_euler_data_h, double *d_euler_data_p, double *d
 
 	return comres;
 }
+
+s8 bno055_get_accel(int16_t *acc_x, int16_t *acc_y, int16_t *acc_z)
+{
+	/* Variable used to return value of
+	communication routine*/
+	s8 comres = ERROR;
+	/*	For reading sensor raw data it is required to set the
+		operation modes of the sensor
+		operation mode can set from the register
+		page - page0
+		register - 0x3D
+		bit - 0 to 3
+		for sensor data read following operation mode have to set
+		 * SENSOR MODE
+			*0x01 - OPERATION_MODE_ACCONLY
+			*0x02 - OPERATION_MODE_MAGONLY
+			*0x03 - OPERATION_MODE_GYRONLY
+			*0x04 - OPERATION_MODE_ACCMAG
+			*0x05 - OPERATION_MODE_ACCGYRO
+			*0x06 - OPERATION_MODE_MAGGYRO
+			*0x07 - OPERATION_MODE_AMG
+			based on the user need configure the operation mode*/
+//		comres += bno055_set_operation_mode(OPERATION_MODE_AMG);
+
+	/*	Raw Linear accel X, Y and Z data can read from the register
+		page - page 0
+		register - 0x28 to 0x2D */
+//		comres += bno055_read_linear_accel_x(acc_x);
+//		comres += bno055_read_linear_accel_y(acc_y);
+//		comres += bno055_read_linear_accel_z(acc_z);
+		comres += bno055_read_accel_x(acc_x);
+		comres += bno055_read_accel_y(acc_y);
+		comres += bno055_read_accel_z(acc_z);
+
+	return comres;
+}
+
 
 /*!
  *	@brief This API used to read	calibration status
@@ -174,6 +211,8 @@ unsigned char bno055_check_calibration_status()
 
 	return accel_calib_status+gyro_calib_status+mag_calib_status+sys_calib_status;
 }
+
+
 
 
 //s32 bno055_data_readout_template(void)

@@ -41,12 +41,20 @@ float gps_get_speed(){
 	return minmea_tocoord(&gps_rmc_frame.speed);
 }
 
+int32_t gps_get_int_speed(){
+	return (int32_t)(100*minmea_tocoord(&gps_rmc_frame.speed));
+}
+
 float gps_get_course(){
 	return minmea_tocoord(&gps_rmc_frame.course);
 }
 
 float gps_get_altitude(){
 	return minmea_tofloat(&gps_gga_frame.altitude);
+}
+
+uint32_t gps_get_int_altitude(){
+	return (int32_t)minmea_tofloat(&gps_gga_frame.altitude);
 }
 
 int gps_get_lat_scale(){

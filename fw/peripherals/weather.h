@@ -48,4 +48,11 @@ int16_t imu_get_roll();
 // return IMU calib status
 uint8_t imu_get_calib_status();
 
+// linear acceleration data in 100 m/s^2
+int16_t imu_get_accel_x();
+// linear acceleration data in 100 m/s^2
+int16_t imu_get_accel_y();
+// linear acceleration data in 100 m/s^2
+int16_t imu_get_accel_z();
+
 /*************** END IMU stuff  ******************/

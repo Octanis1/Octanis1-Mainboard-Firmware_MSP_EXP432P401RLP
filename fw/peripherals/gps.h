@@ -15,7 +15,10 @@ float gps_get_lat();
 float gps_get_lon();
 
 float gps_get_speed();
+int32_t gps_get_int_speed();
+
 float gps_get_altitude();
+uint32_t gps_get_int_altitude();
 float gps_get_course();
 
 

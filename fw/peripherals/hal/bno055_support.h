@@ -60,7 +60,9 @@
 #include "bno055.h"
 
 s32 imu_init();
-s32 bno055_get_heading(double *d_euler_data_h, double *d_euler_data_p, double *d_euler_data_r);
+s8 bno055_get_heading(double *d_euler_data_h, double *d_euler_data_p, double *d_euler_data_r);
+s8 bno055_get_accel(int16_t *acc_x, int16_t *acc_y, int16_t *acc_z);
+
 unsigned char bno055_check_calibration_status();
 
 
@@ -85,6 +87,7 @@ s8 BNO055_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt);
  *	\param cnt : The no of byte of data to be write
  */
 s8 BNO055_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt);
+
 /*
  * \Brief: I2C init routine
 */

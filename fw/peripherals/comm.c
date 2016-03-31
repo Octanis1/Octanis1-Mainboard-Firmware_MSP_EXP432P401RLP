@@ -41,6 +41,11 @@ typedef struct _rover_status_comm {
 	int ext_temperature;
 	unsigned int ext_pressure;
 	unsigned int ext_humidity; //converted from float
+	int16_t accel_x;
+	int16_t accel_y;
+	int16_t accel_z;
+	int32_t speed;
+	int32_t altitude;
 } rover_status_comm;
 
 
@@ -87,6 +92,11 @@ void comm_init(rover_status_comm* stat)
 	stat->ext_temperature = -274;
 	stat->ext_pressure = -1;
 	stat->ext_humidity = -1;
+	stat->accel_x = -1;
+	stat->accel_y = -1;
+	stat->accel_z = -1;
+	stat->speed = -1;
+	stat->altitude = -1;
 }
 
 
@@ -111,6 +121,11 @@ void comm_poll_status(rover_status_comm* stat)
 	stat->ext_temperature = weather_get_ext_temp();
 	stat->ext_pressure = weather_get_ext_press();
 	stat->ext_humidity = weather_get_ext_humid();
+	stat->accel_x = imu_get_accel_x();
+	stat->accel_y = imu_get_accel_y();
+	stat->accel_z = imu_get_accel_z();
+	stat->speed = gps_get_int_speed();
+	stat->altitude = gps_get_int_altitude();
 }
 
 
@@ -126,7 +141,7 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 	stringlength += ftoa(stat->gps_long, &txdata[stringlength], 7); //convert gps long to string with sign and 7 afterpoint
 	txdata[stringlength++] = ','; 					//plus a comma
 
-	stringlength += tfp_sprintf(&(txdata[stringlength]), "%d,%u,%u,%u,%u,%u,%u,%d,%d,%d,%d,%u,%u,%d,%d",
+	stringlength += tfp_sprintf(&(txdata[stringlength]), "%d,%u,%u,%u,%u,%u,%u,%d,%d,%d,%d,%u,%u,%d,%d,%d,%d,%d",
 											stat->gps_fix_quality,
 											stat->system_seconds,
 											stat->v_bat,
@@ -142,7 +157,12 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 											stat->int_humidity,
 											stat->ext_temperature,
 											stat->ext_pressure,
-											stat->ext_humidity);
+											stat->ext_humidity,
+											stat->accel_x,
+											stat->accel_y,
+											stat->accel_z,
+											stat->speed,
+											stat->altitude);
 
 	if(stringlength > COMM_FRAME_SIZE) //should never happen! corrupt memory will be the result!
 	{

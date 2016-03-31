@@ -115,6 +115,9 @@ void log_weather(struct _weather_data *d)
 #include "hal/i2c_helper.h"
 
 	static struct _imu_data {
+		int16_t accel_x;
+		int16_t accel_y;
+		int16_t accel_z;
 		double d_euler_data_p;
 		double d_euler_data_h;
 		double d_euler_data_r;
@@ -144,6 +147,22 @@ void log_weather(struct _weather_data *d)
 	uint8_t imu_get_calib_status(){
 		return (uint8_t)(imu_data.calib_status);
 	}
+
+	// linear acceleration data in 100 m/s^2
+	int16_t imu_get_accel_x(){
+		return (imu_data.accel_x);
+	}
+
+	// linear acceleration data in 100 m/s^2
+	int16_t imu_get_accel_y(){
+		return (imu_data.accel_y);
+	}
+
+	// linear acceleration data in 100 m/s^2
+	int16_t imu_get_accel_z(){
+		return (imu_data.accel_z);
+	}
+
 
 /************** END IMU stuff *******************/
 
@@ -220,6 +239,8 @@ void weather_task(){
 
 		imu_data.calib_status=bno055_check_calibration_status();
 		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r));
+		bno055_get_accel(&(imu_data.accel_x), &(imu_data.accel_y), &(imu_data.accel_z));
+
 
 /************** END IMU stuff *******************/
 
