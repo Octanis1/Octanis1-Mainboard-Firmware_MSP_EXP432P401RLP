@@ -31,7 +31,7 @@
 #define LOG_GPS_TIMESTEP     5
 #define LOG_IMU_TIMESTEP     1
 #define LOG_WEATHER_TIMESTEP 5
-#define LOG_BACKUP_TIMESTEP  250
+#define LOG_BACKUP_TIMESTEP  60
 
 typedef struct Types_FreqHz {
     Bits32 hi;
@@ -219,6 +219,7 @@ void weather_task(){
             log_reset();
         }
     }
+    //cli_printf("log position 0x%x\n", log_write_pos());
 	/************* flash test END ****************/
 
 
