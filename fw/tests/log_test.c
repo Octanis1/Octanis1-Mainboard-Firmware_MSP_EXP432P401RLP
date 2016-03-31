@@ -429,6 +429,31 @@ TEST test_seek_when_flash_is_full(void)
     PASS();
 }
 
+TEST test_log_init_with_cleared_flash(void)
+{
+    FAIL();
+}
+
+TEST test_log_init_recover_from_reboot(void)
+{
+    FAIL();
+}
+
+TEST test_log_init_recover_full_backup_table(void)
+{
+    FAIL();
+}
+
+TEST test_log_init_detect_invalid_address(void)
+{
+    FAIL();
+}
+
+TEST test_position_backup(void)
+{
+    FAIL();
+}
+
 SUITE(log_flash_test)
 {
     SET_SETUP(setup_cb, NULL);
@@ -444,6 +469,11 @@ SUITE(log_flash_test)
     RUN_TEST(test_seek_unaligned_plus_one);
     RUN_TEST(test_seek_unaligned_minus_one);
     RUN_TEST(test_seek_when_flash_is_full);
+    RUN_TEST(test_log_init_with_cleared_flash);
+    RUN_TEST(test_log_init_recover_from_reboot);
+    RUN_TEST(test_log_init_recover_full_backup_table);
+    RUN_TEST(test_log_init_detect_invalid_address);
+    RUN_TEST(test_position_backup);
 }
 
 GREATEST_MAIN_DEFS();

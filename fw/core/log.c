@@ -180,15 +180,16 @@ LOG_INTERNAL bool _log_seek_end(uint32_t base_addr, uint32_t *end_addr, uint8_t 
     return false;
 }
 
+// note: leaves the last entry empty to simplify recovering from a full table
 LOG_INTERNAL void _log_position_backup(struct logger *l)
 {
     logger_lock();
     uint32_t write_pos = l->flash_write_pos;
     uint32_t bkup_pos = l->backup_pos;
-    if (bkup_pos + 4 <= FLASH_BLOCK_SIZE) {
+    if (bkup_pos + 4 < FLASH_BLOCK_SIZE) {
         flash_write(bkup_pos, (uint8_t *)&write_pos, 4);
         l->backup_pos += 4;
-    }
+    } // if backup table is full, just continue without
     logger_unlock();
 }
 
