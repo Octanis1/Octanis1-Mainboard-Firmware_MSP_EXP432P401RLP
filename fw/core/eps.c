@@ -160,11 +160,14 @@ uint16_t eps_get_iout()
 }
 
 void eps_task(){
+#ifdef EPS_ENABLED
 	eps_init();
 	give_life_sign = 0;
-
+#endif
 	while(1)
 	{
+#ifdef EPS_ENABLED
+
 		// check if we need to confirm that we are alive.
 		if(give_life_sign)
 		{
@@ -187,7 +190,7 @@ void eps_task(){
 			sendEpsCommand(ALIVE);
 			give_life_sign = 0;
 		}
-
+#endif
 		Task_sleep(500);
 
 
