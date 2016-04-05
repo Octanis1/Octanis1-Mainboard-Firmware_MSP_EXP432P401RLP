@@ -10,13 +10,6 @@
 
 int hm10_begin(); //returns 1 if modem responds with OK
 void hm10_end();
-
-
-typedef enum hm10_mime {
-	MIME_OCTET_STREAM,
-	MIME_TEXT_PLAIN
-} HM10_MIME;
-
-
+void hm10_send(char * tx_buffer, int tx_size);
 
 #endif

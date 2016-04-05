@@ -195,7 +195,7 @@ void weather_task(){
 	bme280_init();
 
 
-
+#ifdef FLASH_ENABLED
 	/************* flash test START ****************/
 	spi_helper_init_handle();
 
@@ -221,7 +221,7 @@ void weather_task(){
     }
     //cli_printf("log position 0x%x\n", log_write_pos());
 	/************* flash test END ****************/
-
+#endif
 
 
 
@@ -241,10 +241,12 @@ void weather_task(){
 
 /************** END IMU stuff *******************/
 
-
 		Task_sleep(3000);
+#ifdef FLASH_ENABLED
 
         log_counter++;
+
+
         if (logging_enabled) {
             if (LOG_GPS_TIMESTEP > 0 && log_counter % LOG_GPS_TIMESTEP == 0) {
                 log_write_gps();
@@ -264,6 +266,7 @@ void weather_task(){
             }
         }
 
+#endif
 		if(external_board_connected)
 		{
 			bmp180_data_readout(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
@@ -291,7 +294,9 @@ void weather_task(){
 		weather_aggregate_data();
 		cli_printf("W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
 
-
+#ifdef FLASH_ENABLED
         log_weather(&weather_data);
+#endif
 	}
+
 }

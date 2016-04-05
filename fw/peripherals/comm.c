@@ -10,6 +10,7 @@
 #include "hal/rockblock.h"
 #include "hal/rn2483.h"
 #include "hal/sim800.h"
+#include "hal/hm10.h"
 #include "hal/vc0706.h"
 #include "../lib/printf.h"
 
@@ -54,6 +55,7 @@ void comm_init(rover_status_comm* stat)
 	Task_sleep(5000);
 	cli_printf("reset occured.\n", 0);
 
+#ifdef LORA_ENABLED
 	if(rn2483_begin()){
 	#if VERBOSE==1
 		cli_printf("rn2483 begin OK.\n", 0);
@@ -62,8 +64,10 @@ void comm_init(rover_status_comm* stat)
 		cli_printf("rn2483 begin NOK\n", 0);
 		rn2483_end();
 	}
+#endif
 
 
+#ifdef GSM_ENABLED
 	if(sim800_begin()){
 	#if VERBOSE==1
 		cli_printf("sim800 begin OK.\n", 0);
@@ -72,6 +76,19 @@ void comm_init(rover_status_comm* stat)
 		cli_printf("sim800 begin NOK\n", 0);
 		sim800_end();
 	}
+#endif
+
+
+#ifdef BLE_ENABLED
+	if(hm10_begin()){
+	#if VERBOSE==1
+		cli_printf("hm10 begin OK.\n", 0);
+	#endif
+	}else{
+		cli_printf("hm10 begin NOK\n", 0);
+		hm10_end();
+	}
+#endif
 
 
 	stat->gps_lat = -1.0;
@@ -185,10 +202,7 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 
 	switch(destination) {
 	   case DESTINATION_LORA_TTN:
-	      //lora test
 		  rn2483_send_receive(hex_string, 2*stringlength);
-//		  rn2483_end(); --> IDIOT
-		  //lora test end
 	      break;
 
 	   case DESTINATION_GSM:
@@ -199,6 +213,10 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 		  sim800_send_sms(txdata, strlen(txdata));
 		  break;
 
+	   case DESTINATION_BLE:
+		  hm10_send(txdata, strlen(txdata));
+		  break;
+
 	}
 
 }
@@ -207,6 +225,7 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 
 void comm_task(){
 
+#ifdef LORA_ENABLED
 	#ifdef CONFIG_MODE
 		int comm_result=rn2483_config();
 		if(comm_result)
@@ -214,7 +233,7 @@ void comm_task(){
 		else
 			cli_printf("LoRa config success: %d", comm_result);
 	#endif
-
+#endif
 
 	rover_status_comm my_rover_status;
     comm_init(&my_rover_status);
@@ -223,31 +242,38 @@ void comm_task(){
     while(1){
 
 		comm_poll_status(&my_rover_status);
+
+#ifdef GSM_ENABLED
 		comm_send_status(&my_rover_status, DESTINATION_GSM);
-
-
 		if(i > 10){
 			Task_sleep(2000);
 			comm_send_status(&my_rover_status, DESTINATION_GSM_SMS);
 			i=0;
 		}
-
+		i++;
 		Task_sleep(5000);
+#endif
 
-#ifndef CAMERA_BOARD
+
+#ifdef LORA_ENABLED
 		comm_send_status(&my_rover_status, DESTINATION_LORA_TTN);
 #endif
 
-#ifdef CAMERA_BOARD
-		//camera instead of lora module
+
+#ifdef UARTCAM_ENABLED
 		if(vc0706_begin()){
 			vc0706_gprs_upload_jpeg();
 		}
 		vc0706_end();
 #endif
 
+
+#ifdef BLE_ENABLED
+		comm_send_status(&my_rover_status, DESTINATION_BLE);
+#endif
+
 		Task_sleep(5000);
-		i++;
+
 	}
 
 }
