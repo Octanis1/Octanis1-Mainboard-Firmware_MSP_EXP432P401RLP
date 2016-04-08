@@ -114,6 +114,9 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
 	Octanis_UV_EN,
 	Octanis_GEIGER_EN,
 	Octanis_Flash_CS,
+#ifndef VERSION_0_5
+	Octanis_GPS_POWER_MODE,
+#endif
 
     MSP_EXP432P401RLP_GPIOCOUNT
 } MSP_EXP432P401RLP_GPIOName;

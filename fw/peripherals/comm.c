@@ -7,12 +7,19 @@
 
 #include "../../Board.h"
 #include "comm.h"
+
+// comm modules to RX and TX data
 #include "hal/rockblock.h"
 #include "hal/rn2483.h"
 #include "hal/sim800.h"
 #include "hal/hm10.h"
+#define COMMAND_BUFFER_LENGTH	HM10_RXBUFFER_SIZE 	//how many bytes can be sent back as response to a command
 #include "hal/vc0706.h"
 #include "../lib/printf.h"
+
+// peripheral includes to execute commands
+#include "navigation.h"
+
 
 
 /* libraries to get status info from other peripherals */
@@ -21,6 +28,8 @@
 #include "weather.h"
 #include "../core/eps.h"
 
+int comm_process_command(char* command, int commandlength, char* answer, int* answerlength);
+void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination);
 
 /* Struct definitions */
 typedef struct _rover_status_comm {
@@ -146,6 +155,69 @@ void comm_poll_status(rover_status_comm* stat)
 }
 
 
+void comm_receive_command(COMM_DESTINATION destination)
+{
+	static int rx_stringlength,tx_stringlength = 0;
+	static int received_command = 0;
+	static int answer_required = 0;
+
+	static char	rxdata[COMMAND_BUFFER_LENGTH];
+	//answer buffer
+	static char txdata[COMMAND_BUFFER_LENGTH];
+	//clears buffer
+	memset(&txdata[0], 0, sizeof(txdata));
+
+	// check for rx'ed data:
+	switch(destination)
+	{
+	   case DESTINATION_BLE:
+		  received_command = hm10_receive(rxdata, &rx_stringlength);
+		  break;
+
+	   default:
+	   	   cli_printf("comm Task: Command RX source not supported\n");
+	}
+
+	if(received_command)
+	{
+		answer_required = comm_process_command(rxdata, rx_stringlength, txdata, &tx_stringlength);
+
+		if(answer_required)
+		{
+			comm_tx_data(txdata, tx_stringlength, destination);
+		}
+	}
+}
+
+int comm_process_command(char* command, int commandlength, char* txbuffer, int* answerlength)
+{
+	//return value (default yes):
+	int require_answer = 1;
+
+	if(strncmp ("mot", command, 3) == 0){ //motor command was sent
+		if(navigation_bypass(command[3],(command[4]-'0')))
+			tfp_sprintf(txbuffer, "okm\n");
+		else
+			tfp_sprintf(txbuffer, "inv\n");
+	}
+
+	*answerlength = strlen(txbuffer);
+	return require_answer;
+}
+
+void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination)
+{
+	switch(destination) {
+	   case DESTINATION_BLE:
+		  hm10_send(txdata, stringlength);
+		  break;
+
+	   default:
+	   	   cli_printf("comm Task: TX destination not supported\n");
+	}
+}
+
+
 void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 {
 	/* create Hexstring buffer from struct */
@@ -217,6 +289,8 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 		  hm10_send(txdata, strlen(txdata));
 		  break;
 
+	   default:
+	   	   cli_printf("comm Task: Status TX destination not supported\n");
 	}
 
 }
@@ -239,41 +313,54 @@ void comm_task(){
     comm_init(&my_rover_status);
 
     int i = 11;
+    int rx_counter = RX_TO_TX_RATIO;
     while(1){
 
-		comm_poll_status(&my_rover_status);
+    		// Poll for received commands
+		#ifdef BLE_ENABLED
+    		comm_receive_command(DESTINATION_BLE);
+		#endif
 
-#ifdef GSM_ENABLED
-		comm_send_status(&my_rover_status, DESTINATION_GSM);
-		if(i > 10){
-			Task_sleep(2000);
-			comm_send_status(&my_rover_status, DESTINATION_GSM_SMS);
-			i=0;
-		}
-		i++;
-		Task_sleep(5000);
-#endif
+    		rx_counter++;
+		Task_sleep(50);
+
+		// Status TX part:
+
+    		if(rx_counter > RX_TO_TX_RATIO)
+    		{
+    			rx_counter=0;
+
+			comm_poll_status(&my_rover_status);
+
+			#ifdef GSM_ENABLED
+			comm_send_status(&my_rover_status, DESTINATION_GSM);
+			if(i > 10){
+				Task_sleep(2000);
+				comm_send_status(&my_rover_status, DESTINATION_GSM_SMS);
+				i=0;
+			}
+			i++;
+			Task_sleep(5000);
+			#endif
 
 
-#ifdef LORA_ENABLED
-		comm_send_status(&my_rover_status, DESTINATION_LORA_TTN);
-#endif
+			#ifdef LORA_ENABLED
+			comm_send_status(&my_rover_status, DESTINATION_LORA_TTN);
+			#endif
 
 
-#ifdef UARTCAM_ENABLED
-		if(vc0706_begin()){
-			vc0706_gprs_upload_jpeg();
-		}
-		vc0706_end();
-#endif
+			#ifdef UARTCAM_ENABLED
+			if(vc0706_begin()){
+				vc0706_gprs_upload_jpeg();
+			}
+			vc0706_end();
+			#endif
 
 
-#ifdef BLE_ENABLED
-		comm_send_status(&my_rover_status, DESTINATION_BLE);
-#endif
-
-		Task_sleep(5000);
-
-	}
+			#ifdef BLE_ENABLED
+			comm_send_status(&my_rover_status, DESTINATION_BLE);
+			#endif
+    		}
+    }
 
 }

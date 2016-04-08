@@ -290,6 +290,10 @@ GPIO_PinConfig gpioPinConfigs[] = {
 
 	/* Octanis_Flash_CS */
 	GPIOMSP432_P5_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
+#ifndef VERSION_0_5
+	/* Octanis_GPS_POWER_MODE */
+	GPIOMSP432_P5_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
+#endif
 
 
 };
