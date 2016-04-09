@@ -101,7 +101,7 @@ static int a2d(char ch)
     else return -1;
     }
 
-static char a2i(char ch, char** src,int base,int* nump)
+char a2i(char ch, char** src,int base,int* nump)
     {
     char* p= *src;
     int num=0;
@@ -109,7 +109,7 @@ static char a2i(char ch, char** src,int base,int* nump)
     while ((digit=a2d(ch))>=0) {
         if (digit>base) break;
         num=num*base+digit;
-        ch=*p++;
+        ch=*(++p);
         }
     *src=p;
     *nump=num;

@@ -8,6 +8,7 @@
 #ifndef __COMM_H
 #define __COMM_H
 
+#include <stdint.h>
 
 //max size of mobile originated messages
 #define COMM_MO_SIZE 340
@@ -30,6 +31,36 @@ typedef enum comm_dest {
 	DESTINATION_BLE,
 	DESTINATION_DEBUG_UART
 } COMM_DESTINATION;
+
+typedef struct comm_condition_ {
+	enum variable_{
+		IMUX,IMUY,IMUZ,
+		IMUP,IMUR,IMUH,
+		TEMP,PRES,HUMI
+	} variable;
+	enum op_{
+		GREATER,
+		SMALLER,
+		EQUAL,
+		NEQUAL,
+		INT
+	} op;
+	int threshold;
+} COMM_CONDITION;
+
+
+typedef struct comm_led_control_ {
+	COMM_CONDITION cond;
+	uint16_t frequency;
+} COMM_LED_CONTROL;
+
+#define USER_MSG_SIZE	4
+typedef struct comm_msg_control_ {
+	COMM_CONDITION cond;
+	char message[USER_MSG_SIZE];
+	int msglength;
+} COMM_MSG_CONTROL;
+
 
 
 void comm_task();

@@ -13,7 +13,7 @@
 //called periodically
 Void cron_quick_clock(UArg arg){
   //flash led
-  GPIO_toggle(Board_LED_RED);
+  GPIO_toggle(Board_LED_GREEN); // use red led for user inputs
 
   //print load periodically
   int cpuLoad = Load_getCPULoad();

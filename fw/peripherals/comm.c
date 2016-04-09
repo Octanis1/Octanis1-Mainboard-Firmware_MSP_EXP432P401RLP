@@ -31,6 +31,11 @@
 int comm_process_command(char* command, int commandlength, char* answer, int* answerlength);
 void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination);
 
+#define N_USER_MESSAGES 10
+static COMM_LED_CONTROL led_control;
+static COMM_MSG_CONTROL msg_control[N_USER_MESSAGES];
+static int n_message_rules = 0;
+
 /* Struct definitions */
 typedef struct _rover_status_comm {
 	float gps_lat;
@@ -193,8 +198,91 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 {
 	//return value (default yes):
 	int require_answer = 1;
+	int command_valid = 1;
+	COMM_CONDITION condition;
 
-	if(strncmp ("mot", command, 3) == 0){ //motor command was sent
+	if(strncmp ("thr ", command, 4) == 0){ //new threshold to be set
+		/*extract the variable*/
+		if(strncmp ("temp", &command[4], 4) == 0)
+			condition.variable = TEMP;
+		else if(strncmp ("pres", &command[4], 4) == 0)
+			condition.variable = PRES;
+		else if(strncmp ("humi", &command[4], 4) == 0)
+			condition.variable = HUMI;
+		else if(strncmp ("imux", &command[4], 4) == 0)
+			condition.variable = IMUX;
+		else if(strncmp ("imuy", &command[4], 4) == 0)
+			condition.variable = IMUY;
+		else if(strncmp ("imuz", &command[4], 4) == 0)
+			condition.variable = IMUZ;
+		else if(strncmp ("imup", &command[4], 4) == 0)
+			condition.variable = IMUP;
+		else if(strncmp ("imur", &command[4], 4) == 0)
+			condition.variable = IMUR;
+		else if(strncmp ("imuh", &command[4], 4) == 0)
+			condition.variable = IMUH;
+		else
+			command_valid = 0;
+
+		/* extract operator */
+		if(command[8] == '<')
+			condition.op = SMALLER;
+		else if(command[8] == '>')
+			condition.op = GREATER;
+		else if(command[8] == '=')
+			condition.op = EQUAL;
+		else if(command[8] == '!')
+			condition.op = NEQUAL;
+		else
+			command_valid = 0;
+
+		/* extract threshold value */
+		int compos = strcspn(command, ",");
+		char *numptr = &command[9];
+		a2i(command[9], &numptr ,10,&(condition.threshold));
+
+		if(compos < commandlength)
+		{
+			if(strncmp ("led", &command[compos+1], 3) == 0){
+				if(strncmp ("off", &command[compos+4], 3) == 0){
+					led_control.frequency = 0;}
+				else if(strncmp ("on", &command[compos+4], 2) == 0){
+					led_control.frequency = 1000;}// freq bigger than 2*MAX_UINT8--> led will never toggle
+				else{
+					led_control.frequency = command[compos+4] - '0';}
+				led_control.cond = condition;
+			}
+			else if('m' == command[compos+1]){
+				int j=0;
+				int k=0;
+				for(k=compos+3;k<commandlength-1;k++)
+				{
+					msg_control[n_message_rules].message[j] = command[k];
+					j++;
+				}
+				msg_control[n_message_rules].msglength = j;
+				msg_control[n_message_rules].cond = condition;
+				n_message_rules = (n_message_rules+1) % N_USER_MESSAGES;
+			}
+			else
+			{
+				command_valid = 0;
+			}
+		}else command_valid = 0;
+
+		//prepare response
+		if(command_valid)
+			tfp_sprintf(txbuffer, "threshold set.\n");
+		else
+			tfp_sprintf(txbuffer, "invalid threshold command.\n");
+
+	}
+	else if(strncmp ("rst", command, 3) == 0){ //reset all thresholds
+		n_message_rules = 0;
+		led_control.frequency = 0;
+		tfp_sprintf(txbuffer, "thresholds reset.\n");
+	}
+	else if(strncmp ("mot", command, 3) == 0){ //motor command was sent
 		if(navigation_bypass(command[3],(command[4]-'0')))
 			tfp_sprintf(txbuffer, "okm\n");
 		else

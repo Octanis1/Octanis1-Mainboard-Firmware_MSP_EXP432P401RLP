@@ -105,4 +105,7 @@ int tfp_format(void* putp,void (*putf) (void*,char),char *fmt, va_list va);
 
 int ftoa(float n, char *res, int afterpoint);
 
+char a2i(char ch, char** src,int base,int* nump);
+
+
 #endif
