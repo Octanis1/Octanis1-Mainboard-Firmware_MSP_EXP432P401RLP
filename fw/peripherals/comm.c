@@ -308,7 +308,7 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 
 		/* extract threshold value */
 		int compos = strcspn(command, ",");
-		char *numptr = &command[9];
+		char *numptr = &command[10];
 		a2i(command[9], &numptr ,10,&(condition.threshold));
 
 		if(compos < commandlength)
