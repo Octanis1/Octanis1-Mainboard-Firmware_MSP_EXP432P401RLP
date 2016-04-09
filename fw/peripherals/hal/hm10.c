@@ -90,7 +90,7 @@ int hm10_begin(){
 		UART_write(uart, hm10_at, strlen(hm10_at));
 		UART_read(uart, hm10_rxBuffer, sizeof(hm10_rxBuffer));
 		cli_printf("%s\n", hm10_rxBuffer);
-		if(!strcmp("OK", hm10_rxBuffer) | 1==1){ //TODO: remove on real hardware!
+		if(!strcmp("OK", hm10_rxBuffer)){
 			UART_write(uart, hm10_at_start, strlen(hm10_at_start));
 			hm10_end(); // Close UART port to configure Text mode to callback @ newline + CR
 
@@ -164,6 +164,7 @@ void hm10_send(char * tx_buffer, int tx_size)
 {
 	if(hm10_initialised){
 		UART_write(uart, tx_buffer, tx_size);
+		UART_write(uart, "\n", 1);
 	}else{
 		cli_printf("TX failed. hm10 not init\n");
 	}

@@ -28,7 +28,7 @@
 #include "weather.h"
 #include "../core/eps.h"
 
-int comm_process_command(char* command, int commandlength, char* answer, int* answerlength);
+int comm_process_command(char* command, int commandlength, char* answer, int* answerlength, COMM_DESTINATION destination);
 void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination);
 
 #define N_USER_MESSAGES 10
@@ -159,6 +159,72 @@ void comm_poll_status(rover_status_comm* stat)
 	stat->altitude = gps_get_int_altitude();
 }
 
+static int threshold_reached(COMM_CONDITION cond, rover_status_comm* stat)
+{
+	int vari = 0;
+	switch(cond.variable){
+		case IMUX: vari = stat->accel_x;break; //100m/s^2
+		case IMUY: vari = stat->accel_y;break;
+		case IMUZ: vari = stat->accel_z;break;
+		case IMUR: vari = stat->imu_roll/100;break; //degrees
+		case IMUP: vari = stat->imu_pitch/100;break;
+		case IMUH: vari = stat->imu_heading/100;break;
+		case TEMP: vari = (stat->int_temperature)/100;break; //°C
+		case PRES: vari = (stat->int_pressure)/100;break; // hPa
+		case HUMI: vari = (stat->int_humidity)/1000;break; // %rel humid
+		default: return 0; break;
+	}
+
+	switch(cond.op){
+		case SMALLER: return (vari < cond.threshold);
+		case GREATER: return (vari > cond.threshold);
+		case EQUAL: return (vari == cond.threshold);
+		case NEQUAL: return (vari != cond.threshold);
+		default: return 0;
+	}
+}
+
+#define MAX_LED_FREQ 10
+void comm_execute_thresholds(rover_status_comm* stat)
+{
+	/* Execute LED thresholds */
+	static int led_cycles = 0;
+	if(threshold_reached(led_control.cond, stat))
+	{
+		led_cycles += led_control.frequency;
+
+		if(led_cycles > 3*MAX_LED_FREQ)
+			GPIO_write(Board_LED_RED,1);
+		else
+			GPIO_write(Board_LED_RED,0);
+
+		if(led_cycles > 6*MAX_LED_FREQ)
+		{
+			led_cycles = 0;
+		}
+
+	}
+
+	int i = 0;
+
+	for(i=0;i<n_message_rules;i++)
+	{
+		if(threshold_reached(msg_control[i].cond, stat))
+		{
+			//only send a user message after threshold crossing
+			if(msg_control[i].msg_sent_since_last_threshold_crossing == 0)
+			{
+				comm_tx_data(msg_control[i].message, msg_control[i].msglength, msg_control[i].destination);
+				msg_control[i].msg_sent_since_last_threshold_crossing = 1;
+			}
+		}
+		else
+		{
+			msg_control[i].msg_sent_since_last_threshold_crossing = 0; //reset state to send msg again next time.
+		}
+	}
+
+}
 
 void comm_receive_command(COMM_DESTINATION destination)
 {
@@ -185,7 +251,7 @@ void comm_receive_command(COMM_DESTINATION destination)
 
 	if(received_command)
 	{
-		answer_required = comm_process_command(rxdata, rx_stringlength, txdata, &tx_stringlength);
+		answer_required = comm_process_command(rxdata, rx_stringlength, txdata, &tx_stringlength, destination);
 
 		if(answer_required)
 		{
@@ -194,7 +260,7 @@ void comm_receive_command(COMM_DESTINATION destination)
 	}
 }
 
-int comm_process_command(char* command, int commandlength, char* txbuffer, int* answerlength)
+int comm_process_command(char* command, int commandlength, char* txbuffer, int* answerlength, COMM_DESTINATION destination)
 {
 	//return value (default yes):
 	int require_answer = 1;
@@ -262,6 +328,7 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 				}
 				msg_control[n_message_rules].msglength = j;
 				msg_control[n_message_rules].cond = condition;
+				msg_control[n_message_rules].destination = destination;
 				n_message_rules = (n_message_rules+1) % N_USER_MESSAGES;
 			}
 			else
@@ -413,12 +480,14 @@ void comm_task(){
 		Task_sleep(50);
 
 		// Status TX part:
+		comm_poll_status(&my_rover_status);
+		comm_execute_thresholds(&my_rover_status);
 
     		if(rx_counter > RX_TO_TX_RATIO)
     		{
     			rx_counter=0;
 
-			comm_poll_status(&my_rover_status);
+
 
 			#ifdef GSM_ENABLED
 			comm_send_status(&my_rover_status, DESTINATION_GSM);

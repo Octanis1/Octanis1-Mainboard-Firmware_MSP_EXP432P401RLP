@@ -56,7 +56,7 @@ typedef enum {
 // measurement signal selection
 typedef enum{
   HUMIDITY,
-  TEMP
+  TEMPERATURE
 }etSHT2xMeasureType;
 
 typedef enum{

@@ -24,7 +24,7 @@ float sht2x_get_temp()
 	int data =0;
 	float result =0;
 
-	SHT2x_Measure(TEMP, pMeasurand);
+	SHT2x_Measure(TEMPERATURE, pMeasurand);
 
 	data = SHT2x_GetInfo (pMeasurand);
 
@@ -117,7 +117,7 @@ char SHT2x_Measure(etSHT2xMeasureType eSHT2xMeasureType, unsigned char *pMeasura
 
   switch(eSHT2xMeasureType)
   { case HUMIDITY: write_buffer = TRIG_RH_MEASUREMENT_POLL; break;
-    case TEMP    : write_buffer = TRIG_T_MEASUREMENT_POLL;  break;
+    case TEMPERATURE    : write_buffer = TRIG_T_MEASUREMENT_POLL;  break;
     default: ; //error message?
   }
 

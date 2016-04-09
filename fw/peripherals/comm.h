@@ -59,6 +59,8 @@ typedef struct comm_msg_control_ {
 	COMM_CONDITION cond;
 	char message[USER_MSG_SIZE];
 	int msglength;
+	int msg_sent_since_last_threshold_crossing;
+	COMM_DESTINATION destination;
 } COMM_MSG_CONTROL;
 
 
