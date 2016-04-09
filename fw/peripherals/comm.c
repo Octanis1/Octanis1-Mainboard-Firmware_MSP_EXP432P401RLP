@@ -166,9 +166,9 @@ static int threshold_reached(COMM_CONDITION cond, rover_status_comm* stat)
 		case IMUX: vari = stat->accel_x;break; //100m/s^2
 		case IMUY: vari = stat->accel_y;break;
 		case IMUZ: vari = stat->accel_z;break;
-		case IMUR: vari = stat->imu_roll/100;break; //degrees
-		case IMUP: vari = stat->imu_pitch/100;break;
-		case IMUH: vari = stat->imu_heading/100;break;
+		case IMUR: vari = (stat->imu_roll)/100;break; //degrees
+		case IMUP: vari = (stat->imu_pitch)/100;break;
+		case IMUH: vari = (stat->imu_heading)/100;break;
 		case TEMP: vari = (stat->int_temperature)/100;break; //°C
 		case PRES: vari = (stat->int_pressure)/100;break; // hPa
 		case HUMI: vari = (stat->int_humidity)/1000;break; // %rel humid
@@ -203,6 +203,10 @@ void comm_execute_thresholds(rover_status_comm* stat)
 			led_cycles = 0;
 		}
 
+	}
+	else
+	{
+		GPIO_write(Board_LED_RED,0);
 	}
 
 	int i = 0;
@@ -329,6 +333,7 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 				msg_control[n_message_rules].msglength = j;
 				msg_control[n_message_rules].cond = condition;
 				msg_control[n_message_rules].destination = destination;
+				msg_control[n_message_rules].msg_sent_since_last_threshold_crossing = 0;
 				n_message_rules = (n_message_rules+1) % N_USER_MESSAGES;
 			}
 			else
