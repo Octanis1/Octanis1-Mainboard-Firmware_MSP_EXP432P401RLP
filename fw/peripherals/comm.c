@@ -135,7 +135,7 @@ void comm_poll_status(rover_status_comm* stat)
 {
 	/*Fill in struct with status information */
 	stat->gps_lat = gps_get_lat();
-	stat->gps_long = gps_get_lon();
+	stat->gps_long = (-gps_get_lon()); //TODO: remove when back in europe!
 	stat->gps_fix_quality = gps_get_fix_quality();
 	stat->system_seconds = Seconds_get();
 	stat->v_bat = eps_get_vbat();
@@ -386,6 +386,8 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 
 	stringlength += ftoa(stat->gps_lat, &txdata[stringlength], 7); //convert gps latitude to string with sign and 7 afterpoint
 	txdata[stringlength++] = ','; 					//plus a comma
+	txdata[stringlength++] = '-'; 					//plus negative sign for US TODO: remove when back in europe
+
 
 	stringlength += ftoa(stat->gps_long, &txdata[stringlength], 7); //convert gps long to string with sign and 7 afterpoint
 	txdata[stringlength++] = ','; 					//plus a comma
