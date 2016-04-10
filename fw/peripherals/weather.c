@@ -238,10 +238,10 @@ void weather_task(){
 		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r));
 		bno055_get_accel(&(imu_data.accel_x), &(imu_data.accel_y), &(imu_data.accel_z));
 
+		Task_sleep(100);
 
 /************** END IMU stuff *******************/
 
-		Task_sleep(3000);
 #ifdef FLASH_ENABLED
 
         log_counter++;
@@ -292,7 +292,7 @@ void weather_task(){
 		//	windsensor_getvalue();
 
 		weather_aggregate_data();
-		cli_printf("W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
+		//cli_printf("W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
 
 #ifdef FLASH_ENABLED
         log_weather(&weather_data);

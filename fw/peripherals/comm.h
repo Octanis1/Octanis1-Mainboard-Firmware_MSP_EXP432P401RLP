@@ -19,7 +19,7 @@
 //max size of status string
 #define COMM_STRING_SIZE 175
 //how many times do we poll for received commands per sending a status message (RX: every 50ms, TX every 5s)
-#define RX_TO_TX_RATIO	100
+#define RX_TO_TX_RATIO	8
 
 
 typedef enum comm_dest {

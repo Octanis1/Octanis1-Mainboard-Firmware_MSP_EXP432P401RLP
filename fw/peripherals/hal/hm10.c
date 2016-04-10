@@ -12,7 +12,7 @@
 #define HM10_READ_TIMEOUT 3000
 
 static const char hm10_at[] = "AT"; //does not require return characters
-static const char hm10_at_name[] = "AT+NAMEmars";
+static const char hm10_at_name[] = "AT+NAMEmars3";
 static const char hm10_at_clear[] = "AT+CLEAR"; //clear last connected device
 static const char hm10_at_wakestring[] = "I am iron man,I am iron man,I am iron man,I am iron man, I am iron man, I am iron man I am iron I am iron man, I am iron man.";
 static const char hm10_at_imme1[] = "AT+IMME1"; //When module is powered on, only respond the AT Command, don’t do anything.

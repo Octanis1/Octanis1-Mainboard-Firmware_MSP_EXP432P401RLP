@@ -369,6 +369,7 @@ void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination)
 {
 	switch(destination) {
 	   case DESTINATION_BLE:
+		  cli_printf("ble tx2\n");
 		  hm10_send(txdata, stringlength);
 		  break;
 
@@ -448,6 +449,7 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 		  break;
 
 	   case DESTINATION_BLE:
+		  cli_printf("ble tx\n");
 		  hm10_send(txdata, strlen(txdata));
 		  break;
 
