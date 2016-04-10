@@ -393,13 +393,13 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 	stringlength += ftoa(stat->gps_long, &txdata[stringlength], 7); //convert gps long to string with sign and 7 afterpoint
 	txdata[stringlength++] = ','; 					//plus a comma
 
-	stringlength += tfp_sprintf(&(txdata[stringlength]), "%d,%u,%u,%u,%u,%u,%u,%d,%d,%d,%d,%u,%u,%d,%d,%d,%d,%d",
+	stringlength += tfp_sprintf(&(txdata[stringlength]), "%d,%u,%u,%d,%d,%d,%d,%u,%u,%d,%d,%d,%d,%u",
 											stat->gps_fix_quality,
 											stat->system_seconds,
-											stat->v_bat,
+											/*stat->v_bat,
 											stat->v_solar,
 											stat->i_in,
-											stat->i_out,
+											stat->i_out,*/
 											stat->imu_calib_status,
 											stat->imu_heading,
 											stat->imu_roll,
@@ -407,9 +407,9 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 											stat->int_temperature,
 											stat->int_pressure,
 											stat->int_humidity,
-											stat->ext_temperature,
+										/*	stat->ext_temperature,
 											stat->ext_pressure,
-											stat->ext_humidity,
+											stat->ext_humidity,*/
 											stat->accel_x,
 											stat->accel_y,
 											stat->accel_z,
