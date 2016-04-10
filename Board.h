@@ -71,10 +71,7 @@ extern "C" {
 #include <xdc/cfg/global.h>
 #include <xdc/runtime/System.h>
 
-
-
 #include "fw/core/cli.h" //enable CLI printf everywhere
-
 
 /* Clock cycle conversion factors */
 #define CYCLES_PER_US		48			// cycles per microsecond

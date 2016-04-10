@@ -165,7 +165,7 @@ void weather_task(){
 
     while(1){
 
-		Task_sleep(3000);
+
 #ifdef FLASH_ENABLED
 
         log_counter++;
@@ -216,7 +216,8 @@ void weather_task(){
 		//	windsensor_getvalue();
 
 		weather_aggregate_data();
-		serial_printf(stdout, "W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
+//		serial_printf(stdout, "W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
+
 
 #ifdef FLASH_ENABLED
         log_weather(&weather_data);

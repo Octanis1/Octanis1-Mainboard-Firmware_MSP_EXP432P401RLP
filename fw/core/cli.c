@@ -10,7 +10,7 @@
 #include "cli.h"
 #include "log.h"
 #include "../peripherals/gps.h"
-#include "../peripherals/navigation.h"≤
+#include "../peripherals/navigation.h"
 #include "../peripherals/hal/rockblock.h"
 
 #include "../peripherals/comm.h"
