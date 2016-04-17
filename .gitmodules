@@ -4,3 +4,6 @@
 [submodule "fw/lib/cmp_mem_access"]
 	path = fw/lib/cmp_mem_access
 	url = https://github.com/Stapelzeiger/cmp_mem_access.git
+[submodule "fw/lib/serial-datagram"]
+	path = fw/lib/serial-datagram
+	url = https://github.com/Stapelzeiger/serial-datagram.git
