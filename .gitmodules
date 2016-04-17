@@ -7,3 +7,6 @@
 [submodule "fw/lib/serial-datagram"]
 	path = fw/lib/serial-datagram
 	url = https://github.com/Stapelzeiger/serial-datagram.git
+[submodule "fw/lib/crc"]
+	path = fw/lib/crc
+	url = https://github.com/cvra/CRC.git
