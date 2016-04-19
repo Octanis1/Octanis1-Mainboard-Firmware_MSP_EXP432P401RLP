@@ -15,7 +15,9 @@
 #include "../peripherals/hal/rockblock.h"
 #include "../lib/printf.h"
 #include "../peripherals/hal/sim800.h"
-
+#include <serial.h>
+#include <serial_printf.h>
+#include <shell.h>
 
 //which uart index to use for the CLI
 #define CLI_UART Board_UART0_DEBUG
@@ -23,15 +25,47 @@
 #define CLI_BUFFER 300
 #define PRINTF_BUFFER 300
 
+typedef struct {
+    const struct serial_function_table *fntab;
+    UART_Handle uart;
+} UART_SerialDevice;
 
+size_t uart_serial_write(void *dev, const uint8_t *data, size_t n)
+{
+	return UART_write(((UART_SerialDevice *)dev)->uart, data, n);
+}
+
+size_t uart_serial_read(void *dev, uint8_t *data, size_t n)
+{
+	return UART_read(((UART_SerialDevice *)dev)->uart, data, n);
+}
+
+int uart_serial_putc(void *dev, uint8_t c)
+{
+	UART_write(((UART_SerialDevice *)dev)->uart, &c, 1);
+	return 0;
+}
+
+int uart_serial_getc(void *dev)
+{
+	uint8_t c;
+	if (UART_read(((UART_SerialDevice *)dev)->uart, &c, 1) == 1) {
+		return c;
+	}
+	return SERIAL_EOF;
+}
+
+const struct serial_function_table UART_SerialDevice_fntab = {
+	uart_serial_write,
+	uart_serial_read,
+	uart_serial_putc,
+	uart_serial_getc
+};
 
 static UART_Handle uart = NULL;
-static UART_Params uartParams;
 
-
-
-
-void cli_init(){
+static void cli_uart_init(UART_SerialDevice *dev) {
+	static UART_Params uartParams;
 
     /* Create a UART with data processing off. */
     UART_Params_init(&uartParams);
@@ -46,6 +80,8 @@ void cli_init(){
         System_abort("Error opening the UART");
     }
 
+    dev->fntab = &UART_SerialDevice_fntab;
+    dev->uart = uart;
 }
 
 
@@ -90,94 +126,111 @@ void cli_print_task(){
 			}
 
 		}
-
 	}
-
-
 }
 
+const struct shell_commands commands[];
+
+void cmd_help(SerialDevice *dev, int argc, char *argv[])
+{
+    const struct shell_commands *c = commands;
+    serial_printf(dev, "Commands:");
+    while (c->name != NULL && c->function != NULL) {
+        serial_printf(dev, " %s", c->name);
+        c++;
+    }
+    serial_printf(dev, "\r\n");
+}
+
+void cmd_motor(SerialDevice *io, int argc, char *argv[])
+{
+    if (argc != 3) {
+        serial_printf(io, "wrong number of arguments");
+        return;
+    }
+    if(navigation_bypass(*argv[1], *argv[2]-'0')) {
+        serial_printf(io, "okm\n");
+    } else {
+        serial_printf(io, "inv\n");
+    }
+}
+
+void cmd_gps(SerialDevice *io, int argc, char *argv[])
+{
+    serial_printf(io, "fq %d", gps_get_fix_quality());
+}
+
+void cmd_lat(SerialDevice *io, int argc, char *argv[])
+{
+    char buf[15];
+    int len = ftoa(gps_get_lat(), buf, 4);
+    serial_write(io, (uint8_t *)buf, len);
+}
+
+void cmd_lon(SerialDevice *io, int argc, char *argv[])
+{
+    char buf[15];
+    int len = ftoa(gps_get_lon(), buf, 4);
+    serial_write(io, (uint8_t *)buf, len);
+}
+
+void cmd_sat(SerialDevice *io, int argc, char *argv[])
+{
+    serial_printf(io, "sat %d \n", gps_get_satellites_tracked());
+}
+
+void cmd_valid(SerialDevice *io, int argc, char *argv[])
+{
+    serial_printf(io, "valid %d \n", gps_get_validity());
+}
+
+void cmd_hdop(SerialDevice *io, int argc, char *argv[])
+{
+    serial_printf(io, "hdop %d \n", gps_get_hdop());
+}
+
+void cmd_lastgps(SerialDevice *io, int argc, char *argv[])
+{
+    serial_printf(io, "lu %d \n", gps_get_last_update_time());
+}
+
+void cmd_tasks(SerialDevice *io, int argc, char *argv[])
+{
+    system_listTasks();
+}
+
+void cmd_rbs(SerialDevice *io, int argc, char *argv[])
+{
+    serial_printf(io, "rb sleep? %d \n", rockblock_get_sleep_status());
+}
+
+void cmd_rbn(SerialDevice *io, int argc, char *argv[])
+{
+    serial_printf(io, "rb net? %d \n", rockblock_get_net_availability());
+}
+
+const struct shell_commands commands[] = {
+    {"help", cmd_help},
+    {"gps", cmd_gps},
+    {"lat", cmd_lat},
+    {"lon", cmd_lon},
+    {"sat", cmd_sat},
+    {"valid", cmd_valid},
+    {"hdop", cmd_hdop},
+    {"lastgps", cmd_lastgps},
+    {"tasks", cmd_tasks},
+    {"rbs", cmd_rbs},
+    {"rbn", cmd_rbn},
+    {NULL, NULL}
+};
 
 //runs with lowest priority
 void cli_task(){
+	static UART_SerialDevice cli_uart;
+    cli_uart_init(&cli_uart);
 
-	char input[CLI_BUFFER];
-	char output[CLI_BUFFER];
-	const char consolePrompt[] = "octanis Rover Console:\r\n";
-
-	//initialises UART0 handle
-	cli_init();
-
-	//prints welcome message
-	UART_write(uart, consolePrompt, sizeof(consolePrompt));
-
-
-
-	while (1) {
-
-		//clears buffers
-		memset(&input[0], 0, sizeof(input));
-		memset(&output[0], 0, sizeof(output));
-
-		//blocks until command received
-		UART_read(uart, &input, sizeof(input));
-
-
-		if(strncmp ("mot", input, 3) == 0){ //motor command was sent
-			if(navigation_bypass(input[3],(input[4]-'0')))
-				tfp_sprintf(output, "okm\n");
-			else
-				tfp_sprintf(output, "inv\n");
-			UART_write(uart, output, sizeof(output));
-		}
-		else if(strcmp("gps\n", input) == 0){
-		   tfp_sprintf(output, "fq %d", gps_get_fix_quality());
-		   UART_write(uart, output, sizeof(output));
-		}else if(strcmp("lat\n", input) == 0){
-			   ftoa(gps_get_lat(), output, 4);
-			   UART_write(uart, output, sizeof(output));
-		}else if(strcmp("lon\n", input) == 0){
-			   ftoa(gps_get_lon(), output, 4);
-			   UART_write(uart, output, sizeof(output));
-		}else if(strcmp("sat\n", input) == 0){
-			   tfp_sprintf(output, "sat %d \n", gps_get_satellites_tracked());
-			   UART_write(uart, output, sizeof(output));
-		}else if(strcmp("valid\n", input) == 0){
-			   tfp_sprintf(output, "valid %d \n", gps_get_validity());
-			   UART_write(uart, output, sizeof(output));
-		}else if(strcmp("hdop\n", input) == 0){
-			   tfp_sprintf(output, "hdop %d \n", gps_get_hdop());
-			   UART_write(uart, output, sizeof(output));
-		}else if(strcmp("lastgps\n", input) == 0){
-			   tfp_sprintf(output, "lu %d \n", gps_get_last_update_time());
-			   UART_write(uart, output, sizeof(output));
-		}else if(strcmp("tasks\n", input) == 0){
-			   system_listTasks();
-		}else if(strcmp("rbs\n", input) == 0){
-			   tfp_sprintf(output, "rb sleep? %d \n", rockblock_get_sleep_status());
-			   UART_write(uart, output, sizeof(output));
-		}else if(strcmp("rbn\n", input) == 0){
-			   tfp_sprintf(output, "rb net? %d \n", rockblock_get_net_availability());
-			   UART_write(uart, output, sizeof(output));
-		}else if (strcmp("logrst\n", input) == 0){
-               log_reset();
-               tfp_sprintf(output, "ok");
-               UART_write(uart, output, sizeof(output));
-        }else if (strcmp("logpos\n", input) == 0){
-               tfp_sprintf(output, "logpos %u", log_write_pos());
-               UART_write(uart, output, sizeof(output));
-        }
-//		else if(strcmp("hoff\n", input) == 0){
-//			   hx1_off();
-//		}else if(strcmp("hon\n", input) == 0){
-//			   hx1_on();
-//		}
-
-
-
-
-
-
-	}
-
-
+    while (1) {
+        serial_printf((SerialDevice *)&cli_uart, "octanis Rover Console:\r\n");
+        shell(commands, (SerialDevice *)&cli_uart);
+    }
 }
