@@ -6,6 +6,8 @@
 #define SHELL_PROMPT "> "
 #endif
 
+#define SHELL_ECHO 1
+
 #define SHELL_LINE_LEN 50
 #define SHELL_MAX_ARGS 4
 
@@ -26,15 +28,18 @@ static int read_line(SerialDevice *dev, char *line, size_t len)
         }
         if (c == '\r' || c == '\n') {
             *l = '\0';
+#if SHELL_ECHO
             SERIAL_WRITE(dev, (uint8_t *)"\r\n", 2);
+#endif
             return LINE_OK;
         }
         if (c < 20) {
             continue;
         }
         *l++ = c;
+#if SHELL_ECHO
         SERIAL_PUTC(dev, c);
-
+#endif
     }
     *l = '\0';
     return LINE_OVERFLOW;
