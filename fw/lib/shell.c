@@ -26,7 +26,7 @@ static int read_line(SerialDevice *dev, char *line, size_t len)
         if (c == '\0' || c == 4 || c == SERIAL_EOF || c < 0) { // CTRL+D to exit
             return END_OF_TRANSMISSION;
         }
-        if (c == '\r' || c == '\n') {
+        if (c == '\r') {
             *l = '\0';
 #if SHELL_ECHO
             SERIAL_WRITE(dev, (uint8_t *)"\r\n", 2);
