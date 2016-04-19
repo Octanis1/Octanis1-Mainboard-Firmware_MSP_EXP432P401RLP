@@ -70,8 +70,9 @@ static void cli_uart_init(UART_SerialDevice *dev) {
     /* Create a UART with data processing off. */
     UART_Params_init(&uartParams);
     uartParams.writeDataMode = UART_DATA_BINARY;
-    uartParams.readDataMode = UART_DATA_TEXT;
-    uartParams.readReturnMode = UART_RETURN_NEWLINE;
+    uartParams.writeMode = UART_MODE_BLOCKING;
+    uartParams.readDataMode = UART_DATA_BINARY;
+    uartParams.readReturnMode = UART_RETURN_FULL;
     uartParams.readEcho = UART_ECHO_OFF;
     uartParams.baudRate = 9600;
     uart = UART_open(CLI_UART, &uartParams);
