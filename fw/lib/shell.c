@@ -102,7 +102,7 @@ void shell(const struct shell_commands *commands, SerialDevice *dev)
         const struct shell_commands *c = commands;
         while (c->name != NULL && c->function != NULL) {
             if (strcmp(c->name, argv[0]) == 0) {
-                c->function(dev, argc, &argv[0]);
+                c->function(dev, argc - 1, &argv[1]);
                 break;
             }
             c++;
