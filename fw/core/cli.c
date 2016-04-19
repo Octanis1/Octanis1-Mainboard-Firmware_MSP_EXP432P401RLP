@@ -195,9 +195,51 @@ void cmd_lastgps(SerialDevice *io, int argc, char *argv[])
     serial_printf(io, "lu %d \n", gps_get_last_update_time());
 }
 
+static void task_print(SerialDevice *dev, Task_Handle task)
+{
+    Task_Stat stat;
+    Task_stat(task, &stat);
+    const char *name = Task_Handle_name(task);
+    const char *mode = "INVALID";
+    switch (stat.mode) {
+    case Task_Mode_RUNNING: // Task is currently executing
+        mode = "RUNNING";
+        break;
+    case Task_Mode_READY: // Task is scheduled for execution
+        mode = "READY";
+        break;
+    case Task_Mode_BLOCKED: // Task is suspended from execution
+        mode = "BLOCKED";
+        break;
+    case Task_Mode_TERMINATED: // Task is terminated from execution
+        mode = "TERMINATED";
+        break;
+    case Task_Mode_INACTIVE:  // Task is on inactive task list
+        mode = "INACTIVE";
+        break;
+    };
+    serial_printf(dev, "%s: %d, %s, stack: %u/%u\r\n", name, stat.priority,
+                  mode, stat.used, stat.stackSize);
+}
+
 void cmd_tasks(SerialDevice *io, int argc, char *argv[])
 {
-    system_listTasks();
+    serial_printf(io, "name: priority, mode, stack: used/size\r\n");
+    serial_printf(io, "static tasks:\r\n");
+    // static tasks
+    Task_Object *task;
+    int i;
+    for (i = 0; i < Task_Object_count(); i++) {
+        task = Task_Object_get(NULL, i);
+        task_print(io, task);
+    }
+    // dymanmically allocated tasks
+    serial_printf(io, "dynamic tasks:\r\n");
+    task = Task_Object_first();
+    while (task) {
+        task_print(io, task);
+        task = Task_Object_next(task);
+    }
 }
 
 void cmd_rbs(SerialDevice *io, int argc, char *argv[])
