@@ -144,7 +144,7 @@ int rockblock_get_signal_quality(){
 
 
 		//signal quality value is at index 7
-		csq_val = system_chartoint((char)rxBuffer[7]);
+		csq_val = (char)rxBuffer[7] - '0';
 		/*
 		rockblock_health_sum += rockblock_get_signal_quality();
 		rockblock_health = (int)(rockblock_health_sum/times_called + 0.5);

@@ -8,7 +8,6 @@
 #include "../../Board.h"
 
 #include "cli.h"
-#include "system.h"
 #include "log.h"
 #include "../peripherals/gps.h"
 #include "../peripherals/navigation.h"
