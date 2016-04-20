@@ -16,3 +16,8 @@ int serial_printf(SerialDevice *dev, const char *fmt, ...)
     va_end(va);
     return n;
 }
+
+int serial_vprintf(SerialDevice *dev, const char *fmt, va_list va)
+{
+    return tfp_format(dev, _serial_printf_putc, fmt, va);
+}
