@@ -17,6 +17,7 @@
 #include <serial.h>
 #include <serial_printf.h>
 #include <shell.h>
+#include "log_message.h"
 
 //which uart index to use for the CLI
 #define CLI_UART Board_UART0_DEBUG
@@ -266,10 +267,14 @@ const struct shell_commands commands[] = {
     {NULL, NULL}
 };
 
+SerialDevice *stdout;
+
 //runs with lowest priority
 void cli_task(){
 	static UART_SerialDevice cli_uart;
     cli_uart_init(&cli_uart);
+    stdout = (SerialDevice *)&cli_uart;
+    log_info("boot");
 
     while (1) {
         serial_printf((SerialDevice *)&cli_uart, "octanis Rover Console:\r\n");
