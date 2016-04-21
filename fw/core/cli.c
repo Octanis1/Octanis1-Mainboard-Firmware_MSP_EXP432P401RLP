@@ -337,6 +337,7 @@ void cli_task(){
     cli_uart_init(&cli_uart);
     stdout = (SerialDevice *)&cli_uart;
     log_info("boot");
+    spi_helper_init_handle();
 
     while (1) {
         serial_printf((SerialDevice *)&cli_uart, "octanis Rover Console:\r\n");
