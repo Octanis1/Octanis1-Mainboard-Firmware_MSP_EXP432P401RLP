@@ -18,6 +18,8 @@
 #include <serial_printf.h>
 #include <shell.h>
 #include "log_message.h"
+#include <string.h>
+#include "../peripherals/flash.h"
 
 //which uart index to use for the CLI
 #define CLI_UART Board_UART0_DEBUG
@@ -92,6 +94,7 @@ static void putc_callback(void* p,char c){
 
 //can be called from any function to queue output strings (currently only integer support)
 void cli_printf(char *print_format, ...){
+    return;
 	static char printf_output_buffer[PRINTF_BUFFER];
 	char *strp = &printf_output_buffer[0];
 
@@ -252,6 +255,99 @@ void cmd_rbn(SerialDevice *io, int argc, char *argv[])
     serial_printf(io, "rb net? %d \n", rockblock_get_net_availability());
 }
 
+/********************************* FLASH **************************************/
+#define FLASH_PAGE_SIZE 256
+
+void dump_buf(SerialDevice *dev, const uint8_t *buf, size_t len)
+{
+    size_t i;
+    for (i = 0; i < len; i++) {
+        serial_printf(dev, "%02x", buf[i]);
+    }
+    serial_printf(dev, "\n\r");
+}
+
+void dump_compact(SerialDevice *dev, const uint8_t *buf, size_t len, uint8_t last, uint32_t addr)
+{
+    size_t i;
+    for (i = 0; i < len; i++) {
+        if (buf[i] != 0xff) {
+            if (last == 0xff || addr+i == 0) {
+                serial_printf(dev, "\n\r[%06x]:", addr+i);
+            }
+            serial_printf(dev, "%02x", buf[i]);
+        } else if (last != 0xff) {
+            serial_printf(dev, "ff[.]");
+        }
+        last = buf[i];
+    }
+}
+
+// bool flash_id_check(SerialDevice *chp)
+// {
+//     bool ret = false;
+//     const char *id_ok = "WRONG ID!";
+//     uint8_t buf[3];
+//     flash_id_read(buf);
+//     const uint8_t SST26VF064_ID[] = {0xbf,0x26,0x43};
+//     const uint8_t S25FL127S_ID[] = {0x01,0x20,0x18};
+//     if (memcmp(buf, SST26VF064_ID, 3) == 0
+//         || memcmp(buf, S25FL127S_ID, 3) == 0) {
+//         id_ok = "OK";
+//         ret = true;
+//     }
+//     serial_printf(chp, "flash id %02x %02x %02x, %s\n\r", buf[0], buf[1], buf[2], id_ok);
+//     return ret;
+// }
+
+void flash_id_check(void)
+{
+    uint8_t buf[3];
+    flash_id_read(buf);
+    const uint8_t flash_id[] = {0x01,0x20,0x18}; // S25FL127S ID
+    if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
+        // flash answers with correct ID
+        log_info("Flash ID OK");
+    } else {
+        log_warning("Flash ID ERROR (%02x %02x %02x)", buf[0], buf[1], buf[2]);
+    }
+}
+
+static void cmd_flash_check(SerialDevice *dev, int argc, char *argv[])
+{
+    flash_id_check();
+}
+
+static void cmd_hexdump(SerialDevice *dev, int argc, char *argv[])
+{
+    (void)argc;
+    (void)argv;
+    static uint8_t buf[FLASH_PAGE_SIZE];
+    uint32_t addr = 0;
+    size_t len = sizeof(buf);
+    // flash_id_check(dev);
+    flash_id_check();
+    uint8_t last = 0;
+    uint32_t end = 0x30000;
+    if (argc > 0) {
+        int arg = strtol(argv[0], NULL, 16);
+        if (arg < 0x1000000 && arg > 0) {
+            end = arg;
+        }
+    }
+    while (addr + len <= end) {
+        if (flash_read(addr, buf, len) != 0) {
+            log_error("flash_read() failed\r\n");
+            break;
+        }
+        dump_compact(dev, buf, len, last, addr);
+        last = buf[sizeof(buf)-1];
+        addr += len;
+    }
+    serial_printf(dev, "\n\r");
+}
+/********************************* FLASH **************************************/
+
 const struct shell_commands commands[] = {
     {"help", cmd_help},
     {"gps", cmd_gps},
@@ -264,6 +360,8 @@ const struct shell_commands commands[] = {
     {"tasks", cmd_tasks},
     {"rbs", cmd_rbs},
     {"rbn", cmd_rbn},
+    {"dump", cmd_hexdump},
+    {"check", cmd_flash_check},
     {NULL, NULL}
 };
 
@@ -275,6 +373,11 @@ void cli_task(){
     cli_uart_init(&cli_uart);
     stdout = (SerialDevice *)&cli_uart;
     log_info("boot");
+
+    spi_helper_init_handle();
+    flash_id_check(); // ok
+    cmd_flash_check(stdout, 0, NULL); // ok
+    cmd_hexdump(stdout, 0, NULL); // fails
 
     while (1) {
         serial_printf((SerialDevice *)&cli_uart, "octanis Rover Console:\r\n");

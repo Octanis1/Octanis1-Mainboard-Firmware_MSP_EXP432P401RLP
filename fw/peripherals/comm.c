@@ -460,6 +460,9 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 
 
 void comm_task(){
+    while(1) {
+        Task_sleep(3000);
+    }
 
 #ifdef LORA_ENABLED
 	#ifdef CONFIG_MODE

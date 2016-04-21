@@ -101,20 +101,6 @@ uint8_t weather_check_external_connected()
 }
 
 
-void log_weather(struct _weather_data *d)
-{
-/*    struct logger *l = logger_get("weather");
-    cmp_write_array(l->ctx, 8);
-    cmp_write_integer(l->ctx, d->int_temp);
-    cmp_write_uinteger(l->ctx, d->int_press);
-    // ...
-    logger_finish(l);
-    */
-}
-
-
-
-
 /*************** IMU stuff moved here ******************/
 #include "imu.h"
 #include "hal/motors.h"
@@ -174,6 +160,10 @@ void log_weather(struct _weather_data *d)
 /************** END IMU stuff *******************/
 
 void weather_task(){
+    while(1) {
+        Task_sleep(3000);
+    }
+
 	static uint8_t external_board_connected = 0;
 	external_board_connected = weather_check_external_connected();
 
@@ -195,37 +185,6 @@ void weather_task(){
 	bme280_init();
 
 
-#ifdef FLASH_ENABLED
-	/************* flash test START ****************/
-	spi_helper_init_handle();
-
-    // force enable logging
-    bool logging_enabled = true;
-
-
-	static uint8_t buf[250];
-	flash_id_read(buf);
-	const uint8_t flash_id[] = {0x01,0x20,0x18}; // S25FL127S ID
-	if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
-		// flash answers with correct ID
-		cli_printf("Flash ID OK\n");
-	} else {
-		cli_printf("Flash ID ERROR\n");
-	}
-
-    if (logging_enabled) {
-        if (!log_init()) {
-            cli_printf("log_init failed\n");
-            log_reset();
-        }
-    }
-    //cli_printf("log position 0x%x\n", log_write_pos());
-	/************* flash test END ****************/
-#endif
-
-
-
-
 /************* IMU STUFF moved here *************/
 
 	imu_init();
@@ -242,31 +201,7 @@ void weather_task(){
 /************** END IMU stuff *******************/
 
 		Task_sleep(3000);
-#ifdef FLASH_ENABLED
 
-        log_counter++;
-
-
-        if (logging_enabled) {
-            if (LOG_GPS_TIMESTEP > 0 && log_counter % LOG_GPS_TIMESTEP == 0) {
-                log_write_gps();
-                // cli_printf("log gps, %x\n", log_write_pos());
-            }
-            if (LOG_IMU_TIMESTEP > 0 && log_counter % LOG_IMU_TIMESTEP == 0) {
-                log_write_imu();
-                // cli_printf("log imu, %x\n", log_write_pos());
-            }
-            if (LOG_WEATHER_TIMESTEP > 0 && log_counter % LOG_WEATHER_TIMESTEP == 0) {
-                log_write_weather();
-                // cli_printf("log weather, %x\n", log_write_pos());
-            }
-            if (LOG_BACKUP_TIMESTEP > 0 && log_counter % LOG_BACKUP_TIMESTEP == 0) {
-                log_position_backup();
-                // cli_printf("log backup, %x\n", log_write_pos());
-            }
-        }
-
-#endif
 		if(external_board_connected)
 		{
 			bmp180_data_readout(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
@@ -293,10 +228,6 @@ void weather_task(){
 
 		weather_aggregate_data();
 		cli_printf("W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
-
-#ifdef FLASH_ENABLED
-        log_weather(&weather_data);
-#endif
 	}
 
 }
