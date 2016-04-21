@@ -92,6 +92,7 @@ static void putc_callback(void* p,char c){
 
 //can be called from any function to queue output strings (currently only integer support)
 void cli_printf(char *print_format, ...){
+    return;
 	static char printf_output_buffer[PRINTF_BUFFER];
 	char *strp = &printf_output_buffer[0];
 
@@ -128,6 +129,66 @@ void cli_print_task(){
 
 		}
 	}
+}
+
+static void send_fn(void *arg, const void *p, size_t len)
+{
+    SerialDevice *dev = (SerialDevice *)arg;
+    SERIAL_WRITE(dev, (uint8_t *)p, len);
+}
+
+#include <stdint.h>
+#include <serial-datagram/serial_datagram.h>
+#include "flash.h"
+
+#define FLASH_DUMP_CHUNK_SIZE 1024
+
+#ifndef FLASH_SIZE
+#define FLASH_SIZE          0x1000000 // 16M
+#endif
+
+/* Dumps the entifer SPI flash
+ * Datagrams are sent using the SLIP protocol. To each datagram a CRC32 checksum
+ * is appended. The payload starts with a 4byte flash address followed by the
+ * corresponding data chunk of size FLASH_DUMP_CHUNK_SIZE.
+ * Note: CRC and flash address are sent LSByte first.
+ */
+void flash_dump(void (*sendfn)(void *arg, const void *p, size_t len), void *arg,
+                uint32_t start, uint32_t end)
+{
+    static uint8_t buffer[4 + FLASH_DUMP_CHUNK_SIZE];
+    uint32_t address = start;
+    while (address + FLASH_DUMP_CHUNK_SIZE <= end) {
+        flash_read(address, &buffer[4], FLASH_DUMP_CHUNK_SIZE);
+        buffer[0] = (uint8_t)address;
+        buffer[1] = (uint8_t)(address>>8);
+        buffer[2] = (uint8_t)(address>>16);
+        buffer[3] = (uint8_t)(address>>24);
+        serial_datagram_send(buffer, sizeof(buffer), sendfn, arg);
+        address += FLASH_DUMP_CHUNK_SIZE;
+        Task_sleep(10);
+    }
+}
+
+void cmd_flash_dump(SerialDevice *dev, int argc, char *argv[])
+{
+    uint32_t start = 0;
+    uint32_t end = 0x20000; // 128K
+    if (argc == 2) {
+        int arg = strtol(argv[0], NULL, 16);
+        if (arg <= FLASH_SIZE && arg > 0) {
+            start = arg;
+        }
+        arg = strtol(argv[1], NULL, 16);
+        if (arg <= FLASH_SIZE && arg > 0) {
+            end = arg;
+        }
+    }
+    if (start >= end) {
+        return;
+    }
+    Task_sleep(1000);
+    flash_dump(send_fn, dev, start, end);
 }
 
 const struct shell_commands commands[];
@@ -264,6 +325,7 @@ const struct shell_commands commands[] = {
     {"tasks", cmd_tasks},
     {"rbs", cmd_rbs},
     {"rbn", cmd_rbn},
+    {"flash_dump", cmd_flash_dump},
     {NULL, NULL}
 };
 
