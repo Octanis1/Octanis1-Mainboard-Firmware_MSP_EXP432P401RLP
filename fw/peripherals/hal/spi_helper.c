@@ -58,7 +58,7 @@ void spi_helper_init_handle(){
 	}
 }
 
-uint8_t spi_helper_transfer(uint8_t nBytes, uint8_t* txBufferPointer, uint8_t* rxBufferPointer, uint8_t CS_pin)
+uint8_t spi_helper_transfer(size_t nBytes, uint8_t* txBufferPointer, uint8_t* rxBufferPointer, uint8_t CS_pin)
 {
 	static SPI_Transaction spiTransaction;
 	spiTransaction.count = nBytes;
