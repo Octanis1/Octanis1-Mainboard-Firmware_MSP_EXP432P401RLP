@@ -108,7 +108,7 @@ void shell(const struct shell_commands *commands, SerialDevice *dev)
             c++;
         }
         if (c->name == NULL || c->function == NULL) {
-            serial_printf(dev, "%s ?\r\n"); // command not found
+            serial_printf(dev, "%s ?\r\n", line); // command not found
         }
     }
 }
