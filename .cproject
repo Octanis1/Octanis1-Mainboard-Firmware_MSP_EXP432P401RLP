@@ -88,8 +88,8 @@
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.MSP432_GNU_4.0.linkerID.SEARCH_PATH.1866463557" name="Library search path (-L, --library-path)" superClass="com.ti.ccstudio.buildDefinitions.MSP432_GNU_4.0.linkerID.SEARCH_PATH" valueType="stringList">
 									<listOptionValue builtIn="false" value="&quot;${PROJECT_LOC}/fw/lib&quot;"/>
-									<listOptionValue builtIn="false" value="/Applications/ti/tirtos_msp43x_2_16_00_08/products"/>
-									<listOptionValue builtIn="false" value="/Applications/ti/tirtos_msp43x_2_16_00_08/products/msp432_driverlib_3_10_00_09/driverlib/MSP432P4xx/gcc"/>
+									<listOptionValue builtIn="false" value="&quot;${COM_TI_RTSC_TIRTOSMSP430_INSTALL_DIR}/products&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${COM_TI_RTSC_TIRTOSMSP430_INSTALL_DIR}/products/msp432_driverlib_3_10_00_09/driverlib/MSP432P4xx/gcc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${COM_TI_RTSC_TIRTOSMSP430_INSTALL_DIR}/products/bios_6_41_03_51/packages/gnu/targets/arm/libs/install-native/arm-none-eabi/lib/armv7e-m/fpu&quot;"/>
 								</option>
 								<inputType id="com.ti.ccstudio.buildDefinitions.MSP432_GNU_4.0.exeLinker.inputType__CMD_SRCS.1046750585" name="Linker Command Files" superClass="com.ti.ccstudio.buildDefinitions.MSP432_GNU_4.0.exeLinker.inputType__CMD_SRCS"/>

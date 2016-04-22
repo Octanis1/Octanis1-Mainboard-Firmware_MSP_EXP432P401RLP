@@ -302,7 +302,8 @@ int ftoa(float n, char *res, int afterpoint)
     if(ipart<0)
     {
     		res[0]='-'; //TODO can probably be improved
-    		ipart=-ipart;
+    		ipart= -ipart;
+    		fpart= -fpart;
     		length++;
     }
 

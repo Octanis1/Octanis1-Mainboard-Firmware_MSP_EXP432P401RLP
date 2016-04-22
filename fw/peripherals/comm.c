@@ -135,7 +135,7 @@ void comm_poll_status(rover_status_comm* stat)
 {
 	/*Fill in struct with status information */
 	stat->gps_lat = gps_get_lat();
-	stat->gps_long = (-gps_get_lon()); //TODO: remove when back in europe!
+	stat->gps_long = gps_get_lon();
 	stat->gps_fix_quality = gps_get_fix_quality();
 	stat->system_seconds = Seconds_get();
 	stat->v_bat = eps_get_vbat();
@@ -322,7 +322,7 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 					led_control.frequency = command[compos+4] - '0';}
 				led_control.cond = condition;
 			}
-			else if('m' == command[compos+1]){
+			else if(command[compos+1] == 'b' || command[compos+1] == 'l'){ //send BLE or lora message
 				int j=0;
 				int k=0;
 				for(k=compos+3;k<commandlength-1;k++)
@@ -332,7 +332,10 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 				}
 				msg_control[n_message_rules].msglength = j;
 				msg_control[n_message_rules].cond = condition;
-				msg_control[n_message_rules].destination = destination;
+				if(command[compos+1] == 'b')
+					msg_control[n_message_rules].destination = DESTINATION_BLE;
+				else
+					msg_control[n_message_rules].destination = DESTINATION_LORA_TTN;
 				msg_control[n_message_rules].msg_sent_since_last_threshold_crossing = 0;
 				n_message_rules = (n_message_rules+1) % N_USER_MESSAGES;
 			}
@@ -367,15 +370,44 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 
 void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination)
 {
+
+	/** Prepare hex string for LoRa **/
+	char hex_string_byte[2];
+	char hex_string[COMM_FRAME_SIZE]; //TODO: ATTENTION: this is too small! need to change this
+	memset(&hex_string, 0, sizeof(hex_string));
+
+	int i;
+	for(i=0; i<stringlength; i++){
+		memset(&hex_string_byte, 0, sizeof(hex_string_byte));
+		tfp_sprintf(hex_string_byte, "%02x", txdata[i]);
+		strcat(hex_string, hex_string_byte);
+	}
+	/** end hex string **/
+
 	switch(destination) {
-	   case DESTINATION_BLE:
-		  cli_printf("ble tx2\n");
-		  hm10_send(txdata, stringlength);
+	   case DESTINATION_LORA_TTN:
+		  rn2483_send_receive(hex_string, 2*stringlength);
 		  break;
 
+	   case DESTINATION_GSM:
+		  sim800_send_http(hex_string, strlen(hex_string), MIME_TEXT_PLAIN);
+		  break;
+
+	   case DESTINATION_GSM_SMS:
+		  sim800_send_sms(txdata, strlen(txdata));
+		  break;
+
+	   case DESTINATION_BLE:
+
+		  hm10_send(txdata, strlen(txdata));
+		  break;
+
+	   case DESTINATION_DEBUG_UART:
+		   cli_printf("%s\n",txdata);
 	   default:
-	   	   cli_printf("comm Task: TX destination not supported\n");
+		   cli_printf("comm Task: Status TX destination not supported\n");
 	}
+
 }
 
 
@@ -387,7 +419,6 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 
 	stringlength += ftoa(stat->gps_lat, &txdata[stringlength], 7); //convert gps latitude to string with sign and 7 afterpoint
 	txdata[stringlength++] = ','; 					//plus a comma
-	txdata[stringlength++] = '-'; 					//plus negative sign for US TODO: remove when back in europe
 
 
 	stringlength += ftoa(stat->gps_long, &txdata[stringlength], 7); //convert gps long to string with sign and 7 afterpoint
@@ -422,6 +453,7 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 		stringlength = COMM_FRAME_SIZE;
 	}
 
+<<<<<<< HEAD
 	char hex_string_byte[2];
 	char hex_string[COMM_FRAME_SIZE]; //TODO: ATTENTION: this is too small! need to change this
 	memset(&hex_string, 0, sizeof(hex_string));
@@ -457,6 +489,9 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 	   	   cli_printf("comm Task: Status TX destination not supported\n");
 	}
 
+=======
+	comm_tx_data(txdata, stringlength, destination);
+>>>>>>> 4286d38a16f2b8ae617f53d855cec96c045a6fa1
 }
 
 
@@ -526,6 +561,9 @@ void comm_task(){
 			#ifdef BLE_ENABLED
 			comm_send_status(&my_rover_status, DESTINATION_BLE);
 			#endif
+
+			comm_send_status(&my_rover_status, DESTINATION_DEBUG_UART);
+
     		}
     }
 
