@@ -8,7 +8,7 @@
 #ifndef FW_PERIPHERALS_NAVIGATION_H_
 #define FW_PERIPHERALS_NAVIGATION_H_
 
-#define TARGET_REACHED_DISTANCE	5 //meters
+#include <stdint.h>
 
 #define N_TARGETS_MAX	20
 typedef struct _target_list_t{
@@ -44,8 +44,9 @@ uint8_t navigation_bypass(char command, uint8_t index);
 
 
 //Compute angle and distance from the rover to the target
-float nav_get_distance(float lat_current, float lon_current, float lat_target, float lon_target);
-float nav_get_angle(float lat_current, float lon_current, float lat_target, float lon_target);
+float navigation_dist_to_target(float lat_current, float lon_current, float lat_target, float lon_target);
+float navigation_angle_to_target(float lat_current, float lon_current, float lat_target, float lon_target, float headX);
+float navigation_degree_to_rad(float degree);
 
 //"Main" task of the file
 void navigation_task();
