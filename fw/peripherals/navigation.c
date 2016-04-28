@@ -29,7 +29,7 @@ void Task_sleep(int a);
 
 #endif
 #define M_PI 3.14159265358979323846
-#define EARTH_RADIUS 6356752
+#define EARTH_RADIUS 6356752.3
 
 
 typedef struct _navigation_status{
@@ -72,8 +72,6 @@ float navigation_dist_to_target(float lat_current, float lon_current, float lat_
     float a = sinf(delta_lat/2)*sinf(delta_lat/2) + cosf(lat_current)*cosf(lat_target) * sinf(delta_lon/2)*sinf(delta_lon/2);
     
     float distance = 2*EARTH_RADIUS*asinf(sqrtf(a));
-    float distance2 = 2*EARTH_RADIUS*atan2f(sqrtf(a), sqrtf(1-a));
-
     return distance;
 }
 
@@ -82,32 +80,27 @@ float navigation_dist_to_target(float lat_current, float lon_current, float lat_
  * Params: lat1, long1 => Latitude and Longitude of current point
  *         lat2, long2 => Latitude and Longitude of target  point
  *
- *         headX       => x-Value of built-in compass
- *
  * Returns the degree of a direction from current point to target point (between -180, 180).
- * Note: a negative result means the target is towards the left of the rover. positive to the right
- *
+ * Negative value are toward East, positive West
  */
-float navigation_angle_to_target(float lat1, float lon1, float lat2, float lon2, float headX) {
-    //float dLon = M_PI/180*(lon2-lon1);
+float navigation_angle_to_target(float lat1, float lon1, float lat2, float lon2) {
+    float dLon = navigation_degree_to_rad(lon2-lon1);
 
-    lat1 = M_PI/180*(lat1);
-    lat2 = M_PI/180*(lat2);
-    /*
+    lat1 = navigation_degree_to_rad(lat1);
+    lat2 = navigation_degree_to_rad(lat2);
+    
     float y = sinf(dLon) * cosf(lat2);
     float x = cosf(lat1) * sinf(lat2) - sinf(lat1)*cosf(lat2)*cosf(dLon);
     float brng = 180/M_PI*(atan2f(y, x));
 
-    brng = brng - headX;
-
-    // bound result between -180 and 180
-    if(brng < -180.0)
-    		brng = 360 + brng;
-
-    return brng;*/
-    return 0;
+    return brng;
 }
 
+float navigation_angle_for_rover(float lat1, float lon1, float lat2, float lon2, float headX) {
+    float angle = navigation_angle_to_target(lat1, lon1, lat2, lon2);
+    angle = angle - headX;
+    return angle;
+}
 
 uint8_t navigation_add_target(float new_lat, float new_lon, uint8_t new_id)
 {
@@ -212,7 +205,7 @@ void navigation_update_position()
 
 	// recalculate heading angle
 	navigation_status.heading_rover = imu_get_fheading();
-	navigation_status.angle_to_target = navigation_angle_to_target(navigation_status.lat_rover,navigation_status.lon_rover,
+	navigation_status.angle_to_target = navigation_angle_for_rover(navigation_status.lat_rover,navigation_status.lon_rover,
 			navigation_status.lat_target, navigation_status.lon_target, navigation_status.heading_rover);
 	// recalculate distance to target
 	navigation_status.distance_to_target = getDistanceToTarget(navigation_status.lat_rover,navigation_status.lon_rover,
