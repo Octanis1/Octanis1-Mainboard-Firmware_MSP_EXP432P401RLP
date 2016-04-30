@@ -12,11 +12,7 @@
 #include <math.h>
 void Task_sleep(int a);
 
-#define INIT_LAT 0
-#define INIT_LON 0
-#define TARGET_LAT 4
-#define TARGET_LON 4
-#define TARGET_REACHED_DISTANCE 1
+
 
 #else
 
@@ -30,6 +26,11 @@ void Task_sleep(int a);
 #endif
 #define M_PI 3.14159265358979323846
 #define EARTH_RADIUS 6356752.3
+#define INIT_LAT 45.531993
+#define INIT_LON 6.591617
+#define TARGET_LAT 46.531884
+#define TARGET_LON 6.591798
+#define TARGET_REACHED_DISTANCE 1
 
 
 typedef struct _navigation_status{
@@ -208,7 +209,7 @@ void navigation_update_position()
 	navigation_status.angle_to_target = navigation_angle_for_rover(navigation_status.lat_rover,navigation_status.lon_rover,
 			navigation_status.lat_target, navigation_status.lon_target, navigation_status.heading_rover);
 	// recalculate distance to target
-	navigation_status.distance_to_target = getDistanceToTarget(navigation_status.lat_rover,navigation_status.lon_rover,
+	navigation_status.distance_to_target = navigation_dist_to_target(navigation_status.lat_rover,navigation_status.lon_rover,
 			navigation_status.lat_target, navigation_status.lon_target);
 }
 #endif
