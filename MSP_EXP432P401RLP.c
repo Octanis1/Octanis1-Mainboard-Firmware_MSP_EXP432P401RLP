@@ -541,6 +541,19 @@ void MSP_EXP432P401RLP_initPWM(void)
 
     MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P3,
 		GPIO_PIN4, GPIO_PRIMARY_MODULE_FUNCTION);
+#endif
+#ifdef VERSION_1
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P7,
+    	GPIO_PIN7, GPIO_PRIMARY_MODULE_FUNCTION);
+
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P7,
+    	GPIO_PIN5, GPIO_PRIMARY_MODULE_FUNCTION);
+
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P3,
+    	GPIO_PIN4, GPIO_PRIMARY_MODULE_FUNCTION);
+
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P3,
+        GPIO_PIN6, GPIO_PRIMARY_MODULE_FUNCTION);
 #else
     MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P7,
     		GPIO_PIN7, GPIO_PRIMARY_MODULE_FUNCTION);
