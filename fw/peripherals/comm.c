@@ -478,7 +478,7 @@ void comm_task(){
 
     		// Poll for received commands
 		#ifdef BLE_ENABLED
-    		comm_receive_command(DESTINATION_BLE);
+    			comm_receive_command(DESTINATION_BLE);
 		#endif
 
     		rx_counter++;
