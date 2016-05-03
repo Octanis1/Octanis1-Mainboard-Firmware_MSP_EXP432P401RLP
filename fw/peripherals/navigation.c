@@ -233,6 +233,18 @@ void navigation_update_state()
 			{
 				navigation_status.current_state = GO_TO_TARGET;
 			}
+			else
+			{
+				cli_printf("Calibrate IMU\n");
+				GPIO_toggle(Board_LED_RED);
+				Task_sleep(50);
+				GPIO_toggle(Board_LED_RED);
+				Task_sleep(50);
+				GPIO_toggle(Board_LED_RED);
+				Task_sleep(50);
+				GPIO_toggle(Board_LED_RED);
+				Task_sleep(50);
+			}
 		}
 		else if(navigation_status.current_state == GO_TO_TARGET)
 		{

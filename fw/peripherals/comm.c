@@ -403,6 +403,8 @@ void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination)
 
 	   case DESTINATION_DEBUG_UART:
 		   cli_printf("%s\n",txdata);
+		   break;
+
 	   default:
 		   cli_printf("comm Task: Status TX destination not supported\n");
 	}
@@ -491,8 +493,6 @@ void comm_task(){
     		if(rx_counter > RX_TO_TX_RATIO)
     		{
     			rx_counter=0;
-
-
 
 			#ifdef GSM_ENABLED
 			comm_send_status(&my_rover_status, DESTINATION_GSM);
