@@ -8,11 +8,12 @@
 #include "../../Board.h"
 
 #include "cli.h"
-#include "system.h"
-#include "log.h"
-#include "../peripherals/gps.h"
-#include "../peripherals/navigation.h"
-#include "../peripherals/hal/rockblock.h"
+#include "../peripherals/comm.h"
+//#include "system.h"
+//#include "log.h"
+//#include "../peripherals/gps.h"
+//#include "../peripherals/navigation.h"
+//#include "../peripherals/hal/rockblock.h"
 #include "../lib/printf.h"
 #include "../peripherals/hal/sim800.h"
 
@@ -96,7 +97,6 @@ void cli_print_task(){
 
 }
 
-
 //runs with lowest priority
 void cli_task(){
 
@@ -110,6 +110,11 @@ void cli_task(){
 	//prints welcome message
 	UART_write(uart, consolePrompt, sizeof(consolePrompt));
 
+	static int answer_required = 0;
+	static int command_length = 0;
+	static int tx_stringlength = 0;
+
+	static char txdata[CLI_BUFFER-1]; //leave some space for the attached \n character
 
 
 	while (1) {
@@ -119,53 +124,58 @@ void cli_task(){
 		memset(&output[0], 0, sizeof(output));
 
 		//blocks until command received
-		UART_read(uart, &input, sizeof(input));
-
-
-		if(strncmp ("mot", input, 3) == 0){ //motor command was sent
-			if(navigation_bypass(input[3],(input[4]-'0')))
-				tfp_sprintf(output, "okm\n");
-			else
-				tfp_sprintf(output, "inv\n");
-			UART_write(uart, output, sizeof(output));
+		command_length = UART_read(uart, &input, sizeof(input));
+		if(command_length > 1){ //avoid commands that might just be a remaining \n or \r
+			answer_required = comm_process_command(input, command_length, txdata, &tx_stringlength, DESTINATION_DEBUG_UART);
+			if(answer_required)
+			{
+				cli_printf("%s\n",txdata);
+			}
 		}
-		else if(strcmp("gps\n", input) == 0){
-		   tfp_sprintf(output, "fq %d", gps_get_fix_quality());
-		   UART_write(uart, output, sizeof(output));
-		}else if(strcmp("lat\n", input) == 0){
-			   ftoa(gps_get_lat(), output, 4);
-			   UART_write(uart, output, sizeof(output));
-		}else if(strcmp("lon\n", input) == 0){
-			   ftoa(gps_get_lon(), output, 4);
-			   UART_write(uart, output, sizeof(output));
-		}else if(strcmp("sat\n", input) == 0){
-			   tfp_sprintf(output, "sat %d \n", gps_get_satellites_tracked());
-			   UART_write(uart, output, sizeof(output));
-		}else if(strcmp("valid\n", input) == 0){
-			   tfp_sprintf(output, "valid %d \n", gps_get_validity());
-			   UART_write(uart, output, sizeof(output));
-		}else if(strcmp("hdop\n", input) == 0){
-			   tfp_sprintf(output, "hdop %d \n", gps_get_hdop());
-			   UART_write(uart, output, sizeof(output));
-		}else if(strcmp("lastgps\n", input) == 0){
-			   tfp_sprintf(output, "lu %d \n", gps_get_last_update_time());
-			   UART_write(uart, output, sizeof(output));
-		}else if(strcmp("tasks\n", input) == 0){
-			   system_listTasks();
-		}else if(strcmp("rbs\n", input) == 0){
-			   tfp_sprintf(output, "rb sleep? %d \n", rockblock_get_sleep_status());
-			   UART_write(uart, output, sizeof(output));
-		}else if(strcmp("rbn\n", input) == 0){
-			   tfp_sprintf(output, "rb net? %d \n", rockblock_get_net_availability());
-			   UART_write(uart, output, sizeof(output));
-		}else if (strcmp("logrst\n", input) == 0){
-               log_reset();
-               tfp_sprintf(output, "ok");
-               UART_write(uart, output, sizeof(output));
-        }else if (strcmp("logpos\n", input) == 0){
-               tfp_sprintf(output, "logpos %u", log_write_pos());
-               UART_write(uart, output, sizeof(output));
-        }
+//		if(strncmp ("mot", input, 3) == 0){ //motor command was sent
+//			if(navigation_bypass(input[3],(input[4]-'0')))
+//				tfp_sprintf(output, "okm\n");
+//			else
+//				tfp_sprintf(output, "inv\n");
+//			UART_write(uart, output, sizeof(output));
+//		}
+//		else if(strcmp("gps\n", input) == 0){
+//		   tfp_sprintf(output, "fq %d", gps_get_fix_quality());
+//		   UART_write(uart, output, sizeof(output));
+//		}else if(strcmp("lat\n", input) == 0){
+//			   ftoa(gps_get_lat(), output, 4);
+//			   UART_write(uart, output, sizeof(output));
+//		}else if(strcmp("lon\n", input) == 0){
+//			   ftoa(gps_get_lon(), output, 4);
+//			   UART_write(uart, output, sizeof(output));
+//		}else if(strcmp("sat\n", input) == 0){
+//			   tfp_sprintf(output, "sat %d \n", gps_get_satellites_tracked());
+//			   UART_write(uart, output, sizeof(output));
+//		}else if(strcmp("valid\n", input) == 0){
+//			   tfp_sprintf(output, "valid %d \n", gps_get_validity());
+//			   UART_write(uart, output, sizeof(output));
+//		}else if(strcmp("hdop\n", input) == 0){
+//			   tfp_sprintf(output, "hdop %d \n", gps_get_hdop());
+//			   UART_write(uart, output, sizeof(output));
+//		}else if(strcmp("lastgps\n", input) == 0){
+//			   tfp_sprintf(output, "lu %d \n", gps_get_last_update_time());
+//			   UART_write(uart, output, sizeof(output));
+//		}else if(strcmp("tasks\n", input) == 0){
+//			   system_listTasks();
+//		}else if(strcmp("rbs\n", input) == 0){
+//			   tfp_sprintf(output, "rb sleep? %d \n", rockblock_get_sleep_status());
+//			   UART_write(uart, output, sizeof(output));
+//		}else if(strcmp("rbn\n", input) == 0){
+//			   tfp_sprintf(output, "rb net? %d \n", rockblock_get_net_availability());
+//			   UART_write(uart, output, sizeof(output));
+//		}else if (strcmp("logrst\n", input) == 0){
+//               log_reset();
+//               tfp_sprintf(output, "ok");
+//               UART_write(uart, output, sizeof(output));
+//        }else if (strcmp("logpos\n", input) == 0){
+//               tfp_sprintf(output, "logpos %u", log_write_pos());
+//               UART_write(uart, output, sizeof(output));
+//        }
 //		else if(strcmp("hoff\n", input) == 0){
 //			   hx1_off();
 //		}else if(strcmp("hon\n", input) == 0){

@@ -235,15 +235,16 @@ void navigation_update_state()
 			}
 			else
 			{
-				cli_printf("Calibrate IMU\n");
-				GPIO_toggle(Board_LED_RED);
-				Task_sleep(50);
-				GPIO_toggle(Board_LED_RED);
-				Task_sleep(50);
-				GPIO_toggle(Board_LED_RED);
-				Task_sleep(50);
-				GPIO_toggle(Board_LED_RED);
-				Task_sleep(50);
+				cli_printf("Calibrate IMU (status: %d/9)\n",imu_get_calib_status());
+				int i;
+				for (i = 0; i<(7-imu_get_calib_status());i++) //blink shorter for better calibration
+				{
+					GPIO_toggle(Board_LED_RED);
+					Task_sleep(50);
+					GPIO_toggle(Board_LED_RED);
+					Task_sleep(50);
+				}
+				GPIO_write(Board_LED_RED,0);
 			}
 		}
 		else if(navigation_status.current_state == GO_TO_TARGET)
