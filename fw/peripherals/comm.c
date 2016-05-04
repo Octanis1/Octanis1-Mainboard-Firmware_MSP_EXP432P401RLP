@@ -403,7 +403,9 @@ void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination)
 		  break;
 
 	   case DESTINATION_DEBUG_UART:
-		   cli_printf("%s\n",txdata);
+		  cli_printf("%s\n",txdata);
+		  break;
+
 	   default:
 		   cli_printf("comm Task: Status TX destination not supported\n");
 	}
@@ -453,45 +455,7 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 		stringlength = COMM_FRAME_SIZE;
 	}
 
-<<<<<<< HEAD
-	char hex_string_byte[2];
-	char hex_string[COMM_FRAME_SIZE]; //TODO: ATTENTION: this is too small! need to change this
-	memset(&hex_string, 0, sizeof(hex_string));
-
-	int i;
-	for(i=0; i<stringlength; i++){
-		memset(&hex_string_byte, 0, sizeof(hex_string_byte));
-		tfp_sprintf(hex_string_byte, "%02x", txdata[i]);
-		strcat(hex_string, hex_string_byte);
-	}
-
-
-
-	switch(destination) {
-	   case DESTINATION_LORA_TTN:
-		  rn2483_send_receive(hex_string, 2*stringlength);
-	      break;
-
-	   case DESTINATION_GSM:
-		  sim800_send_http(hex_string, strlen(hex_string), MIME_TEXT_PLAIN);
-	      break;
-
-	   case DESTINATION_GSM_SMS:
-		  sim800_send_sms(txdata, strlen(txdata));
-		  break;
-
-	   case DESTINATION_BLE:
-		  cli_printf("ble tx\n");
-		  hm10_send(txdata, strlen(txdata));
-		  break;
-
-	   default:
-	   	   cli_printf("comm Task: Status TX destination not supported\n");
-	}
-
-=======
 	comm_tx_data(txdata, stringlength, destination);
->>>>>>> 4286d38a16f2b8ae617f53d855cec96c045a6fa1
 }
 
 

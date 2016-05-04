@@ -49,7 +49,7 @@
 //#define VERSION_0_6
 #define VERSION_1
 //#define FLASH_ENABLED 1
-//#define LORA_ENABLED 1
+#define LORA_ENABLED 1
 #define BLE_ENABLED 1
 //#define EPS_ENABLED 1
 //#define ROCKBLOCK_ENABLED 1
