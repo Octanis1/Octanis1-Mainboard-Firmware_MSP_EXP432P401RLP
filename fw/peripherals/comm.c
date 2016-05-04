@@ -370,6 +370,20 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 		else
 			tfp_sprintf(txbuffer, "inv");
 	}
+	else if(strncmp("targ", command, 4) == 0){
+		if(strncmp("rm", &command[5], 2) == 0) //remove newest target from list
+		{
+			if(navigation_remove_newest_target())
+				tfp_sprintf(txbuffer, "newest target removed");
+		}
+		else
+		{
+			if(navigation_add_target_from_string(&command[5], commandlength - 5))
+				tfp_sprintf(txbuffer, "target added");
+			else
+				tfp_sprintf(txbuffer, "target list full");
+		}
+	}
 	else if(strcmp("gps\n", command) == 0){
 		tfp_sprintf(txbuffer, "fq %d", gps_get_fix_quality());}
 	else if(strcmp("lat\n", command) == 0){

@@ -107,5 +107,5 @@ int ftoa(float n, char *res, int afterpoint);
 
 char a2i(char ch, char** src,int base,int* nump);
 
-
+float a2f(char ch, char** src,int base); //,int* nump);
 #endif

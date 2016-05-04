@@ -102,7 +102,7 @@ static int a2d(char ch)
     }
 
 char a2i(char ch, char** src,int base,int* nump)
-    {
+{
     char* p= *src;
     int num=0;
     int digit;
@@ -114,7 +114,39 @@ char a2i(char ch, char** src,int base,int* nump)
     *src=p;
     *nump=num;
     return ch;
-    }
+}
+
+float a2f(char ch, char** src,int base)//,int* nump)
+{
+	float result=0.0;
+	int integer = 0;
+	int fraction = 0;
+
+	char* p= *src;
+
+	a2i(ch, &p, base,&integer);
+
+	ch=*p++;
+	*src=p;
+
+	a2i(ch, &p, base,&fraction);
+
+	int digits = (p - (*src));
+
+	result = (float)fraction;
+	while(digits > 0)
+	{
+		result = result/(float)base;
+		digits--;
+	}
+
+	result = result + (float)integer;
+
+	*src=p;
+
+	return result;
+
+}
 
 static void putchw(void* putp,putcf putf,int n, char z, char* bf)
 {

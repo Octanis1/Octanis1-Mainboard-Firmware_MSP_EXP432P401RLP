@@ -22,6 +22,7 @@ void Task_sleep(int a);
 #include "navigation.h"
 #include "hal/motors.h" //also contains all sorts of geometries (wheel radius etc)
 #include <math.h>
+#include "../lib/printf.h"
 
 #endif
 #define M_PI 3.14159265358979323846
@@ -103,6 +104,22 @@ float navigation_angle_for_rover(float lat1, float lon1, float lat2, float lon2,
     return angle;
 }
 
+uint8_t navigation_remove_newest_target()
+{
+	uint8_t previous_index = (navigation_targets.last_index + N_TARGETS_MAX -1) % N_TARGETS_MAX;
+
+	if(navigation_targets.last_index == navigation_targets.current_index)
+	{
+		navigation_status.current_state = STOP; //as we delete the current target
+		previous_index = navigation_targets.last_index;
+	}
+	navigation_targets.state[navigation_targets.last_index] = INVALID;
+	navigation_targets.last_index = previous_index;
+
+	return 1;
+
+}
+
 uint8_t navigation_add_target(float new_lat, float new_lon, uint8_t new_id)
 {
 	uint8_t next_index = (navigation_targets.last_index + 1) % N_TARGETS_MAX;
@@ -121,6 +138,27 @@ uint8_t navigation_add_target(float new_lat, float new_lon, uint8_t new_id)
 		return 1;
 	}
 }
+
+uint8_t navigation_add_target_from_string(char* targetstring, int stringlength)
+{
+	char ch=targetstring[0];
+	char * p = &targetstring[1];
+
+	float lat = a2f(ch, &p ,10);
+
+	ch=*p++;
+
+	float lon = a2f(ch, &p ,10);
+
+	ch=*p++;
+
+	int id;
+	a2i(ch, &p, 10,&id);
+
+	return navigation_add_target(lat, lon, id);
+}
+
+
 #if defined (NAVIGATION_TEST)
 uint8_t navigation_bypass(char command, uint8_t index);
 #else
