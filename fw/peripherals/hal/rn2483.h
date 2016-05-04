@@ -1,6 +1,6 @@
 /*
  *  File: rn2483.h
- *  Description: Model for Iridium Satellite Modem "Rockblock"
+ *  Description: Model for Microchip LoRa modem
  *  Author: Sam
  */
 

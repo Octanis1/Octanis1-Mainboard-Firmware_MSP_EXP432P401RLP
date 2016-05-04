@@ -63,7 +63,6 @@ void comm_mavlink_handler(mavlink_message_t *msg){
 		break;
 	}
 
-
 }
 
 void comm_init(){
@@ -86,7 +85,6 @@ void comm_init(){
 	}
 
 #endif
-
 
 }
 
