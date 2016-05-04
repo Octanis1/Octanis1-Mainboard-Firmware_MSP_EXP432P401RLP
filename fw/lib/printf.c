@@ -117,7 +117,7 @@ char a2i(char ch, char** src,int base,int* nump)
     }
 
 static void putchw(void* putp,putcf putf,int n, char z, char* bf)
-    {
+{
     char fc=z? '0' : ' ';
     char ch;
     char* p=bf;
@@ -127,7 +127,7 @@ static void putchw(void* putp,putcf putf,int n, char z, char* bf)
         putf(putp,fc);
     while ((ch= *bf++))
         putf(putp,ch);
-    }
+}
 
 /* WARNING: THE RETURNED STRING LENGHT ONLY WORKS FOR %u AND %d ARGUMENTS */
 int tfp_format(void* putp,putcf putf,char *fmt, va_list va)

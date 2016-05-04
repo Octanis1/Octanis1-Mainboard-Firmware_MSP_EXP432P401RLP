@@ -1,6 +1,8 @@
 #ifndef __GPS_H
 #define __GPS_H
 
+#include <stdint.h>
+
 #define NUM_SENTENCES 4
 
 void gps_task();

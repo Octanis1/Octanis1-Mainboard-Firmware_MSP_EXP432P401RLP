@@ -261,13 +261,19 @@ GPIO_PinConfig gpioPinConfigs[] = {
 
 	/* Octanis_M5678_ON */
 	GPIOMSP432_P3_1 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+#ifdef VERSION_1
+	/* Octanis_M5_IN2 */
+	GPIOMSP432_P7_6 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
+	/* Octanis_M6_IN2 */
+	GPIOMSP432_P3_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+#else
 	/* Octanis_M5_IN2 */
 	GPIOMSP432_P8_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
 	/* Octanis_M6_IN2 */
 	GPIOMSP432_P8_1 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
-
+#endif
 	/* Octanis_M7_IN2 */
 	GPIOMSP432_P3_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
@@ -491,7 +497,8 @@ void MSP_EXP432P401RLP_initPWM(void)
     		PM_TA1CCR3A, PM_NONE, PM_NONE, PM_NONE,
 		PM_TA1CCR4A, PM_NONE, PM_NONE, PM_NONE
 	};
-#else
+#endif
+#ifdef VERSION_0_6
     const uint8_t port7Map [] = {
         PM_NONE, PM_NONE, PM_NONE, PM_TA0CCR1A, //note: P7.3 was defined as windsensor input
         PM_NONE, PM_NONE, PM_NONE, PM_TA1CCR1A
@@ -501,7 +508,17 @@ void MSP_EXP432P401RLP_initPWM(void)
     		PM_TA1CCR2A, PM_NONE, PM_UCA2RXD, PM_UCA2TXD,
 		PM_TA1CCR3A, PM_NONE, PM_TA1CCR4A, PM_NONE
 	};
+#endif
+#ifdef VERSION_1
+    const uint8_t port7Map [] = {
+            PM_NONE, PM_NONE, PM_NONE, PM_TA0CCR1A, //note: P7.3 was defined as windsensor input
+            PM_NONE, PM_TA1CCR1A, PM_NONE, PM_TA1CCR2A
+        };
 
+        const uint8_t port3Map [] = {
+        		PM_NONE, PM_NONE, PM_UCA2RXD, PM_UCA2TXD,
+    		PM_TA1CCR3A, PM_NONE, PM_TA1CCR4A, PM_NONE
+        };
 #endif
     /* Mapping capture compare registers to Port 7 */
     MAP_PMAP_configurePorts((const uint8_t *) port7Map, P7MAP, 1,
@@ -524,6 +541,19 @@ void MSP_EXP432P401RLP_initPWM(void)
 
     MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P3,
 		GPIO_PIN4, GPIO_PRIMARY_MODULE_FUNCTION);
+#endif
+#ifdef VERSION_1
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P7,
+    	GPIO_PIN7, GPIO_PRIMARY_MODULE_FUNCTION);
+
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P7,
+    	GPIO_PIN5, GPIO_PRIMARY_MODULE_FUNCTION);
+
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P3,
+    	GPIO_PIN4, GPIO_PRIMARY_MODULE_FUNCTION);
+
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P3,
+        GPIO_PIN6, GPIO_PRIMARY_MODULE_FUNCTION);
 #else
     MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P7,
     		GPIO_PIN7, GPIO_PRIMARY_MODULE_FUNCTION);

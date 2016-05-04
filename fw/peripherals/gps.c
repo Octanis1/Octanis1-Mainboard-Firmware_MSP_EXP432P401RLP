@@ -7,8 +7,12 @@
 
 /********************** TODO: this could maybe be merged to the navigation task ****************/
 
+#if defined(NAVIGATION_TEST)
 
+#else
 #include "../../Board.h"
+#endif
+
 #include "hal/ublox_6.h"
 #include "../lib/minmea/minmea.h"
 #include "gps.h"
