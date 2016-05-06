@@ -176,10 +176,10 @@ void eps_task(){
 		}
 
 		// get status data (TODO: do correct conversion)
-		rover_status_eps.v_bat = (uint16_t)((float)sendEpsCommand(V_BAT)*6.67+2500);
-		rover_status_eps.v_solar = (uint16_t)((float)sendEpsCommand(V_SC)*27.5);
-		rover_status_eps.i_in = (uint16_t)((float)sendEpsCommand(I_IN)*1.19);
-		rover_status_eps.i_out = (uint16_t)((float)sendEpsCommand(I_OUT)*4.76);
+		rover_status_eps.v_bat = (uint16_t)((float)sendEpsCommand(V_BAT)*6.67+2500); // flight version should be: (float)sendEpsCommand(V_BAT)*6.67+2500)
+		rover_status_eps.v_solar = (uint16_t)((float)sendEpsCommand(V_SC)*27.5); //flight version should be *29.23 for 1.2M
+		rover_status_eps.i_in = (uint16_t)((float)sendEpsCommand(I_IN)*1.19); //
+		rover_status_eps.i_out = (uint16_t)((float)sendEpsCommand(I_OUT)*4.76);// depends on current sense resistor on eps!
 
 
 		Task_sleep(500);

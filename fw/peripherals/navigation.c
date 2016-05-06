@@ -7,6 +7,14 @@
  *  File description: Module for computing the path from position to target and sending command to motors.
  *  distances are in meters and angles in radian.
  */
+#if defined(NAVIGATION_TEST)
+#include "navigation.h"
+#include <math.h>
+void Task_sleep(int a);
+
+
+
+#else
 
 #include "../../Board.h"
 #include "gps.h"
@@ -14,27 +22,17 @@
 #include "navigation.h"
 #include "hal/motors.h" //also contains all sorts of geometries (wheel radius etc)
 #include <math.h>
+#include "../lib/printf.h"
 
-#define MATH_PI 3.14159265358979323846
-#define EARTH_RADIUS 6356752
+#endif
+#define M_PI 3.14159265358979323846
+#define EARTH_RADIUS 6356752.3
+#define INIT_LAT 45.531993
+#define INIT_LON 6.591617
+#define TARGET_LAT 46.531884
+#define TARGET_LON 6.591798
+#define TARGET_REACHED_DISTANCE 1
 
-//Target for testing, just outside of hackuarium
-#define TARGET_LAT 	46.532476
-#define TARGET_LON 	6.590315
-#define INIT_LAT		46.5252206
-#define INIT_LON 	6.6296219
-
-//Other, hopefully closer
-#define ESP_LAT 46.520216
-#define ESP_LON 6.565783
-#define HACK_LAT 46.532483
-#define HACK_LON 6.590315
-#define EL_LAT 46.519832
-#define EL_LON 6.564925
-#define ROLEX_LAT 46.518996
-#define ROLEX_LON 6.568278
-#define PLASMA_LAT 46.517241
-#define PLASMA_LON 6.565021
 
 typedef struct _navigation_status{
 	float lat_rover;
@@ -56,21 +54,27 @@ typedef struct _navigation_status{
 static navigation_status_t navigation_status;
 static target_list_t navigation_targets;
 
+float navigation_degree_to_rad(float degree)
+{
+    float rad = degree/360 *2*M_PI;
+    return rad;
+}
 
-float getDistanceToTarget(float lat_current, float lon_current, float lat_target, float lon_target){
+float navigation_dist_to_target(float lat_current, float lon_current, float lat_target, float lon_target){
 
-	/*About this code: here we use the haversin formula
-	 * As I undersood, we may run into problems if our robot goes past the 180/-180 degree line
-	 * As I get it, we have a 0.5% error with this formula, even with us being at the pole
-	 * However it would be nice to double check that
-	 * 0.5% error means that, on a 5m distance, we are 25cm imprecise.
-	 * Since the gps is probably 5m off, it's not a big deal.
-	 */
-	float distance = 0;
+	//The gps gives the coordinate in degree
+    lat_current = navigation_degree_to_rad(lat_current);
+    lat_target = navigation_degree_to_rad(lat_target);
+    lon_current = navigation_degree_to_rad(lon_current);
+    lon_target = navigation_degree_to_rad(lon_target);
 
-	distance = 2*EARTH_RADIUS*asinf(sqrtf(powf(sinf((lat_target-lat_current)/2),2) + cosf(lat_current)*cosf(lat_target)*powf(sinf((lon_target-lon_current)/2),2)));
+    float delta_lat = lat_target - lat_current;
+    float delta_lon = lon_target - lon_current;
 
-	return distance;
+    float a = sinf(delta_lat/2)*sinf(delta_lat/2) + cosf(lat_current)*cosf(lat_target) * sinf(delta_lon/2)*sinf(delta_lon/2);
+    
+    float distance = 2*EARTH_RADIUS*asinf(sqrtf(a));
+    return distance;
 }
 
 
@@ -78,31 +82,43 @@ float getDistanceToTarget(float lat_current, float lon_current, float lat_target
  * Params: lat1, long1 => Latitude and Longitude of current point
  *         lat2, long2 => Latitude and Longitude of target  point
  *
- *         headX       => x-Value of built-in compass
- *
  * Returns the degree of a direction from current point to target point (between -180, 180).
- * Note: a negative result means the target is towards the left of the rover. positive to the right
- *
+ * Negative value are toward East, positive West
  */
-float getAngleToTarget(float lat1, float lon1, float lat2, float lon2, float headX) {
-    float dLon = MATH_PI/180*(lon2-lon1);
+float navigation_angle_to_target(float lat1, float lon1, float lat2, float lon2) {
+    float dLon = navigation_degree_to_rad(lon2-lon1);
 
-    lat1 = MATH_PI/180*(lat1);
-    lat2 = MATH_PI/180*(lat2);
-
+    lat1 = navigation_degree_to_rad(lat1);
+    lat2 = navigation_degree_to_rad(lat2);
+    
     float y = sinf(dLon) * cosf(lat2);
     float x = cosf(lat1) * sinf(lat2) - sinf(lat1)*cosf(lat2)*cosf(dLon);
-    float brng = 180/MATH_PI*(atan2f(y, x));
-
-    brng = brng - headX;
-
-    // bound result between -180 and 180
-    if(brng < -180.0)
-    		brng = 360 + brng;
+    float brng = 180/M_PI*(atan2f(y, x));
 
     return brng;
 }
 
+float navigation_angle_for_rover(float lat1, float lon1, float lat2, float lon2, float headX) {
+    float angle = navigation_angle_to_target(lat1, lon1, lat2, lon2);
+    angle = angle - headX;
+    return angle;
+}
+
+uint8_t navigation_remove_newest_target()
+{
+	uint8_t previous_index = (navigation_targets.last_index + N_TARGETS_MAX -1) % N_TARGETS_MAX;
+
+	if(navigation_targets.last_index == navigation_targets.current_index)
+	{
+		navigation_status.current_state = STOP; //as we delete the current target
+		previous_index = navigation_targets.last_index;
+	}
+	navigation_targets.state[navigation_targets.last_index] = INVALID;
+	navigation_targets.last_index = previous_index;
+
+	return 1;
+
+}
 
 uint8_t navigation_add_target(float new_lat, float new_lon, uint8_t new_id)
 {
@@ -123,6 +139,29 @@ uint8_t navigation_add_target(float new_lat, float new_lon, uint8_t new_id)
 	}
 }
 
+uint8_t navigation_add_target_from_string(char* targetstring, int stringlength)
+{
+	char ch=targetstring[0];
+	char * p = &targetstring[1];
+
+	float lat = a2f(ch, &p ,10);
+
+	ch=*p++;
+
+	float lon = a2f(ch, &p ,10);
+
+	ch=*p++;
+
+	int id;
+	a2i(ch, &p, 10,&id);
+
+	return navigation_add_target(lat, lon, id);
+}
+
+
+#if defined (NAVIGATION_TEST)
+uint8_t navigation_bypass(char command, uint8_t index);
+#else
 uint8_t navigation_bypass(char command, uint8_t index)
 {
 	if(command == 'n')
@@ -160,7 +199,7 @@ uint8_t navigation_bypass(char command, uint8_t index)
 	navigation_status.current_state = BYPASS;
 	return 1;
 }
-
+#endif
 
 /* fetch the next target to move to from the queue */
 void navigation_update_target()
@@ -183,6 +222,9 @@ void navigation_update_target()
 	}
 }
 
+#if defined (NAVIGATION_TEST)
+void navigation_update_position();
+#else
 void navigation_update_position()
 {
 	if(gps_update_new_position(&(navigation_status.lat_rover), &(navigation_status.lon_rover)))
@@ -202,13 +244,13 @@ void navigation_update_position()
 
 	// recalculate heading angle
 	navigation_status.heading_rover = imu_get_fheading();
-	navigation_status.angle_to_target = getAngleToTarget(navigation_status.lat_rover,navigation_status.lon_rover,
+	navigation_status.angle_to_target = navigation_angle_for_rover(navigation_status.lat_rover,navigation_status.lon_rover,
 			navigation_status.lat_target, navigation_status.lon_target, navigation_status.heading_rover);
 	// recalculate distance to target
-	navigation_status.distance_to_target = getDistanceToTarget(navigation_status.lat_rover,navigation_status.lon_rover,
+	navigation_status.distance_to_target = navigation_dist_to_target(navigation_status.lat_rover,navigation_status.lon_rover,
 			navigation_status.lat_target, navigation_status.lon_target);
 }
-
+#endif
 
 void navigation_update_state()
 {
@@ -229,6 +271,19 @@ void navigation_update_state()
 			{
 				navigation_status.current_state = GO_TO_TARGET;
 			}
+			else
+			{
+				cli_printf("Calibrate IMU (status: %d/9)\n",imu_get_calib_status());
+				int i;
+				for (i = 0; i<(7-imu_get_calib_status());i++) //blink shorter for better calibration
+				{
+					GPIO_toggle(Board_LED_RED);
+					Task_sleep(50);
+					GPIO_toggle(Board_LED_RED);
+					Task_sleep(50);
+				}
+				GPIO_write(Board_LED_RED,0);
+			}
 		}
 		else if(navigation_status.current_state == GO_TO_TARGET)
 		{
@@ -242,6 +297,9 @@ void navigation_update_state()
 }
 
 
+#if defined (NAVIGATION_TEST)
+void navigation_move();
+#else
 void navigation_move()
 {
 	static int32_t lspeed, rspeed;
@@ -284,10 +342,12 @@ void navigation_move()
 		// TODO: obstacle avoidance
 	}
 }
+#endif
 
 
-
-
+#if defined (NAVIGATION_TEST)
+void navigation_init();
+#else
 void navigation_init()
 {
 	motors_init();
@@ -303,18 +363,11 @@ void navigation_init()
 	int i=navigation_add_target(TARGET_LAT, TARGET_LON, 0); //fill initial target to list
 
 }
+#endif
 
-
-void navigation_task(){
-
-//	float toPlasma=0;
-//	float toEL=0;
-//	float toRolex=0;
-//	float toHackuarium=0;
-//	float toEsplanade=0;
-
+void navigation_task()
+{
 	navigation_init();
-	Task_sleep(1000);
 
 	while(1){
 
@@ -323,63 +376,7 @@ void navigation_task(){
 		navigation_update_state();
 		navigation_move();
 
-		int i=navigation_add_target(TARGET_LAT, TARGET_LON, 0); //TODO: remove test
 
-
-//		GPIO_write(Board_LED_RED, Board_LED_OFF);
-//		struct navigation_status pos_var;
-//
-//		//Commented for debug reason because oterwise we never go into the else
-//		//We check if the gps is already working
-//		if (gps_get_validity() == 0){
-//			//error
-//		}
-//		else{
-//			pos_var.lat_current = gps_get_lat();
-//			pos_var.lon_current = gps_get_lon();
-//
-//			toPlasma= nav_get_distance(pos_var.lat_current, pos_var.lon_current, PLASMA_LAT, PLASMA_LON);
-//			toEL= nav_get_distance(pos_var.lat_current, pos_var.lon_current, EL_LAT, EL_LON);
-//			toRolex= nav_get_distance(pos_var.lat_current, pos_var.lon_current, ROLEX_LAT, ROLEX_LON);
-//			toHackuarium= nav_get_distance(pos_var.lat_current, pos_var.lon_current, HACK_LAT, HACK_LON);
-//			toEsplanade= nav_get_distance(pos_var.lat_current, pos_var.lon_current, ESP_LAT, ESP_LON);
-//
-//			//We check if we are at the location
-//			if(toEsplanade <= 5){
-//				System_printf("Esplanade reached\n");
-//				    /* SysMin will only print to the console when you call flush or exit */
-//				System_flush();
-//			}
-//			else if (toHackuarium <= 5){
-//				System_printf("Hackuarium reached\n");
-//								    /* SysMin will only print to the console when you call flush or exit */
-//				System_flush();
-//			}
-//			else if (toEL <= 5){
-//				System_printf("EL reached\n");
-//								    /* SysMin will only print to the console when you call flush or exit */
-//				System_flush();
-//			}
-//			else if (toRolex <= 5){
-//				System_printf("RLC reached\n");
-//								    /* SysMin will only print to the console when you call flush or exit */
-//				System_flush();
-//			}
-//			else if (toPlasma <= 5){
-//				System_printf("Plasma center reached\n");
-//								    /* SysMin will only print to the console when you call flush or exit */
-//				System_flush();
-//			}
-//			else{
-//				System_printf("To EL = %f\n To Esplanade = %f\n To Rolex = %f\n To Plasma = %f\n To Hackuarium = %f\n", toEL, toEsplanade, toRolex, toPlasma, toHackuarium);
-//				    /* SysMin will only print to the console when you call flush or exit */
-//				System_flush();
-//			}
-//
-//			pos_var.angle = nav_get_angle(pos_var.lat_current, pos_var.lon_current, HACK_LAT, HACK_LON);
-//
-//			//Tell the motor to move accordingly
-//		}
 		Task_sleep(1500);
 
 	}

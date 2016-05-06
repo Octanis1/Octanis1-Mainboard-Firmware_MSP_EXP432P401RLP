@@ -19,7 +19,7 @@
 
 // peripheral includes to execute commands
 #include "navigation.h"
-
+#include "../core/log.h"
 
 
 /* libraries to get status info from other peripherals */
@@ -28,8 +28,6 @@
 #include "weather.h"
 #include "../core/eps.h"
 
-int comm_process_command(char* command, int commandlength, char* answer, int* answerlength, COMM_DESTINATION destination);
-void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination);
 
 #define N_USER_MESSAGES 10
 static COMM_LED_CONTROL led_control;
@@ -135,7 +133,7 @@ void comm_poll_status(rover_status_comm* stat)
 {
 	/*Fill in struct with status information */
 	stat->gps_lat = gps_get_lat();
-	stat->gps_long = (-gps_get_lon()); //TODO: remove when back in europe!
+	stat->gps_long = gps_get_lon();
 	stat->gps_fix_quality = gps_get_fix_quality();
 	stat->system_seconds = Seconds_get();
 	stat->v_bat = eps_get_vbat();
@@ -187,6 +185,7 @@ static int threshold_reached(COMM_CONDITION cond, rover_status_comm* stat)
 #define MAX_LED_FREQ 10
 void comm_execute_thresholds(rover_status_comm* stat)
 {
+	static int led_off = 1; //makes sure we turn off the led only once, as not to disturb other uses of the red LED.
 	/* Execute LED thresholds */
 	static int led_cycles = 0;
 	if(threshold_reached(led_control.cond, stat))
@@ -203,10 +202,15 @@ void comm_execute_thresholds(rover_status_comm* stat)
 			led_cycles = 0;
 		}
 
+		led_off = 0;
 	}
 	else
 	{
-		GPIO_write(Board_LED_RED,0);
+		if(!led_off)
+		{
+			GPIO_write(Board_LED_RED,0);
+			led_off = 1;
+		}
 	}
 
 	int i = 0;
@@ -248,7 +252,6 @@ void comm_receive_command(COMM_DESTINATION destination)
 	   case DESTINATION_BLE:
 		  received_command = hm10_receive(rxdata, &rx_stringlength);
 		  break;
-
 	   default:
 	   	   cli_printf("comm Task: Command RX source not supported\n");
 	}
@@ -322,7 +325,7 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 					led_control.frequency = command[compos+4] - '0';}
 				led_control.cond = condition;
 			}
-			else if('m' == command[compos+1]){
+			else if(command[compos+1] == 'b' || command[compos+1] == 'l'){ //send BLE or lora message
 				int j=0;
 				int k=0;
 				for(k=compos+3;k<commandlength-1;k++)
@@ -332,7 +335,13 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 				}
 				msg_control[n_message_rules].msglength = j;
 				msg_control[n_message_rules].cond = condition;
-				msg_control[n_message_rules].destination = destination;
+				if(command[compos+1] == 'b')
+					msg_control[n_message_rules].destination = DESTINATION_BLE;
+				else if(command[compos+1] == 'l')
+					msg_control[n_message_rules].destination = DESTINATION_LORA_TTN;
+				else
+					msg_control[n_message_rules].destination = DESTINATION_DEBUG_UART;
+
 				msg_control[n_message_rules].msg_sent_since_last_threshold_crossing = 0;
 				n_message_rules = (n_message_rules+1) % N_USER_MESSAGES;
 			}
@@ -344,37 +353,113 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 
 		//prepare response
 		if(command_valid)
-			tfp_sprintf(txbuffer, "threshold set.\n");
+			tfp_sprintf(txbuffer, "threshold set.");
 		else
-			tfp_sprintf(txbuffer, "invalid threshold command.\n");
+			tfp_sprintf(txbuffer, "invalid threshold command.");
 
 	}
 	else if(strncmp ("rst", command, 3) == 0){ //reset all thresholds
 		n_message_rules = 0;
 		led_control.frequency = 0;
-		tfp_sprintf(txbuffer, "thresholds reset.\n");
+		tfp_sprintf(txbuffer, "thresholds reset.");
 	}
 	else if(strncmp ("mot", command, 3) == 0){ //motor command was sent
 		if(navigation_bypass(command[3],(command[4]-'0')))
-			tfp_sprintf(txbuffer, "okm\n");
+			tfp_sprintf(txbuffer, "okm");
 		else
-			tfp_sprintf(txbuffer, "inv\n");
+			tfp_sprintf(txbuffer, "inv");
+	}
+	else if(strncmp("targ", command, 4) == 0){
+		if(strncmp("rm", &command[5], 2) == 0) //remove newest target from list
+		{
+			if(navigation_remove_newest_target())
+				tfp_sprintf(txbuffer, "newest target removed");
+		}
+		else
+		{
+			if(navigation_add_target_from_string(&command[5], commandlength - 5))
+				tfp_sprintf(txbuffer, "target added");
+			else
+				tfp_sprintf(txbuffer, "target list full");
+		}
+	}
+	else if(strcmp("gps\n", command) == 0){
+		tfp_sprintf(txbuffer, "fq %d", gps_get_fix_quality());}
+	else if(strcmp("lat\n", command) == 0){
+		ftoa(gps_get_lat(), txbuffer, 4);
+	}else if(strcmp("lon\n", command) == 0){
+		ftoa(gps_get_lon(), txbuffer, 4);
+	}else if(strcmp("sat\n", command) == 0){
+		tfp_sprintf(txbuffer, "sat %d", gps_get_satellites_tracked());
+	}else if(strcmp("valid\n", command) == 0){
+		tfp_sprintf(txbuffer, "valid %d", gps_get_validity());
+	}else if(strcmp("hdop\n", command) == 0){
+		tfp_sprintf(txbuffer, "hdop %d", gps_get_hdop());
+	}else if(strcmp("lastgps\n", command) == 0){
+		tfp_sprintf(txbuffer, "lu %d", gps_get_last_update_time());
+	}else if(strcmp("tasks\n", command) == 0){
+	   system_listTasks();
+	   require_answer = 0; //printf is already done in syste_listTasks() --> only answers in DEBUG_UART
+	}else if(strcmp("rbs\n", command) == 0){
+	   tfp_sprintf(txbuffer, "rb sleep? %d", rockblock_get_sleep_status());
+	}else if(strcmp("rbn\n", command) == 0){
+	   tfp_sprintf(txbuffer, "rb net? %d", rockblock_get_net_availability());
+	}else if (strcmp("logrst", command) == 0){
+	   log_reset();
+	   tfp_sprintf(txbuffer, "ok");
+	}else if (strcmp("logpos\n", command) == 0){
+	   tfp_sprintf(txbuffer, "logpos %u", log_write_pos());
+	}
+	else{ // received command not valid
+		tfp_sprintf(txbuffer, "invalid command");
 	}
 
 	*answerlength = strlen(txbuffer);
+
 	return require_answer;
 }
 
 void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination)
 {
+
+	/** Prepare hex string for LoRa **/
+	char hex_string_byte[2];
+	char hex_string[COMM_FRAME_SIZE]; //TODO: ATTENTION: this is too small! need to change this
+	memset(&hex_string, 0, sizeof(hex_string));
+
+	int i;
+	for(i=0; i<stringlength; i++){
+		memset(&hex_string_byte, 0, sizeof(hex_string_byte));
+		tfp_sprintf(hex_string_byte, "%02x", txdata[i]);
+		strcat(hex_string, hex_string_byte);
+	}
+	/** end hex string **/
+
 	switch(destination) {
-	   case DESTINATION_BLE:
-		  hm10_send(txdata, stringlength);
+	   case DESTINATION_LORA_TTN:
+		  rn2483_send_receive(hex_string, 2*stringlength);
 		  break;
 
+	   case DESTINATION_GSM:
+		  sim800_send_http(hex_string, strlen(hex_string), MIME_TEXT_PLAIN);
+		  break;
+
+	   case DESTINATION_GSM_SMS:
+		  sim800_send_sms(txdata, strlen(txdata));
+		  break;
+
+	   case DESTINATION_BLE:
+		  hm10_send(txdata, strlen(txdata));
+		  break;
+
+	   case DESTINATION_DEBUG_UART:
+		   cli_printf("%s\n",txdata);
+		   break;
+
 	   default:
-	   	   cli_printf("comm Task: TX destination not supported\n");
+		   cli_printf("comm Task: Status TX destination not supported\n");
 	}
+
 }
 
 
@@ -386,7 +471,6 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 
 	stringlength += ftoa(stat->gps_lat, &txdata[stringlength], 7); //convert gps latitude to string with sign and 7 afterpoint
 	txdata[stringlength++] = ','; 					//plus a comma
-	txdata[stringlength++] = '-'; 					//plus negative sign for US TODO: remove when back in europe
 
 
 	stringlength += ftoa(stat->gps_long, &txdata[stringlength], 7); //convert gps long to string with sign and 7 afterpoint
@@ -421,40 +505,7 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 		stringlength = COMM_FRAME_SIZE;
 	}
 
-	char hex_string_byte[2];
-	char hex_string[COMM_FRAME_SIZE]; //TODO: ATTENTION: this is too small! need to change this
-	memset(&hex_string, 0, sizeof(hex_string));
-
-	int i;
-	for(i=0; i<stringlength; i++){
-		memset(&hex_string_byte, 0, sizeof(hex_string_byte));
-		tfp_sprintf(hex_string_byte, "%02x", txdata[i]);
-		strcat(hex_string, hex_string_byte);
-	}
-
-
-
-	switch(destination) {
-	   case DESTINATION_LORA_TTN:
-		  rn2483_send_receive(hex_string, 2*stringlength);
-	      break;
-
-	   case DESTINATION_GSM:
-		  sim800_send_http(hex_string, strlen(hex_string), MIME_TEXT_PLAIN);
-	      break;
-
-	   case DESTINATION_GSM_SMS:
-		  sim800_send_sms(txdata, strlen(txdata));
-		  break;
-
-	   case DESTINATION_BLE:
-		  hm10_send(txdata, strlen(txdata));
-		  break;
-
-	   default:
-	   	   cli_printf("comm Task: Status TX destination not supported\n");
-	}
-
+	comm_tx_data(txdata, stringlength, destination);
 }
 
 
@@ -480,7 +531,7 @@ void comm_task(){
 
     		// Poll for received commands
 		#ifdef BLE_ENABLED
-    		comm_receive_command(DESTINATION_BLE);
+    			comm_receive_command(DESTINATION_BLE);
 		#endif
 
     		rx_counter++;
@@ -493,8 +544,6 @@ void comm_task(){
     		if(rx_counter > RX_TO_TX_RATIO)
     		{
     			rx_counter=0;
-
-
 
 			#ifdef GSM_ENABLED
 			comm_send_status(&my_rover_status, DESTINATION_GSM);
@@ -524,6 +573,9 @@ void comm_task(){
 			#ifdef BLE_ENABLED
 			comm_send_status(&my_rover_status, DESTINATION_BLE);
 			#endif
+
+			comm_send_status(&my_rover_status, DESTINATION_DEBUG_UART);
+
     		}
     }
 

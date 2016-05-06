@@ -4,7 +4,11 @@
  *  Created on: 19 Aug 2015
  *      Author: Sam
  */
+#if defined(NAVIGATION_TEST)
+
+#else
 #include "../../Board.h"
+#endif
 #include "imu.h"
 #include "hal/motors.h"
 #include "hal/bno055_support.h"
