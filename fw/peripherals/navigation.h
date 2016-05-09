@@ -30,7 +30,12 @@ typedef struct _target_list_t{
 /* Add a new target position to the list. Returns 1 on success and 0
  * if the queue is full.
  */
+uint8_t navigation_remove_newest_target();
+
 uint8_t navigation_add_target(float new_lat, float new_lon, uint8_t new_id);
+
+uint8_t navigation_add_target_from_string(char* targetstring, int stringlength);
+
 
 /* bypass the navigation logic and control the motors individually via CLI or other interface.
  * Commands are single chars:
