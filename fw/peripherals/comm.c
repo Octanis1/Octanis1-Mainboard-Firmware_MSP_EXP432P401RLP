@@ -17,6 +17,9 @@
 #include "hal/vc0706.h"
 #include "../lib/printf.h"
 
+//mavlink wire protocol
+#include "../lib/mavlink/common/mavlink.h"
+
 // peripheral includes to execute commands
 #include "navigation.h"
 #include "../core/system.h"
@@ -422,8 +425,46 @@ void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination)
 	}
 	/** end hex string **/
 
+
+
+	/* MAVLINK TESTING START */
+
+
+			   mavlink_system_t mavlink_system;
+
+			   mavlink_system.sysid = 25;                   ///< ID 25 for this rover
+			   mavlink_system.compid = MAV_COMP_ID_ALL;     ///< The component sending the message is all, it could be also a Linux process
+
+			   // Define the system type, in this case an airplane
+			   uint8_t system_type = MAV_TYPE_GROUND_ROVER;
+			   uint8_t autopilot_type = MAV_AUTOPILOT_GENERIC;
+
+			   uint8_t system_mode = MAV_MODE_PREFLIGHT; ///< Booting up
+			   uint8_t system_state = MAV_STATE_UNINIT; ///< System ready for flight
+
+
+			   // Initialize the required buffers
+			   mavlink_message_t msg;
+			   uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+
+			   // Pack the message
+			   mavlink_msg_heartbeat_pack(mavlink_system.sysid, mavlink_system.compid, &msg, system_type, autopilot_type, system_mode, 0, system_state);
+
+			   // Copy the message to the send buffer
+			   uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+
+			   // Send the message with the standard UART send function
+			   // uart0_send might be named differently depending on
+			   // the individual microcontroller / library in use.
+
+				/* MAVLINK TESTING END */
+
+
+
+
 	switch(destination) {
 	   case DESTINATION_LORA_TTN:
+
 		  rn2483_send_receive(hex_string, 2*stringlength);
 		  break;
 
