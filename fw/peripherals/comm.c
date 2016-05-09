@@ -9,9 +9,6 @@
 #include "comm.h"
 #include <string.h>
 
-
-
-
 #ifdef MAVLINK_ON_UART0_ENABLED
 	static UART_Handle application_uart = NULL;
 #endif
