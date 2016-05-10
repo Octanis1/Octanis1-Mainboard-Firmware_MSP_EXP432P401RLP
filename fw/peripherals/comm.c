@@ -467,8 +467,8 @@ void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination)
 void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 {
 	/* create Hexstring buffer from struct */
-	int stringlength=0;
-	char txdata[COMM_STRING_SIZE] = "";
+	int stringlength=5;
+	char txdata[COMM_STRING_SIZE] = "stat:";
 
 	stringlength += ftoa(stat->gps_lat, &txdata[stringlength], 7); //convert gps latitude to string with sign and 7 afterpoint
 	txdata[stringlength++] = ','; 					//plus a comma
@@ -477,13 +477,13 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 	stringlength += ftoa(stat->gps_long, &txdata[stringlength], 7); //convert gps long to string with sign and 7 afterpoint
 	txdata[stringlength++] = ','; 					//plus a comma
 
-	stringlength += tfp_sprintf(&(txdata[stringlength]), "%d,%u,%u,%d,%d,%d,%d,%u,%u,%d,%d,%d,%d,%u",
+	stringlength += tfp_sprintf(&(txdata[stringlength]), "%d,%u,%u,%u,%u,%u,%u,%d,%d,%d,%d,%u,%u,%d,%d,%d,%d,%u",
 											stat->gps_fix_quality,
 											stat->system_seconds,
-											/*stat->v_bat,
+											stat->v_bat,
 											stat->v_solar,
 											stat->i_in,
-											stat->i_out,*/
+											stat->i_out,
 											stat->imu_calib_status,
 											stat->imu_heading,
 											stat->imu_roll,
@@ -548,11 +548,11 @@ void comm_task(){
 
 			#ifdef GSM_ENABLED
 			comm_send_status(&my_rover_status, DESTINATION_GSM);
-			if(i > 10){
-				Task_sleep(2000);
-				comm_send_status(&my_rover_status, DESTINATION_GSM_SMS);
-				i=0;
-			}
+//			if(i > 10){
+//				Task_sleep(2000);
+//				comm_send_status(&my_rover_status, DESTINATION_GSM_SMS);
+//				i=0;
+//			}
 			i++;
 			Task_sleep(5000);
 			#endif

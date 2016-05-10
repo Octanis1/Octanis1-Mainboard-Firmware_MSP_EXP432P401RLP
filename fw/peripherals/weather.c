@@ -113,66 +113,6 @@ void log_weather(struct _weather_data *d)
 }
 
 
-
-
-/*************** IMU stuff moved here ******************/
-#include "imu.h"
-#include "hal/motors.h"
-#include "hal/bno055_support.h"
-#include "hal/i2c_helper.h"
-
-	static struct _imu_data {
-		int16_t accel_x;
-		int16_t accel_y;
-		int16_t accel_z;
-		double d_euler_data_p;
-		double d_euler_data_h;
-		double d_euler_data_r;
-		unsigned char calib_status;
-	} imu_data;
-
-	// pitch Euler data in 100 degrees
-	int16_t imu_get_pitch(){
-		return (int16_t)(100*imu_data.d_euler_data_p);
-	}
-
-	// heading Euler data in 100 degrees
-	int16_t imu_get_heading(){
-		return (int16_t)(100*imu_data.d_euler_data_h);
-	}
-
-	float imu_get_fheading(){
-		return (float)imu_data.d_euler_data_h;
-	}
-
-	// roll Euler data in 100 degrees
-	int16_t imu_get_roll(){
-		return (int16_t)(100*imu_data.d_euler_data_r);
-	}
-
-	// return IMU calib status
-	uint8_t imu_get_calib_status(){
-		return (uint8_t)(imu_data.calib_status);
-	}
-
-	// linear acceleration data in 100 m/s^2
-	int16_t imu_get_accel_x(){
-		return (imu_data.accel_x);
-	}
-
-	// linear acceleration data in 100 m/s^2
-	int16_t imu_get_accel_y(){
-		return (imu_data.accel_y);
-	}
-
-	// linear acceleration data in 100 m/s^2
-	int16_t imu_get_accel_z(){
-		return (imu_data.accel_z);
-	}
-
-
-/************** END IMU stuff *******************/
-
 void weather_task(){
 	static uint8_t external_board_connected = 0;
 	external_board_connected = weather_check_external_connected();
@@ -223,23 +163,7 @@ void weather_task(){
 	/************* flash test END ****************/
 #endif
 
-
-
-
-/************* IMU STUFF moved here *************/
-
-	imu_init();
-
-    uint32_t log_counter = 0;
-	while(1){
-
-
-		imu_data.calib_status=bno055_check_calibration_status();
-		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r));
-		bno055_get_accel(&(imu_data.accel_x), &(imu_data.accel_y), &(imu_data.accel_z));
-
-
-/************** END IMU stuff *******************/
+    while(1){
 
 		Task_sleep(3000);
 #ifdef FLASH_ENABLED
