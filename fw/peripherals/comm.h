@@ -20,6 +20,7 @@
 #define COMM_STRING_SIZE 175
 //how many times do we poll for received commands per sending a status message (RX: every 50ms, TX every 5s)
 #define RX_TO_TX_RATIO	100
+#define LORA_TX_RATIO	5 // only send lora messages every 5th time compared to CLI
 
 
 typedef enum comm_dest {

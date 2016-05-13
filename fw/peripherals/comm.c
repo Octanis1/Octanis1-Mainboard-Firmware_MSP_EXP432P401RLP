@@ -528,6 +528,7 @@ void comm_task(){
 
     int i = 11;
     int rx_counter = RX_TO_TX_RATIO;
+    int lora_tx_counter = LORA_TX_RATIO;
     while(1){
 
     		// Poll for received commands
@@ -559,7 +560,12 @@ void comm_task(){
 
 
 			#ifdef LORA_ENABLED
-			comm_send_status(&my_rover_status, DESTINATION_LORA_TTN);
+			lora_tx_counter++;
+			if(lora_tx_counter > LORA_TX_RATIO)
+			{
+				comm_send_status(&my_rover_status, DESTINATION_LORA_TTN);
+				lora_tx_counter = 0;
+			}
 			#endif
 
 

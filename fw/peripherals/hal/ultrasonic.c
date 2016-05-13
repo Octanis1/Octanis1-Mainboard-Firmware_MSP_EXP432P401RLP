@@ -7,6 +7,7 @@
 
 #include "ultrasonic.h"
 #include "../../../Board.h"
+#include "../../core/eps.h"
 #include <xdc/runtime/Timestamp.h>
 #include <xdc/runtime/Types.h>
 #include <msp432.h> //to access the registers
@@ -15,9 +16,12 @@
 /* DriverLib Includes */
 #include "driverlib.h"
 
+#define TRIGGER_HIGH		0
+#define TRIGGER_LOW		1
 
-uint16_t pulse_rising_time[N_ULTRASONIC_SENSORS_PER_ARRAY*N_ULTRASONIC_ARRAYS]; //record timestamp when pulse was sent out
-uint16_t pulse_falling_time[N_ULTRASONIC_SENSORS_PER_ARRAY*N_ULTRASONIC_ARRAYS]; //record timestamp when the interrupt was triggered by the echoed pulse
+
+uint16_t pulse_rising_time[N_ULTRASONIC_SENSORS]; //record timestamp when pulse was sent out
+uint16_t pulse_falling_time[N_ULTRASONIC_SENSORS]; //record timestamp when the interrupt was triggered by the echoed pulse
 
 //uint16_t
 
@@ -44,6 +48,13 @@ Timer_A_CaptureModeConfig captureModeConfig =
 
 void ultrasonic_init()
 {
+	/* Set the trigger pins to LOW (i.e. turn on NMOS -> set port high) and turn off 5V */
+	GPIO_write(Board_ULTRASONIC_TRIGGER0, TRIGGER_LOW);
+	GPIO_write(Board_ULTRASONIC_TRIGGER1, TRIGGER_LOW);
+
+	GPIO_write(Board_ULTRASONIC_ENABLE, 0);
+
+
 	/* configure input pins as capture/compare functions: */
 	GPIO_setAsPeripheralModuleFunctionInputPin(Board_ULTRASONIC_IN_0_PORT,
 			Board_ULTRASONIC_IN_0_PIN,  Board_ULTRASONIC_IN_0_SELECT);
@@ -124,10 +135,10 @@ void ultrasonic_init()
 	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_1_TAx_MODULE, Board_ULTRASONIC_IN_1_CCR );
 	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_2_TAx_MODULE, Board_ULTRASONIC_IN_2_CCR );
 	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_3_TAx_MODULE, Board_ULTRASONIC_IN_3_CCR );
-	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_0_TAx_MODULE, Board_ULTRASONIC_IN_4_CCR );
-	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_1_TAx_MODULE, Board_ULTRASONIC_IN_5_CCR );
-	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_2_TAx_MODULE, Board_ULTRASONIC_IN_6_CCR );
-	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_3_TAx_MODULE, Board_ULTRASONIC_IN_7_CCR );
+	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_4_TAx_MODULE, Board_ULTRASONIC_IN_4_CCR );
+	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_5_TAx_MODULE, Board_ULTRASONIC_IN_5_CCR );
+	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_6_TAx_MODULE, Board_ULTRASONIC_IN_6_CCR );
+	Timer_A_enableCaptureCompareInterrupt(Board_ULTRASONIC_IN_7_TAx_MODULE, Board_ULTRASONIC_IN_7_CCR );
 
 	/* Enabling MASTER interrupts */
 	MAP_Interrupt_enableMaster();
@@ -188,11 +199,11 @@ bool ultrasonic_get_distance(int32_t distance_values[])
 				/* Check that no timer overflow happened */
 				if(pulse_rising_time[i+arrayoffset] < pulse_falling_time[i+arrayoffset])
 				{ //calculate time difference normally
-					distance_values[i+arrayoffset]=(int32_t)pulse_falling_time[i+arrayoffset] - (int32_t)pulse_rising_time[i+arrayoffset];
+					distance_values[i+arrayoffset]= ((int32_t)pulse_falling_time[i+arrayoffset] - (int32_t)pulse_rising_time[i+arrayoffset]);
 				}
 				else
 				{ //compensate for the overflow
-					distance_values[i+arrayoffset]=(int32_t)pulse_falling_time[i+arrayoffset] - (int32_t)pulse_rising_time[i+arrayoffset] + 0xFFFF;
+					distance_values[i+arrayoffset]= ((int32_t)pulse_falling_time[i+arrayoffset] - (int32_t)pulse_rising_time[i+arrayoffset] + 0xFFFF);
 				}
 
 			//	cli_printf("us : distance : %d \n", distance_values[i+arrayoffset]);
@@ -205,12 +216,23 @@ bool ultrasonic_get_distance(int32_t distance_values[])
 }
 
 /*
- * distance_values: integer times of flight in ms for each sensor
+ * input:
+ * - dist: integer times of flight in ms for each sensor
+ * - motor_scaling_factor: 100% PWM signal number.
  *
- * return an array of boolean values (or possibly more information) if the direction corresponding to an array of ultrasonic sensors is cleared or not
+ * returns:
+ * - motor_values[0] = left speed
+ * - motor_values[1] = right speed
+ * - return value: true if obstacle is near, false if not.
  */
-void ultrasonic_check_distance(int32_t distance_values[], int8_t directions_array[])
+uint8_t ultrasonic_check_distance(int32_t dist[], int32_t motor_values[], int32_t motor_scaling_factor)
 {
+	static uint8_t bl[N_ULTRASONIC_SENSORS] = {0,-0.5,-0.5,1,-0.5,2,1,0}; //braitenberg_weights_left
+	static uint8_t br[N_ULTRASONIC_SENSORS] = {0,1,2,-0.5,1,-0.5,-0.5,0}; //braitenberg_weights_right
+
+//	static uint8_t bl[N_ULTRASONIC_SENSORS] = {0,2,0.5,-0.5,1,-0.5,-0.5,0}; //braitenberg_weights_left
+//	static uint8_t br[N_ULTRASONIC_SENSORS] = {0,-0.5,-0.5,1,-0.5,0.5,2,0}; //braitenberg_weights_right
+
 	uint8_t j=0,
 			i=0,
 			arrayoffset=0; //the index offset to store the distance_value's for each array
@@ -222,18 +244,39 @@ void ultrasonic_check_distance(int32_t distance_values[], int8_t directions_arra
 		arrayoffset = j*N_ULTRASONIC_SENSORS_PER_ARRAY;
 		for(i=0; i < N_ULTRASONIC_SENSORS_PER_ARRAY; i++)
 		{
-			if(distance_values[i+arrayoffset] <= CRITICAL_DISTANCE_THRESHOLD_TIMESTAMP)
+			if(dist[i+arrayoffset] <= CRITICAL_DISTANCE_THRESHOLD_TICKS) //if any of the sensors is below a threshold,
 			{
-				directions_array[i+arrayoffset] = 0;
+				int32_t average_val = (dist[2] + dist[5]); //look ahead and react stronger when something is near just ahead
+				motor_values[0] = bl[0] * dist[0] + bl[1] * dist[1] + bl[2] * dist[2] + bl[3] * dist[3] +
+						bl[4] * dist[4] + bl[5] * dist[5] + bl[6] * dist[6] + bl[7] * dist[7] + average_val;
+				motor_values[1] = br[0] * dist[0] + br[1] * dist[1] + br[2] * dist[2] + br[3] * dist[3] +
+						br[4] * dist[4] + br[5] * dist[5] + br[6] * dist[6] + br[7] * dist[7] + average_val;
+				//scaling with absolute maximum and 100% speed:
+				int32_t maxval = motor_values[0];
+				if(motor_values[1] > maxval)
+					maxval = motor_values[1];
+
+				motor_values[0] = motor_values[0] * motor_scaling_factor / maxval;
+				motor_values[1] = motor_values[1] * motor_scaling_factor / maxval;
+
+				if(motor_values[0] < motor_scaling_factor/2)
+					motor_values[0] = motor_scaling_factor/2;
+				if(motor_values[1] < motor_scaling_factor/2)
+					motor_values[1] = motor_scaling_factor/2;
+
+				return 1;
 			}
-			else
-			{
-				directions_array[i+arrayoffset] = 1;
-			}
+
 		//	cli_printf("us: cleared? - for %d \n", directions_array[i+arrayoffset]);
 		}
 
 	}
+
+	//no close obstacle --> full speed ahead.
+	motor_values[0] = motor_scaling_factor;
+	motor_values[1] = motor_scaling_factor;
+
+	return 0;
 }
 
 /*
@@ -241,45 +284,41 @@ void ultrasonic_check_distance(int32_t distance_values[], int8_t directions_arra
  * sends task to sleep for the necessary time. Then it triggers the other
  * 4 sensors and waits again before the calling function can resume
  *
- *
+ * Trigger0 is connected to sensors 6,0,4 and 2,
+ * Trigger1 is connected to sensors 3,1,5 and 7.
  */
 void ultrasonic_send_pulses(uint8_t index)
 {
 	// TODO: this part of the code is only left here in case we have two different triggers
-	const static uint8_t enable_pins[2] = {Board_ULTRASONIC_SLEEP,Board_ULTRASONIC_SLEEP};
-	const static uint8_t trigger_pins[2] = {Board_ULTRASONIC_TRIGGER,Board_ULTRASONIC_TRIGGER};
+	const static uint8_t trigger_pins[2] = {Board_ULTRASONIC_TRIGGER0,Board_ULTRASONIC_TRIGGER1};
 
 	uint32_t start_time;
 	uint32_t stop_time;
 
-	/* Turn on logic OR gate */
-//	GPIO_write(Board_ULTRASONIC_OR_SLEEP, 0);
-
-	/* Turn on sensors 0-3 */
-	GPIO_write(enable_pins[index], 1);
+	/* Turn on 5V supply for sensors */
+	eps_switch_module(M5V_ON);
+	GPIO_write(Board_ULTRASONIC_ENABLE, 1);
 	Task_sleep(600); //assure supply voltage could rise high.
 
 	//TODO: maybe would be useful to turn on/off CCR interrupts
 
 	/* Send pulse for 10us */
 	start_time = Timestamp_get32();
-	GPIO_write(trigger_pins[index], 1);
+	GPIO_write(trigger_pins[index], TRIGGER_HIGH);
 	stop_time = Timestamp_get32();
 	while((stop_time-start_time)<10*CYCLES_PER_US)
 	{ //wait 10us
 		stop_time = Timestamp_get32();
 	}
-//	Task_sleep(60); //todo remove
-	GPIO_write(trigger_pins[index], 0);
+	GPIO_write(trigger_pins[index], TRIGGER_LOW);
 
 	/* Wait for all pulses to arrive and ISR to finish (max pulse lenght: 23ms) */
 	Task_sleep(80);
 
-	/* Turn off sensors 0-3 (or 4-7) */
-	GPIO_write(enable_pins[index], 0);
+	/* Turn off sensors */
+	GPIO_write(Board_ULTRASONIC_ENABLE, 0);
+	eps_switch_module(M5V_OFF);
 
-	/* Turn off logic OR gate */
-//	GPIO_write(Board_ULTRASONIC_OR_SLEEP, 1);
 }
 
 /* TODO: this code is just here for reference. remove later
