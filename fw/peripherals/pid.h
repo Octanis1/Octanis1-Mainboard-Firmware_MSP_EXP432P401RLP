@@ -1,7 +1,7 @@
 #ifndef PID_H
 #define PID_H
 
-typedef struct pid_t{
+typedef struct pid_controler_t{
     float pGain;
     float iGain;
     float dGain;
@@ -9,8 +9,8 @@ typedef struct pid_t{
     float iState;
     float iMax;
     float iMin;
-}pid_t;
+}pid_controler_t;
 
-float pid_update (*pid_t pid, float error, float position);
+float pid_update (pid_controler_t *pid, float error, float position);
 
 #endif

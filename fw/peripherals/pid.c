@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "pid.h"
 
 
-float pid_update (*pid_t pid, float error, float position)
+float pid_update (pid_controler_t *pid, float error, float position)
 {
     float pTerm, iTerm, dTerm;
     
