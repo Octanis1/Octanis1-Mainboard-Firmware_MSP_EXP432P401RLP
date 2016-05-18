@@ -21,6 +21,7 @@ void Task_sleep(int a);
 #include "imu.h"
 #include "navigation.h"
 #include "hal/motors.h" //also contains all sorts of geometries (wheel radius etc)
+#include "hal/ultrasonic.h"
 #include <math.h>
 #include "../lib/printf.h"
 
@@ -260,7 +261,9 @@ void navigation_update_state()
 	}
 	else if(navigation_status.current_state == AVOID_OBSTACLE)
 	{
-		//TODO: check if obstacle is gone.
+
+
+
 	}
 	else
 	{
@@ -339,7 +342,13 @@ void navigation_move()
 	}
 	else if(navigation_status.current_state == AVOID_OBSTACLE)
 	{
-		// TODO: obstacle avoidance
+		int32_t distance_values[N_ULTRASONIC_SENSORS];
+		int32_t motor_values[2];
+		ultrasonic_get_distance(distance_values);
+		ultrasonic_check_distance(distance_values, motor_values, PWM_SPEED_100);
+
+		cli_printf("speed l=%d, r=%d \n", motor_values[0], motor_values[1]);
+		motors_wheels_move(motor_values[0], motor_values[1], motor_values[0], motor_values[1]);
 	}
 }
 #endif
@@ -351,6 +360,7 @@ void navigation_init();
 void navigation_init()
 {
 	motors_init();
+	ultrasonic_init();
 	navigation_status.lat_rover = INIT_LAT;
 	navigation_status.lon_rover = INIT_LON;
 	navigation_status.heading_rover = 0.0;
@@ -358,7 +368,7 @@ void navigation_init()
 	navigation_status.lon_target = TARGET_LON;
 	navigation_status.distance_to_target = 0.0;
 	navigation_status.angle_to_target = 0.0;
-	navigation_status.current_state = STOP;
+	navigation_status.current_state = AVOID_OBSTACLE;
 
 	int i=navigation_add_target(TARGET_LAT, TARGET_LON, 0); //fill initial target to list
 

@@ -236,6 +236,7 @@ int rockblock_get_sleep_status(){
 
 
 int rockblock_get_net_availability(){
-	return GPIO_read(Board_ROCKBLOCK_NET);
+	return 0; //TODO: decide on pin and initialize GPIO
+//	return GPIO_read(Board_ROCKBLOCK_NET);
 }
 
