@@ -12,5 +12,6 @@ typedef struct pid_controler_t{
 }pid_controler_t;
 
 float pid_update (pid_controler_t *pid, float error, float position);
+void pid_init (pid_controler_t* pid, float pGain, float iGain, float dGain, float iMax, float iMin);
 
 #endif
