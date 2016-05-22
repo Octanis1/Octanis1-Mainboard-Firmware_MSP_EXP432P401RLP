@@ -3,7 +3,7 @@
 #include "pid.h"
 
 
-float pid_update (pid_controler_t *pid, float error, float position)
+float pid_update (pid_controler_t *pid, float error)
 {
     float pTerm, iTerm, dTerm;
     
@@ -20,8 +20,8 @@ float pid_update (pid_controler_t *pid, float error, float position)
     iTerm = pid->iGain*pid->iState;
 
     //differential term
-    dTerm = pid->dGain*(position - pid->dState);
-    pid->dState = position;
+    dTerm = pid->dGain*(error - pid->dState);
+    pid->dState = error;
 
     return pTerm + iTerm - dTerm;
 }

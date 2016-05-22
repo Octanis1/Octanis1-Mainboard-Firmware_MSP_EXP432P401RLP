@@ -38,9 +38,6 @@ void Task_sleep(int a);
 #define PGAIN_A 1
 #define IGAIN_A 0
 #define DGAIN_A 0
-#define PGAIN_A 0
-#define IGAIN_A 0
-#define DGAIN_A 0
 #define MOTOR_IMAX 40
 #define MOTOR_IMIN 0
 
@@ -321,7 +318,7 @@ void navigation_move()
 
 	if(navigation_status.current_state == GO_TO_TARGET)
 	{
-		angular = pid_update(&pid_a, navigation_status.angle_to_target, navigation_status.heading_rover);
+		angular = pid_update(&pid_a, navigation_status.angle_to_target);
 
 		if (angular > 0){
 			lspeed = PWM_SPEED_100;
