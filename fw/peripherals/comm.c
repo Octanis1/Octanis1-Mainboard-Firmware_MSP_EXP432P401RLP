@@ -274,6 +274,7 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 	int require_answer = 1;
 	int command_valid = 1;
 	COMM_CONDITION condition;
+	char ** endptr = NULL;
 
 	if(strncmp ("thr ", command, 4) == 0){ //new threshold to be set
 		/*extract the variable*/
@@ -410,10 +411,15 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 	   tfp_sprintf(txbuffer, "ok");
 	}else if (strcmp("logpos\n", command) == 0){
 	   tfp_sprintf(txbuffer, "logpos %u", log_write_pos());
+	}else if(strncmp("pid", command, 3) == 0){
+		//command = "pid <a> <p/i/d> <value in floating point>"
+		endptr = NULL;
+		navigation_change_gain(command[4], command[6], strtof(&command[8], endptr));
 	}
 	else{ // received command not valid
 		tfp_sprintf(txbuffer, "invalid command");
 	}
+
 
 	*answerlength = strlen(txbuffer);
 

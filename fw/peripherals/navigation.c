@@ -36,12 +36,12 @@ void Task_sleep(int a);
 #define TARGET_REACHED_DISTANCE 1
 
 #define PGAIN_A 1
-#define IGAIN_A 1
-#define DGAIN_A 1
-#define PGAIN_A 1
-#define IGAIN_A 1
-#define DGAIN_A 1
-#define MOTOR_IMAX 100
+#define IGAIN_A 0
+#define DGAIN_A 0
+#define PGAIN_A 0
+#define IGAIN_A 0
+#define DGAIN_A 0
+#define MOTOR_IMAX 40
 #define MOTOR_IMIN 0
 
 typedef struct _navigation_status{
@@ -63,6 +63,8 @@ typedef struct _navigation_status{
 
 static navigation_status_t navigation_status;
 static target_list_t navigation_targets;
+static pid_controler_t pid_a;
+
 
 float navigation_degree_to_rad(float degree)
 {
@@ -315,45 +317,24 @@ void navigation_move();
 void navigation_move()
 {
 	static int32_t lspeed, rspeed;
-	static pid_controler_t pid_d; //PID controler for angle and dist
-	static pid_controler_t pid_a;
-	float linear = 0;
 	float angular = 0;
-
-	/*should be written somewhere but not here, because don't want to reset them
-	pid_init(&pid_d, PGAIN_D, IGAIN_D, DGAIN_D, MOTOR_IMAX, MOTOR_IMIN);
-	pid_init(&pid_a, PGAIN_A, IGAIN_A, DGAIN_A, MOTOR_IMAX, MOTOR_IMIN);*/
 
 	if(navigation_status.current_state == GO_TO_TARGET)
 	{
-		/*lspeed = PWM_SPEED_100;
-		rspeed = PWM_SPEED_100;*/
-
-		linear = pid_update(&pid_d, navigation_status.distance_to_target, navigation_status.distance_to_target);
 		angular = pid_update(&pid_a, navigation_status.angle_to_target, navigation_status.heading_rover);
 
-		// we take the non-linearity into account
-		if (linear > 100)
-			linear = 100;
-		else if (linear < 0)
-			linear = 0;
-		if (angular > 100)
-			angular = 100;
-		else if (angular <0)
-			angular = 0;
+		if (angular > 0){
+			lspeed = PWM_SPEED_100;
+			rspeed = PWM_SPEED_100 - angular;
+			if (rspeed < 60)
+				rspeed = 60;
+		}else if (angular <= 0){
+			rspeed = PWM_SPEED_100;
+			lspeed = PWM_SPEED_100 - angular;
+			if (lspeed < 60)
+				lspeed = 60;
 
-		//TODO: check if sign is correct
-		lspeed = linear + angular;
-		rspeed = linear - angular;
-
-		if (lspeed > 100)
-			lspeed = 100;
-		else if (lspeed < 0)
-			lspeed = 0;
-		if (rspeed > 100)
-			rspeed = 100;
-		else if (rspeed < 0)
-			rspeed = 0;
+		}
 
 		motors_wheels_move(lspeed, rspeed, lspeed, rspeed);
 	}
@@ -374,6 +355,17 @@ void navigation_move()
 }
 #endif
 
+void navigation_change_gain(char pid, char type, float gain)
+{
+	if (pid == 'a'){
+		if(type == 'p')
+			pid_a.pGain = gain;
+		else if (type == 'i')
+			pid_a.iGain = gain;
+		else if (type == 'd')
+			pid_a.dGain = gain;
+	}
+}
 
 #if defined (NAVIGATION_TEST)
 void navigation_init();
@@ -382,6 +374,7 @@ void navigation_init()
 {
 	motors_init();
 	ultrasonic_init();
+	pid_init(&pid_a, PGAIN_A, IGAIN_A, DGAIN_A, MOTOR_IMAX, MOTOR_IMIN);
 	navigation_status.lat_rover = INIT_LAT;
 	navigation_status.lon_rover = INIT_LON;
 	navigation_status.heading_rover = 0.0;

@@ -55,6 +55,8 @@ float navigation_angle_to_target(float lat_current, float lon_current, float lat
 float navigation_angle_for_rover(float lat1, float lon1, float lat2, float lon2, float headX);
 float navigation_degree_to_rad(float degree);
 
+void navigation_change_gain(char pid, char type, float gain);
+
 //"Main" task of the file
 void navigation_task();
 
