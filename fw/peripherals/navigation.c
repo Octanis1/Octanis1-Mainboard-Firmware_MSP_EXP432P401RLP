@@ -323,13 +323,13 @@ void navigation_move()
 		if (angular > 0){
 			lspeed = PWM_SPEED_100;
 			rspeed = PWM_SPEED_100 - angular;
-			if (rspeed < PWM_SPEED_60)
-				rspeed = PWM_SPEED_60;
+			if (rspeed < PWM_SPEED_70)
+				rspeed = PWM_SPEED_70;
 		}else if (angular <= 0){
 			rspeed = PWM_SPEED_100;
 			lspeed = PWM_SPEED_100 + angular;
-			if (lspeed < PWM_SPEED_60)
-				lspeed = PWM_SPEED_60;
+			if (lspeed < PWM_SPEED_70)
+				lspeed = PWM_SPEED_70;
 
 		}
 

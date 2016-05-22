@@ -161,7 +161,17 @@ void ultrasonic_init()
 
 }
 
+int32_t ultrasonic_get_smallest (int32_t *distance_values, uint8_t size){
+	int32_t smallest = 2147483648;
+	int i = 0;
 
+	for(i=0; i<size; i++){
+		if(distance_values[i] < smallest)
+			smallest = distance_values[i];
+	}
+
+	return smallest;
+}
 
 /*
  * distance_values: integer times of flight in ms for each sensor

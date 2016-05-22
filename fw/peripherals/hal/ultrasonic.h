@@ -38,6 +38,8 @@
 
 void ultrasonic_init();
 
+int32_t ultrasonic_get_smallest (int32_t *distance_values, uint8_t size);
+
 /* returns 1 if success */
 bool ultrasonic_get_distance(int32_t* distance_values);
 
