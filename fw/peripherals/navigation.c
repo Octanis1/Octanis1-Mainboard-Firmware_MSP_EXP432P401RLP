@@ -31,7 +31,7 @@ void Task_sleep(int a);
 #define EARTH_RADIUS 6356752.3
 #define INIT_LAT 45.531993
 #define INIT_LON 6.591617
-#define TARGET_LAT 46.531884
+#define TARGET_LAT 0
 #define TARGET_LON 6.591798
 #define TARGET_REACHED_DISTANCE 1
 
@@ -326,17 +326,17 @@ void navigation_move()
 		if (angular > 0){
 			lspeed = PWM_SPEED_100;
 			rspeed = PWM_SPEED_100 - angular;
-			if (rspeed < 60)
-				rspeed = 60;
+			if (rspeed < PWM_SPEED_60)
+				rspeed = PWM_SPEED_60;
 		}else if (angular <= 0){
 			rspeed = PWM_SPEED_100;
-			lspeed = PWM_SPEED_100 - angular;
-			if (lspeed < 60)
-				lspeed = 60;
+			lspeed = PWM_SPEED_100 + angular;
+			if (lspeed < PWM_SPEED_60)
+				lspeed = PWM_SPEED_60;
 
 		}
 
-		motors_wheels_move(lspeed, rspeed, lspeed, rspeed);
+		motors_wheels_move((int32_t)lspeed, (int32_t)rspeed, (int32_t)lspeed, (int32_t)rspeed);
 	}
 	else if(navigation_status.current_state == STOP)
 	{
@@ -382,7 +382,7 @@ void navigation_init()
 	navigation_status.lon_target = TARGET_LON;
 	navigation_status.distance_to_target = 0.0;
 	navigation_status.angle_to_target = 0.0;
-	navigation_status.current_state = AVOID_OBSTACLE;
+	navigation_status.current_state = GO_TO_TARGET;
 
 	int i=navigation_add_target(TARGET_LAT, TARGET_LON, 0); //fill initial target to list
 
