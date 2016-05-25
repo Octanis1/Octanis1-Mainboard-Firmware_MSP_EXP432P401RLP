@@ -63,6 +63,11 @@ static target_list_t navigation_targets;
 static pid_controler_t pid_a;
 
 
+float navigation_get_angle_to_target()
+{
+	return navigation_status.angle_to_target;
+}
+
 float navigation_degree_to_rad(float degree)
 {
     float rad = degree/360 *2*M_PI;
@@ -269,8 +274,10 @@ void navigation_update_state()
 	}
 	else if(navigation_status.current_state == AVOID_OBSTACLE)
 	{
-
-
+		int32_t distance_values[N_ULTRASONIC_SENSORS];
+		ultrasonic_get_distance(distance_values);
+		if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) > OBSTACLE_MAX_DIST)
+			navigation_status.current_state = GO_TO_TARGET;
 
 	}
 	else
