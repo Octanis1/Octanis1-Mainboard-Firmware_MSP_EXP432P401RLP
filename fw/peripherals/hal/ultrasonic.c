@@ -23,6 +23,9 @@
 uint16_t pulse_rising_time[N_ULTRASONIC_SENSORS]; //record timestamp when pulse was sent out
 uint16_t pulse_falling_time[N_ULTRASONIC_SENSORS]; //record timestamp when the interrupt was triggered by the echoed pulse
 
+static uint8_t bl[N_ULTRASONIC_SENSORS] = {0,-0.5,-0.5,1,-0.5,2,1,0}; //braitenberg_weights_left
+static uint8_t br[N_ULTRASONIC_SENSORS] = {0,1,2,-0.5,1,-0.5,-0.5,0}; //braitenberg_weights_right
+
 //uint16_t
 
 void ultrasonic_ccr_ISR(uint8_t pin_index, uint16_t timestamp, uint8_t edgetype);
@@ -159,6 +162,33 @@ void ultrasonic_init()
 	TIMER_A2->CCTL[2] |= TIMER_A_CCTLN_CM__BOTH + CCIE + CAP;// TIMER_A_CCTLN_CCIS__CCIA;
 	*/
 
+	ultrasonic_set_bl(0,-0.5,-0.5,1,-0.5,2,1,0); //braitenberg_weights_left
+	ultrasonic_set_br(0,1,2,-0.5,1,-0.5,-0.5,0);
+
+}
+
+void ultrasonic_set_bl(int8_t a, int8_t b, int8_t c, int8_t d, int8_t e, int8_t f, int8_t g, int8_t h)
+{
+	bl[0]=a;
+	bl[1]=b;
+	bl[2]=c;
+	bl[3]=d;
+	bl[4]=e;
+	bl[5]=f;
+	bl[6]=g;
+	bl[7]=h;
+}
+
+void ultrasonic_set_br(int8_t a, int8_t b, int8_t c, int8_t d, int8_t e, int8_t f, int8_t g, int8_t h)
+{
+	br[0]=a;
+	br[1]=b;
+	br[2]=c;
+	br[3]=d;
+	br[4]=e;
+	br[5]=f;
+	br[6]=g;
+	br[7]=h;
 }
 
 int32_t ultrasonic_get_smallest (int32_t *distance_values, uint8_t size){
@@ -237,8 +267,6 @@ bool ultrasonic_get_distance(int32_t distance_values[])
  */
 uint8_t ultrasonic_check_distance(int32_t dist[], int32_t motor_values[], int32_t motor_scaling_factor)
 {
-	static uint8_t bl[N_ULTRASONIC_SENSORS] = {0,-0.5,-0.5,1,-0.5,2,1,0}; //braitenberg_weights_left
-	static uint8_t br[N_ULTRASONIC_SENSORS] = {0,1,2,-0.5,1,-0.5,-0.5,0}; //braitenberg_weights_right
 
 //	static uint8_t bl[N_ULTRASONIC_SENSORS] = {0,2,0.5,-0.5,1,-0.5,-0.5,0}; //braitenberg_weights_left
 //	static uint8_t br[N_ULTRASONIC_SENSORS] = {0,-0.5,-0.5,1,-0.5,0.5,2,0}; //braitenberg_weights_right
