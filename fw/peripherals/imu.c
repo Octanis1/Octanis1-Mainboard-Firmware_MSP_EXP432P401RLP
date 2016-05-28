@@ -73,9 +73,9 @@ void imu_task(){
 	while(1){
 
 
-		imu_data.calib_status=bno055_check_calibration_status();
-		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r));
-		bno055_get_accel(&(imu_data.accel_x), &(imu_data.accel_y), &(imu_data.accel_z));
+		imu_data.calib_status=bno055_check_calibration_status(); //this line alone lets the i2c bus crash
+		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r)); //this line alone lets the i2c bus crash
+		bno055_get_accel(&(imu_data.accel_x), &(imu_data.accel_y), &(imu_data.accel_z)); //commenting out this line alone still lets the i2c bus be blocked
 
 
 	//	if(calib_status > 8)
