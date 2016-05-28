@@ -213,25 +213,34 @@ bool ultrasonic_get_distance(int32_t distance_values[])
 			i=0,
 			arrayoffset=0; //the index offset to store the distance_value's for each array
 
+	for(i=0; i < N_ULTRASONIC_SENSORS; i++)
+	{
+		distance_values[i]=0;
+	}
+
+	/* Turn on 5V supply for sensors */
+	eps_switch_module(M5V_ON);
+	GPIO_write(Board_ULTRASONIC_ENABLE, 1);
+	Task_sleep(300); //assure supply voltage could rise high.
 
 	/* iterate over the number of sensor arrays */
-	for(j=0; j<N_ULTRASONIC_ARRAYS; j++)
+	for(j=0; j<N_ULTRASONIC_ARRAYS*N_ULTRASONIC_SAMPLES; j++)
 	{
-		arrayoffset = j*N_ULTRASONIC_SENSORS_PER_ARRAY;
+		arrayoffset = (j%N_ULTRASONIC_ARRAYS)*N_ULTRASONIC_SENSORS_PER_ARRAY;
 		for(i=0; i < N_ULTRASONIC_SENSORS_PER_ARRAY; i++)
 		{
 			pulse_rising_time[i+arrayoffset]=0;
 			pulse_falling_time[i+arrayoffset]=0;
 		}
 
-		ultrasonic_send_pulses(j);
+		ultrasonic_send_pulses((j%N_ULTRASONIC_ARRAYS));
 
 		for(i=0; i < N_ULTRASONIC_SENSORS_PER_ARRAY; i++)
 		{
 			/* Check if pulse was detected and timestamp recorded */
 			if(pulse_rising_time[i+arrayoffset]==0 || pulse_falling_time[i+arrayoffset]==0) //assuming timestamp = 0 is very unlikely
 			{
-				distance_values[i+arrayoffset]=0;
+				distance_values[i+arrayoffset] = 0;
 				//retval = 0; //return ERROR
 			}
 			else
@@ -239,11 +248,11 @@ bool ultrasonic_get_distance(int32_t distance_values[])
 				/* Check that no timer overflow happened */
 				if(pulse_rising_time[i+arrayoffset] < pulse_falling_time[i+arrayoffset])
 				{ //calculate time difference normally
-					distance_values[i+arrayoffset]= ((int32_t)pulse_falling_time[i+arrayoffset] - (int32_t)pulse_rising_time[i+arrayoffset]);
+					distance_values[i+arrayoffset] += ((int32_t)pulse_falling_time[i+arrayoffset] - (int32_t)pulse_rising_time[i+arrayoffset]);
 				}
 				else
 				{ //compensate for the overflow
-					distance_values[i+arrayoffset]= ((int32_t)pulse_falling_time[i+arrayoffset] - (int32_t)pulse_rising_time[i+arrayoffset] + 0xFFFF);
+					distance_values[i+arrayoffset] += ((int32_t)pulse_falling_time[i+arrayoffset] - (int32_t)pulse_rising_time[i+arrayoffset] + 0xFFFF);
 				}
 
 			//	cli_printf("us : distance : %d \n", distance_values[i+arrayoffset]);
@@ -251,6 +260,10 @@ bool ultrasonic_get_distance(int32_t distance_values[])
 		}
 
 	}
+
+	/* Turn off sensors */
+	GPIO_write(Board_ULTRASONIC_ENABLE, 0);
+	eps_switch_module(M5V_OFF);
 
 	return retval;
 }
@@ -333,11 +346,6 @@ void ultrasonic_send_pulses(uint8_t index)
 	uint32_t start_time;
 	uint32_t stop_time;
 
-	/* Turn on 5V supply for sensors */
-	eps_switch_module(M5V_ON);
-	GPIO_write(Board_ULTRASONIC_ENABLE, 1);
-	Task_sleep(600); //assure supply voltage could rise high.
-
 	//TODO: maybe would be useful to turn on/off CCR interrupts
 
 	/* Send pulse for 10us */
@@ -351,11 +359,9 @@ void ultrasonic_send_pulses(uint8_t index)
 	GPIO_write(trigger_pins[index], TRIGGER_LOW);
 
 	/* Wait for all pulses to arrive and ISR to finish (max pulse lenght: 23ms) */
-	Task_sleep(80);
+	Task_sleep(50);
 
-	/* Turn off sensors */
-	GPIO_write(Board_ULTRASONIC_ENABLE, 0);
-	eps_switch_module(M5V_OFF);
+
 
 }
 

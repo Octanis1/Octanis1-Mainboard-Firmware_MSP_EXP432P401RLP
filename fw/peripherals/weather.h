@@ -26,33 +26,3 @@ unsigned int weather_get_ext_humid();
 
 
 void weather_task();
-
-
-
-
-/*************** IMU stuff moved here ******************/
-
-// pitch Euler data in 100 degrees
-int16_t imu_get_pitch();
-
-// heading Euler data in 100 degrees
-int16_t imu_get_heading();
-
-// heading Euler data
-float imu_get_fheading();
-
-
-// roll Euler data in 100 degrees
-int16_t imu_get_roll();
-
-// return IMU calib status
-uint8_t imu_get_calib_status();
-
-// linear acceleration data in 100 m/s^2
-int16_t imu_get_accel_x();
-// linear acceleration data in 100 m/s^2
-int16_t imu_get_accel_y();
-// linear acceleration data in 100 m/s^2
-int16_t imu_get_accel_z();
-
-/*************** END IMU stuff  ******************/
