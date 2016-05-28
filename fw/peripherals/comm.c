@@ -92,14 +92,11 @@ void comm_task(){
 	comm_init();
 
 	while(1){
-
 		//pend COMM RX TX mailbox
 
 		   //if INCOMING then
 		   //  comm_mavlink_handler()
 		   //else
 		   //  comm_send()
-
 	}
-
 }
