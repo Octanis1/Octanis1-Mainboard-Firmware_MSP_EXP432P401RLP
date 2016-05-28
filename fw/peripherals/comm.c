@@ -7,6 +7,7 @@
 
 #include "../../Board.h"
 #include "comm.h"
+#include <string.h>
 
 // comm modules to RX and TX data
 #include "hal/ultrasonic.h"
@@ -14,6 +15,7 @@
 #include "hal/rn2483.h"
 #include "hal/sim800.h"
 #include "hal/hm10.h"
+#include "imu.h"
 #define COMMAND_BUFFER_LENGTH	HM10_RXBUFFER_SIZE 	//how many bytes can be sent back as response to a command
 #include "hal/vc0706.h"
 #include "../lib/printf.h"
@@ -279,7 +281,6 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 	int i = 0;
 	COMM_CONDITION condition;
 	char ** endptr = NULL;
-	char ** lastptr = NULL;
 	int8_t br[8];
 	int8_t bl[8];
 
@@ -419,36 +420,41 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 	   tfp_sprintf(txbuffer, "ok");
 	}else if (strcmp("logpos\n", command) == 0){
 	   tfp_sprintf(txbuffer, "logpos %u", log_write_pos());
+	}else if (strncmp("max_dist", command, 8) == 0){
+		endptr = NULL;
+		navigation_set_max_dist(strtof(&command[9], endptr));
 	}else if(strncmp("pid", command, 3) == 0){
 		//command = "pid <a> <p/i/d> <value in floating point>"
 		endptr = NULL;
 		navigation_change_gain(command[4], command[6], strtof(&command[8], endptr));
 	}else if(strncmp("bl", command, 2) == 0){
-		endptr = NULL;
-		*lastptr = &command[4];
-		for(i=0; i<7; i++){
-			bl[i] = strtol(*lastptr, endptr, 10);
-			*lastptr = *endptr+1;
+		char *delim = " ";
+		char *token = NULL;
+		i = 0;
+		for(token = strtok(&command[3], delim); token != NULL; strtok (NULL,delim)){
+			char *unconverted;
+			bl[i] = strtof(token, &unconverted);
+			if (!isspace(*unconverted) && *unconverted != 0){
+				tfp_sprintf(txbuffer, "invalid number of arguments.\n");
+				break;
+			}
+			i++;
 		}
-		bl[7] = strtol(*lastptr, endptr, 10);
-		//we check if the user inputed the good amout of values
-		if (*lastptr == *endptr+1)
-			tfp_sprintf(txbuffer, "invalid number of arguments.\n");
-		else
-			ultrasonic_set_bl(bl[0], bl[1], bl[2], bl[3], bl[4], bl[5], bl[6], bl[7]);
+		ultrasonic_set_bl(bl[0], bl[1], bl[2], bl[3], bl[4], bl[5], bl[6], bl[7]);
 	}else if(strncmp("br", command, 2) == 0){
-		endptr = NULL;
-		*lastptr = &command[4];
-		for(i=0; i<7; i++){
-			br[i] = strtol(*lastptr, endptr, 10);
-			*lastptr = *endptr+1;
+		char *delim = " ";
+		char *token = NULL;
+		i = 0;
+		for(token = strtok(&command[3], delim); token != NULL; strtok (NULL,delim)){
+			char *unconverted;
+			br[i] = strtof(token, &unconverted);
+			if (!isspace(*unconverted) && *unconverted != 0){
+				tfp_sprintf(txbuffer, "invalid number of arguments.\n");
+				break;
+			}
+			i++;
 		}
-		br[7] = strtol(*lastptr, endptr, 10);
-		//we check if the user inputed the good amout of values
-		if (*lastptr == *endptr+1)
-			tfp_sprintf(txbuffer, "invalid number of arguments.\n");
-		else
-			ultrasonic_set_br(br[0], br[1], br[2], br[3], br[4], br[5], br[6], br[7]);
+		ultrasonic_set_br(br[0], br[1], br[2], br[3], br[4], br[5], br[6], br[7]);
 	}
 	else{ // received command not valid
 		tfp_sprintf(txbuffer, "invalid command");

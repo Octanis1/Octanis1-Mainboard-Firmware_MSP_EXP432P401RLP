@@ -233,6 +233,9 @@ extern "C" {
 #define Board_GEIGER_ON 1
 #define Board_GEIGER_OFF 0
 
+/*Debug pin to see when he switches to obstacle avoidance mode*/
+#define Board_OBS_A_EN				Octanis_OBS_A_EN
+
 /* Motor pins */
 #define Board_M1234_SLEEP_N			Octanis_M1234_SLEEP_N
 #define Board_M1_PH					Octanis_M1_PH

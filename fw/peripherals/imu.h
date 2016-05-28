@@ -18,6 +18,10 @@ int16_t imu_get_heading();
 // heading Euler data
 float imu_get_fheading();
 
+int16_t imu_get_accel_x();
+int16_t imu_get_accel_y();
+int16_t imu_get_accel_z();
+
 
 // roll Euler data in 100 degrees
 int16_t imu_get_roll();

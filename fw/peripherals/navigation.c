@@ -49,6 +49,7 @@ typedef struct _navigation_status{
 	float lon_target;
 	float distance_to_target;
 	float angle_to_target;
+	float max_dist_obs;
 	uint8_t angle_valid;
 	enum _current_state{
 		STOP=0,
@@ -72,6 +73,11 @@ float navigation_degree_to_rad(float degree)
 {
     float rad = degree/360 *2*M_PI;
     return rad;
+}
+
+void navigation_set_max_dist(float max_dist)
+{
+	navigation_status.max_dist_obs = max_dist;
 }
 
 float navigation_dist_to_target(float lat_current, float lon_current, float lat_target, float lon_target){
@@ -254,7 +260,7 @@ void navigation_update_position()
 		motors_struts_get_position();
 	}
 
-	navigation_status.angle_valid = (imu_get_calib_status()>6);
+	navigation_status.angle_valid = (imu_get_calib_status()>=6);
 
 	// recalculate heading angle
 	navigation_status.heading_rover = imu_get_fheading();
@@ -269,6 +275,7 @@ void navigation_update_position()
 void navigation_update_state()
 {
 	int32_t distance_values[N_ULTRASONIC_SENSORS];
+	int i = 0;
 	if(navigation_status.current_state == BYPASS)
 	{
 		//motor command is done directly in CLI
@@ -276,8 +283,11 @@ void navigation_update_state()
 	else if(navigation_status.current_state == AVOID_OBSTACLE)
 	{
 		ultrasonic_get_distance(distance_values);
-		if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) > OBSTACLE_MAX_DIST)
+		cli_printf("smallest val US %d\n", ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS));
+		if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) > navigation_status.max_dist_obs){
 			navigation_status.current_state = GO_TO_TARGET;
+			GPIO_write(Board_OBS_A_EN, 0);
+		}
 
 	}
 	else
@@ -303,15 +313,18 @@ void navigation_update_state()
 				GPIO_write(Board_LED_RED,0);
 			}
 		}
-		else if(navigation_status.current_state == GO_TO_TARGET)
+		if(navigation_status.current_state == GO_TO_TARGET)
 		{
+			ultrasonic_get_distance(distance_values);
+			cli_printf("smallest val US %d\n", ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS));
 			if(navigation_status.distance_to_target < TARGET_REACHED_DISTANCE)
 			{
 				navigation_targets.state[navigation_targets.current_index] = DONE;
 				navigation_status.current_state = STOP;
-			}
-			else if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) < OBSTACLE_MAX_DIST)
+			}else if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) < navigation_status.max_dist_obs){
+				GPIO_write(Board_OBS_A_EN, 1);
 				navigation_status.current_state = AVOID_OBSTACLE;
+			}
 		}
 	}
 }
@@ -389,6 +402,8 @@ void navigation_init()
 	navigation_status.distance_to_target = 0.0;
 	navigation_status.angle_to_target = 0.0;
 	navigation_status.current_state = AVOID_OBSTACLE;
+	navigation_status.max_dist_obs = OBSTACLE_MAX_DIST;
+	GPIO_write(Board_OBS_A_EN, 1);
 
 	int i=navigation_add_target(TARGET_LAT, TARGET_LON, 0); //fill initial target to list
 

@@ -39,8 +39,8 @@
 
 void ultrasonic_init();
 
-void ultrasonic_set_br(int8_t a, int8_t b, int8_t c, int8_t d, int8_t e, int8_t f, int8_t g, int8_t h);
-void ultrasonic_set_bl(int8_t a, int8_t b, int8_t c, int8_t d, int8_t e, int8_t f, int8_t g, int8_t h);
+void ultrasonic_set_br(float a, float b, float c, float d, float e, float f, float g, float h);
+void ultrasonic_set_bl(float a, float b, float c, float d, float e, float f, float g, float h);
 
 int32_t ultrasonic_get_smallest (int32_t *distance_values, uint8_t size);
 

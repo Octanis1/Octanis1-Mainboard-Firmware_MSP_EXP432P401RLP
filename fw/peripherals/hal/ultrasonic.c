@@ -23,8 +23,8 @@
 uint16_t pulse_rising_time[N_ULTRASONIC_SENSORS]; //record timestamp when pulse was sent out
 uint16_t pulse_falling_time[N_ULTRASONIC_SENSORS]; //record timestamp when the interrupt was triggered by the echoed pulse
 
-static int8_t bl[N_ULTRASONIC_SENSORS]; //braitenberg_weights_left
-static int8_t br[N_ULTRASONIC_SENSORS]; //braitenberg_weights_right
+static float bl[N_ULTRASONIC_SENSORS]; //braitenberg_weights_left
+static float br[N_ULTRASONIC_SENSORS]; //braitenberg_weights_right
 
 //uint16_t
 
@@ -162,12 +162,12 @@ void ultrasonic_init()
 	TIMER_A2->CCTL[2] |= TIMER_A_CCTLN_CM__BOTH + CCIE + CAP;// TIMER_A_CCTLN_CCIS__CCIA;
 	*/
 
-	ultrasonic_set_bl(0,-1,-1,2,-1,4,2,0); //braitenberg_weights_left
-	ultrasonic_set_br(0,2,4,-1,2,-1,-1,0);
+	ultrasonic_set_bl(0,-0.5,-0.5,1,-0.5,2,1,0); //braitenberg_weights_left
+	ultrasonic_set_br(0,1,2,-0.5,1,-0.5,-0.5,0);
 
 }
 
-void ultrasonic_set_bl(int8_t a, int8_t b, int8_t c, int8_t d, int8_t e, int8_t f, int8_t g, int8_t h)
+void ultrasonic_set_bl(float a, float b, float c, float d, float e, float f, float g, float h)
 {
 	bl[0]=a;
 	bl[1]=b;
@@ -179,7 +179,7 @@ void ultrasonic_set_bl(int8_t a, int8_t b, int8_t c, int8_t d, int8_t e, int8_t 
 	bl[7]=h;
 }
 
-void ultrasonic_set_br(int8_t a, int8_t b, int8_t c, int8_t d, int8_t e, int8_t f, int8_t g, int8_t h)
+void ultrasonic_set_br(float a, float b, float c, float d, float e, float f, float g, float h)
 {
 	br[0]=a;
 	br[1]=b;
@@ -192,11 +192,17 @@ void ultrasonic_set_br(int8_t a, int8_t b, int8_t c, int8_t d, int8_t e, int8_t 
 }
 
 int32_t ultrasonic_get_smallest (int32_t *distance_values, uint8_t size){
-	int32_t smallest = 2147483648;
+	int32_t smallest = 0;
 	int i = 0;
 
+	//Since some of the captor are not connected and thus return 0, we have to weed them out
 	for(i=0; i<size; i++){
-		if(distance_values[i] < smallest)
+		if (smallest == 0 && distance_values[i] != 0)
+			smallest = distance_values[i];
+	}
+
+	for(i=0; i<size; i++){
+		if((distance_values[i] < smallest) && (distance_values[i] != 0))
 			smallest = distance_values[i];
 	}
 
