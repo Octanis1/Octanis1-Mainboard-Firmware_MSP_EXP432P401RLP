@@ -9,6 +9,7 @@
 #include "comm.h"
 
 // comm modules to RX and TX data
+#include "hal/ultrasonic.h"
 #include "hal/rockblock.h"
 #include "hal/rn2483.h"
 #include "hal/sim800.h"

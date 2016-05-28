@@ -23,8 +23,8 @@
 uint16_t pulse_rising_time[N_ULTRASONIC_SENSORS]; //record timestamp when pulse was sent out
 uint16_t pulse_falling_time[N_ULTRASONIC_SENSORS]; //record timestamp when the interrupt was triggered by the echoed pulse
 
-static uint8_t bl[N_ULTRASONIC_SENSORS] = {0,-0.5,-0.5,1,-0.5,2,1,0}; //braitenberg_weights_left
-static uint8_t br[N_ULTRASONIC_SENSORS] = {0,1,2,-0.5,1,-0.5,-0.5,0}; //braitenberg_weights_right
+static int8_t bl[N_ULTRASONIC_SENSORS]; //braitenberg_weights_left
+static int8_t br[N_ULTRASONIC_SENSORS]; //braitenberg_weights_right
 
 //uint16_t
 
@@ -162,8 +162,8 @@ void ultrasonic_init()
 	TIMER_A2->CCTL[2] |= TIMER_A_CCTLN_CM__BOTH + CCIE + CAP;// TIMER_A_CCTLN_CCIS__CCIA;
 	*/
 
-	ultrasonic_set_bl(0,-0.5,-0.5,1,-0.5,2,1,0); //braitenberg_weights_left
-	ultrasonic_set_br(0,1,2,-0.5,1,-0.5,-0.5,0);
+	ultrasonic_set_bl(0,-1,-1,2,-1,4,2,0); //braitenberg_weights_left
+	ultrasonic_set_br(0,2,4,-1,2,-1,-1,0);
 
 }
 

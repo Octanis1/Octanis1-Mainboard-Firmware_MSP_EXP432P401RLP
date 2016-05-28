@@ -35,8 +35,6 @@ void Task_sleep(int a);
 #define TARGET_LON 6.591798
 #define TARGET_REACHED_DISTANCE 1
 
-#define OBSTACLE_MAX_DIST 390
-
 #define PGAIN_A 1
 #define IGAIN_A 0
 #define DGAIN_A 0

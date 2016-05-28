@@ -11,7 +11,7 @@
 #include <stdint.h>
 
 #define N_TARGETS_MAX	20
-#define OBSTACLE_MAX_DIST 1
+#define OBSTACLE_MAX_DIST 390
 typedef struct _target_list_t{
 	float lat[N_TARGETS_MAX];
 	float lon[N_TARGETS_MAX];
