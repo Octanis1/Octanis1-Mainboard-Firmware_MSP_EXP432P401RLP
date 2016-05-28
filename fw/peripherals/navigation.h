@@ -11,6 +11,7 @@
 #include <stdint.h>
 
 #define N_TARGETS_MAX	20
+#define OBSTACLE_MAX_DIST 1
 typedef struct _target_list_t{
 	float lat[N_TARGETS_MAX];
 	float lon[N_TARGETS_MAX];
@@ -47,6 +48,7 @@ uint8_t navigation_add_target_from_string(char* targetstring, int stringlength);
  */
 uint8_t navigation_bypass(char command, uint8_t index);
 
+float navigation_get_angle_to_target();
 
 //Compute angle and distance from the rover to the target
 float navigation_dist_to_target(float lat_current, float lon_current, float lat_target, float lon_target);

@@ -35,6 +35,8 @@ void Task_sleep(int a);
 #define TARGET_LON 6.591798
 #define TARGET_REACHED_DISTANCE 1
 
+#define OBSTACLE_MAX_DIST 390
+
 #define PGAIN_A 1
 #define IGAIN_A 0
 #define DGAIN_A 0
@@ -62,6 +64,11 @@ static navigation_status_t navigation_status;
 static target_list_t navigation_targets;
 static pid_controler_t pid_a;
 
+
+float navigation_get_angle_to_target()
+{
+	return navigation_status.angle_to_target;
+}
 
 float navigation_degree_to_rad(float degree)
 {
@@ -263,14 +270,16 @@ void navigation_update_position()
 
 void navigation_update_state()
 {
+	int32_t distance_values[N_ULTRASONIC_SENSORS];
 	if(navigation_status.current_state == BYPASS)
 	{
 		//motor command is done directly in CLI
 	}
 	else if(navigation_status.current_state == AVOID_OBSTACLE)
 	{
-
-
+		ultrasonic_get_distance(distance_values);
+		if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) > OBSTACLE_MAX_DIST)
+			navigation_status.current_state = GO_TO_TARGET;
 
 	}
 	else
@@ -303,6 +312,8 @@ void navigation_update_state()
 				navigation_targets.state[navigation_targets.current_index] = DONE;
 				navigation_status.current_state = STOP;
 			}
+			else if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) < OBSTACLE_MAX_DIST)
+				navigation_status.current_state = AVOID_OBSTACLE;
 		}
 	}
 }
@@ -323,13 +334,13 @@ void navigation_move()
 		if (angular > 0){
 			lspeed = PWM_SPEED_100;
 			rspeed = PWM_SPEED_100 - angular;
-			if (rspeed < PWM_SPEED_60)
-				rspeed = PWM_SPEED_60;
+			if (rspeed < PWM_SPEED_70)
+				rspeed = PWM_SPEED_70;
 		}else if (angular <= 0){
 			rspeed = PWM_SPEED_100;
 			lspeed = PWM_SPEED_100 + angular;
-			if (lspeed < PWM_SPEED_60)
-				lspeed = PWM_SPEED_60;
+			if (lspeed < PWM_SPEED_70)
+				lspeed = PWM_SPEED_70;
 
 		}
 
