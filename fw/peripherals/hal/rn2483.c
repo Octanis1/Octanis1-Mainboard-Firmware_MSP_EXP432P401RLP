@@ -26,10 +26,14 @@ static int rn2483_initialised = 1;
 		static const char rn_set_deveui[] ="mac set deveui F03D291000000046\r\n";
 		static const char rn_save[] ="mac save\r\n";
 	#else //thethingsnetwork login:
-		static const char rn_set_nwkskey[] ="mac set nwkskey 2B7E151628AED2A6ABF7158809CF4F3C\r\n";
-		static const char rn_set_appskey[] ="mac set appskey 2B7E151628AED2A6ABF7158809CF4F3C\r\n";
-		static const char rn_set_devaddr[] ="mac set devaddr 08050046\r\n";
-		static const char rn_set_deveui[] ="mac set deveui F03D291000000046\r\n";
+//		static const char rn_set_nwkskey[] ="mac set nwkskey 2B7E151628AED2A6ABF7158809CF4F3C\r\n"; //(old config values)
+//		static const char rn_set_appskey[] ="mac set appskey 2B7E151628AED2A6ABF7158809CF4F3C\r\n";
+//		static const char rn_set_devaddr[] ="mac set devaddr 08050046\r\n";
+		static const char rn_set_nwkskey[] ="mac set nwkskey FAE2006DB71C34F2DDA6C33C19D92858\r\n";
+		static const char rn_set_appskey[] ="mac set appskey 9D4D8EC1B87CE76F0EC056D197BA8CD1\r\n";
+		static const char rn_set_devaddr[] ="mac set devaddr 020312A1\r\n";
+		static const char rn_set_deveui[] =	"mac set deveui F03D291000000046\r\n";
+		static const char rn_set_appeui[] =	"mac set appeui 70B3D57ED0000171\r\n"; //TESTING
 		static const char rn_save[] ="mac save\r\n";
 	#endif
 #endif
@@ -166,6 +170,12 @@ int rn2483_config()
 	comm_result += !(rxBuffer[0] == 'o' && rxBuffer[1] == 'k');
 	rxBuffer[0] = 0;
 
+	UART_write(uart, rn_set_appeui, sizeof(rn_set_appeui));
+	UART_read(uart, rxBuffer, sizeof(rxBuffer));
+	Task_sleep(500);
+	comm_result += !(rxBuffer[0] == 'o' && rxBuffer[1] == 'k');
+	rxBuffer[0] = 0;
+
 	UART_write(uart, rn_set_nwkskey, sizeof(rn_set_nwkskey));
 	UART_read(uart, rxBuffer, sizeof(rxBuffer));
 	Task_sleep(500);
@@ -210,10 +220,10 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 	int tx_ret = UART_write(uart, txBuffer, strlen(txBuffer));
 	int rx_ret = UART_read(uart, rxBuffer, sizeof(rxBuffer));
 
-	//cli_printf("tx %d \n", tx_ret);
 
 	if(!strcmp("ok\r\n", rxBuffer))
 	{
+		cli_printf("LoRa TX: %d \n", tx_ret);
 		GPIO_toggle(Board_LED_GREEN);
 		return 1; //modem can now communicate with us
 	}

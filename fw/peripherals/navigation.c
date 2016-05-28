@@ -21,18 +21,27 @@ void Task_sleep(int a);
 #include "imu.h"
 #include "navigation.h"
 #include "hal/motors.h" //also contains all sorts of geometries (wheel radius etc)
+#include "hal/ultrasonic.h"
 #include <math.h>
 #include "../lib/printf.h"
+#include "pid.h"
 
 #endif
 #define M_PI 3.14159265358979323846
 #define EARTH_RADIUS 6356752.3
 #define INIT_LAT 45.531993
 #define INIT_LON 6.591617
-#define TARGET_LAT 46.531884
+#define TARGET_LAT 0
 #define TARGET_LON 6.591798
 #define TARGET_REACHED_DISTANCE 1
 
+#define OBSTACLE_MAX_DIST 390
+
+#define PGAIN_A 1
+#define IGAIN_A 0
+#define DGAIN_A 0
+#define MOTOR_IMAX 40
+#define MOTOR_IMIN 0
 
 typedef struct _navigation_status{
 	float lat_rover;
@@ -53,6 +62,13 @@ typedef struct _navigation_status{
 
 static navigation_status_t navigation_status;
 static target_list_t navigation_targets;
+static pid_controler_t pid_a;
+
+
+float navigation_get_angle_to_target()
+{
+	return navigation_status.angle_to_target;
+}
 
 float navigation_degree_to_rad(float degree)
 {
@@ -254,13 +270,17 @@ void navigation_update_position()
 
 void navigation_update_state()
 {
+	int32_t distance_values[N_ULTRASONIC_SENSORS];
 	if(navigation_status.current_state == BYPASS)
 	{
 		//motor command is done directly in CLI
 	}
 	else if(navigation_status.current_state == AVOID_OBSTACLE)
 	{
-		//TODO: check if obstacle is gone.
+		ultrasonic_get_distance(distance_values);
+		if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) > OBSTACLE_MAX_DIST)
+			navigation_status.current_state = GO_TO_TARGET;
+
 	}
 	else
 	{
@@ -292,6 +312,8 @@ void navigation_update_state()
 				navigation_targets.state[navigation_targets.current_index] = DONE;
 				navigation_status.current_state = STOP;
 			}
+			else if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) < OBSTACLE_MAX_DIST)
+				navigation_status.current_state = AVOID_OBSTACLE;
 		}
 	}
 }
@@ -303,35 +325,26 @@ void navigation_move();
 void navigation_move()
 {
 	static int32_t lspeed, rspeed;
+	float angular = 0;
+
 	if(navigation_status.current_state == GO_TO_TARGET)
 	{
-		if(navigation_status.angle_to_target < -90) //turn on spot to the left
-		{
-			lspeed = -PWM_SPEED_80;
-			rspeed = PWM_SPEED_80;
-		}
-		else if(navigation_status.angle_to_target > 90) //turn on spot to the right
-		{
-			lspeed = PWM_SPEED_80;
-			rspeed = -PWM_SPEED_80;
-		}
-		else if(navigation_status.angle_to_target < -5) //go to the left
-		{
-			lspeed = PWM_SPEED_60;
-			rspeed = PWM_SPEED_100;
-		}
-		else if(navigation_status.angle_to_target > 5) //go to the right
-		{
+		angular = pid_update(&pid_a, navigation_status.angle_to_target);
+
+		if (angular > 0){
 			lspeed = PWM_SPEED_100;
-			rspeed = PWM_SPEED_60;
-		}
-		else //go straight
-		{
-			lspeed = PWM_SPEED_100;
+			rspeed = PWM_SPEED_100 - angular;
+			if (rspeed < PWM_SPEED_70)
+				rspeed = PWM_SPEED_70;
+		}else if (angular <= 0){
 			rspeed = PWM_SPEED_100;
+			lspeed = PWM_SPEED_100 + angular;
+			if (lspeed < PWM_SPEED_70)
+				lspeed = PWM_SPEED_70;
+
 		}
 
-		motors_wheels_move(lspeed, rspeed, lspeed, rspeed);
+		motors_wheels_move((int32_t)lspeed, (int32_t)rspeed, (int32_t)lspeed, (int32_t)rspeed);
 	}
 	else if(navigation_status.current_state == STOP)
 	{
@@ -339,11 +352,28 @@ void navigation_move()
 	}
 	else if(navigation_status.current_state == AVOID_OBSTACLE)
 	{
-		// TODO: obstacle avoidance
+		int32_t distance_values[N_ULTRASONIC_SENSORS];
+		int32_t motor_values[2];
+		ultrasonic_get_distance(distance_values);
+		ultrasonic_check_distance(distance_values, motor_values, PWM_SPEED_100);
+
+		cli_printf("speed l=%d, r=%d \n", motor_values[0], motor_values[1]);
+		motors_wheels_move(motor_values[0], motor_values[1], motor_values[0], motor_values[1]);
 	}
 }
 #endif
 
+void navigation_change_gain(char pid, char type, float gain)
+{
+	if (pid == 'a'){
+		if(type == 'p')
+			pid_a.pGain = gain;
+		else if (type == 'i')
+			pid_a.iGain = gain;
+		else if (type == 'd')
+			pid_a.dGain = gain;
+	}
+}
 
 #if defined (NAVIGATION_TEST)
 void navigation_init();
@@ -351,6 +381,8 @@ void navigation_init();
 void navigation_init()
 {
 	motors_init();
+	ultrasonic_init();
+	pid_init(&pid_a, PGAIN_A, IGAIN_A, DGAIN_A, MOTOR_IMAX, MOTOR_IMIN);
 	navigation_status.lat_rover = INIT_LAT;
 	navigation_status.lon_rover = INIT_LON;
 	navigation_status.heading_rover = 0.0;
@@ -358,7 +390,7 @@ void navigation_init()
 	navigation_status.lon_target = TARGET_LON;
 	navigation_status.distance_to_target = 0.0;
 	navigation_status.angle_to_target = 0.0;
-	navigation_status.current_state = STOP;
+	navigation_status.current_state = GO_TO_TARGET;
 
 	int i=navigation_add_target(TARGET_LAT, TARGET_LON, 0); //fill initial target to list
 

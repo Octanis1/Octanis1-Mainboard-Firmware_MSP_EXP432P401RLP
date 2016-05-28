@@ -120,23 +120,17 @@ void timer_a0_isr()
 //#endif
 
 			//#if(Board_ULTRASONIC_IN_4_TAx_MODULE==TIMER_A0_BASE && Board_ULTRASONIC_IN_6_TAx_MODULE==TIMER_A0_BASE && Board_ULTRASONIC_IN_7_TAx_MODULE==TIMER_A0_BASE)
-	case Board_ULTRASONIC_IN_4_IV:                                      // ultrasonic input capture 4
-			/* record timestamp and logic state of input pin to get edgetype */
-			ccr_timestamp = Timer_A_getCaptureCompareCount ( TIMER_A0_BASE, Board_ULTRASONIC_IN_4_CCR );
-			ccr_edgetype  = Board_ULTRASONIC_IN_4_CCTL & TIMER_A_CCTLN_CCI; //1=rising, 0=falling
-			ultrasonic_ccr_ISR(4,ccr_timestamp,ccr_edgetype);
-			Timer_A_clearCaptureCompareInterrupt(TIMER_A0_BASE,Board_ULTRASONIC_IN_4_CCR);
-			break;
+
 	case Board_ULTRASONIC_IN_6_IV:                                      // ultrasonic input capture 6
 			ccr_timestamp = Timer_A_getCaptureCompareCount ( TIMER_A0_BASE, Board_ULTRASONIC_IN_6_CCR );
 			ccr_edgetype  = Board_ULTRASONIC_IN_6_CCTL & TIMER_A_CCTLN_CCI; //1=rising, 0=falling
-			ultrasonic_ccr_ISR(6,ccr_timestamp,ccr_edgetype);
+			ultrasonic_ccr_ISR(ULTRASONIC_INDEX_6,ccr_timestamp,ccr_edgetype);
 			Timer_A_clearCaptureCompareInterrupt(TIMER_A0_BASE,Board_ULTRASONIC_IN_6_CCR);
 			break;
 	case Board_ULTRASONIC_IN_7_IV:                                      // ultrasonic input capture 7
 			ccr_timestamp = Timer_A_getCaptureCompareCount ( TIMER_A0_BASE, Board_ULTRASONIC_IN_7_CCR );
 			ccr_edgetype  = Board_ULTRASONIC_IN_7_CCTL & TIMER_A_CCTLN_CCI; //1=rising, 0=falling
-			ultrasonic_ccr_ISR(7,ccr_timestamp,ccr_edgetype);
+			ultrasonic_ccr_ISR(ULTRASONIC_INDEX_7,ccr_timestamp,ccr_edgetype);
 			Timer_A_clearCaptureCompareInterrupt(TIMER_A0_BASE,Board_ULTRASONIC_IN_7_CCR);
 			break;
 			//#endif
@@ -163,19 +157,26 @@ void timer_a2_isr()
 			/* record timestamp and logic state of input pin to get edgetype */
 			ccr_timestamp = Timer_A_getCaptureCompareCount ( TIMER_A2_BASE, Board_ULTRASONIC_IN_0_CCR );
 			ccr_edgetype  = Board_ULTRASONIC_IN_0_CCTL & TIMER_A_CCTLN_CCI; //1=rising, 0=falling
-			ultrasonic_ccr_ISR(0,ccr_timestamp,ccr_edgetype);
+			ultrasonic_ccr_ISR(ULTRASONIC_INDEX_0,ccr_timestamp,ccr_edgetype);
 			Timer_A_clearCaptureCompareInterrupt(TIMER_A2_BASE,Board_ULTRASONIC_IN_0_CCR);
 			break;
 	case Board_ULTRASONIC_IN_1_IV:                                      // ultrasonic input capture 1
 			ccr_timestamp = Timer_A_getCaptureCompareCount ( TIMER_A2_BASE, Board_ULTRASONIC_IN_1_CCR );
 			ccr_edgetype  = Board_ULTRASONIC_IN_1_CCTL & TIMER_A_CCTLN_CCI; //1=rising, 0=falling
-			ultrasonic_ccr_ISR(1,ccr_timestamp,ccr_edgetype);
+			ultrasonic_ccr_ISR(ULTRASONIC_INDEX_1,ccr_timestamp,ccr_edgetype);
 			Timer_A_clearCaptureCompareInterrupt(TIMER_A2_BASE,Board_ULTRASONIC_IN_1_CCR);
+			break;
+	case Board_ULTRASONIC_IN_4_IV:                                      // ultrasonic input capture 4
+			/* record timestamp and logic state of input pin to get edgetype */
+			ccr_timestamp = Timer_A_getCaptureCompareCount ( TIMER_A2_BASE, Board_ULTRASONIC_IN_4_CCR );
+			ccr_edgetype  = Board_ULTRASONIC_IN_4_CCTL & TIMER_A_CCTLN_CCI; //1=rising, 0=falling
+			ultrasonic_ccr_ISR(ULTRASONIC_INDEX_4,ccr_timestamp,ccr_edgetype);
+			Timer_A_clearCaptureCompareInterrupt(TIMER_A2_BASE,Board_ULTRASONIC_IN_4_CCR);
 			break;
 	case Board_ULTRASONIC_IN_5_IV:                                      // ultrasonic input capture 5
 			ccr_timestamp = Timer_A_getCaptureCompareCount ( TIMER_A2_BASE, Board_ULTRASONIC_IN_5_CCR );
 			ccr_edgetype  = Board_ULTRASONIC_IN_5_CCTL & TIMER_A_CCTLN_CCI; //1=rising, 0=falling
-			ultrasonic_ccr_ISR(5,ccr_timestamp,ccr_edgetype);
+			ultrasonic_ccr_ISR(ULTRASONIC_INDEX_5,ccr_timestamp,ccr_edgetype);
 			Timer_A_clearCaptureCompareInterrupt(TIMER_A2_BASE,Board_ULTRASONIC_IN_5_CCR);
 			break;
 			//#else
@@ -195,13 +196,13 @@ void timer_a3_isr()
 		case Board_ULTRASONIC_IN_2_IV:                                      // ultrasonic input capture 2
 			ccr_timestamp = Timer_A_getCaptureCompareCount ( TIMER_A3_BASE, Board_ULTRASONIC_IN_2_CCR );
 			ccr_edgetype  = Board_ULTRASONIC_IN_2_CCTL & TIMER_A_CCTLN_CCI; //1=rising, 0=falling
-			ultrasonic_ccr_ISR(2,ccr_timestamp,ccr_edgetype);
+			ultrasonic_ccr_ISR(ULTRASONIC_INDEX_2,ccr_timestamp,ccr_edgetype);
 			Timer_A_clearCaptureCompareInterrupt(TIMER_A3_BASE,Board_ULTRASONIC_IN_2_CCR);
 			break;
 		case Board_ULTRASONIC_IN_3_IV:                                      // ultrasonic input capture 3
 			ccr_timestamp = Timer_A_getCaptureCompareCount ( TIMER_A3_BASE, Board_ULTRASONIC_IN_3_CCR );
 			ccr_edgetype  = Board_ULTRASONIC_IN_3_CCTL & TIMER_A_CCTLN_CCI; //1=rising, 0=falling
-			ultrasonic_ccr_ISR(3,ccr_timestamp,ccr_edgetype);
+			ultrasonic_ccr_ISR(ULTRASONIC_INDEX_3,ccr_timestamp,ccr_edgetype);
 			Timer_A_clearCaptureCompareInterrupt(TIMER_A3_BASE,Board_ULTRASONIC_IN_3_CCR);
 			break;
 			//#else

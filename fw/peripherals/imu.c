@@ -14,8 +14,10 @@
 #include "hal/bno055_support.h"
 #include "hal/i2c_helper.h"
 
-/*
 static struct _imu_data {
+	int16_t accel_x;
+	int16_t accel_y;
+	int16_t accel_z;
 	double d_euler_data_p;
 	double d_euler_data_h;
 	double d_euler_data_r;
@@ -44,19 +46,38 @@ int16_t imu_get_roll(){
 // return IMU calib status
 uint8_t imu_get_calib_status(){
 	return (uint8_t)(imu_data.calib_status);
-}*/
+}
+
+// linear acceleration data in 100 m/s^2
+int16_t imu_get_accel_x(){
+	return (imu_data.accel_x);
+}
+
+// linear acceleration data in 100 m/s^2
+int16_t imu_get_accel_y(){
+	return (imu_data.accel_y);
+}
+
+// linear acceleration data in 100 m/s^2
+int16_t imu_get_accel_z(){
+	return (imu_data.accel_z);
+}
 
 void imu_task(){
+	/************* IMU STUFF moved here *************/
 
-	/*
 	i2c_helper_init_handle();
-//	cli_printf("BNO begin \n", 0);
+
 	imu_init();
-//	motors_pwm_init(); //!!!! is already called in motors.c. caused segfault.
-*/
+
 	while(1){
-/*
+
+
 		imu_data.calib_status=bno055_check_calibration_status();
+		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r));
+		bno055_get_accel(&(imu_data.accel_x), &(imu_data.accel_y), &(imu_data.accel_z));
+
+
 	//	if(calib_status > 8)
 	//	{
 	//
@@ -69,7 +90,6 @@ void imu_task(){
 	//	}
 
 
-		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r));
 	//	if(d_euler_data_h > 180)
 	//	{
 	//		GPIO_write(Board_LED_GREEN, Board_LED_ON);
@@ -81,7 +101,7 @@ void imu_task(){
 
 		//	bno055_data_readout_template();
 
-		 */
+
 
 		/*
 		if(drive_get_status() == NOT_MOVING){

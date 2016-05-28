@@ -1,5 +1,5 @@
 
-TESTS = flash_test log_test navigation_test
+TESTS = flash_test log_test navigation_test pid_test
 
 .PHONY: test
 test: $(TESTS)
@@ -20,3 +20,6 @@ navigation_test: navigation_test.c ../peripherals/navigation.c
 
 log_test: log_test.c ../core/log.c
 	gcc -Wall -I../ -I../lib -DLOG_TEST=1 log_test.c ../core/log.c ../lib/crc8.c ../lib/cmp/cmp.c ../lib/cmp_mem_access/cmp_mem_access.c -o $@
+
+pid_test: pid_test.c ../peripherals/pid.c
+	gcc -Wall -I../ -I../lib -DPID_TEST=1 pid_test.c ../peripherals/pid.c  -o $@

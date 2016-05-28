@@ -50,11 +50,11 @@
 #define VERSION_1
 //#define FLASH_ENABLED 1
 
-#define LORA_ENABLED 1
-#define BLE_ENABLED 1
-
 //#define EPS_ENABLED 1
-//#define ROCKBLOCK_ENABLED 1
+ //#define LORA_ENABLED 1
+//#define BLE_ENABLED 1
+#define EPS_ENABLED 1
+ //#define ROCKBLOCK_ENABLED 1
 //#define UARTCAM_ENABLED 1
 //#define GSM_ENABLED 1
 
@@ -82,10 +82,6 @@ extern "C" {
  *  @brief  Enum of GPIO names on the MSP_EXP432P401RLP dev board
  */
 typedef enum MSP_EXP432P401RLP_GPIOName {
-//    MSP_EXP432P401RLP_S1 = 0,
-//    MSP_EXP432P401RLP_S2,
-    Octanis_ROCKBLOCK_NET,
-	//MSP_EXP432P401RLP_ULTRASONIC_IN0,
 	Octanis_LIGHTNING_INT,
 	Octanis_EPS_ALIVE_REQ,
 	Octanis_GEIGER_COUNTER,
@@ -93,8 +89,11 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
 	Octanis_LED1, //octanis led2
 	Octanis_ROCKBLOCK_SLEEP,
 	Octanis_LORA_RESET_N,
-	Octanis_ULTRASONIC_TRIGGER,
-	Octanis_ULTRASONIC_SLEEP,
+#ifdef VERSION_1
+	Octanis_5V_EXT_ENABLE, // ultrasonic supply voltage
+#endif
+	Octanis_ULTRASONIC_TRIGGER1,
+	Octanis_ULTRASONIC_TRIGGER0,
 	Octanis_WINDSENSOR_SLEEP,
 	Octanis_M1234_SLEEP_N,
 	Octanis_M1_PH,

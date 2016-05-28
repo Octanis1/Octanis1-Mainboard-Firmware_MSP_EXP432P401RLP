@@ -144,15 +144,8 @@ void MSP_EXP432P401RLP_initGeneral(void)
  *       reduce memory usage.
  */
 GPIO_PinConfig gpioPinConfigs[] = {
-    /* Input pins */
-    /* MSP_EXP432P401RLP_S1 */
-//    GPIOMSP432_P1_1 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
-    /* MSP_EXP432P401RLP_S2 */
-//    GPIOMSP432_P1_4 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
-	/* MSP_EXP432P401RLP_ROCKBLOCK_NET */
-	GPIOMSP432_P4_7 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
-	/* MSP_EXP432P401RLP_ULTRASONIC_IN_0 */
-	//GPIOMSP432_P5_7 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_BOTH_EDGES,
+    /********** Input pins **********/
+
 	/* Octanis_LIGHTNING_INT */
 #ifdef VERSION_1
 	GPIOMSP432_P2_0 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
@@ -166,7 +159,7 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	GPIOMSP432_P1_0 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
 
 
-	/* Output pins */
+	/********** Output pins **********/
     /* Octanis_LED1 (green) */
     GPIOMSP432_P10_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
@@ -179,10 +172,14 @@ GPIO_PinConfig gpioPinConfigs[] = {
     /* Octanis_LORA_RESET_N */
     GPIOMSP432_P9_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
 
-	/* Octanis_ULTRASONIC_TRIGGER */
+#ifdef VERSION_1
+	/* Octanis_5V_EXT_ENABLE */
+	GPIOMSP432_P1_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+#endif
+	/* Octanis_ULTRASONIC_TRIGGER1 */
 	GPIOMSP432_PJ_3 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
-	/* Octanis_ULTRASONIC_SLEEP */
+	/* Octanis_ULTRASONIC_TRIGGER0 */
 	GPIOMSP432_PJ_2 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
 	/* Octanis_WINDSENSOR_SLEEP */
@@ -511,7 +508,8 @@ void MSP_EXP432P401RLP_initPWM(void)
 #endif
 #ifdef VERSION_1
     const uint8_t port7Map [] = {
-            PM_NONE, PM_NONE, PM_NONE, PM_TA0CCR1A, //note: P7.3 was defined as windsensor input
+    			PM_TA0CCR2A, PM_TA0CCR3A, PM_NONE, PM_TA0CCR1A, //note: P7.3 was defined as windsensor input
+															// P7.0 and P7.1 as ultrasonic input.
             PM_NONE, PM_TA1CCR1A, PM_NONE, PM_TA1CCR2A
         };
 

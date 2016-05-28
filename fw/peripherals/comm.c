@@ -49,6 +49,7 @@ typedef struct _rover_status_comm {
 	uint16_t i_in;
 	uint16_t i_out;
 	uint8_t imu_calib_status;
+	float angle_target;
 	int16_t imu_heading; //converted from double
 	int16_t imu_roll; //converted from double
 	int16_t imu_pitch; //converted from double
@@ -144,6 +145,7 @@ void comm_poll_status(rover_status_comm* stat)
 	stat->v_solar = eps_get_vsolar();
 	stat->i_in = eps_get_iin();
 	stat->i_out = eps_get_iout();
+	stat->angle_target = navigation_get_angle_to_target();
 	stat->imu_calib_status = imu_get_calib_status();
 	stat->imu_heading = imu_get_heading();
 	stat->imu_roll = imu_get_roll();
@@ -276,7 +278,13 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 	//return value (default yes):
 	int require_answer = 1;
 	int command_valid = 1;
+	int i = 0;
 	COMM_CONDITION condition;
+	char ** endptr = NULL;
+	char ** lastptr = NULL;
+	int8_t br[8];
+	int8_t bl[8];
+
 
 	if(strncmp ("thr ", command, 4) == 0){ //new threshold to be set
 		/*extract the variable*/
@@ -413,10 +421,41 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 	   tfp_sprintf(txbuffer, "ok");
 	}else if (strcmp("logpos\n", command) == 0){
 	   tfp_sprintf(txbuffer, "logpos %u", log_write_pos());
+	}else if(strncmp("pid", command, 3) == 0){
+		//command = "pid <a> <p/i/d> <value in floating point>"
+		endptr = NULL;
+		navigation_change_gain(command[4], command[6], strtof(&command[8], endptr));
+	}else if(strncmp("bl", command, 2) == 0){
+		endptr = NULL;
+		*lastptr = &command[4];
+		for(i=0; i<7; i++){
+			bl[i] = strtol(*lastptr, endptr, 10);
+			*lastptr = *endptr+1;
+		}
+		bl[7] = strtol(*lastptr, endptr, 10);
+		//we check if the user inputed the good amout of values
+		if (*lastptr == *endptr+1)
+			tfp_sprintf(txbuffer, "invalid number of arguments.\n");
+		else
+			ultrasonic_set_bl(bl[0], bl[1], bl[2], bl[3], bl[4], bl[5], bl[6], bl[7]);
+	}else if(strncmp("br", command, 2) == 0){
+		endptr = NULL;
+		*lastptr = &command[4];
+		for(i=0; i<7; i++){
+			br[i] = strtol(*lastptr, endptr, 10);
+			*lastptr = *endptr+1;
+		}
+		br[7] = strtol(*lastptr, endptr, 10);
+		//we check if the user inputed the good amout of values
+		if (*lastptr == *endptr+1)
+			tfp_sprintf(txbuffer, "invalid number of arguments.\n");
+		else
+			ultrasonic_set_br(br[0], br[1], br[2], br[3], br[4], br[5], br[6], br[7]);
 	}
 	else{ // received command not valid
 		tfp_sprintf(txbuffer, "invalid command");
 	}
+
 
 	*answerlength = strlen(txbuffer);
 
@@ -509,8 +548,8 @@ void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination)
 void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 {
 	/* create Hexstring buffer from struct */
-	int stringlength=0;
-	char txdata[COMM_STRING_SIZE] = "";
+	int stringlength=5;
+	char txdata[COMM_STRING_SIZE] = "stat:";
 
 	stringlength += ftoa(stat->gps_lat, &txdata[stringlength], 7); //convert gps latitude to string with sign and 7 afterpoint
 	txdata[stringlength++] = ','; 					//plus a comma
@@ -519,13 +558,13 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 	stringlength += ftoa(stat->gps_long, &txdata[stringlength], 7); //convert gps long to string with sign and 7 afterpoint
 	txdata[stringlength++] = ','; 					//plus a comma
 
-	stringlength += tfp_sprintf(&(txdata[stringlength]), "%d,%u,%u,%d,%d,%d,%d,%u,%u,%d,%d,%d,%d,%u",
+	stringlength += tfp_sprintf(&(txdata[stringlength]), "%d,%u,%u,%u,%u,%u,%u,%d,%d,%d,%d,%u,%u,%d,%d,%d,%d,%u,%f\n",
 											stat->gps_fix_quality,
 											stat->system_seconds,
-											/*stat->v_bat,
+											stat->v_bat,
 											stat->v_solar,
 											stat->i_in,
-											stat->i_out,*/
+											stat->i_out,
 											stat->imu_calib_status,
 											stat->imu_heading,
 											stat->imu_roll,
@@ -540,7 +579,8 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 											stat->accel_y,
 											stat->accel_z,
 											stat->speed,
-											stat->altitude);
+											stat->altitude,
+											stat->angle_target);
 
 	if(stringlength > COMM_FRAME_SIZE) //should never happen! corrupt memory will be the result!
 	{
@@ -570,6 +610,7 @@ void comm_task(){
 
     int i = 11;
     int rx_counter = RX_TO_TX_RATIO;
+    int lora_tx_counter = LORA_TX_RATIO;
     while(1){
 
     		// Poll for received commands
@@ -590,18 +631,23 @@ void comm_task(){
 
 			#ifdef GSM_ENABLED
 			comm_send_status(&my_rover_status, DESTINATION_GSM);
-			if(i > 10){
-				Task_sleep(2000);
-				comm_send_status(&my_rover_status, DESTINATION_GSM_SMS);
-				i=0;
-			}
+//			if(i > 10){
+//				Task_sleep(2000);
+//				comm_send_status(&my_rover_status, DESTINATION_GSM_SMS);
+//				i=0;
+//			}
 			i++;
 			Task_sleep(5000);
 			#endif
 
 
 			#ifdef LORA_ENABLED
-			comm_send_status(&my_rover_status, DESTINATION_LORA_TTN);
+			lora_tx_counter++;
+			if(lora_tx_counter > LORA_TX_RATIO)
+			{
+				comm_send_status(&my_rover_status, DESTINATION_LORA_TTN);
+				lora_tx_counter = 0;
+			}
 			#endif
 
 
