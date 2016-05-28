@@ -56,6 +56,7 @@ static void putc_callback(void* p,char c){
 
 //can be called from any function to queue output strings (currently only integer support)
 void cli_printf(char *print_format, ...){
+#ifndef MAVLINK_ENABLED
 	static char printf_output_buffer[PRINTF_BUFFER];
 	char *strp = &printf_output_buffer[0];
 
@@ -70,6 +71,16 @@ void cli_printf(char *print_format, ...){
 
 	//post message to mailbox
     Mailbox_post(cli_print_mailbox, printf_output_buffer, BIOS_NO_WAIT);  //from this context, timeouts are not allowed
+#endif
+}
+
+void cli_send_mavlink(uint8_t *mavlink_message, int mavlink_message_size){
+#ifdef MAVLINK_ENABLED
+	if (uart != NULL) {
+		UART_write(uart, mavlink_message, mavlink_message_size);
+	}
+
+#endif
 }
 
 
@@ -110,6 +121,7 @@ void cli_task(){
 	//prints welcome message
 	UART_write(uart, consolePrompt, sizeof(consolePrompt));
 
+#ifndef MAVLINK_ENABLED
 	static int answer_required = 0;
 	static int command_length = 0;
 	static int tx_stringlength = 0;
@@ -132,62 +144,10 @@ void cli_task(){
 				cli_printf("%s\n",txdata);
 			}
 		}
-//		if(strncmp ("mot", input, 3) == 0){ //motor command was sent
-//			if(navigation_bypass(input[3],(input[4]-'0')))
-//				tfp_sprintf(output, "okm\n");
-//			else
-//				tfp_sprintf(output, "inv\n");
-//			UART_write(uart, output, sizeof(output));
-//		}
-//		else if(strcmp("gps\n", input) == 0){
-//		   tfp_sprintf(output, "fq %d", gps_get_fix_quality());
-//		   UART_write(uart, output, sizeof(output));
-//		}else if(strcmp("lat\n", input) == 0){
-//			   ftoa(gps_get_lat(), output, 4);
-//			   UART_write(uart, output, sizeof(output));
-//		}else if(strcmp("lon\n", input) == 0){
-//			   ftoa(gps_get_lon(), output, 4);
-//			   UART_write(uart, output, sizeof(output));
-//		}else if(strcmp("sat\n", input) == 0){
-//			   tfp_sprintf(output, "sat %d \n", gps_get_satellites_tracked());
-//			   UART_write(uart, output, sizeof(output));
-//		}else if(strcmp("valid\n", input) == 0){
-//			   tfp_sprintf(output, "valid %d \n", gps_get_validity());
-//			   UART_write(uart, output, sizeof(output));
-//		}else if(strcmp("hdop\n", input) == 0){
-//			   tfp_sprintf(output, "hdop %d \n", gps_get_hdop());
-//			   UART_write(uart, output, sizeof(output));
-//		}else if(strcmp("lastgps\n", input) == 0){
-//			   tfp_sprintf(output, "lu %d \n", gps_get_last_update_time());
-//			   UART_write(uart, output, sizeof(output));
-//		}else if(strcmp("tasks\n", input) == 0){
-//			   system_listTasks();
-//		}else if(strcmp("rbs\n", input) == 0){
-//			   tfp_sprintf(output, "rb sleep? %d \n", rockblock_get_sleep_status());
-//			   UART_write(uart, output, sizeof(output));
-//		}else if(strcmp("rbn\n", input) == 0){
-//			   tfp_sprintf(output, "rb net? %d \n", rockblock_get_net_availability());
-//			   UART_write(uart, output, sizeof(output));
-//		}else if (strcmp("logrst\n", input) == 0){
-//               log_reset();
-//               tfp_sprintf(output, "ok");
-//               UART_write(uart, output, sizeof(output));
-//        }else if (strcmp("logpos\n", input) == 0){
-//               tfp_sprintf(output, "logpos %u", log_write_pos());
-//               UART_write(uart, output, sizeof(output));
-//        }
-//		else if(strcmp("hoff\n", input) == 0){
-//			   hx1_off();
-//		}else if(strcmp("hon\n", input) == 0){
-//			   hx1_on();
-//		}
-
-
-
-
 
 
 	}
+#endif
 
 
 }

@@ -352,7 +352,7 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 				else if(command[compos+1] == 'l')
 					msg_control[n_message_rules].destination = DESTINATION_LORA_TTN;
 				else
-					msg_control[n_message_rules].destination = DESTINATION_DEBUG_UART;
+					msg_control[n_message_rules].destination = DESTINATION_APPLICATION_UART;
 
 				msg_control[n_message_rules].msg_sent_since_last_threshold_crossing = 0;
 				n_message_rules = (n_message_rules+1) % N_USER_MESSAGES;
@@ -411,7 +411,7 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 		tfp_sprintf(txbuffer, "lu %d", gps_get_last_update_time());
 	}else if(strcmp("tasks\n", command) == 0){
 	   system_listTasks();
-	   require_answer = 0; //printf is already done in syste_listTasks() --> only answers in DEBUG_UART
+	   require_answer = 0; //printf is already done in syste_listTasks() --> only answers in APPLICATION_UART
 	}else if(strcmp("rbs\n", command) == 0){
 	   tfp_sprintf(txbuffer, "rb sleep? %d", rockblock_get_sleep_status());
 	}else if(strcmp("rbn\n", command) == 0){
@@ -462,7 +462,7 @@ int comm_process_command(char* command, int commandlength, char* txbuffer, int* 
 	return require_answer;
 }
 
-void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination)
+void comm_tx_data(char* txdata, int len, COMM_DESTINATION destination)
 {
 
 	/** Prepare hex string for LoRa **/
@@ -471,7 +471,7 @@ void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination)
 	memset(&hex_string, 0, sizeof(hex_string));
 
 	int i;
-	for(i=0; i<stringlength; i++){
+	for(i=0; i<len; i++){
 		memset(&hex_string_byte, 0, sizeof(hex_string_byte));
 		tfp_sprintf(hex_string_byte, "%02x", txdata[i]);
 		strcat(hex_string, hex_string_byte);
@@ -479,46 +479,10 @@ void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination)
 	/** end hex string **/
 
 
-
-	/* MAVLINK TESTING START */
-
-
-			   mavlink_system_t mavlink_system;
-
-			   mavlink_system.sysid = 25;                   ///< ID 25 for this rover
-			   mavlink_system.compid = MAV_COMP_ID_ALL;     ///< The component sending the message is all, it could be also a Linux process
-
-			   // Define the system type, in this case an airplane
-			   uint8_t system_type = MAV_TYPE_GROUND_ROVER;
-			   uint8_t autopilot_type = MAV_AUTOPILOT_GENERIC;
-
-			   uint8_t system_mode = MAV_MODE_PREFLIGHT; ///< Booting up
-			   uint8_t system_state = MAV_STATE_UNINIT; ///< System ready for flight
-
-
-			   // Initialize the required buffers
-			   mavlink_message_t msg;
-			   uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-
-			   // Pack the message
-			   mavlink_msg_heartbeat_pack(mavlink_system.sysid, mavlink_system.compid, &msg, system_type, autopilot_type, system_mode, 0, system_state);
-
-			   // Copy the message to the send buffer
-			   uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
-
-			   // Send the message with the standard UART send function
-			   // uart0_send might be named differently depending on
-			   // the individual microcontroller / library in use.
-
-				/* MAVLINK TESTING END */
-
-
-
-
 	switch(destination) {
 	   case DESTINATION_LORA_TTN:
 
-		  rn2483_send_receive(hex_string, 2*stringlength);
+		  rn2483_send_receive(hex_string, 2*len);
 		  break;
 
 	   case DESTINATION_GSM:
@@ -534,9 +498,10 @@ void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination)
 		  hm10_send(txdata, strlen(txdata));
 		  break;
 
-	   case DESTINATION_DEBUG_UART:
-		  cli_printf("%s\n",txdata);
+	   case DESTINATION_APPLICATION_UART:
+
 		  break;
+
 
 	   default:
 		   cli_printf("comm Task: Status TX destination not supported\n");
@@ -629,6 +594,42 @@ void comm_task(){
     		{
     			rx_counter=0;
 
+			#ifdef MAVLINK_ENABLED
+			/* MAVLINK TESTING START */
+			   mavlink_system_t mavlink_system;
+
+			   mavlink_system.sysid = 25;                   ///< ID 25 for this rover
+			   mavlink_system.compid = MAV_COMP_ID_ALL;     ///< The component sending the message is all, it could be also a Linux process
+
+			   // Define the system type, in this case an airplane
+			   uint8_t system_type = MAV_TYPE_GROUND_ROVER;
+			   uint8_t autopilot_type = MAV_AUTOPILOT_GENERIC;
+
+			   uint8_t system_mode = MAV_MODE_PREFLIGHT; ///< Booting up
+			   uint8_t system_state = MAV_STATE_UNINIT; ///< System ready for flight
+
+
+			   // Initialize the required buffers
+			   mavlink_message_t msg;
+			   uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+
+			   // Pack the message
+			   mavlink_msg_heartbeat_pack(mavlink_system.sysid, mavlink_system.compid, &msg, system_type, autopilot_type, system_mode, 0, system_state);
+
+			   // Copy the message to the send buffer
+			   uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+
+			   // Send the message with the standard UART send function
+			   // uart0_send might be named differently depending on
+			   // the individual microcontroller / library in use.
+
+ 			   cli_send_mavlink(buf, len);
+
+			/* MAVLINK TESTING END */
+			#endif
+
+
+
 			#ifdef GSM_ENABLED
 			comm_send_status(&my_rover_status, DESTINATION_GSM);
 //			if(i > 10){
@@ -663,8 +664,9 @@ void comm_task(){
 			comm_send_status(&my_rover_status, DESTINATION_BLE);
 			#endif
 
-			comm_send_status(&my_rover_status, DESTINATION_DEBUG_UART);
-
+            #ifndef MAVLINK_ENABLED
+			comm_send_status(&my_rover_status, DESTINATION_APPLICATION_UART);
+			#endif
     		}
     }
 
