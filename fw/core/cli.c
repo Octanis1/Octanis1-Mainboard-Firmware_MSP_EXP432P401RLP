@@ -1,6 +1,7 @@
 /*
  *  File: cli.c
  *  Description: Provides a command line interface and offers possibility to register function as new command
+ *
  *  Author:
  */
 
@@ -352,6 +353,7 @@ void cli_task(){
         serial_printf((SerialDevice *)&cli_uart, "octanis Rover Console:\r\n");
         shell(commands, (SerialDevice *)&cli_uart);
     }
+
 #endif
 
 }
