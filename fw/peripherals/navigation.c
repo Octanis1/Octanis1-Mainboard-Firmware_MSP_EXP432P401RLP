@@ -285,7 +285,7 @@ void navigation_update_state()
 		ultrasonic_get_distance(distance_values);
 
 		for (i=0;i<N_ULTRASONIC_SENSORS;i++)
-			cli_printf("US %d val : %d \n", i, distance_values[i]);
+//			cli_printf("US %d val : %d \n", i, distance_values[i]);
 
 		if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) > navigation_status.max_dist_obs){
 			navigation_status.current_state = GO_TO_TARGET;
@@ -302,7 +302,7 @@ void navigation_update_state()
 
 		//We check if we're not facing the wall anymore
 		for (i=0;i<N_ULTRASONIC_SENSORS;i++)
-			cli_printf("US %d val : %d \n", i, distance_values[i]);
+//			cli_printf("US %d val : %d \n", i, distance_values[i]);
 		if ((distance_values[US_LEFT] < BACKWARD_THRESHOLD/2) || (distance_values[US_RIGHT] < BACKWARD_THRESHOLD/2)){
 			navigation_status.current_state = SPACE_NEEDED;
 		}
@@ -342,7 +342,7 @@ void navigation_update_state()
 			}
 			else
 			{
-				cli_printf("Calibrate IMU (status: %d/9)\n",imu_get_calib_status());
+//				cli_printf("Calibrate IMU (status: %d/9)\n",imu_get_calib_status());
 				int i;
 				for (i = 0; i<(7-imu_get_calib_status());i++) //blink shorter for better calibration
 				{
@@ -359,7 +359,7 @@ void navigation_update_state()
 		{
 			ultrasonic_get_distance(distance_values);
 			for (i=0;i<N_ULTRASONIC_SENSORS;i++)
-				cli_printf("US %d val : %d \n", i, distance_values[i]);
+//				cli_printf("US %d val : %d \n", i, distance_values[i]);
 			if(navigation_status.distance_to_target < TARGET_REACHED_DISTANCE)
 			{
 				navigation_targets.state[navigation_targets.current_index] = DONE;
@@ -419,7 +419,7 @@ void navigation_move()
 		ultrasonic_get_distance(distance_values);
 		ultrasonic_check_distance(distance_values, motor_values, PWM_SPEED_100);
 
-		cli_printf("speed l=%d, r=%d \n", motor_values[0], motor_values[1]);
+//		cli_printf("speed l=%d, r=%d \n", motor_values[0], motor_values[1]);
 		motors_wheels_move(motor_values[0], motor_values[1], motor_values[0], motor_values[1]);
 	}else if (navigation_status.current_state == AVOID_WALL){
 		lspeed = -PWM_SPEED_100;
@@ -481,7 +481,7 @@ void navigation_task()
 		navigation_move();
 
 
-		Task_sleep(1500);
+		Task_sleep(500);
 
 	}
 }

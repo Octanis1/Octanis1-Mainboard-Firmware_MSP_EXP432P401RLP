@@ -49,7 +49,6 @@ typedef struct _rover_status_comm {
 	uint16_t i_in;
 	uint16_t i_out;
 	uint8_t imu_calib_status;
-	float angle_target;
 	int16_t imu_heading; //converted from double
 	int16_t imu_roll; //converted from double
 	int16_t imu_pitch; //converted from double
@@ -64,6 +63,7 @@ typedef struct _rover_status_comm {
 	int16_t accel_z;
 	int32_t speed;
 	int32_t altitude;
+	int16_t angle_target;
 } rover_status_comm;
 
 
@@ -145,7 +145,6 @@ void comm_poll_status(rover_status_comm* stat)
 	stat->v_solar = eps_get_vsolar();
 	stat->i_in = eps_get_iin();
 	stat->i_out = eps_get_iout();
-	stat->angle_target = navigation_get_angle_to_target();
 	stat->imu_calib_status = imu_get_calib_status();
 	stat->imu_heading = imu_get_heading();
 	stat->imu_roll = imu_get_roll();
@@ -161,6 +160,7 @@ void comm_poll_status(rover_status_comm* stat)
 	stat->accel_z = imu_get_accel_z();
 	stat->speed = gps_get_int_speed();
 	stat->altitude = gps_get_int_altitude();
+	stat->angle_target = (int16_t)(100.0 * navigation_get_angle_to_target());
 }
 
 static int threshold_reached(COMM_CONDITION cond, rover_status_comm* stat)
@@ -523,7 +523,7 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 	stringlength += ftoa(stat->gps_long, &txdata[stringlength], 7); //convert gps long to string with sign and 7 afterpoint
 	txdata[stringlength++] = ','; 					//plus a comma
 
-	stringlength += tfp_sprintf(&(txdata[stringlength]), "%d,%u,%u,%u,%u,%u,%u,%d,%d,%d,%d,%u,%u,%d,%d,%d,%d,%u,%f\n",
+	stringlength += tfp_sprintf(&(txdata[stringlength]), "%d,%u,%u,%u,%u,%u,%u,%d,%d,%d,%d,%u,%u,%d,%d,%d,%d,%u,%d\n",
 											stat->gps_fix_quality,
 											stat->system_seconds,
 											stat->v_bat,

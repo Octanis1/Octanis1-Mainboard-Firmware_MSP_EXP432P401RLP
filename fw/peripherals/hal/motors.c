@@ -73,6 +73,9 @@ int motors_pwm_init(){
  */
 void motors_wheels_move(int32_t front_left, int32_t front_right, int32_t rear_left, int32_t rear_right)
 {
+	cli_printf("mv %d\n\r",front_left);
+
+
 	eps_switch_module(M11V_ON);
 
 	GPIO_write(Board_M5678_CURR_SENS_EN, 1); //turn current sensors on
@@ -202,6 +205,8 @@ void motors_struts_get_position()
 
 void motors_wheels_stop()
 {
+	cli_printf("stop\n\r",0);
+
 	PWM_setDuty(pwm5_handle, 0);
 	PWM_setDuty(pwm6_handle, 0);
 	PWM_setDuty(pwm7_handle, 0);
