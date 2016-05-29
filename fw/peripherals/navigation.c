@@ -51,6 +51,7 @@ typedef struct _navigation_status{
 	float distance_to_target;
 	float angle_to_target;
 	float max_dist_obs;
+	int32_t motor_values[2]; // current motor speed
 	uint8_t angle_valid;
 	enum _current_state{
 		STOP=0,
@@ -284,7 +285,7 @@ void navigation_update_state()
 	}else if(navigation_status.current_state == AVOID_OBSTACLE){
 		ultrasonic_get_distance(distance_values);
 
-		for (i=0;i<N_ULTRASONIC_SENSORS;i++)
+//		for (i=0;i<N_ULTRASONIC_SENSORS;i++)
 //			cli_printf("US %d val : %d \n", i, distance_values[i]);
 
 		if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) > navigation_status.max_dist_obs){
@@ -301,7 +302,7 @@ void navigation_update_state()
 		ultrasonic_get_distance(distance_values);
 
 		//We check if we're not facing the wall anymore
-		for (i=0;i<N_ULTRASONIC_SENSORS;i++)
+//		for (i=0;i<N_ULTRASONIC_SENSORS;i++)
 //			cli_printf("US %d val : %d \n", i, distance_values[i]);
 		if ((distance_values[US_LEFT] < BACKWARD_THRESHOLD/2) || (distance_values[US_RIGHT] < BACKWARD_THRESHOLD/2)){
 			navigation_status.current_state = SPACE_NEEDED;
@@ -311,6 +312,7 @@ void navigation_update_state()
 			if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) > navigation_status.max_dist_obs){
 				navigation_status.current_state = GO_TO_TARGET;
 				GPIO_write(Board_OBS_A_EN, 0);
+
 			}else{
 				navigation_status.current_state = AVOID_OBSTACLE;
 			}
@@ -358,7 +360,7 @@ void navigation_update_state()
 		if(navigation_status.current_state == GO_TO_TARGET)
 		{
 			ultrasonic_get_distance(distance_values);
-			for (i=0;i<N_ULTRASONIC_SENSORS;i++)
+//			for (i=0;i<N_ULTRASONIC_SENSORS;i++)
 //				cli_printf("US %d val : %d \n", i, distance_values[i]);
 			if(navigation_status.distance_to_target < TARGET_REACHED_DISTANCE)
 			{
@@ -405,31 +407,39 @@ void navigation_move()
 				lspeed = PWM_SPEED_70;
 
 		}
-
 		motors_wheels_move((int32_t)lspeed, (int32_t)rspeed, (int32_t)lspeed, (int32_t)rspeed);
+		navigation_status.motor_values[0] = lspeed; //backup
+		navigation_status.motor_values[1] = rspeed;
 	}
 	else if(navigation_status.current_state == STOP)
 	{
 		motors_wheels_stop();
+		navigation_status.motor_values[0] = 0;
+		navigation_status.motor_values[1] = 0;
 	}
 	else if(navigation_status.current_state == AVOID_OBSTACLE)
 	{
 		int32_t distance_values[N_ULTRASONIC_SENSORS];
-		int32_t motor_values[2];
 		ultrasonic_get_distance(distance_values);
-		ultrasonic_check_distance(distance_values, motor_values, PWM_SPEED_100);
+		ultrasonic_check_distance(distance_values, navigation_status.motor_values, PWM_SPEED_80); //80% of speed to move slower than in normal mode
 
-//		cli_printf("speed l=%d, r=%d \n", motor_values[0], motor_values[1]);
-		motors_wheels_move(motor_values[0], motor_values[1], motor_values[0], motor_values[1]);
+		motors_wheels_move(navigation_status.motor_values[0], navigation_status.motor_values[1],
+				navigation_status.motor_values[0], navigation_status.motor_values[1]);
+
 	}else if (navigation_status.current_state == AVOID_WALL){
-		lspeed = -PWM_SPEED_100;
-		rspeed = -PWM_SPEED_70;
+		// move backwards in opposite curving direction (TODO: to be tested)
+		lspeed = -navigation_status.motor_values[1];
+		rspeed = -navigation_status.motor_values[0];
 		motors_wheels_move((int32_t)lspeed, (int32_t)rspeed, (int32_t)lspeed, (int32_t)rspeed);
 	}else if (navigation_status.current_state == SPACE_NEEDED){
-		lspeed = -PWM_SPEED_100;
-		rspeed = -PWM_SPEED_100;
-		motors_wheels_move((int32_t)lspeed, (int32_t)rspeed, (int32_t)lspeed, (int32_t)rspeed);
+		navigation_status.motor_values[0] = -PWM_SPEED_100;
+		navigation_status.motor_values[1] = -PWM_SPEED_100;
+		motors_wheels_move(navigation_status.motor_values[0], navigation_status.motor_values[1],
+				navigation_status.motor_values[0], navigation_status.motor_values[1]);
 	}
+
+	//		cli_printf("speed l=%d, r=%d \n", motor_values[0], motor_values[1]);
+
 }
 #endif
 

@@ -6,6 +6,7 @@
  */
 
 #include "ultrasonic.h"
+#include "motors.h"
 #include "../../../Board.h"
 #include "../../core/eps.h"
 #include <xdc/runtime/Timestamp.h>
@@ -294,6 +295,8 @@ uint8_t ultrasonic_check_distance(int32_t dist[], int32_t motor_values[], int32_
 			i=0,
 			arrayoffset=0; //the index offset to store the distance_value's for each array
 
+	int32_t tmp_motor_values[2] = {0, 0};
+
 
 	/* iterate over the number of sensor arrays */
 	for(j=0; j<N_ULTRASONIC_ARRAYS; j++)
@@ -304,22 +307,32 @@ uint8_t ultrasonic_check_distance(int32_t dist[], int32_t motor_values[], int32_
 			if(dist[i+arrayoffset] <= CRITICAL_DISTANCE_THRESHOLD_TICKS) //if any of the sensors is below a threshold,
 			{
 				int32_t average_val = (dist[2] + dist[5]); //look ahead and react stronger when something is near just ahead
-				motor_values[0] = bl[0] * dist[0] + bl[1] * dist[1] + bl[2] * dist[2] + bl[3] * dist[3] +
+				tmp_motor_values[0] = bl[0] * dist[0] + bl[1] * dist[1] + bl[2] * dist[2] + bl[3] * dist[3] +
 						bl[4] * dist[4] + bl[5] * dist[5] + bl[6] * dist[6] + bl[7] * dist[7] + average_val;
-				motor_values[1] = br[0] * dist[0] + br[1] * dist[1] + br[2] * dist[2] + br[3] * dist[3] +
+				tmp_motor_values[1] = br[0] * dist[0] + br[1] * dist[1] + br[2] * dist[2] + br[3] * dist[3] +
 						br[4] * dist[4] + br[5] * dist[5] + br[6] * dist[6] + br[7] * dist[7] + average_val;
+
+				if(tmp_motor_values[0] == 0 || tmp_motor_values[1] == 0)
+				{
+					// There are no updated ultrasonic sensor values. --> keep old values
+					return 1;
+				}
+
 				//scaling with absolute maximum and 100% speed:
-				int32_t maxval = motor_values[0];
-				if(motor_values[1] > maxval)
-					maxval = motor_values[1];
+				int32_t maxval = tmp_motor_values[0];
+				if(tmp_motor_values[1] > maxval)
+					maxval = tmp_motor_values[1];
 
-				motor_values[0] = motor_values[0] * motor_scaling_factor / maxval;
-				motor_values[1] = motor_values[1] * motor_scaling_factor / maxval;
+				motor_values[0] = tmp_motor_values[0] * motor_scaling_factor / maxval;
+				motor_values[1] = tmp_motor_values[1] * motor_scaling_factor / maxval;
 
-				if(motor_values[0] < motor_scaling_factor/2)
-					motor_values[0] = motor_scaling_factor/2;
-				if(motor_values[1] < motor_scaling_factor/2)
-					motor_values[1] = motor_scaling_factor/2;
+
+				// assure a certain minimum speed
+				if(motor_values[0] < PWM_MINIMUM_SPEED)
+					motor_values[0] = PWM_MINIMUM_SPEED;
+
+				if(motor_values[1] < PWM_MINIMUM_SPEED)
+					motor_values[1] = PWM_MINIMUM_SPEED;
 
 				return 1;
 			}
@@ -329,7 +342,7 @@ uint8_t ultrasonic_check_distance(int32_t dist[], int32_t motor_values[], int32_
 
 	}
 
-	//no close obstacle --> full speed ahead.
+	// If this point is reached, it means  there is no close obstacle --> full speed ahead.
 	motor_values[0] = motor_scaling_factor;
 	motor_values[1] = motor_scaling_factor;
 

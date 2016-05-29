@@ -25,6 +25,8 @@
 #define PWM_SPEED_10	4
 #define PWM_SPEED_0		0
 
+#define PWM_MINIMUM_SPEED	26 //this is the minimum speed we want so the motors are still visibly moving.
+
 #define PH_FORWARD		0
 #define PH_REVERSE		1
 

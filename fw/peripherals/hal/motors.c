@@ -73,7 +73,7 @@ int motors_pwm_init(){
  */
 void motors_wheels_move(int32_t front_left, int32_t front_right, int32_t rear_left, int32_t rear_right)
 {
-	cli_printf("mv %d\n\r",front_left);
+	cli_printf("mv %d %d %d %d\n\r",front_left, front_right, rear_left, rear_right);
 
 
 	eps_switch_module(M11V_ON);
