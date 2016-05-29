@@ -23,6 +23,12 @@
 #define ULTRASONIC_INDEX_6		0
 #define ULTRASONIC_INDEX_7		7
 
+//Which ultrasonic are looking forward
+#define US_FRONT_1 	2
+#define US_FRONT_2 	5
+#define US_LEFT		1
+#define US_RIGHT	6
+
 #define ULTRASONIC_MAX_SENSOR_VALUE	800
 
 #define CRITICAL_DISTANCE_THRESHOLD_METERS	1
