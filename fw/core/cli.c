@@ -1,6 +1,7 @@
 /*
  *  File: cli.c
  *  Description: Provides a command line interface and offers possibility to register function as new command
+ *
  *  Author:
  */
 
@@ -138,7 +139,7 @@ void cli_task(){
 		//blocks until command received
 		command_length = UART_read(uart, &input, sizeof(input));
 		if(command_length > 1){ //avoid commands that might just be a remaining \n or \r
-			answer_required = comm_process_command(input, command_length, txdata, &tx_stringlength, DESTINATION_DEBUG_UART);
+			answer_required = comm_process_command(input, command_length, txdata, &tx_stringlength, DESTINATION_APPLICATION_UART);
 			if(answer_required)
 			{
 				cli_printf("%s\n",txdata);

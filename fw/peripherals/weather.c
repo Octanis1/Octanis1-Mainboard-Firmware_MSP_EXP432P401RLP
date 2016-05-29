@@ -194,7 +194,10 @@ void weather_task(){
 		if(external_board_connected)
 		{
 			bmp180_data_readout(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
-			//		float uv = mcp_get_data();
+			float uv = mcp_get_data();
+			int uvint = (int)(1000.0*uv);
+
+			cli_printf("UV: %d\r\n",uvint);
 
 			weather_data.ext_temp_sht21 = sht2x_get_temp(); //TODO: fix the fact that program stops here if sensor is not connected.
 			weather_data.ext_humid = sht2x_get_humidity();
@@ -217,6 +220,8 @@ void weather_task(){
 
 		weather_aggregate_data();
 		//cli_printf("W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
+
+		Task_sleep(1000);
 
 #ifdef FLASH_ENABLED
         log_weather(&weather_data);

@@ -150,10 +150,9 @@ float mcp_get_data (){
     cpt_data uv_cpt;
     uint8_t buffer[3];
 
-    //turn on UV captor then wait 1msec
+    //turn on UV sensor then wait 2msec
     GPIO_write(Board_UV_PIN, Board_UV_ON);
-    for (i=0;i<5000;i++)
-    	NOP10();
+    Task_sleep(2);
     
     mcp_read(MCP_ADDR, buffer, 3);
 
@@ -168,7 +167,7 @@ float mcp_get_data (){
             break;
     }
 
-    //Turn UV captor off
+    //Turn UV sensor off
     GPIO_write(Board_UV_PIN, Board_UV_OFF);
 
     mcp_parse (buffer, &uv_cpt);

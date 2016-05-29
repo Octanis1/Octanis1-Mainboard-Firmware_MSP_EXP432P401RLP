@@ -54,7 +54,7 @@
  //#define LORA_ENABLED 1
 //#define BLE_ENABLED 1
 //#define EPS_ENABLED 1
-#define MAVLINK_ENABLED 1
+//#define MAVLINK_ENABLED 1
  //#define ROCKBLOCK_ENABLED 1
 //#define UARTCAM_ENABLED 1
 //#define GSM_ENABLED 1
