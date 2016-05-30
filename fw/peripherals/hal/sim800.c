@@ -70,11 +70,11 @@ void sim800_send_sms(char * tx_buffer, int tx_size){
 		memset(&rxBuffer, 0, sizeof(rxBuffer));
 		UART_write(uart, sim800_ctrl_z, sizeof(sim800_ctrl_z));
 		UART_read(uart, rxBuffer, sizeof(rxBuffer));
-		cli_printf("sms:%s", rxBuffer);
+		serial_printf(stdout, "sms:%s", rxBuffer);
 
 		sim800_locked = 0;
 	 }else{
-		cli_printf("sim800 not initialised",0);
+		serial_printf(stdout, "sim800 not initialised",0);
 	}
 
 }
@@ -89,7 +89,7 @@ const char* sim800_get_battery_voltage(){
 		Task_sleep(500);
 		return rxBuffer;
 	}else{
-		cli_printf("sim800 not initialised",0);
+		serial_printf(stdout, "sim800 not initialised",0);
 		return 0;
 	}
 }
@@ -138,7 +138,7 @@ int sim800_begin(){
 		UART_write(uart, sim800_at_echo_off, sizeof(sim800_at_echo_off));
 		UART_read(uart, rxBuffer, sizeof(rxBuffer));
 
-		cli_printf("%s", rxBuffer);
+		serial_printf(stdout, "%s", rxBuffer);
 		Task_sleep(500);
 
 		if(!strcmp("\r\nOK\r\n", rxBuffer)){
@@ -160,7 +160,7 @@ void sim800_end(){
 
 void sim800_init_http(SIM800_MIME mime_type){
 	if(!sim800_initialised){
-		cli_printf("sim800 not initialised",0);
+		serial_printf(stdout, "sim800 not initialised",0);
 	}else{
 		char rxBuffer[SIM800_RXBUFFER_SIZE];
 		int i;
@@ -195,7 +195,7 @@ void sim800_init_http(SIM800_MIME mime_type){
 
 void sim800_buffermessage_http(char * tx_buffer, int tx_size){
 	if(!sim800_initialised){
-		cli_printf("sim800 not initialised",0);
+		serial_printf(stdout, "sim800 not initialised",0);
 	}else{
 		char rxBuffer[SIM800_RXBUFFER_SIZE];
 		memset(&rxBuffer, 0, sizeof(rxBuffer));
@@ -204,7 +204,7 @@ void sim800_buffermessage_http(char * tx_buffer, int tx_size){
 		Task_sleep(600);
 		UART_write(uart, tx_buffer, tx_size);
 		UART_read(uart, rxBuffer, sizeof(rxBuffer));
-		cli_printf("%s", rxBuffer);
+		serial_printf(stdout, "%s", rxBuffer);
 
 
 		Task_sleep(11000);
@@ -222,7 +222,7 @@ void sim800_buffermessage_http(char * tx_buffer, int tx_size){
 
 void sim800_send_http(char * tx_buffer, int tx_size, SIM800_MIME mime_type){
 	if(!sim800_initialised){
-		cli_printf("sim800 not initialised",0);
+		serial_printf(stdout, "sim800 not initialised",0);
 	}else{
 		sim800_locked = 1;
 		sim800_init_http(mime_type);

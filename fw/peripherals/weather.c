@@ -148,18 +148,18 @@ void weather_task(){
 	const uint8_t flash_id[] = {0x01,0x20,0x18}; // S25FL127S ID
 	if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
 		// flash answers with correct ID
-		cli_printf("Flash ID OK\n");
+		serial_printf(stdout, "Flash ID OK\n");
 	} else {
-		cli_printf("Flash ID ERROR\n");
+		serial_printf(stdout, "Flash ID ERROR\n");
 	}
 
     if (logging_enabled) {
         if (!log_init()) {
-            cli_printf("log_init failed\n");
+            serial_printf(stdout, "log_init failed\n");
             log_reset();
         }
     }
-    //cli_printf("log position 0x%x\n", log_write_pos());
+    //serial_printf(stdout, "log position 0x%x\n", log_write_pos());
 	/************* flash test END ****************/
 #endif
 
@@ -174,19 +174,19 @@ void weather_task(){
         if (logging_enabled) {
             if (LOG_GPS_TIMESTEP > 0 && log_counter % LOG_GPS_TIMESTEP == 0) {
                 log_write_gps();
-                // cli_printf("log gps, %x\n", log_write_pos());
+                // serial_printf(stdout, "log gps, %x\n", log_write_pos());
             }
             if (LOG_IMU_TIMESTEP > 0 && log_counter % LOG_IMU_TIMESTEP == 0) {
                 log_write_imu();
-                // cli_printf("log imu, %x\n", log_write_pos());
+                // serial_printf(stdout, "log imu, %x\n", log_write_pos());
             }
             if (LOG_WEATHER_TIMESTEP > 0 && log_counter % LOG_WEATHER_TIMESTEP == 0) {
                 log_write_weather();
-                // cli_printf("log weather, %x\n", log_write_pos());
+                // serial_printf(stdout, "log weather, %x\n", log_write_pos());
             }
             if (LOG_BACKUP_TIMESTEP > 0 && log_counter % LOG_BACKUP_TIMESTEP == 0) {
                 log_position_backup();
-                // cli_printf("log backup, %x\n", log_write_pos());
+                // serial_printf(stdout, "log backup, %x\n", log_write_pos());
             }
         }
 
@@ -216,7 +216,7 @@ void weather_task(){
 		//	windsensor_getvalue();
 
 		weather_aggregate_data();
-		cli_printf("W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
+		serial_printf(stdout, "W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
 
 #ifdef FLASH_ENABLED
         log_weather(&weather_data);

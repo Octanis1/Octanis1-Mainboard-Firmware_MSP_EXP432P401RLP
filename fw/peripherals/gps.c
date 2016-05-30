@@ -110,7 +110,7 @@ uint8_t gps_update_new_position(float* lat_, float* lon_)
 
 		//initialise GPS device, open UART
 		if(!ublox_6_open()){
-//			cli_printf("%d GPS UART error", 0);
+//			serial_printf(stdout, "%d GPS UART error", 0);
 		}
 
 		//get data from device (blocking call)
@@ -141,7 +141,7 @@ uint8_t gps_update_new_position(float* lat_, float* lon_)
 			nmeaframes = strtok_r(NULL, "\n", &saveptr2);
 		}
 
-		cli_printf("dgps_age:%d\n", gps_get_hdop());
+		serial_printf(stdout, "dgps_age:%d\n", gps_get_hdop());
 
 		ublox_6_close();
 		Task_sleep(6000);

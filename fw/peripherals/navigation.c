@@ -286,7 +286,7 @@ void navigation_update_state()
 		ultrasonic_get_distance(distance_values);
 
 //		for (i=0;i<N_ULTRASONIC_SENSORS;i++)
-//			cli_printf("US %d val : %d \n", i, distance_values[i]);
+//			serial_printf(stdout, "US %d val : %d \n", i, distance_values[i]);
 
 		if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) > navigation_status.max_dist_obs){
 			navigation_status.current_state = GO_TO_TARGET;
@@ -294,7 +294,7 @@ void navigation_update_state()
 		}else if ((distance_values[US_LEFT] < BACKWARD_THRESHOLD/2) || (distance_values[US_RIGHT] < BACKWARD_THRESHOLD/2)){
 			navigation_status.current_state = SPACE_NEEDED;
 		}else if (distance_values[US_FRONT_1] < BACKWARD_THRESHOLD && distance_values[US_FRONT_2] < BACKWARD_THRESHOLD){
-			cli_printf("Wall ahead!\n");
+			serial_printf(stdout, "Wall ahead!\n");
 			navigation_status.current_state = AVOID_WALL;
 		}
 
@@ -303,7 +303,7 @@ void navigation_update_state()
 
 		//We check if we're not facing the wall anymore
 //		for (i=0;i<N_ULTRASONIC_SENSORS;i++)
-//			cli_printf("US %d val : %d \n", i, distance_values[i]);
+//			serial_printf(stdout, "US %d val : %d \n", i, distance_values[i]);
 		if ((distance_values[US_LEFT] < BACKWARD_THRESHOLD/2) || (distance_values[US_RIGHT] < BACKWARD_THRESHOLD/2)){
 			navigation_status.current_state = SPACE_NEEDED;
 		}
@@ -325,7 +325,7 @@ void navigation_update_state()
 			if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) < navigation_status.max_dist_obs){
 				//We use a different strategy depending on the type of obstacle
 				if (distance_values[US_FRONT_1] < BACKWARD_THRESHOLD && distance_values[US_FRONT_2] < BACKWARD_THRESHOLD){
-					cli_printf("Wall ahead!\n");
+					serial_printf(stdout, "Wall ahead!\n");
 					navigation_status.current_state = AVOID_WALL;
 				}else
 					navigation_status.current_state = AVOID_OBSTACLE;
@@ -344,7 +344,7 @@ void navigation_update_state()
 			}
 			else
 			{
-//				cli_printf("Calibrate IMU (status: %d/9)\n",imu_get_calib_status());
+//				serial_printf(stdout, "Calibrate IMU (status: %d/9)\n",imu_get_calib_status());
 				int i;
 				for (i = 0; i<(7-imu_get_calib_status());i++) //blink shorter for better calibration
 				{
@@ -361,7 +361,7 @@ void navigation_update_state()
 		{
 			ultrasonic_get_distance(distance_values);
 //			for (i=0;i<N_ULTRASONIC_SENSORS;i++)
-//				cli_printf("US %d val : %d \n", i, distance_values[i]);
+//				serial_printf(stdout, "US %d val : %d \n", i, distance_values[i]);
 			if(navigation_status.distance_to_target < TARGET_REACHED_DISTANCE)
 			{
 				navigation_targets.state[navigation_targets.current_index] = DONE;
@@ -371,7 +371,7 @@ void navigation_update_state()
 
 				//We use a different strategy depending on the type of obstacle
 				if (distance_values[US_FRONT_1] < BACKWARD_THRESHOLD && distance_values[US_FRONT_2] < BACKWARD_THRESHOLD){
-					cli_printf("Wall ahead!\n");
+					serial_printf(stdout, "Wall ahead!\n");
 					navigation_status.current_state = AVOID_WALL;
 				}else if ((distance_values[US_LEFT] < BACKWARD_THRESHOLD/2) || (distance_values[US_RIGHT] < BACKWARD_THRESHOLD/2)){
 					navigation_status.current_state = SPACE_NEEDED;
@@ -438,7 +438,7 @@ void navigation_move()
 				navigation_status.motor_values[0], navigation_status.motor_values[1]);
 	}
 
-	//		cli_printf("speed l=%d, r=%d \n", motor_values[0], motor_values[1]);
+	//		serial_printf(stdout, "speed l=%d, r=%d \n", motor_values[0], motor_values[1]);
 
 }
 #endif

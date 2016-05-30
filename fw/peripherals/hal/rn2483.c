@@ -81,11 +81,11 @@ int rn2483_begin(){
 
 #ifndef CONFIG_MODE
 	if(!rn2483_open()){
-		cli_printf("rn2483 open error \n",0);
+		serial_printf(stdout, "rn2483 open error \n",0);
 		return 0;
 	}else{
 	#if VERBOSE==1
-		cli_printf("rn2483 opened\n",0);
+		serial_printf(stdout, "rn2483 opened\n",0);
 	#endif
 
 	}
@@ -223,7 +223,7 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 
 	if(!strcmp("ok\r\n", rxBuffer))
 	{
-		cli_printf("LoRa TX: %d \n", tx_ret);
+		serial_printf(stdout, "LoRa TX: %d \n", tx_ret);
 		GPIO_toggle(Board_LED_GREEN);
 		return 1; //modem can now communicate with us
 	}

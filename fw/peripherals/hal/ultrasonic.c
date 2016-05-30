@@ -262,7 +262,7 @@ bool ultrasonic_get_distance(int32_t distance_values[])
 					distance_values[i+arrayoffset] += ((int32_t)pulse_falling_time[i+arrayoffset] - (int32_t)pulse_rising_time[i+arrayoffset] + 0xFFFF);
 				}
 
-			//	cli_printf("us : distance : %d \n", distance_values[i+arrayoffset]);
+			//	serial_printf(stdout, "us : distance : %d \n", distance_values[i+arrayoffset]);
 			}
 		}
 
@@ -337,7 +337,7 @@ uint8_t ultrasonic_check_distance(int32_t dist[], int32_t motor_values[], int32_
 				return 1;
 			}
 
-		//	cli_printf("us: cleared? - for %d \n", directions_array[i+arrayoffset]);
+		//	serial_printf(stdout, "us: cleared? - for %d \n", directions_array[i+arrayoffset]);
 		}
 
 	}

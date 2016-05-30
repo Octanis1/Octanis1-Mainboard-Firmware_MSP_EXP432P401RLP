@@ -74,7 +74,6 @@ extern "C" {
 
 
 #include "fw/core/cli.h" //enable CLI printf everywhere
-#include "fw/core/system.h" //provides useful general functions
 
 
 /* Clock cycle conversion factors */

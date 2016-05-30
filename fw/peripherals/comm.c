@@ -22,7 +22,6 @@
 
 // peripheral includes to execute commands
 #include "navigation.h"
-#include "../core/system.h"
 #include "../core/log.h"
 
 
@@ -70,15 +69,15 @@ typedef struct _rover_status_comm {
 void comm_init(rover_status_comm* stat)
 {
 	Task_sleep(5000);
-	cli_printf("reset occured.\n", 0);
+	serial_printf(stdout, "reset occured.\n", 0);
 
 #ifdef LORA_ENABLED
 	if(rn2483_begin()){
 	#if VERBOSE==1
-		cli_printf("rn2483 begin OK.\n", 0);
+		serial_printf(stdout, "rn2483 begin OK.\n", 0);
 	#endif
 	}else{
-		cli_printf("rn2483 begin NOK\n", 0);
+		serial_printf(stdout, "rn2483 begin NOK\n", 0);
 		rn2483_end();
 	}
 #endif
@@ -87,10 +86,10 @@ void comm_init(rover_status_comm* stat)
 #ifdef GSM_ENABLED
 	if(sim800_begin()){
 	#if VERBOSE==1
-		cli_printf("sim800 begin OK.\n", 0);
+		serial_printf(stdout, "sim800 begin OK.\n", 0);
 	#endif
 	}else{
-		cli_printf("sim800 begin NOK\n", 0);
+		serial_printf(stdout, "sim800 begin NOK\n", 0);
 		sim800_end();
 	}
 #endif
@@ -99,10 +98,10 @@ void comm_init(rover_status_comm* stat)
 #ifdef BLE_ENABLED
 	if(hm10_begin()){
 	#if VERBOSE==1
-		cli_printf("hm10 begin OK.\n", 0);
+		serial_printf(stdout, "hm10 begin OK.\n", 0);
 	#endif
 	}else{
-		cli_printf("hm10 begin NOK\n", 0);
+		serial_printf(stdout, "hm10 begin NOK\n", 0);
 		hm10_end();
 	}
 #endif
@@ -259,7 +258,7 @@ void comm_receive_command(COMM_DESTINATION destination)
 		  received_command = hm10_receive(rxdata, &rx_stringlength);
 		  break;
 	   default:
-	   	   cli_printf("comm Task: Command RX source not supported\n");
+	   	   serial_printf(stdout, "comm Task: Command RX source not supported\n");
 	}
 
 	if(received_command)
@@ -500,11 +499,11 @@ void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination)
 		  break;
 
 	   case DESTINATION_DEBUG_UART:
-		   cli_printf("%s\n",txdata);
+		   serial_printf(stdout, "%s\n",txdata);
 		   break;
 
 	   default:
-		   cli_printf("comm Task: Status TX destination not supported\n");
+		   serial_printf(stdout, "comm Task: Status TX destination not supported\n");
 	}
 
 }
@@ -549,7 +548,7 @@ void comm_send_status(rover_status_comm* stat, COMM_DESTINATION destination)
 
 	if(stringlength > COMM_FRAME_SIZE) //should never happen! corrupt memory will be the result!
 	{
-		cli_printf("status string overflow! %u",stringlength);
+		serial_printf(stdout, "status string overflow! %u",stringlength);
 		stringlength = COMM_FRAME_SIZE;
 	}
 
@@ -564,9 +563,9 @@ void comm_task(){
 	#ifdef CONFIG_MODE
 		int comm_result=rn2483_config();
 		if(comm_result)
-			cli_printf("LoRa config failed: %d", comm_result);
+			serial_printf(stdout, "LoRa config failed: %d", comm_result);
 		else
-			cli_printf("LoRa config success: %d", comm_result);
+			serial_printf(stdout, "LoRa config success: %d", comm_result);
 	#endif
 #endif
 

@@ -73,7 +73,7 @@ int motors_pwm_init(){
  */
 void motors_wheels_move(int32_t front_left, int32_t front_right, int32_t rear_left, int32_t rear_right)
 {
-	cli_printf("mv %d %d %d %d\n\r",front_left, front_right, rear_left, rear_right);
+	serial_printf(stdout, "mv %d %d %d %d\n\r",front_left, front_right, rear_left, rear_right);
 
 
 	eps_switch_module(M11V_ON);
@@ -198,14 +198,14 @@ void motors_struts_get_position()
 //	uint16_t angle = 0;
 ////	as5050_read_data(&angle);
 //
-//		//cli_printf("%u\n",degrees);
+//		//serial_printf(stdout, "%u\n",degrees);
 
 
 }
 
 void motors_wheels_stop()
 {
-	cli_printf("stop\n\r",0);
+	serial_printf(stdout, "stop\n\r",0);
 
 	PWM_setDuty(pwm5_handle, 0);
 	PWM_setDuty(pwm6_handle, 0);

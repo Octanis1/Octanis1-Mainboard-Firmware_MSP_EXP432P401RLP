@@ -7,7 +7,6 @@
 
 #include "../../Board.h"
 #include "cron.h"
-#include "system.h"
 
 
 //called periodically
@@ -18,8 +17,8 @@ Void cron_quick_clock(UArg arg){
   //print load periodically
   int cpuLoad = Load_getCPULoad();
   #if VERBOSE==1
-	  cli_printf("CPU load: %d \n", cpuLoad);
-	  cli_printf("Epoch: %d \n", Seconds_get());
+	  serial_printf(stdout, "CPU load: %d \n", cpuLoad);
+	  serial_printf(stdout, "Epoch: %d \n", Seconds_get());
   #endif
 }
 

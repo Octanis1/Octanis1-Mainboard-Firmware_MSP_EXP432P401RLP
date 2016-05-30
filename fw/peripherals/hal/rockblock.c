@@ -80,7 +80,7 @@ int rockblock_open(){
 int rockblock_begin(){
 
 	if(!rockblock_open()){
-//		cli_printf("RB open error \n",0);
+//		serial_printf(stdout, "RB open error \n",0);
 		return 0;
 	}
 
@@ -144,7 +144,7 @@ int rockblock_get_signal_quality(){
 
 
 		//signal quality value is at index 7
-		csq_val = system_chartoint((char)rxBuffer[7]);
+		csq_val = (char)rxBuffer[7] - '0';
 		/*
 		rockblock_health_sum += rockblock_get_signal_quality();
 		rockblock_health = (int)(rockblock_health_sum/times_called + 0.5);
@@ -159,10 +159,10 @@ int rockblock_get_signal_quality(){
 //sends an SBD, then checks the inbox (checking costs 1 credit!)
 int rockblock_send_receive_SBD(const uint8_t *tx_buffer, size_t tx_buffersize,
 								uint8_t *rx_buffer, size_t *rx_buffersizePtr){
-//	cli_printf("RBsr\n",0);
+//	serial_printf(stdout, "RBsr\n",0);
 
 	if(!rockblock_begin()){
-//		cli_printf("RB begin error \n",0);
+//		serial_printf(stdout, "RB begin error \n",0);
 		return 0;
 	}
 
@@ -205,13 +205,13 @@ int rockblock_send_receive_SBD(const uint8_t *tx_buffer, size_t tx_buffersize,
 		}
 
 		//wait for CSQ retry
-		cli_printf("csq in %d\n", ROCKBLOCK_CSQ_INTERVAL);
+		serial_printf(stdout, "csq in %d\n", ROCKBLOCK_CSQ_INTERVAL);
 		Task_sleep(ROCKBLOCK_CSQ_INTERVAL*1000);
 
 	//else timeout loop
 	}
 
-	cli_printf("RB s/r timeout\n",0);
+	serial_printf(stdout, "RB s/r timeout\n",0);
 	return 0;
 
 }

@@ -46,7 +46,7 @@ uint8_t read8(unsigned char i2c_addr, I2C_Handle handle, uint8_t register_addr){
 		int ret = I2C_transfer(handle, &i2cTransaction);
 
 		if (!ret) {
-//		    cli_printf("read8 error \n", 0);
+//		    serial_printf(stdout, "read8 error \n", 0);
 		}else{
 			returnValue = readBuffer;
 		}
@@ -75,7 +75,7 @@ uint16_t read16(unsigned char i2c_addr, I2C_Handle handle, uint8_t register_addr
 		int ret = I2C_transfer(handle, &i2cTransaction);
 
 		if (!ret) {
-//		    cli_printf("read16 error \n", 0);
+//		    serial_printf(stdout, "read16 error \n", 0);
 		}else{
 			returnValue = readBuffer[0];
 			returnValue <<= 8;
@@ -106,7 +106,7 @@ void write8(unsigned char i2c_addr, I2C_Handle handle, uint8_t register_addr, ui
 		int ret = I2C_transfer(handle, &i2cTransaction);
 
 		if (!ret) {
-//		    cli_printf("write8 error\n", 0);
+//		    serial_printf(stdout, "write8 error\n", 0);
 		}
 	}
 }

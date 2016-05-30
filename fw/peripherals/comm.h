@@ -67,7 +67,7 @@ typedef struct comm_msg_control_ {
 
 /*** functions accessible to all modules able to receive commands (f.ex. cli) ***/
 /* args:
- *  - answer			answer string to be sent by a subsequent comm_tx_data() or cli_printf()
+ *  - answer			answer string to be sent by a subsequent comm_tx_data() or serial_printf(stdout, )
  *  					--> IMPORTANT: this string is not terminated by "\n", so the newline character has to be added if needed.
  */
 int comm_process_command(char* command, int commandlength, char* answer, int* answerlength, COMM_DESTINATION destination);
