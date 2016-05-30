@@ -353,7 +353,6 @@ void cli_task(){
         serial_printf((SerialDevice *)&cli_uart, "octanis Rover Console:\r\n");
         shell(commands, (SerialDevice *)&cli_uart);
     }
-
 #endif
 
 }

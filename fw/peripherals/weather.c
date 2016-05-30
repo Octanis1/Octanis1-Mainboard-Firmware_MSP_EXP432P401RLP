@@ -163,8 +163,8 @@ void weather_task(){
 	/************* flash test END ****************/
 #endif
 
-    while(1){
 
+    while(1){
 
 #ifdef FLASH_ENABLED
 
@@ -199,6 +199,7 @@ void weather_task(){
 
 //			cli_printf("UV: %d\r\n",uvint);
 
+
 			weather_data.ext_temp_sht21 = sht2x_get_temp(); //TODO: fix the fact that program stops here if sensor is not connected.
 			weather_data.ext_humid = sht2x_get_humidity();
 
@@ -220,7 +221,6 @@ void weather_task(){
 
 		weather_aggregate_data();
 //		serial_printf(stdout, "W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
-
 
 		Task_sleep(1000);
 
