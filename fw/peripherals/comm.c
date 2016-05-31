@@ -66,7 +66,7 @@ void comm_init(){
 
 
 void comm_task(){
-/*
+
 	COMM_FRAME mail;
 
 	comm_init();
@@ -83,5 +83,5 @@ void comm_task(){
 
 		}
 	}
-*/
+
 }
