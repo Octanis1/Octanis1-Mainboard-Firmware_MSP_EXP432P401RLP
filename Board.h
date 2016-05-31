@@ -71,8 +71,6 @@ extern "C" {
 #include <xdc/cfg/global.h>
 #include <xdc/runtime/System.h>
 
-
-
 #include "fw/core/cli.h" //enable CLI printf everywhere
 
 

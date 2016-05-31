@@ -69,6 +69,8 @@ typedef struct _rover_status_comm {
 void comm_init(rover_status_comm* stat)
 {
 	Task_sleep(5000);
+	cli_init();
+
 	serial_printf(stdout, "reset occured.\n", 0);
 
 #ifdef LORA_ENABLED

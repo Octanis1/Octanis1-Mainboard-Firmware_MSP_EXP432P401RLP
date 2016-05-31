@@ -8,9 +8,12 @@
 #ifndef __CLI_H
 #define __CLI_H
 
-#include <serial.h>
+#include <serial_printf.h>
 
 extern SerialDevice *stdout;
+
+// init must be called by every task using serial_printf before calling it for the first time.
+void cli_init();
 
 //runs with lowest priority
 void cli_task();

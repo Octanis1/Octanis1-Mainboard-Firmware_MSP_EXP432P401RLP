@@ -460,6 +460,7 @@ void navigation_init();
 #else
 void navigation_init()
 {
+	cli_init();
 	motors_init();
 	ultrasonic_init();
 	pid_init(&pid_a, PGAIN_A, IGAIN_A, DGAIN_A, MOTOR_IMAX, MOTOR_IMIN);
