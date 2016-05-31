@@ -73,6 +73,8 @@ extern "C" {
 
 #include "fw/core/cli.h" //enable CLI printf everywhere
 
+#define MAVLINK_SYSTEM_ID	25
+
 /* Clock cycle conversion factors */
 #define CYCLES_PER_US		48			// cycles per microsecond
 #define CYCLES_PER_MS		48000		// cycles per millisecond

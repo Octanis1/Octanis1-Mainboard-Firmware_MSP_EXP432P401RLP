@@ -33,6 +33,7 @@ typedef struct {
    unsigned int direction : 1;
 } COMM_FRAME;
 
+extern mavlink_system_t mavlink_system;
 
 int comm_tx_slot_open(MAV_COMPONENT component); //check if outgoing message can be sent for a given destination and component id
 void comm_mavlink_post_outbox(COMM_CHANNEL channel, mavlink_message_t *message); //post to mailbox for outgoing messages
