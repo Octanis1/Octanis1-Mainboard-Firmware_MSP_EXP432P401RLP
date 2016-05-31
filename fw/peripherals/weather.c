@@ -225,7 +225,7 @@ void weather_task(){
 		weather_aggregate_data();
 		//serial_printf(stdout, "W ok. T= %u, He=%u ", weather_data.int_temp, weather_get_ext_humid());
 
-
+		Task_sleep(3000);
 
 
 
