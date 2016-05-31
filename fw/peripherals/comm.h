@@ -23,6 +23,13 @@ typedef enum comm_channels {
 } COMM_CHANNEL;
 
 
+typedef struct {
+   mavlink_message_t mavlink_message;
+   unsigned int channel : 7;
+   unsigned int direction : 1;
+} COMM_FRAME;
+
+
 int comm_tx_slot_open(MAV_COMPONENT component); //check if outgoing message can be sent for a given destination and component id
 void comm_mavlink_post_outbox(COMM_CHANNEL channel, mavlink_message_t *message); //post to mailbox for outgoing messages
 void comm_mavlink_post_inbox(COMM_CHANNEL channel, mavlink_message_t *message); //post to mailbox for incoming messages

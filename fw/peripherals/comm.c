@@ -9,10 +9,6 @@
 #include "comm.h"
 #include <string.h>
 
-#ifdef MAVLINK_ON_UART0_ENABLED
-	static UART_Handle application_uart = NULL;
-#endif
-
 /* PUBLIC */
 int comm_tx_slot_open(MAV_COMPONENT component); //check if outgoing message can be sent for a given destination and component id
 void comm_mavlink_post_outbox(COMM_CHANNEL channel, mavlink_message_t *message); //post to mailbox for outgoing messages
@@ -26,7 +22,7 @@ void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 #ifdef MAVLINK_ON_UART0_ENABLED
 	   case CHANNEL_APP_UART:
 		  {
-			  UART_write(application_uart,msg,msg->len);
+
 		  }
  	      break;
 #endif
@@ -62,40 +58,30 @@ void comm_mavlink_handler(mavlink_message_t *msg){
 
 }
 
+
 void comm_init(){
-
-#ifdef MAVLINK_ON_UART0_ENABLED
-	static UART_Params uartParams;
-
-	/* Create a UART with data processing off. */
-	UART_Params_init(&uartParams);
-	uartParams.writeDataMode = UART_DATA_BINARY;
-	uartParams.readDataMode = UART_DATA_BINARY;
-	uartParams.readReturnMode = UART_RETURN_FULL;
-	uartParams.writeMode = UART_MODE_BLOCKING;
-	uartParams.readEcho = UART_ECHO_OFF;
-	uartParams.baudRate = 115200;
-	application_uart = UART_open(Board_UART0_DEBUG, &uartParams);
-
-	if (application_uart == NULL) {
-		System_abort("Error opening the UART");
-	}
-
-#endif
 
 }
 
 
 
 void comm_task(){
+/*
+	COMM_FRAME mail;
 
 	comm_init();
 
 	while(1){
-		//pend COMM RX TX mailbox
-		   //if INCOMING then
-		   //  comm_mavlink_handler()
-		   //else
-		   //  comm_send()
+
+
+
+		if(Mailbox_pend(comm_mailbox, &mail, BIOS_WAIT_FOREVER)){
+			  //if INCOMING then
+					   //  comm_mavlink_handler()
+					   //else
+					   //  comm_send()
+
+		}
 	}
+*/
 }

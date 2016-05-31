@@ -27,6 +27,8 @@
 #include <serial_printf.h>
 #include <shell.h>
 #include "log_message.h"
+//mavlink wire protocol
+#include "../lib/mavlink/common/mavlink.h"
 
 //which uart index to use for the CLI
 #define CLI_UART Board_UART0_DEBUG
@@ -78,9 +80,9 @@ static void cli_uart_init(UART_SerialDevice *dev) {
 
     /* Create a UART with data processing off. */
     UART_Params_init(&uartParams);
-    uartParams.writeDataMode = UART_DATA_TEXT;
-    uartParams.readDataMode = UART_DATA_TEXT;
-    uartParams.readReturnMode = UART_RETURN_NEWLINE;
+    uartParams.writeDataMode = UART_DATA_BINARY;
+    uartParams.readDataMode = UART_DATA_BINARY;
+    uartParams.readReturnMode = UART_RETURN_FULL;
     uartParams.writeMode = UART_MODE_BLOCKING;
     uartParams.readEcho = UART_ECHO_OFF;
     uartParams.baudRate = 9600;
@@ -338,21 +340,42 @@ const struct shell_commands commands[] = {
     {NULL, NULL}
 };
 
+
+void mavlink_rx(SerialDevice *dev){
+
+	mavlink_message_t msg;
+	mavlink_status_t status;
+
+	uint8_t c;
+
+	while((c = serial_getc(dev))) {
+		if(mavlink_parse_char(CHANNEL_APP_UART, c, &msg, &status)){
+			System_printf("rx!");
+		}
+	}
+
+}
+
 SerialDevice *stdout;
 
 //runs with lowest priority
 void cli_task(){
 
-#ifndef MAVLINK_ON_UART0_ENABLED
+
 	static UART_SerialDevice cli_uart;
     cli_uart_init(&cli_uart);
     stdout = (SerialDevice *)&cli_uart;
     log_info("boot");
 
+
     while (1) {
-        serial_printf((SerialDevice *)&cli_uart, "octanis Rover Console:\r\n");
-        shell(commands, (SerialDevice *)&cli_uart);
+	#ifndef MAVLINK_ON_UART0_ENABLED
+		serial_printf((SerialDevice *)&cli_uart, "octanis Rover Console:\r\n");
+		shell(commands, (SerialDevice *)&cli_uart);
+	#else
+		//mavlink_rx((SerialDevice *)&cli_uart);
+    #endif
     }
-#endif
+
 
 }
