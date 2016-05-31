@@ -124,6 +124,7 @@ uint16_t eps_get_iout()
 }
 
 void eps_task(){
+	cli_init();
 #ifdef EPS_ENABLED
 	eps_init();
 	give_life_sign = 0;

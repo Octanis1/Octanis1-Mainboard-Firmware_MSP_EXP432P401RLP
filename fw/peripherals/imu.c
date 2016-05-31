@@ -65,14 +65,15 @@ int16_t imu_get_accel_z(){
 
 void imu_task(){
 	/************* IMU STUFF moved here *************/
-
 	i2c_helper_init_handle();
+
+	Task_sleep(500);
+
+	cli_init();
 
 	imu_init();
 
 	while(1){
-
-
 		imu_data.calib_status=bno055_check_calibration_status(); //this line alone lets the i2c bus crash
 		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r)); //this line alone lets the i2c bus crash
 		bno055_get_accel(&(imu_data.accel_x), &(imu_data.accel_y), &(imu_data.accel_z)); //commenting out this line alone still lets the i2c bus be blocked

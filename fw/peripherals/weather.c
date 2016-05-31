@@ -114,8 +114,15 @@ void log_weather(struct _weather_data *d)
 
 
 void weather_task(){
+	cli_init();
+
+	Task_sleep(500);
+
 	static uint8_t external_board_connected = 0;
 	external_board_connected = weather_check_external_connected();
+
+    serial_printf(stdout, "testnl \n");
+    serial_printf(stdout, "test");
 
 	i2c_helper_init_handle();
 	windsensor_init();
@@ -220,9 +227,11 @@ void weather_task(){
 		//	windsensor_getvalue();
 
 		weather_aggregate_data();
-//		serial_printf(stdout, "W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
+
+		//		serial_printf(stdout, "W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
 
 		Task_sleep(1000);
+
 
 #ifdef FLASH_ENABLED
         log_weather(&weather_data);

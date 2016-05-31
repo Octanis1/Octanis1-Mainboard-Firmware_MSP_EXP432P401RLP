@@ -106,6 +106,8 @@ uint8_t gps_update_new_position(float* lat_, float* lon_)
 	char *saveptr1 = NULL; 
     char *saveptr2 = NULL;
 
+    cli_init();
+
 	while (1) {
 
 		//initialise GPS device, open UART

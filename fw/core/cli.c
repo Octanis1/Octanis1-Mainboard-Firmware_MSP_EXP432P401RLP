@@ -81,8 +81,15 @@ static void cli_uart_init(UART_SerialDevice *dev) {
     /* Create a UART with data processing off. */
     UART_Params_init(&uartParams);
     uartParams.writeDataMode = UART_DATA_BINARY;
+<<<<<<< HEAD
     uartParams.readDataMode = UART_DATA_BINARY;
     uartParams.readReturnMode = UART_RETURN_FULL;
+=======
+//    uartParams.readDataMode = UART_DATA_TEXT;
+//    uartParams.readReturnMode = UART_RETURN_NEWLINE;
+    uartParams.readDataMode = UART_DATA_BINARY;
+      uartParams.readReturnMode = UART_RETURN_FULL;
+>>>>>>> 7e5df6e0cfbd1d705bcdfa5fb8f70936a5dd1b2e
     uartParams.writeMode = UART_MODE_BLOCKING;
     uartParams.readEcho = UART_ECHO_OFF;
     uartParams.baudRate = 9600;
@@ -357,10 +364,24 @@ void mavlink_rx(SerialDevice *dev){
 }
 
 SerialDevice *stdout;
+static UART_SerialDevice cli_uart;
+static int cli_uart_initialized = 0;
+
+// public function, must be called by every task using serial_printf before calling it for the first time.
+void cli_init()
+{
+	if(!(cli_uart_initialized))
+	{
+		cli_uart_init(&cli_uart);
+		stdout = (SerialDevice *)&cli_uart;
+		cli_uart_initialized = 1;
+
+		log_info("boot");
+	}
+}
 
 //runs with lowest priority
 void cli_task(){
-
 
 	static UART_SerialDevice cli_uart;
     cli_uart_init(&cli_uart);

@@ -9,10 +9,12 @@
 
 #include "hal/ultrasonic.h"
 #include "../../Board.h"
-//#include "../core/eps.h"
+#include "../core/eps.h"
 
 
 void vision_task(){
+	cli_init();
+
 //	ultrasonic_init();
 	eps_init();
 
