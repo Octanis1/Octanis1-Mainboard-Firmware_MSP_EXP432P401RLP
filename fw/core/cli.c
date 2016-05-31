@@ -343,6 +343,10 @@ const struct shell_commands commands[] = {
 
 void mavlink_rx(SerialDevice *dev){
 
+	COMM_FRAME frame;
+	frame.direction = CHANNEL_IN;
+	frame.channel = CHANNEL_APP_UART;
+
 	mavlink_message_t msg;
 	mavlink_status_t status;
 
@@ -350,7 +354,9 @@ void mavlink_rx(SerialDevice *dev){
 
 	while((c = serial_getc(dev))) {
 		if(mavlink_parse_char(CHANNEL_APP_UART, c, &msg, &status)){
-			System_printf("rx!");
+			System_printf("rx");
+			//frame.mavlin k_message = msg;
+			//Mailbox_post(comm_mailbox, &frame, BIOS_NO_WAIT);
 		}
 	}
 
