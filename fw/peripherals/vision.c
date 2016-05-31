@@ -12,6 +12,7 @@
 #include "../core/eps.h"
 
 
+
 void vision_task(){
 	cli_init();
 
@@ -36,7 +37,7 @@ void vision_task(){
 //		}
 		Task_sleep(5000);
 //		eps_switch_module(M3V3_1_OFF);
-		Task_sleep(5000);
+
 
 	}
 
