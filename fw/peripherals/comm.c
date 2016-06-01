@@ -11,7 +11,17 @@
 
 /* PUBLIC */
 int comm_tx_slot_open(MAV_COMPONENT component); //check if outgoing message can be sent for a given destination and component id
-void comm_mavlink_post_outbox(COMM_CHANNEL channel, mavlink_message_t *message); //post to mailbox for outgoing messages
+
+
+void comm_mavlink_post_outbox(COMM_CHANNEL channel, COMM_FRAME* frame) //post to mailbox for outgoing messages
+{
+	frame->channel = channel;
+	frame->direction = CHANNEL_OUT;
+	Mailbox_post(comm_mailbox, frame, BIOS_NO_WAIT);
+}
+
+
+
 void comm_mavlink_post_inbox(COMM_CHANNEL channel, mavlink_message_t *message); //post to mailbox for incoming messages
 
 mavlink_system_t mavlink_system;
@@ -76,27 +86,37 @@ void comm_task(){
 
 	COMM_FRAME mail;
 
-
 	uint8_t buf[MAVLINK_MAX_PACKET_LEN];
 	uint16_t mavlink_msg_len;
 
 	comm_init();
 
 	while(1){
-
-
 		if(Mailbox_pend(comm_mailbox, &mail, BIOS_WAIT_FOREVER)){
-			  //if INCOMING then
-					   //  comm_mavlink_handler()
-					   //else
-					   //  comm_send()
-			// Copy the message to the send buffer and send
-			mavlink_msg_len = mavlink_msg_to_send_buffer(buf, &(mail.mavlink_message));
+			if((mail.direction) == CHANNEL_OUT)
+			{
+				// Copy the message to the send buffer and send
+				mavlink_msg_len = mavlink_msg_to_send_buffer(buf, &(mail.mavlink_message));
 
-			serial_write(stdout, buf, mavlink_msg_len);
+				switch(mail.channel)
+				{
+					case CHANNEL_APP_UART:
+						serial_write(stdout, buf, mavlink_msg_len);
+						break;
+					case CHANNEL_LORA:
+					case CHANNEL_ROCKBLOCK:
+					case CHANNEL_GSM:
+					default:
+						break;
+				}
+
+			}
+			else
+			{
+				//  comm_mavlink_handler()
+
+			}
 		}
-
-	Task_sleep(500);
  	}
 
 }

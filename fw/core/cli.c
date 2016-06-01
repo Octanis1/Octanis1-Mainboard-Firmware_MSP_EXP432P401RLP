@@ -347,15 +347,13 @@ void mavlink_rx(SerialDevice *dev){
 	frame.direction = CHANNEL_IN;
 	frame.channel = CHANNEL_APP_UART;
 
-	mavlink_message_t msg;
 	mavlink_status_t status;
 	int c;
 
 	while((c = serial_getc(dev)) >= 0) {
-		if(mavlink_parse_char(CHANNEL_APP_UART, (uint8_t)c, &msg, &status)){
+		if(mavlink_parse_char(CHANNEL_APP_UART, (uint8_t)c, &(frame.mavlink_message), &status)){
 			// --> deal with received message...
-			//frame.mavlin k_message = msg;
-			//Mailbox_post(comm_mailbox, &frame, BIOS_NO_WAIT);
+			Mailbox_post(comm_mailbox, &frame, BIOS_NO_WAIT);
 		}
 	}
 }
