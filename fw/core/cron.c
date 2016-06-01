@@ -34,7 +34,7 @@ Void cron_quick_clock(UArg arg){
 
   			COMM_FRAME frame;
   			frame.channel = CHANNEL_APP_UART;
-  			frame.direction = 1;
+  			frame.direction = CHANNEL_IN;
 
 
   			// Pack the message

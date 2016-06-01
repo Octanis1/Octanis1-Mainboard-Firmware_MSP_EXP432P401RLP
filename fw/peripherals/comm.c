@@ -72,8 +72,6 @@ void comm_init(){
 	uint64_t system_time = 1000 * 1000 * (1234); //TODO get time on each message packing
 }
 
-
-
 void comm_task(){
 
 	COMM_FRAME mail;
@@ -99,6 +97,6 @@ void comm_task(){
 		}
 
 	Task_sleep(500);
-	}
+ 	}
 
 }

@@ -25,6 +25,10 @@ typedef enum comm_channels {
 
 } COMM_CHANNEL;
 
+typedef enum comm_channel_direction {
+	CHANNEL_IN,
+	CHANNEL_OUT
+} COMM_CHANNEL_DIRECTION;
 
 typedef struct {
    mavlink_message_t mavlink_message;
