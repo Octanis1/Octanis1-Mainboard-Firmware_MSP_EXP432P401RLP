@@ -13,13 +13,16 @@
 #include "../lib/mavlink/common/mavlink.h"
 
 typedef enum comm_channels {
-	CHANNEL_LORA_TTN,
-	CHANNEL_LORA_SWISSCOM,
+	CHANNEL_APP_UART,
+	CHANNEL_LORA,
 	CHANNEL_ROCKBLOCK,
 	CHANNEL_GSM,
-	CHANNEL_GSM_SMS,
-	CHANNEL_BLE,
-	CHANNEL_APP_UART
+
+	// IMPORTANT: these channel ID's are currently used in Mavlink to access a buffer array.
+	// This array size is defined MAVLINK_COMM_NUM_BUFFERS (currently = 4), so this is the
+	// maximum number of channels to define!
+//	CHANNEL_BLE,
+
 } COMM_CHANNEL;
 
 

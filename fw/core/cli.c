@@ -345,15 +345,13 @@ void mavlink_rx(SerialDevice *dev){
 
 	mavlink_message_t msg;
 	mavlink_status_t status;
+	int c;
 
-	uint8_t c;
-
-	while((c = serial_getc(dev))) {
-		if(mavlink_parse_char(CHANNEL_APP_UART, c, &msg, &status)){
-			System_printf("rx!");
+	while((c = serial_getc(dev)) >= 0) {
+		if(mavlink_parse_char(CHANNEL_APP_UART, (uint8_t)c, &msg, &status)){
+			 // --> deal with received message...
 		}
 	}
-
 }
 
 SerialDevice *stdout;
