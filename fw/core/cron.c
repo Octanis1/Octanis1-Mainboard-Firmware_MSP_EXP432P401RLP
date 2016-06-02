@@ -31,7 +31,9 @@ Void cron_quick_clock(UArg arg){
 	// Pack the message
 	mavlink_msg_heartbeat_pack(mavlink_system.sysid, mavlink_system.compid, &(frame.mavlink_message), system_type, autopilot_type, system_mode, 0, system_state);
 
-	comm_mavlink_post_outbox(CHANNEL_APP_UART, &frame); //post to mailbox for outgoing messages
+	comm_set_tx_flag(CHANNEL_APP_UART, mavlink_system.compid);
+
+	comm_mavlink_broadcast(&frame); //send heartbeat for all available channel slots
 }
 
 

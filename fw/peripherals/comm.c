@@ -9,9 +9,57 @@
 #include "comm.h"
 #include <string.h>
 
-/* PUBLIC */
-int comm_tx_slot_open(MAV_COMPONENT component); //check if outgoing message can be sent for a given destination and component id
+#define N_TX_SLOT_FLAG_INTS		MAV_COMPONENT_ENUM_END/32+1 // +1 to round up
+int comm_tx_slot_flags[MAVLINK_COMM_NUM_BUFFERS][N_TX_SLOT_FLAG_INTS]; // 1-bit flags storing
 
+mavlink_system_t mavlink_system;
+
+void comm_mavlink_post_outbox(COMM_CHANNEL channel, COMM_FRAME* frame); //post to mailbox for outgoing messages
+void comm_clear_tx_flag(COMM_CHANNEL channel, int component_id);
+
+/* PUBLIC */
+
+int comm_check_tx_slots(MAV_COMPONENT component) //check if outgoing message can be sent for a given destination and component id
+{
+	int ch_iter = 0;
+	for(ch_iter = 0; ch_iter<MAVLINK_COMM_NUM_BUFFERS; ch_iter++)
+	{
+		if(( (comm_tx_slot_flags[ch_iter][component/32] & (1 << (component%32) )) != 0 ))
+		{
+			return ch_iter;
+		}
+	}
+	return COMM_CHANNEL_NONE;
+}
+
+void comm_mavlink_broadcast(COMM_FRAME* frame) //posts to mailbox for all available channel slots for a given component
+{
+	int open_slot;
+	while((open_slot = comm_check_tx_slots((frame->mavlink_message).compid)) > COMM_CHANNEL_NONE)
+	{
+		comm_mavlink_post_outbox(open_slot, frame);
+		comm_clear_tx_flag(open_slot, (frame->mavlink_message).compid);
+	}
+}
+
+void comm_mavlink_post_inbox(COMM_CHANNEL channel, mavlink_message_t *message); //post to mailbox for incoming messages
+
+
+void comm_set_all_tx_flags(COMM_CHANNEL channel)
+{
+	int i;
+	for(i=0;i<N_TX_SLOT_FLAG_INTS;i++)
+	{
+		comm_tx_slot_flags[channel][i] = 0xFFFFFFFF;
+	}
+}
+
+void comm_set_tx_flag(COMM_CHANNEL channel, int component_id)
+{
+	comm_tx_slot_flags[channel][component_id/32] |= 1 << (component_id%32);  // Set the bit at the k-th position in comm_tx_slot_flags
+}
+
+/* PRIVATE */
 
 void comm_mavlink_post_outbox(COMM_CHANNEL channel, COMM_FRAME* frame) //post to mailbox for outgoing messages
 {
@@ -20,13 +68,11 @@ void comm_mavlink_post_outbox(COMM_CHANNEL channel, COMM_FRAME* frame) //post to
 	Mailbox_post(comm_mailbox, frame, BIOS_NO_WAIT);
 }
 
+void comm_clear_tx_flag(COMM_CHANNEL channel, int component_id)
+{
+	comm_tx_slot_flags[channel][component_id/32] &= ~(1 << (component_id%32));
+}
 
-
-void comm_mavlink_post_inbox(COMM_CHANNEL channel, mavlink_message_t *message); //post to mailbox for incoming messages
-
-mavlink_system_t mavlink_system;
-
-/* PRIVATE */
 void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 
 	switch(channel) {
@@ -101,7 +147,11 @@ void comm_task(){
 				switch(mail.channel)
 				{
 					case CHANNEL_APP_UART:
-						serial_write(stdout, buf, mavlink_msg_len);
+						if(serial_write(stdout, buf, mavlink_msg_len))
+						{//successful TX
+							comm_clear_tx_flag(CHANNEL_APP_UART, mail.mavlink_message.compid);
+						}
+
 						break;
 					case CHANNEL_LORA:
 					case CHANNEL_ROCKBLOCK:

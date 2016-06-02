@@ -24,6 +24,8 @@ typedef enum comm_channels {
 //	CHANNEL_BLE,
 
 } COMM_CHANNEL;
+#define COMM_CHANNEL_NONE -1
+
 
 typedef enum comm_channel_direction {
 	CHANNEL_IN,
@@ -38,8 +40,12 @@ typedef struct {
 
 extern mavlink_system_t mavlink_system;
 
-int comm_tx_slot_open(MAV_COMPONENT component); //check if outgoing message can be sent for a given destination and component id
-void comm_mavlink_post_outbox(COMM_CHANNEL channel, COMM_FRAME* frame); //post to mailbox for outgoing messages
+int comm_check_tx_slots(MAV_COMPONENT component); //check if outgoing message can be sent for a given destination and component id
+void comm_set_all_tx_flags(COMM_CHANNEL channel);
+void comm_set_tx_flag(COMM_CHANNEL channel, int component_id);
+
+void comm_mavlink_broadcast(COMM_FRAME* frame); //posts to mailbox for all available channel slots for a given component
+
 void comm_mavlink_post_inbox(COMM_CHANNEL channel, mavlink_message_t *message); //post to mailbox for incoming messages
 
 void comm_task();
