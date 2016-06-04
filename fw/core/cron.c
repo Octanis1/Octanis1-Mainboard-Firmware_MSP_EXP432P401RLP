@@ -17,6 +17,8 @@ Void cron_quick_clock(UArg arg){
 	// flash led
 	GPIO_toggle(Board_LED_GREEN); // use red led for user inputs
 
+#ifdef MAVLINK_ON_UART0_ENABLED
+
 	// Mavlink heartbeat
 	// Define the system type, in this case an airplane
 	uint8_t system_type = MAV_TYPE_GROUND_ROVER;
@@ -34,6 +36,7 @@ Void cron_quick_clock(UArg arg){
 	comm_set_tx_flag(CHANNEL_APP_UART, mavlink_system.compid);
 
 	comm_mavlink_broadcast(&frame); //send heartbeat for all available channel slots
+#endif
 }
 
 

@@ -22,7 +22,11 @@ void comm_clear_tx_flag(COMM_CHANNEL channel, int component_id);
 int comm_check_tx_slots(MAV_COMPONENT component) //check if outgoing message can be sent for a given destination and component id
 {
 	int ch_iter = 0;
+#ifdef MAVLINK_ON_UART0_ENABLED
 	for(ch_iter = 0; ch_iter<MAVLINK_COMM_NUM_BUFFERS; ch_iter++)
+#else
+	for(ch_iter = 1; ch_iter<MAVLINK_COMM_NUM_BUFFERS; ch_iter++)
+#endif
 	{
 		if(( (comm_tx_slot_flags[ch_iter][component/32] & (1 << (component%32) )) != 0 ))
 		{
@@ -75,22 +79,29 @@ void comm_clear_tx_flag(COMM_CHANNEL channel, int component_id)
 
 void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 
-	switch(channel) {
+	static uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+	static uint16_t mavlink_msg_len;
+
+	// Copy the message to the send buffer and send
+	mavlink_msg_len = mavlink_msg_to_send_buffer(buf, msg);
+
+	switch(channel)
+	{
+		case CHANNEL_APP_UART:
 #ifdef MAVLINK_ON_UART0_ENABLED
-	   case CHANNEL_APP_UART:
-		  {
-
-		  }
- 	      break;
+			if(serial_write(stdout, buf, mavlink_msg_len))
+			{//successful TX
+				comm_clear_tx_flag(CHANNEL_APP_UART, msg->compid);
+			}
+			break;
 #endif
-
-	   case CHANNEL_GSM:
-		   //sim800_send_http(msg)
- 	      break;
-
-	   default: break;
-
- 	}
+		case CHANNEL_LORA:
+		case CHANNEL_ROCKBLOCK:
+		case CHANNEL_GSM:
+			   //sim800_send_http(msg)
+		default:
+			break;
+	}
 
 }
 
@@ -132,8 +143,6 @@ void comm_task(){
 
 	COMM_FRAME mail;
 
-	uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-	uint16_t mavlink_msg_len;
 
 	comm_init();
 
@@ -141,25 +150,7 @@ void comm_task(){
 		if(Mailbox_pend(comm_mailbox, &mail, BIOS_WAIT_FOREVER)){
 			if((mail.direction) == CHANNEL_OUT)
 			{
-				// Copy the message to the send buffer and send
-				mavlink_msg_len = mavlink_msg_to_send_buffer(buf, &(mail.mavlink_message));
-
-				switch(mail.channel)
-				{
-					case CHANNEL_APP_UART:
-						if(serial_write(stdout, buf, mavlink_msg_len))
-						{//successful TX
-							comm_clear_tx_flag(CHANNEL_APP_UART, mail.mavlink_message.compid);
-						}
-
-						break;
-					case CHANNEL_LORA:
-					case CHANNEL_ROCKBLOCK:
-					case CHANNEL_GSM:
-					default:
-						break;
-				}
-
+				comm_send(mail.channel, &(mail.mavlink_message));
 			}
 			else
 			{
