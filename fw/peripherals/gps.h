@@ -29,7 +29,8 @@ int gps_get_lon_scale();
 
 int gps_get_validity();
 int gps_get_dgps_age();
-int gps_get_hdop();
+uint16_t gps_get_hdop();
+uint16_t gps_get_vdop();
 
 int gps_get_last_update_time();
 
