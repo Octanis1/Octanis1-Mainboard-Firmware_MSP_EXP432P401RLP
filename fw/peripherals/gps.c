@@ -173,20 +173,23 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 			int minmea_sentence = minmea_sentence_id(nmeaframes, false);
 
 			switch (minmea_sentence) {
-				case MINMEA_SENTENCE_GGA: {
+				case MINMEA_SENTENCE_GGA:
+				{
 					minmea_parse_gga(&gps_gga_frame, nmeaframes);
-				}break;
-
-				case MINMEA_SENTENCE_RMC: {
+					break;
+				}
+				case MINMEA_SENTENCE_RMC:
+				{
 					if(minmea_parse_rmc(&gps_rmc_frame, nmeaframes)){
 						//update system time when valid RMC frame arrives
 						Seconds_set(gps_get_last_update_time());
-
-					}
-				}break;
-				case MINMEA_SENTENCE_GSA: {
+						}
+					break;
+				}
+				case MINMEA_SENTENCE_GSA:
+				{
 					minmea_parse_gsa(&gps_gsa_frame, nmeaframes);
-				}break;
+				}
 			}
 
 			nmeaframes = strtok_r(NULL, "\n", &saveptr1);

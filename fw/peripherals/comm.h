@@ -38,6 +38,11 @@ typedef struct {
    unsigned int direction : 1;
 } COMM_FRAME;
 
+typedef struct{
+	uint8_t system;
+	uint8_t component;
+} COMM_MAV_MSG_TARGET;
+
 extern mavlink_system_t mavlink_system;
 
 int comm_check_tx_slots(MAV_COMPONENT component); //check if outgoing message can be sent for a given destination and component id

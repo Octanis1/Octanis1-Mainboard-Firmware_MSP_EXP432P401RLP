@@ -107,7 +107,11 @@ void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 
 
 
-void comm_mavlink_handler(mavlink_message_t *msg){
+void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
+	COMM_MAV_MSG_TARGET target;
+
+	static uint8_t mission_count;
+	static uint16_t mission_item_id;
 
 	switch(msg->msgid){
 	  case MAVLINK_MSG_ID_HEARTBEAT:
@@ -119,7 +123,87 @@ void comm_mavlink_handler(mavlink_message_t *msg){
 	case MAVLINK_MSG_ID_COMMAND_LONG:
 		// EXECUTE ACTION
 		break;
+
+	case MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT:
+			GPIO_toggle(Board_LED_RED);
+		break;
+
+	case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
+//	{
+//		mavlink_msg_param_value_pack(mavlink_system.sysid, uint8_t component_id, mavlink_message_t* msg,
+//			       const char *param_id, float param_value, uint8_t param_type, uint16_t param_count, uint16_t param_index);
+//
+		break;
+//	}
+
+	case MAVLINK_MSG_ID_MISSION_ITEM:
+	{
+
+		uint8_t sysid = mavlink_msg_mission_item_get_target_system(msg);
+		uint8_t target_cmp = mavlink_msg_mission_item_get_target_component(msg);
+
+		if(mission_count > mission_item_id)
+		{
+		static COMM_FRAME frame;
+		mavlink_msg_mission_request_pack(mavlink_system.sysid, target_cmp, &(frame.mavlink_message),
+				msg->sysid, target_cmp, mission_item_id);
+
+		mission_item_id++;
+		comm_mavlink_post_outbox(src_channel, &frame);
+		}
+		else
+		{
+			static COMM_FRAME frame;
+			mavlink_msg_mission_ack_pack(mavlink_system.sysid, target_cmp, &(frame.mavlink_message),
+					msg->sysid, target_cmp, 	MAV_MISSION_ACCEPTED);
+
+			comm_mavlink_post_outbox(src_channel, &frame);
+		}
+		break;
+	}
+
+
+	case MAVLINK_MSG_ID_MISSION_COUNT:
+	{
+		uint8_t sysid = mavlink_msg_mission_count_get_target_system(msg);
+		uint8_t target_cmp = mavlink_msg_mission_count_get_target_component(msg);
+		mission_count = mavlink_msg_mission_count_get_count(msg);
+		mission_item_id = 0;
+
+		/* send mission acknowledge */
+		// Initialize the message buffer
+
+		static COMM_FRAME frame;
+		mavlink_msg_mission_request_pack(mavlink_system.sysid, target_cmp, &(frame.mavlink_message),
+				msg->sysid, target_cmp, 0);
+
+		comm_mavlink_post_outbox(src_channel, &frame);
+
+		break;
+	}
+	case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:
+	{
+		uint8_t sysid = mavlink_msg_mission_request_list_get_target_system(msg);
+		uint8_t target_cmp =mavlink_msg_mission_request_list_get_target_component(msg);
+		mavlink_mission_request_list_t* mission_request_list;
+
+		/* Acknowledge by sending the mission count */
+		static COMM_FRAME frame;
+		mavlink_msg_mission_count_pack(mavlink_system.sysid, target_cmp,  &(frame.mavlink_message),
+				msg->sysid, target_cmp, mission_count);
+
+		comm_mavlink_post_outbox(src_channel, &frame);
+
+		break;
+	}
+	case MAVLINK_MSG_ID_MISSION_REQUEST:
+	{
+
+
+		break;
+	}
 	default:
+		GPIO_toggle(Board_LED_RED);
 		//Do nothing
 		break;
 	}
@@ -154,8 +238,7 @@ void comm_task(){
 			}
 			else
 			{
-				//  comm_mavlink_handler()
-
+				comm_mavlink_handler(mail.channel, &(mail.mavlink_message));
 			}
 		}
  	}
