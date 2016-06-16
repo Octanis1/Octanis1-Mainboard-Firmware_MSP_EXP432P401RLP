@@ -139,6 +139,8 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 	case MAVLINK_MSG_ID_MISSION_ITEM:
 	{
 
+		//TODO: decode message with mavlink_msg_mission_item_decode() and save mission_item
+
 		uint8_t sysid = mavlink_msg_mission_item_get_target_system(msg);
 		uint8_t target_cmp = mavlink_msg_mission_item_get_target_component(msg);
 
