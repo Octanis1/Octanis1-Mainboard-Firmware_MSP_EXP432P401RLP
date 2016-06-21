@@ -1,0 +1,1 @@
+"./communication.obj" "./eps_hal.obj" "./main.obj" "./state_machine.obj" "../lnk_msp430fr5969.cmd" -l"libmath.a" -l"libc.a" 
