@@ -64,8 +64,10 @@ typedef struct _navigation_status{
 } navigation_status_t;
 
 static navigation_status_t navigation_status;
-static target_list_t navigation_targets;
+static target_list_t navigation_targets; //DEPRECATED!
 static pid_controler_t pid_a;
+
+static mission_item_list_t mission_items;
 
 
 float navigation_get_angle_to_target()
@@ -128,6 +130,61 @@ float navigation_angle_for_rover(float lat1, float lon1, float lat2, float lon2,
     return angle;
 }
 
+/******** NEW functions to handle mavlink mission items **********/
+
+static uint16_t mission_item_rx_seq_id; // temporary sequence number during MISSION_ITEM exchange
+static uint16_t mission_item_rx_count;
+
+COMM_MAV_RESULT navigation_rx_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg)
+{
+	//note: If a waypoint planner component receives WAYPOINT messages outside of transactions it answers with a WAYPOINT_ACK message.
+
+	uint8_t next_index = (mission_items.last_index + 1) % N_TARGETS_MAX;
+	if(next_index == mission_items.current_index)
+	{
+		//TODO: reply with MAV_CMD_ACK_ERR_FAIL because buffer is full.
+		return NO_ANSWER; //for now we just don't answer -->timeout. BUT: list is still stored!!
+	}
+	else
+	{ // buffer has space --> add to list
+		mavlink_msg_mission_item_decode(msg, &(mission_items.item[next_index]));
+
+		if(mission_item_rx_count > mission_item_rx_seq_id) // request next item
+		{
+			mavlink_msg_mission_request_pack(mavlink_system.sysid, target->component, answer_msg,
+					msg->sysid, target->component, mission_item_rx_seq_id);
+			mission_item_rx_seq_id++; //increase sequence id
+		}
+		else
+		{
+			mavlink_msg_mission_ack_pack(mavlink_system.sysid, target->component, answer_msg,
+					msg->sysid, target->component, 	MAV_MISSION_ACCEPTED);
+		}
+
+		return REPLY_TO_SENDER;
+
+	}
+
+}
+
+// function to call at the beginning of a mission item write transaction (i.e. after receiving MISSION_COUNT)
+COMM_MAV_RESULT navigation_rx_mission_items_start(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg)
+{
+	mission_item_rx_seq_id = 0;
+	mission_item_rx_count = mavlink_msg_mission_count_get_count(msg);
+
+	/* send mission acknowledge */
+	mavlink_msg_mission_request_pack(mavlink_system.sysid, target->component, answer_msg,
+			msg->sysid, target->component, mission_item_rx_seq_id);
+
+	return REPLY_TO_SENDER;
+}
+
+
+
+
+/******** DEPRECATED FUNCTIONS FOR MANAGING GPS TARGETS VIA SERIAL *******/
+//TODO: REMOVE
 uint8_t navigation_remove_newest_target()
 {
 	uint8_t previous_index = (navigation_targets.last_index + N_TARGETS_MAX -1) % N_TARGETS_MAX;
@@ -181,6 +238,8 @@ uint8_t navigation_add_target_from_string(char* targetstring, int stringlength)
 
 	return navigation_add_target(lat, lon, id);
 }
+
+/******** END DEPRECATED FUNCTIONS FOR MANAGING GPS TARGETS VIA SERIAL *******/
 
 
 #if defined (NAVIGATION_TEST)

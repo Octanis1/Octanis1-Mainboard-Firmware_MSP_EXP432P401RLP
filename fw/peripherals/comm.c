@@ -105,13 +105,33 @@ void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 
 }
 
+//returns true if message target is this system --> you can then continue decoding the message.
+//otherwise it should forward the message to the corresponding target (i.e. EPS, SBC, etc...)
+int comm_mavlink_check_target(COMM_MAV_MSG_TARGET* target, mavlink_message_t *msg)
+{
+	if(target->system == mavlink_system.sysid)
+	{
+		return 1;
+	}
+	else{
+		//TODO: forward the message to corresponding system
+		return 0;
+	}
+}
+
 
 
 void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
-	COMM_MAV_MSG_TARGET target;
+	COMM_MAV_MSG_TARGET msg_target;
+	COMM_FRAME answer_frame; // This variable must be filled by any external function that handles
+							// 	a mavlink message, if it wants to send back an answer to the sender.
+	COMM_MAV_RESULT mav_result = NO_ANSWER; // should be the return value of every external function that handles
+							// 	a mavlink message, and set to 'REPLY_TO_SENDER' if it wants to send an answer.
 
+	//TODO: remove this
 	static uint8_t mission_count;
 	static uint16_t mission_item_id;
+	//
 
 	switch(msg->msgid){
 	  case MAVLINK_MSG_ID_HEARTBEAT:
@@ -138,28 +158,12 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 
 	case MAVLINK_MSG_ID_MISSION_ITEM:
 	{
+		msg_target.system = mavlink_msg_mission_item_get_target_system(msg);
+		msg_target.component = mavlink_msg_mission_item_get_target_component(msg);
 
-		//TODO: decode message with mavlink_msg_mission_item_decode() and save mission_item
-
-		uint8_t sysid = mavlink_msg_mission_item_get_target_system(msg);
-		uint8_t target_cmp = mavlink_msg_mission_item_get_target_component(msg);
-
-		if(mission_count > mission_item_id)
+		if(comm_mavlink_check_target(&msg_target,msg))
 		{
-		static COMM_FRAME frame;
-		mavlink_msg_mission_request_pack(mavlink_system.sysid, target_cmp, &(frame.mavlink_message),
-				msg->sysid, target_cmp, mission_item_id);
-
-		mission_item_id++;
-		comm_mavlink_post_outbox(src_channel, &frame);
-		}
-		else
-		{
-			static COMM_FRAME frame;
-			mavlink_msg_mission_ack_pack(mavlink_system.sysid, target_cmp, &(frame.mavlink_message),
-					msg->sysid, target_cmp, 	MAV_MISSION_ACCEPTED);
-
-			comm_mavlink_post_outbox(src_channel, &frame);
+			mav_result = navigation_rx_mission_item(&msg_target, msg, &(answer_frame.mavlink_message));
 		}
 		break;
 	}
@@ -167,20 +171,13 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 
 	case MAVLINK_MSG_ID_MISSION_COUNT:
 	{
-		uint8_t sysid = mavlink_msg_mission_count_get_target_system(msg);
-		uint8_t target_cmp = mavlink_msg_mission_count_get_target_component(msg);
-		mission_count = mavlink_msg_mission_count_get_count(msg);
-		mission_item_id = 0;
+		msg_target.system = mavlink_msg_mission_count_get_target_system(msg);
+		msg_target.component = mavlink_msg_mission_count_get_target_component(msg);
 
-		/* send mission acknowledge */
-		// Initialize the message buffer
-
-		static COMM_FRAME frame;
-		mavlink_msg_mission_request_pack(mavlink_system.sysid, target_cmp, &(frame.mavlink_message),
-				msg->sysid, target_cmp, 0);
-
-		comm_mavlink_post_outbox(src_channel, &frame);
-
+		if(comm_mavlink_check_target(&msg_target,msg))
+		{
+			mav_result = navigation_rx_mission_items_start(&msg_target, msg, &(answer_frame.mavlink_message));
+		}
 		break;
 	}
 	case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:
@@ -209,6 +206,14 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 		//Do nothing
 		break;
 	}
+
+
+	// Answer, if required:
+	if(mav_result == REPLY_TO_SENDER)
+	{
+		comm_mavlink_post_outbox(src_channel, &answer_frame);
+	}
+
 
 }
 

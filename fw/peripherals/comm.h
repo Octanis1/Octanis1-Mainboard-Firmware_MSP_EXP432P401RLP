@@ -43,6 +43,11 @@ typedef struct{
 	uint8_t component;
 } COMM_MAV_MSG_TARGET;
 
+typedef enum comm_mav_result{
+	NO_ANSWER,
+	REPLY_TO_SENDER //,FORWARD_MESSAGE (?)
+} COMM_MAV_RESULT;
+
 extern mavlink_system_t mavlink_system;
 
 int comm_check_tx_slots(MAV_COMPONENT component); //check if outgoing message can be sent for a given destination and component id

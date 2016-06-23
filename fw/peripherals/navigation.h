@@ -9,9 +9,36 @@
 #define FW_PERIPHERALS_NAVIGATION_H_
 
 #include <stdint.h>
+#include "comm.h"
 
 #define N_TARGETS_MAX	20
 #define OBSTACLE_MAX_DIST 300
+
+
+/******** NEW types and functions to handle mavlink mission items **********/
+
+typedef struct _mission_item_list_t{
+	mavlink_mission_item_t item[N_TARGETS_MAX];
+	enum _mission_item_list_state{
+		ITEM_INVALID = 0,
+		ITEM_VALID,
+		ITEM_DONE,
+		ITEM_CURRENT}
+	state[N_TARGETS_MAX];
+	// circular buffer index variables
+	uint8_t current_index;
+	uint8_t last_index;
+} mission_item_list_t;
+
+COMM_MAV_RESULT navigation_rx_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg);
+COMM_MAV_RESULT navigation_rx_mission_items_start(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg);
+
+
+
+
+/******** OLD types and functions for navigation target lists **********/
+//TODO: remove
+
 typedef struct _target_list_t{
 	float lat[N_TARGETS_MAX];
 	float lon[N_TARGETS_MAX];
@@ -26,6 +53,7 @@ typedef struct _target_list_t{
 	uint8_t current_index;
 	uint8_t last_index;
 } target_list_t;
+
 
 
 /* Add a new target position to the list. Returns 1 on success and 0
