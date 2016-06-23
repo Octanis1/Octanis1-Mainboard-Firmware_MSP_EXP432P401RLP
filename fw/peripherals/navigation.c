@@ -140,20 +140,24 @@ COMM_MAV_RESULT navigation_rx_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_
 	//note: If a waypoint planner component receives WAYPOINT messages outside of transactions it answers with a WAYPOINT_ACK message.
 
 	uint8_t next_index = (mission_items.last_index + 1) % N_TARGETS_MAX;
-	if(next_index == mission_items.current_index)
-	{
+	if(next_index == mission_items.current_index &&
+			(mission_items.state[mission_items.current_index] == ITEM_CURRENT ||
+			mission_items.state[mission_items.current_index] == ITEM_VALID))
+	{ //do not overwrite valid mission item!
 		//TODO: reply with MAV_CMD_ACK_ERR_FAIL because buffer is full.
 		return NO_ANSWER; //for now we just don't answer -->timeout. BUT: list is still stored!!
 	}
 	else
 	{ // buffer has space --> add to list
 		mavlink_msg_mission_item_decode(msg, &(mission_items.item[next_index]));
+		mission_items.last_index = next_index;
+		mission_items.state[next_index] = ITEM_VALID;
 
+		mission_item_rx_seq_id++; //increase sequence id
 		if(mission_item_rx_count > mission_item_rx_seq_id) // request next item
 		{
 			mavlink_msg_mission_request_pack(mavlink_system.sysid, target->component, answer_msg,
 					msg->sysid, target->component, mission_item_rx_seq_id);
-			mission_item_rx_seq_id++; //increase sequence id
 		}
 		else
 		{
@@ -181,6 +185,33 @@ COMM_MAV_RESULT navigation_rx_mission_items_start(COMM_MAV_MSG_TARGET *target, m
 }
 
 
+static uint16_t mission_item_tx_seq_id; // temporary sequence number during MISSION_ITEM exchange
+static uint16_t mission_item_tx_count;
+
+// function to call after a MISSION_REQUEST_LIST command
+COMM_MAV_RESULT navigation_tx_mission_items_start(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg)
+{
+	//compute number of mission items in buffer:
+	mission_item_tx_count = (mission_items.last_index + 1 + N_TARGETS_MAX - mission_items.current_index) % N_TARGETS_MAX;
+
+	mavlink_msg_mission_count_pack(mavlink_system.sysid, target->component, answer_msg,
+			msg->sysid, target->component, mission_item_tx_count);
+
+	mission_item_tx_seq_id = 0;
+
+	return REPLY_TO_SENDER;
+}
+
+COMM_MAV_RESULT navigation_tx_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg)
+{
+	mission_item_tx_seq_id = mavlink_msg_mission_request_get_seq(msg);
+	uint16_t item_index = (mission_items.current_index + mission_item_tx_seq_id) % N_TARGETS_MAX;
+
+	// this function packs the already available struct.
+	mavlink_msg_mission_item_encode(mavlink_system.sysid, target->component, answer_msg, &(mission_items.item[item_index]));
+
+	return REPLY_TO_SENDER;
+}
 
 
 /******** DEPRECATED FUNCTIONS FOR MANAGING GPS TARGETS VIA SERIAL *******/
@@ -534,7 +565,8 @@ void navigation_init()
 	navigation_status.max_dist_obs = OBSTACLE_MAX_DIST;
 	GPIO_write(Board_OBS_A_EN, 1);
 
-	int i=navigation_add_target(TARGET_LAT, TARGET_LON, 0); //fill initial target to list
+	int i=navigation_add_target(TARGET_LAT, TARGET_LON, 0); //fill initial target to list (TODO:remove deprecated)
+	mission_items.last_index = N_TARGETS_MAX - 1; //put last item index to -1 such that the first written element will be at index 0
 
 }
 #endif

@@ -9,6 +9,8 @@
 #include "comm.h"
 #include <string.h>
 
+#include "navigation.h"
+
 #define N_TX_SLOT_FLAG_INTS		MAV_COMPONENT_ENUM_END/32+1 // +1 to round up
 int comm_tx_slot_flags[MAVLINK_COMM_NUM_BUFFERS][N_TX_SLOT_FLAG_INTS]; // 1-bit flags storing
 
@@ -128,11 +130,6 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 	COMM_MAV_RESULT mav_result = NO_ANSWER; // should be the return value of every external function that handles
 							// 	a mavlink message, and set to 'REPLY_TO_SENDER' if it wants to send an answer.
 
-	//TODO: remove this
-	static uint8_t mission_count;
-	static uint16_t mission_item_id;
-	//
-
 	switch(msg->msgid){
 	  case MAVLINK_MSG_ID_HEARTBEAT:
 	        {
@@ -182,23 +179,24 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 	}
 	case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:
 	{
-		uint8_t sysid = mavlink_msg_mission_request_list_get_target_system(msg);
-		uint8_t target_cmp =mavlink_msg_mission_request_list_get_target_component(msg);
-		mavlink_mission_request_list_t* mission_request_list;
+		msg_target.system = mavlink_msg_mission_request_list_get_target_system(msg);
+		msg_target.component = mavlink_msg_mission_request_list_get_target_component(msg);
 
-		/* Acknowledge by sending the mission count */
-		static COMM_FRAME frame;
-		mavlink_msg_mission_count_pack(mavlink_system.sysid, target_cmp,  &(frame.mavlink_message),
-				msg->sysid, target_cmp, mission_count);
-
-		comm_mavlink_post_outbox(src_channel, &frame);
-
+		if(comm_mavlink_check_target(&msg_target,msg))
+		{
+			mav_result = navigation_tx_mission_items_start(&msg_target, msg, &(answer_frame.mavlink_message));
+		}
 		break;
 	}
 	case MAVLINK_MSG_ID_MISSION_REQUEST:
 	{
+		msg_target.system = mavlink_msg_mission_request_get_target_system(msg);
+		msg_target.component = mavlink_msg_mission_request_get_target_component(msg);
 
-
+		if(comm_mavlink_check_target(&msg_target,msg))
+		{
+			mav_result = navigation_tx_mission_item(&msg_target, msg, &(answer_frame.mavlink_message));
+		}
 		break;
 	}
 	default:
