@@ -19,15 +19,8 @@
 
 typedef struct _mission_item_list_t{
 	mavlink_mission_item_t item[N_TARGETS_MAX];
-	enum _mission_item_list_state{
-		ITEM_INVALID = 0,
-		ITEM_VALID,
-		ITEM_DONE,
-		ITEM_CURRENT}
-	state[N_TARGETS_MAX];
-	// circular buffer index variables
-	uint8_t current_index;
-	uint8_t last_index;
+	uint16_t current_index;
+	uint16_t count; //total number of mission items stored
 } mission_item_list_t;
 
 COMM_MAV_RESULT navigation_rx_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg);
