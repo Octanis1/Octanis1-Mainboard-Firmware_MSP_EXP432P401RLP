@@ -18,8 +18,8 @@
 /******** NEW types and functions to handle mavlink mission items **********/
 
 typedef struct _mission_item_list_t{
-	mavlink_mission_item_t item[N_TARGETS_MAX];
-	uint16_t current_index;
+	mavlink_mission_item_t item[N_TARGETS_MAX+1]; //+1 for security; needed if current_index>=count
+	uint16_t current_index; //if higher than count-1, it means we are done with all mission items
 	uint16_t count; //total number of mission items stored
 } mission_item_list_t;
 
@@ -29,36 +29,7 @@ COMM_MAV_RESULT navigation_rx_mission_items_start(COMM_MAV_MSG_TARGET *target, m
 COMM_MAV_RESULT navigation_tx_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg);
 COMM_MAV_RESULT navigation_tx_mission_items_start(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg);
 
-
-
-/******** OLD types and functions for navigation target lists **********/
-//TODO: remove
-
-typedef struct _target_list_t{
-	float lat[N_TARGETS_MAX];
-	float lon[N_TARGETS_MAX];
-	uint8_t id[N_TARGETS_MAX];
-	enum _target_list_state{
-		INVALID = 0,
-		VALID,
-		DONE,
-		CURRENT}
-	state[N_TARGETS_MAX];
-	// circular buffer index variables
-	uint8_t current_index;
-	uint8_t last_index;
-} target_list_t;
-
-
-
-/* Add a new target position to the list. Returns 1 on success and 0
- * if the queue is full.
- */
-uint8_t navigation_remove_newest_target();
-
-uint8_t navigation_add_target(float new_lat, float new_lon, uint8_t new_id);
-
-uint8_t navigation_add_target_from_string(char* targetstring, int stringlength);
+COMM_MAV_RESULT navigation_next_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg);
 
 
 /* bypass the navigation logic and control the motors individually via CLI or other interface.

@@ -199,6 +199,19 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 		}
 		break;
 	}
+	case MAVLINK_MSG_ID_MISSION_SET_CURRENT:
+	{
+		msg_target.system = mavlink_msg_mission_set_current_get_target_system(msg);
+		msg_target.component = mavlink_msg_mission_set_current_get_target_component(msg);
+
+		if(comm_mavlink_check_target(&msg_target,msg))
+		{
+			mav_result = navigation_next_mission_item(&msg_target, msg, &(answer_frame.mavlink_message));
+		}
+		break;
+	}
+
+
 	default:
 		GPIO_toggle(Board_LED_RED);
 		//Do nothing
