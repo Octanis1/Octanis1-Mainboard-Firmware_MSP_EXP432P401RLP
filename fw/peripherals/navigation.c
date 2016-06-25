@@ -68,6 +68,7 @@ static pid_controler_t pid_a;
 
 static mission_item_list_t mission_items;
 
+void navigation_update_current_target();
 
 float navigation_get_angle_to_target()
 {
@@ -102,7 +103,6 @@ float navigation_dist_to_target(float lat_current, float lon_current, float lat_
     return distance;
 }
 
-
 /**
  * Params: lat1, long1 => Latitude and Longitude of current point
  *         lat2, long2 => Latitude and Longitude of target  point
@@ -128,6 +128,7 @@ float navigation_angle_for_rover(float lat1, float lon1, float lat2, float lon2,
     angle = angle - headX;
     return angle;
 }
+
 
 /******** functions to handle mavlink mission items **********/
 
@@ -240,6 +241,11 @@ COMM_MAV_RESULT navigation_next_mission_item(COMM_MAV_MSG_TARGET *target, mavlin
 			return NO_ANSWER; //TODO: reply NACK
 
 	}
+
+	// Set state to reach new waypoints:
+	navigation_update_current_target();
+
+	// Inform controller about the new waypoint:
 	mavlink_msg_mission_current_pack(mavlink_system.sysid, MAV_COMP_ID_MISSIONPLANNER, answer_msg,
 			mission_items.current_index);
 	return REPLY_TO_SENDER;
@@ -319,6 +325,19 @@ void navigation_update_position()
 			navigation_status.lat_target, navigation_status.lon_target);
 }
 #endif
+
+
+void navigation_update_current_target()
+{
+	if(mission_items.current_index < mission_items.count)
+	{
+		//TODO: check for frame and command variable of the mission_item.
+		navigation_status.lat_target = mission_items.item[mission_items.current_index].x;
+		navigation_status.lon_target = mission_items.item[mission_items.current_index].y;
+		navigation_status.current_state = GO_TO_TARGET;
+	}
+	//TODO: do we have to switch state here?
+}
 
 void navigation_update_state()
 {
@@ -540,6 +559,7 @@ void navigation_task()
 	while(1){
 
 		//navigation_update_target();
+		navigation_update_current_target();
 		navigation_update_position();
 		navigation_update_state();
 		navigation_move();
