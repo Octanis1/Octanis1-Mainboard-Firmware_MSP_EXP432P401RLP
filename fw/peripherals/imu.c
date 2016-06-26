@@ -112,11 +112,11 @@ void imu_task(){
 
 
 			// BNO055 debug
-			//serial_printf(stdout, "BNO begin \n", 0);
+			//serial_printf(cli_stdout, "BNO begin \n", 0);
 
 		//	int b = bno055_begin(BNO055_MAIN, i2c_helper_handle);
 
-		//	serial_printf(stdout, "bno startup %d \n", b);
+		//	serial_printf(cli_stdout, "bno startup %d \n", b);
 
 
 		//only check every 10 seconds

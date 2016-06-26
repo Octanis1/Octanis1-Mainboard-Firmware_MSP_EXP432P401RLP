@@ -91,7 +91,7 @@ void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 	{
 		case CHANNEL_APP_UART:
 #ifdef MAVLINK_ON_UART0_ENABLED
-			if(serial_write(stdout, buf, mavlink_msg_len))
+			if(serial_write(cli_stdout, buf, mavlink_msg_len))
 			{//successful TX
 				comm_clear_tx_flag(CHANNEL_APP_UART, msg->compid);
 			}

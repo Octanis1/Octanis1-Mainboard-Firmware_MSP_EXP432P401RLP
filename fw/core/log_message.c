@@ -13,7 +13,7 @@ static void write_entry_format(const char *loglevel)
     }
 
     uint32_t s = Seconds_get();
-    serial_printf(stdout, LOG_COLOR_BLUE "[%u] %s: %s" LOG_COLOR_CLEAR, s,
+    serial_printf(cli_stdout, LOG_COLOR_BLUE "[%u] %s: %s" LOG_COLOR_CLEAR, s,
                   thread_name, loglevel);
 }
 
@@ -26,10 +26,10 @@ void log_message(const char *lvl, const char *fmt, ...)
     write_entry_format(lvl);
 
     va_start(args, fmt);
-    serial_vprintf(stdout, fmt, args);
+    serial_vprintf(cli_stdout, fmt, args);
     va_end(args);
 
-    serial_printf(stdout, "\n");
+    serial_printf(cli_stdout, "\n");
 
     // todo: mutex unlock
 }

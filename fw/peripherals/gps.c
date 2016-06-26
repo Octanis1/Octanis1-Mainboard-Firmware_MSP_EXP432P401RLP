@@ -159,7 +159,7 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 
 		//initialise GPS device, open UART
 		if(!ublox_6_open()){
-//			serial_printf(stdout, "%d GPS UART error", 0);
+//			serial_printf(cli_stdout, "%d GPS UART error", 0);
 		}
 
 		//get data from device (blocking call)
@@ -195,7 +195,7 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 			nmeaframes = strtok_r(NULL, "\n", &saveptr1);
 		}
 
-		serial_printf(stdout, "dgps_age:%d\n", gps_get_hdop());
+//		serial_printf(cli_stdout, "dgps_age:%d\n\r", gps_get_hdop());
 
 		ublox_6_close();
 		Task_sleep(1000);

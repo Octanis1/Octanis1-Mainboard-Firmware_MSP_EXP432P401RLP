@@ -202,7 +202,7 @@ void cmd_valid(SerialDevice *io, int argc, char *argv[])
 							//	answer_required = comm_process_command(input, command_length, txdata, &tx_stringlength, DESTINATION_DEBUG_UART);
 							//	if(answer_required)
 							//	{
-							//		serial_printf(stdout, "%s\n",txdata);
+							//		serial_printf(cli_stdout, "%s\n",txdata);
 							//	}
 							//}
 
@@ -358,7 +358,7 @@ void mavlink_rx(SerialDevice *dev){
 	}
 }
 
-SerialDevice *stdout;
+SerialDevice *cli_stdout;
 static UART_SerialDevice cli_uart;
 static int cli_uart_initialized = 0;
 
@@ -368,7 +368,7 @@ void cli_init()
 	if(!(cli_uart_initialized))
 	{
 		cli_uart_init(&cli_uart);
-		stdout = (SerialDevice *)&cli_uart;
+		cli_stdout = (SerialDevice *)&cli_uart;
 		cli_uart_initialized = 1;
 
 		log_info("boot");

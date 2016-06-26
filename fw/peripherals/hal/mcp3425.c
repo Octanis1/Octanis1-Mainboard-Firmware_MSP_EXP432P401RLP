@@ -50,7 +50,7 @@ int8_t mcp_read (uint8_t dev_addr, uint8_t* reg_data, uint8_t cnt) {
     int8_t ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
     if (!ret) {
-        //serial_printf(stdout, "mcp3425 read error \n", 0);
+        //serial_printf(cli_stdout, "mcp3425 read error \n", 0);
     }
 
     return ret;
@@ -68,7 +68,7 @@ int8_t mcp_write (uint8_t dev_addr, uint8_t* reg_data, uint8_t cnt) {
     int8_t ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
     if (!ret) {
-        //serial_printf(stdout, "SHT2x i2c bus write error\n", 0);
+        //serial_printf(cli_stdout, "SHT2x i2c bus write error\n", 0);
     }
 
     return ret;

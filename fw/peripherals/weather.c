@@ -121,9 +121,6 @@ void weather_task(){
 	static uint8_t external_board_connected = 0;
 	external_board_connected = weather_check_external_connected();
 
-    serial_printf(stdout, "testnl \n");
-    serial_printf(stdout, "test");
-
 	i2c_helper_init_handle();
 	windsensor_init();
 //	mcp_init();
@@ -155,18 +152,18 @@ void weather_task(){
 	const uint8_t flash_id[] = {0x01,0x20,0x18}; // S25FL127S ID
 	if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
 		// flash answers with correct ID
-		serial_printf(stdout, "Flash ID OK\n");
+		serial_printf(cli_stdout, "Flash ID OK\n");
 	} else {
-		serial_printf(stdout, "Flash ID ERROR\n");
+		serial_printf(cli_stdout, "Flash ID ERROR\n");
 	}
 
     if (logging_enabled) {
         if (!log_init()) {
-            serial_printf(stdout, "log_init failed\n");
+            serial_printf(cli_stdout, "log_init failed\n");
             log_reset();
         }
     }
-    //serial_printf(stdout, "log position 0x%x\n", log_write_pos());
+    //serial_printf(cli_stdout, "log position 0x%x\n", log_write_pos());
 	/************* flash test END ****************/
 #endif
 
@@ -181,19 +178,19 @@ void weather_task(){
         if (logging_enabled) {
             if (LOG_GPS_TIMESTEP > 0 && log_counter % LOG_GPS_TIMESTEP == 0) {
                 log_write_gps();
-                // serial_printf(stdout, "log gps, %x\n", log_write_pos());
+                // serial_printf(cli_stdout, "log gps, %x\n", log_write_pos());
             }
             if (LOG_IMU_TIMESTEP > 0 && log_counter % LOG_IMU_TIMESTEP == 0) {
                 log_write_imu();
-                // serial_printf(stdout, "log imu, %x\n", log_write_pos());
+                // serial_printf(cli_stdout, "log imu, %x\n", log_write_pos());
             }
             if (LOG_WEATHER_TIMESTEP > 0 && log_counter % LOG_WEATHER_TIMESTEP == 0) {
                 log_write_weather();
-                // serial_printf(stdout, "log weather, %x\n", log_write_pos());
+                // serial_printf(cli_stdout, "log weather, %x\n", log_write_pos());
             }
             if (LOG_BACKUP_TIMESTEP > 0 && log_counter % LOG_BACKUP_TIMESTEP == 0) {
                 log_position_backup();
-                // serial_printf(stdout, "log backup, %x\n", log_write_pos());
+                // serial_printf(cli_stdout, "log backup, %x\n", log_write_pos());
             }
         }
 
@@ -203,9 +200,6 @@ void weather_task(){
 			bmp180_data_readout(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
 			float uv = mcp_get_data();
 			int uvint = (int)(1000.0*uv);
-
-//			cli_printf("UV: %d\r\n",uvint);
-
 
 			weather_data.ext_temp_sht21 = sht2x_get_temp(); //TODO: fix the fact that program stops here if sensor is not connected.
 			weather_data.ext_humid = sht2x_get_humidity();
@@ -228,7 +222,7 @@ void weather_task(){
 
 		weather_aggregate_data();
 
-		//		serial_printf(stdout, "W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
+		//		serial_printf(cli_stdout, "W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
 
 		Task_sleep(1000);
 
