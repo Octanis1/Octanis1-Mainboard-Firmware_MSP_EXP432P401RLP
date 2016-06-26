@@ -33,7 +33,7 @@ void Task_sleep(int a);
 #define INIT_LON 6.591617
 #define TARGET_LAT 0
 #define TARGET_LON 6.591798
-#define TARGET_REACHED_DISTANCE 3
+#define TARGET_REACHED_DISTANCE 2 //meters
 
 #define PGAIN_A 1
 #define IGAIN_A 0

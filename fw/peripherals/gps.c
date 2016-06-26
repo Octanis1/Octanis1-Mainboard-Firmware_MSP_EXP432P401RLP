@@ -198,7 +198,7 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 		serial_printf(stdout, "dgps_age:%d\n", gps_get_hdop());
 
 		ublox_6_close();
-		Task_sleep(6000);
+		Task_sleep(1000);
 
 #ifdef MAVLINK_ON_UART0_ENABLED
 	comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
