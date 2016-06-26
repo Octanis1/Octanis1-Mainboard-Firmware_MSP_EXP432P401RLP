@@ -88,11 +88,11 @@ uint8_t eps_switch_module(uint8_t command) //use commands defined in eps.h
 			resp = sendEpsCommand(command);
 			if(resp == COMM_OK) {return ON;}
 			else if(resp == LOW_VOLTAGE) {
-				serial_printf(stdout, "Battery too low \r\n",0);
+				serial_printf(cli_stdout, "Battery too low \r\n",0);
 				return OFF;};
 			//else try again or abandon after 3 times
 		}
-		serial_printf(stdout, "EPS comm err \r\n",0);
+		serial_printf(cli_stdout, "EPS comm err \r\n",0);
 		return OFF; // = error = 0
 	}
 	else //turn off a module

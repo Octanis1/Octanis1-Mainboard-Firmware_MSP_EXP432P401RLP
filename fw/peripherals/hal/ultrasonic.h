@@ -51,7 +51,7 @@ void ultrasonic_set_bl(float a, float b, float c, float d, float e, float f, flo
 int32_t ultrasonic_get_smallest (int32_t *distance_values, uint8_t size);
 
 /* returns 1 if success */
-bool ultrasonic_get_distance(int32_t* distance_values);
+uint8_t ultrasonic_get_distance(int32_t* distance_values);
 
 uint8_t ultrasonic_check_distance(int32_t dist[], int32_t motor_values[], int32_t motor_scaling_factor);
 

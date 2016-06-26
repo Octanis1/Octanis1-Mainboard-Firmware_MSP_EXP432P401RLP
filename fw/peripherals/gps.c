@@ -20,13 +20,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+//mavlink includes
+#include "../peripherals/comm.h"
+#include "../lib/mavlink/common/mavlink.h"
+
 
 static struct minmea_sentence_gga gps_gga_frame;
 static struct minmea_sentence_rmc gps_rmc_frame;
+static struct minmea_sentence_gsa gps_gsa_frame; //needed for MAVLINK infos
 static struct timespec gps_last_update;
 
 uint8_t gps_get_fix_quality(){
 	return gps_gga_frame.fix_quality;
+}
+
+uint8_t gps_get_fix_type(){
+	return gps_gsa_frame.fix_type;
 }
 
 int gps_get_satellites_tracked(){
@@ -73,8 +82,11 @@ int gps_get_validity(){
 	return gps_rmc_frame.valid;
 }
 
-int gps_get_hdop(){
-	return gps_gga_frame.hdop.value;
+uint16_t gps_get_hdop(){
+	return gps_gsa_frame.hdop.value;
+}
+uint16_t gps_get_vdop(){
+	return gps_gsa_frame.vdop.value;
 }
 
 int gps_get_dgps_age(){
@@ -84,6 +96,11 @@ int gps_get_dgps_age(){
 int gps_get_last_update_time(){
 	minmea_gettime(&gps_last_update, &gps_rmc_frame.date, &gps_rmc_frame.time);
 	return gps_last_update.tv_sec;
+}
+
+uint64_t gps_get_last_update_usec()
+{
+	return gps_rmc_frame.time.microseconds;
 }
 
 uint8_t gps_update_new_position(float* lat_, float* lon_)
@@ -101,10 +118,40 @@ uint8_t gps_update_new_position(float* lat_, float* lon_)
 }
 
 
+COMM_FRAME* gps_pack_mavlink_raw_int()
+{
+	// Mavlink heartbeat
+	// Define the system type, in this case an airplane
+	int32_t lat = (int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
+	int32_t lon = (int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
+	int32_t alt = (int32_t)(1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
+	uint16_t cog = (uint16_t)(100.0 * gps_get_course());// Course over ground (NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. If unknown, set to: UINT16_MAX
+	uint64_t usec = gps_get_last_update_usec();
+	if(usec == 0)
+	{ //no time information in usec is available
+		usec = (uint64_t)gps_get_last_update_time();
+		if(usec == 0)
+			//no time information from GPS is available --> use system time (since boot)
+			usec = 1000000 * (uint64_t)Seconds_get();
+		else
+			usec = 1000000 * usec;
+	}
+
+	/* MAVLINK HEARTBEAT */
+	// Initialize the message buffer
+	static COMM_FRAME frame;
+
+	// Pack the message
+	mavlink_msg_gps_raw_int_pack(mavlink_system.sysid, MAV_COMP_ID_GPS, &(frame.mavlink_message),
+		usec, gps_get_fix_type(), lat, lon, alt, gps_get_hdop(), gps_get_vdop(),
+		(uint16_t)gps_get_int_speed(), cog, (uint8_t)gps_get_satellites_tracked());
+	return &frame;
+}
+
+
  void gps_task(){
 
 	char *saveptr1 = NULL; 
-    char *saveptr2 = NULL;
 
     cli_init();
 
@@ -112,7 +159,7 @@ uint8_t gps_update_new_position(float* lat_, float* lon_)
 
 		//initialise GPS device, open UART
 		if(!ublox_6_open()){
-//			serial_printf(stdout, "%d GPS UART error", 0);
+//			serial_printf(cli_stdout, "%d GPS UART error", 0);
 		}
 
 		//get data from device (blocking call)
@@ -126,27 +173,39 @@ uint8_t gps_update_new_position(float* lat_, float* lon_)
 			int minmea_sentence = minmea_sentence_id(nmeaframes, false);
 
 			switch (minmea_sentence) {
-				case MINMEA_SENTENCE_GGA: {
+				case MINMEA_SENTENCE_GGA:
+				{
 					minmea_parse_gga(&gps_gga_frame, nmeaframes);
-				}break;
-
-				case MINMEA_SENTENCE_RMC: {
+					break;
+				}
+				case MINMEA_SENTENCE_RMC:
+				{
 					if(minmea_parse_rmc(&gps_rmc_frame, nmeaframes)){
 						//update system time when valid RMC frame arrives
 						Seconds_set(gps_get_last_update_time());
-
-					}
-
-				}break;
+						}
+					break;
+				}
+				case MINMEA_SENTENCE_GSA:
+				{
+					minmea_parse_gsa(&gps_gsa_frame, nmeaframes);
+				}
 			}
 
-			nmeaframes = strtok_r(NULL, "\n", &saveptr2);
+			nmeaframes = strtok_r(NULL, "\n", &saveptr1);
 		}
 
-		serial_printf(stdout, "dgps_age:%d\n", gps_get_hdop());
+//		serial_printf(cli_stdout, "dgps_age:%d\n\r", gps_get_hdop());
 
 		ublox_6_close();
-		Task_sleep(6000);
+		Task_sleep(1000);
+
+#ifdef MAVLINK_ON_UART0_ENABLED
+	comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
+	comm_mavlink_broadcast(gps_pack_mavlink_raw_int());
+#endif
+
+
 	}
 
 

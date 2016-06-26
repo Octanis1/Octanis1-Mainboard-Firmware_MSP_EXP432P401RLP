@@ -27,7 +27,7 @@ void vision_task(){
 //		if(ultrasonic_get_distance(distance_values))
 //		{
 //		//successfully read the sensor values
-////			serial_printf(stdout, 'us check %d \n', (int)CRITICAL_DISTANCE_THRESHOLD_TIMESTAMP);
+////			serial_printf(cli_stdout, 'us check %d \n', (int)CRITICAL_DISTANCE_THRESHOLD_TIMESTAMP);
 //			ultrasonic_check_distance(distance_values, directions_result);
 //		}
 //		else
@@ -36,7 +36,6 @@ void vision_task(){
 //		}
 		Task_sleep(5000);
 //		eps_switch_module(M3V3_1_OFF);
-		Task_sleep(5000);
 
 	}
 

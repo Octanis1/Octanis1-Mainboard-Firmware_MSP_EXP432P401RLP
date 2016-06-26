@@ -12,7 +12,7 @@
 #define HM10_READ_TIMEOUT 3000
 
 static const char hm10_at[] = "AT"; //does not require return characters
-static const char hm10_at_name[] = "AT+NAMEmars";
+static const char hm10_at_name[] = "AT+NAMEmars3";
 static const char hm10_at_clear[] = "AT+CLEAR"; //clear last connected device
 static const char hm10_at_wakestring[] = "I am iron man,I am iron man,I am iron man,I am iron man, I am iron man, I am iron man I am iron I am iron man, I am iron man.";
 static const char hm10_at_imme1[] = "AT+IMME1"; //When module is powered on, only respond the AT Command, don’t do anything.
@@ -60,36 +60,36 @@ int hm10_begin(){
 
 		UART_write(uart, hm10_at_wakestring, strlen(hm10_at_wakestring));
 		UART_read(uart, hm10_rxBuffer, sizeof(hm10_rxBuffer));
-		serial_printf(stdout, "%s\n", hm10_rxBuffer);
+		serial_printf(cli_stdout, "%s\n", hm10_rxBuffer);
 		memset(&hm10_rxBuffer, 0, sizeof(hm10_rxBuffer));
 
 		UART_write(uart, hm10_at_pwrm1, strlen(hm10_at_pwrm1));
 		UART_read(uart, hm10_rxBuffer, sizeof(hm10_rxBuffer));
-		serial_printf(stdout, "%s\n", hm10_rxBuffer);
+		serial_printf(cli_stdout, "%s\n", hm10_rxBuffer);
 		memset(&hm10_rxBuffer, 0, sizeof(hm10_rxBuffer));
 		Task_sleep(1000);
 
 		UART_write(uart, hm10_at_clear, strlen(hm10_at_clear));
 		UART_read(uart, hm10_rxBuffer, sizeof(hm10_rxBuffer));
-		serial_printf(stdout, "%s\n", hm10_rxBuffer);
+		serial_printf(cli_stdout, "%s\n", hm10_rxBuffer);
 		memset(&hm10_rxBuffer, 0, sizeof(hm10_rxBuffer));
 		Task_sleep(500);
 
 		UART_write(uart, hm10_at_imme1, strlen(hm10_at_imme1));
 		UART_read(uart, hm10_rxBuffer, sizeof(hm10_rxBuffer));
-		serial_printf(stdout, "%s\n", hm10_rxBuffer);
+		serial_printf(cli_stdout, "%s\n", hm10_rxBuffer);
 		memset(&hm10_rxBuffer, 0, sizeof(hm10_rxBuffer));
 		Task_sleep(1000);
 
 		UART_write(uart, hm10_at_name, strlen(hm10_at_name));
 		UART_read(uart, hm10_rxBuffer, sizeof(hm10_rxBuffer));
-		serial_printf(stdout, "%s\n", hm10_rxBuffer);
+		serial_printf(cli_stdout, "%s\n", hm10_rxBuffer);
 		memset(&hm10_rxBuffer, 0, sizeof(hm10_rxBuffer));
 		Task_sleep(1000);
 
 		UART_write(uart, hm10_at, strlen(hm10_at));
 		UART_read(uart, hm10_rxBuffer, sizeof(hm10_rxBuffer));
-		serial_printf(stdout, "%s\n", hm10_rxBuffer);
+		serial_printf(cli_stdout, "%s\n", hm10_rxBuffer);
 		if(!strcmp("OK", hm10_rxBuffer)){
 			UART_write(uart, hm10_at_start, strlen(hm10_at_start));
 			hm10_end(); // Close UART port to configure Text mode to callback @ newline + CR
@@ -153,7 +153,7 @@ int hm10_receive(char* rxdata, int* stringlength)
 		}
 		else
 		{
-			serial_printf(stdout, "RX failed. hm10 not init\n");
+			serial_printf(cli_stdout, "RX failed. hm10 not init\n");
 		}
 	}
 	return 0;
@@ -166,7 +166,7 @@ void hm10_send(char * tx_buffer, int tx_size)
 		UART_write(uart, tx_buffer, tx_size);
 		UART_write(uart, "\n", 1);
 	}else{
-		serial_printf(stdout, "TX failed. hm10 not init\n");
+		serial_printf(cli_stdout, "TX failed. hm10 not init\n");
 	}
 }
 

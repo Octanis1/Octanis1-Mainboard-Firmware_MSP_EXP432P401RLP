@@ -10,14 +10,14 @@
 
 #include <serial_printf.h>
 
-extern SerialDevice *stdout;
+extern SerialDevice *cli_stdout;
 
 // init must be called by every task using serial_printf before calling it for the first time.
 void cli_init();
 
 //runs with lowest priority
 void cli_task();
-/******* obsolete functions use serial_printf(stdout, "hello"); ****/
+/******* obsolete functions use serial_printf(cli_stdout, "hello"); ****/
 ////allows sending log messages to the console
 //void cli_print(char *print_format, ...);
 //

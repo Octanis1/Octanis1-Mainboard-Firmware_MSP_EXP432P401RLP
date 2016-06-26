@@ -9,69 +9,54 @@
 #define __COMM_H
 
 #include <stdint.h>
+//mavlink wire protocol
+#include "../lib/mavlink/common/mavlink.h"
 
-//max size of mobile originated messages
-#define COMM_MO_SIZE 340
-//max size of mobile terminated messages
-#define COMM_MT_SIZE 270
-//max size of internal comm frame (hex string)
-#define COMM_FRAME_SIZE 350
-//max size of status string
-#define COMM_STRING_SIZE 175
-//how many times do we poll for received commands per sending a status message (RX: every 50ms, TX every 5s)
-#define RX_TO_TX_RATIO	100
-#define LORA_TX_RATIO	5 // only send lora messages every 5th time compared to CLI
+typedef enum comm_channels {
+	CHANNEL_APP_UART,
+	CHANNEL_LORA,
+	CHANNEL_ROCKBLOCK,
+	CHANNEL_GSM,
 
+	// IMPORTANT: these channel ID's are currently used in Mavlink to access a buffer array.
+	// This array size is defined MAVLINK_COMM_NUM_BUFFERS (currently = 4), so this is the
+	// maximum number of channels to define!
+//	CHANNEL_BLE,
 
-typedef enum comm_dest {
-	DESTINATION_LORA_TTN,
-	DESTINATION_LORA_SWISSCOM,
-	DESTINATION_ROCKBLOCK,
-	DESTINATION_GSM,
-	DESTINATION_GSM_SMS,
-	DESTINATION_BLE,
-	DESTINATION_DEBUG_UART
-} COMM_DESTINATION;
-
-typedef struct comm_condition_ {
-	enum variable_{
-		IMUX,IMUY,IMUZ,
-		IMUP,IMUR,IMUH,
-		TEMP,PRES,HUMI
-	} variable;
-	enum op_{
-		GREATER,
-		SMALLER,
-		EQUAL,
-		NEQUAL,
-		INT
-	} op;
-	int threshold;
-} COMM_CONDITION;
+} COMM_CHANNEL;
+#define COMM_CHANNEL_NONE -1
 
 
-typedef struct comm_led_control_ {
-	COMM_CONDITION cond;
-	uint16_t frequency;
-} COMM_LED_CONTROL;
+typedef enum comm_channel_direction {
+	CHANNEL_IN,
+	CHANNEL_OUT
+} COMM_CHANNEL_DIRECTION;
 
-#define USER_MSG_SIZE	4
-typedef struct comm_msg_control_ {
-	COMM_CONDITION cond;
-	char message[USER_MSG_SIZE];
-	int msglength;
-	int msg_sent_since_last_threshold_crossing;
-	COMM_DESTINATION destination;
-} COMM_MSG_CONTROL;
+typedef struct {
+   mavlink_message_t mavlink_message;
+   unsigned int channel : 7;
+   unsigned int direction : 1;
+} COMM_FRAME;
 
+typedef struct{
+	uint8_t system;
+	uint8_t component;
+} COMM_MAV_MSG_TARGET;
 
-/*** functions accessible to all modules able to receive commands (f.ex. cli) ***/
-/* args:
- *  - answer			answer string to be sent by a subsequent comm_tx_data() or serial_printf(stdout, )
- *  					--> IMPORTANT: this string is not terminated by "\n", so the newline character has to be added if needed.
- */
-int comm_process_command(char* command, int commandlength, char* answer, int* answerlength, COMM_DESTINATION destination);
-void comm_tx_data(char* txdata, int stringlength, COMM_DESTINATION destination);
+typedef enum comm_mav_result{
+	NO_ANSWER,
+	REPLY_TO_SENDER //,FORWARD_MESSAGE (?)
+} COMM_MAV_RESULT;
+
+extern mavlink_system_t mavlink_system;
+
+int comm_check_tx_slots(MAV_COMPONENT component); //check if outgoing message can be sent for a given destination and component id
+void comm_set_all_tx_flags(COMM_CHANNEL channel);
+void comm_set_tx_flag(COMM_CHANNEL channel, int component_id);
+
+void comm_mavlink_broadcast(COMM_FRAME* frame); //posts to mailbox for all available channel slots for a given component
+
+void comm_mavlink_post_inbox(COMM_CHANNEL channel, mavlink_message_t *message); //post to mailbox for incoming messages
 
 void comm_task();
 

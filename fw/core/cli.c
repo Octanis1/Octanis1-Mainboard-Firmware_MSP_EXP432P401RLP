@@ -1,6 +1,7 @@
 /*
  *  File: cli.c
  *  Description: Provides a command line interface and offers possibility to register function as new command
+ *
  *  Author:
  */
 
@@ -10,7 +11,7 @@
 #include "cli.h"
 #include "log.h"
 #include "../peripherals/gps.h"
-#include "../peripherals/navigation.h"≤
+#include "../peripherals/navigation.h"
 #include "../peripherals/hal/rockblock.h"
 
 #include "../peripherals/comm.h"
@@ -26,6 +27,8 @@
 #include <serial_printf.h>
 #include <shell.h>
 #include "log_message.h"
+//mavlink wire protocol
+#include "../lib/mavlink/common/mavlink.h"
 
 //which uart index to use for the CLI
 #define CLI_UART Board_UART0_DEBUG
@@ -78,10 +81,8 @@ static void cli_uart_init(UART_SerialDevice *dev) {
     /* Create a UART with data processing off. */
     UART_Params_init(&uartParams);
     uartParams.writeDataMode = UART_DATA_BINARY;
-//    uartParams.readDataMode = UART_DATA_TEXT;
-//    uartParams.readReturnMode = UART_RETURN_NEWLINE;
     uartParams.readDataMode = UART_DATA_BINARY;
-      uartParams.readReturnMode = UART_RETURN_FULL;
+    uartParams.readReturnMode = UART_RETURN_FULL;
     uartParams.writeMode = UART_MODE_BLOCKING;
     uartParams.readEcho = UART_ECHO_OFF;
     uartParams.baudRate = 9600;
@@ -201,7 +202,7 @@ void cmd_valid(SerialDevice *io, int argc, char *argv[])
 							//	answer_required = comm_process_command(input, command_length, txdata, &tx_stringlength, DESTINATION_DEBUG_UART);
 							//	if(answer_required)
 							//	{
-							//		serial_printf(stdout, "%s\n",txdata);
+							//		serial_printf(cli_stdout, "%s\n",txdata);
 							//	}
 							//}
 
@@ -339,7 +340,25 @@ const struct shell_commands commands[] = {
     {NULL, NULL}
 };
 
-SerialDevice *stdout;
+
+void mavlink_rx(SerialDevice *dev){
+
+	COMM_FRAME frame;
+	frame.direction = CHANNEL_IN;
+	frame.channel = CHANNEL_APP_UART;
+
+	mavlink_status_t status;
+	int c;
+
+	while((c = serial_getc(dev)) >= 0) {
+		if(mavlink_parse_char(CHANNEL_APP_UART, (uint8_t)c, &(frame.mavlink_message), &status)){
+			// --> deal with received message...
+			Mailbox_post(comm_mailbox, &frame, BIOS_NO_WAIT);
+		}
+	}
+}
+
+SerialDevice *cli_stdout;
 static UART_SerialDevice cli_uart;
 static int cli_uart_initialized = 0;
 
@@ -349,7 +368,7 @@ void cli_init()
 	if(!(cli_uart_initialized))
 	{
 		cli_uart_init(&cli_uart);
-		stdout = (SerialDevice *)&cli_uart;
+		cli_stdout = (SerialDevice *)&cli_uart;
 		cli_uart_initialized = 1;
 
 		log_info("boot");
@@ -359,12 +378,14 @@ void cli_init()
 //runs with lowest priority
 void cli_task(){
 
-#ifndef MAVLINK_ON_UART0_ENABLED
-
     while (1) {
-        serial_printf((SerialDevice *)&cli_uart, "octanis Rover Console:\r\n");
-        shell(commands, (SerialDevice *)&cli_uart);
+	#ifndef MAVLINK_ON_UART0_ENABLED
+		serial_printf((SerialDevice *)&cli_uart, "octanis Rover Console:\r\n");
+		shell(commands, (SerialDevice *)&cli_uart);
+	#else
+		mavlink_rx((SerialDevice *)&cli_uart);
+    #endif
     }
-#endif
+
 
 }

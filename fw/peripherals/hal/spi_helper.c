@@ -70,7 +70,7 @@ uint8_t spi_helper_transfer(uint8_t nBytes, uint8_t* txBufferPointer, uint8_t* r
 //	GPIO_write(CS_pin, 1);
 
 	if (!ret) {
-//	   serial_printf(stdout, "Unsuccessful SPI transfer");
+//	   serial_printf(cli_stdout, "Unsuccessful SPI transfer");
 		return 1;
 	} else {
 		return 0;

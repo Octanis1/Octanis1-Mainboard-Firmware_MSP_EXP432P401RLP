@@ -50,7 +50,7 @@ int8_t mcp_read (uint8_t dev_addr, uint8_t* reg_data, uint8_t cnt) {
     int8_t ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
     if (!ret) {
-        //serial_printf(stdout, "mcp3425 read error \n", 0);
+        //serial_printf(cli_stdout, "mcp3425 read error \n", 0);
     }
 
     return ret;
@@ -68,7 +68,7 @@ int8_t mcp_write (uint8_t dev_addr, uint8_t* reg_data, uint8_t cnt) {
     int8_t ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
     if (!ret) {
-        //serial_printf(stdout, "SHT2x i2c bus write error\n", 0);
+        //serial_printf(cli_stdout, "SHT2x i2c bus write error\n", 0);
     }
 
     return ret;
@@ -150,10 +150,9 @@ float mcp_get_data (){
     cpt_data uv_cpt;
     uint8_t buffer[3];
 
-    //turn on UV captor then wait 1msec
+    //turn on UV sensor then wait 2msec
     GPIO_write(Board_UV_PIN, Board_UV_ON);
-    for (i=0;i<5000;i++)
-    	NOP10();
+    Task_sleep(2);
     
     mcp_read(MCP_ADDR, buffer, 3);
 
@@ -168,7 +167,7 @@ float mcp_get_data (){
             break;
     }
 
-    //Turn UV captor off
+    //Turn UV sensor off
     GPIO_write(Board_UV_PIN, Board_UV_OFF);
 
     mcp_parse (buffer, &uv_cpt);

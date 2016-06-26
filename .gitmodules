@@ -4,3 +4,6 @@
 [submodule "fw/lib/cmp_mem_access"]
 	path = fw/lib/cmp_mem_access
 	url = https://github.com/Stapelzeiger/cmp_mem_access.git
+[submodule "fw/lib/mavlink"]
+	path = fw/lib/mavlink
+	url = https://github.com/mavlink/c_library

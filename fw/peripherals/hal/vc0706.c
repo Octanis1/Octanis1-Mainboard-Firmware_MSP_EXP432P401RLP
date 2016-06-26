@@ -54,7 +54,7 @@ int vc0706_begin(){
 		UART_read(uart, rxBuffer, sizeof(rxBuffer));
 		memset(&rxBuffer, 0, sizeof(rxBuffer));
 
-		serial_printf(stdout, "vc0706 cam on",0);
+		serial_printf(cli_stdout, "vc0706 cam on",0);
 
 		static char vc0706_sleep[] = {0x56, 0x00, 0x3E, 0x03, 0x00, 0x01, 0x01}; //go into power save move
 		static char vc0706_wake[] = {0x56, 0x00, 0x3E, 0x03, 0x00, 0x01, 0x00}; //wake up from power save

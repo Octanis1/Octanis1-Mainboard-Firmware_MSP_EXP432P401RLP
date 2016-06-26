@@ -33,7 +33,7 @@ void Task_sleep(int a);
 #define INIT_LON 6.591617
 #define TARGET_LAT 0
 #define TARGET_LON 6.591798
-#define TARGET_REACHED_DISTANCE 1
+#define TARGET_REACHED_DISTANCE 2 //meters
 
 #define PGAIN_A 1
 #define IGAIN_A 0
@@ -64,9 +64,11 @@ typedef struct _navigation_status{
 } navigation_status_t;
 
 static navigation_status_t navigation_status;
-static target_list_t navigation_targets;
 static pid_controler_t pid_a;
 
+static mission_item_list_t mission_items;
+
+void navigation_update_current_target();
 
 float navigation_get_angle_to_target()
 {
@@ -101,7 +103,6 @@ float navigation_dist_to_target(float lat_current, float lon_current, float lat_
     return distance;
 }
 
-
 /**
  * Params: lat1, long1 => Latitude and Longitude of current point
  *         lat2, long2 => Latitude and Longitude of target  point
@@ -128,58 +129,148 @@ float navigation_angle_for_rover(float lat1, float lon1, float lat2, float lon2,
     return angle;
 }
 
-uint8_t navigation_remove_newest_target()
+
+/******** functions to handle mavlink mission items **********/
+
+static uint16_t mission_item_rx_count;
+
+COMM_MAV_RESULT navigation_rx_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg)
 {
-	uint8_t previous_index = (navigation_targets.last_index + N_TARGETS_MAX -1) % N_TARGETS_MAX;
+	uint16_t next_index = mavlink_msg_mission_item_get_seq(msg);
+	if(next_index < N_TARGETS_MAX)
+	{ // buffer has space --> add to list
+		mavlink_msg_mission_item_decode(msg, &(mission_items.item[next_index]));
+		if(mavlink_msg_mission_item_get_current(msg))
+		{
+			mission_items.current_index = next_index;
+		}
 
-	if(navigation_targets.last_index == navigation_targets.current_index)
-	{
-		navigation_status.current_state = STOP; //as we delete the current target
-		previous_index = navigation_targets.last_index;
-	}
-	navigation_targets.state[navigation_targets.last_index] = INVALID;
-	navigation_targets.last_index = previous_index;
-
-	return 1;
-
-}
-
-uint8_t navigation_add_target(float new_lat, float new_lon, uint8_t new_id)
-{
-	uint8_t next_index = (navigation_targets.last_index + 1) % N_TARGETS_MAX;
-	if(next_index == navigation_targets.current_index)
-	{
-		return 0;
+		if(mission_item_rx_count > next_index + 1) // request next item
+		{
+			mavlink_msg_mission_request_pack(mavlink_system.sysid, target->component, answer_msg,
+					msg->sysid, target->component, next_index + 1);
+		}
+		else // transfer done
+		{
+			mavlink_msg_mission_ack_pack(mavlink_system.sysid, target->component, answer_msg,
+					msg->sysid, target->component, 	MAV_MISSION_ACCEPTED);
+			if(mission_item_rx_count == 0)
+			{// If a waypoint planner component receives MISSION_ITEM messages outside of transactions it answers with a MISSION_ACK message.
+				if(mission_items.count == next_index + 1)
+					mission_items.count++; //an item was appended to the end of the list list
+			}
+			else
+			{
+				mission_items.count = next_index + 1;
+				mission_item_rx_count = 0;
+			}
+		}
+		return REPLY_TO_SENDER;
 	}
 	else
-	{
-		navigation_targets.last_index = next_index;
-		navigation_targets.lat[next_index] = new_lat;
-		navigation_targets.lon[next_index] = new_lon;
-		navigation_targets.id[next_index] = new_id;
-		navigation_targets.state[next_index] = VALID;
-
-		return 1;
+	{ //buffer overflow...
+		//TODO: reply with MAV_CMD_ACK_ERR_FAIL because buffer is full.
+		return NO_ANSWER; //for now we just don't answer -->timeout.
 	}
 }
 
-uint8_t navigation_add_target_from_string(char* targetstring, int stringlength)
+// function to call at the beginning of a mission item write transaction (i.e. after receiving MISSION_COUNT)
+COMM_MAV_RESULT navigation_rx_mission_items_start(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg)
 {
-	char ch=targetstring[0];
-	char * p = &targetstring[1];
+	mission_item_rx_count = mavlink_msg_mission_count_get_count(msg);
 
-	float lat = a2f(ch, &p ,10);
+	/* send mission acknowledge */
+	mavlink_msg_mission_request_pack(mavlink_system.sysid, target->component, answer_msg,
+			msg->sysid, target->component, 0);
 
-	ch=*p++;
+	return REPLY_TO_SENDER;
+}
 
-	float lon = a2f(ch, &p ,10);
 
-	ch=*p++;
+// function to call after a MISSION_REQUEST_LIST command
+COMM_MAV_RESULT navigation_tx_mission_items_start(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg)
+{
+	mavlink_msg_mission_count_pack(mavlink_system.sysid, target->component, answer_msg,
+			msg->sysid, target->component, mission_items.count);
 
-	int id;
-	a2i(ch, &p, 10,&id);
+	return REPLY_TO_SENDER;
+}
 
-	return navigation_add_target(lat, lon, id);
+COMM_MAV_RESULT navigation_tx_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg)
+{
+	uint16_t seq_id = mavlink_msg_mission_request_get_seq(msg);
+
+	if(seq_id < N_TARGETS_MAX)
+	{
+		// this function packs the already available struct.
+		mavlink_msg_mission_item_encode(mavlink_system.sysid, target->component, answer_msg, &(mission_items.item[seq_id]));
+		return REPLY_TO_SENDER;
+	}
+	else //requested item outside buffer
+	{
+		//TODO: send NACK
+		return NO_ANSWER;
+	}
+}
+
+//to be called after MISSION_SET_CURRENT ( #41 ) OR after a mission item was reached by the rover.
+// 													In the latter case set *msg = NULL
+COMM_MAV_RESULT navigation_next_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg)
+{
+	if(msg == NULL) // automatically go to next item in list
+	{
+		mission_items.current_index++;
+		if(mission_items.current_index<mission_items.count) //activate next target if available
+		{
+			mission_items.item[mission_items.current_index].current = 1;
+		}
+		else
+		{
+			navigation_status.current_state = STOP;
+			return NO_ANSWER;
+		}
+	}
+	else //received command to change the current item
+	{
+		mission_items.item[mission_items.current_index].current = 0;
+
+		mission_items.current_index = mavlink_msg_mission_set_current_get_seq(msg);
+		if(mission_items.current_index < mission_items.count)
+			mission_items.item[mission_items.current_index].current = 1;
+		else
+			return NO_ANSWER; //TODO: reply NACK
+
+	}
+
+	// Set state to reach new waypoints:
+	navigation_update_current_target();
+
+	// Inform controller about the new waypoint:
+	mavlink_msg_mission_current_pack(mavlink_system.sysid, MAV_COMP_ID_MISSIONPLANNER, answer_msg,
+			mission_items.current_index);
+	return REPLY_TO_SENDER;
+}
+
+void navigation_mission_item_reached()
+{
+	//send MISSION_ITEM_REACHED ( #46 )
+	COMM_FRAME msg_frame;
+
+	mavlink_msg_mission_item_reached_pack(mavlink_system.sysid, MAV_COMP_ID_MISSIONPLANNER, &(msg_frame.mavlink_message),
+			mission_items.current_index);
+	comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_MISSIONPLANNER);
+	comm_mavlink_broadcast(&(msg_frame));
+
+
+	mission_items.item[mission_items.current_index].current = 0;
+	if(mission_items.item[mission_items.current_index].autocontinue)
+	{
+		if(navigation_next_mission_item(NULL, NULL, &(msg_frame.mavlink_message)) == REPLY_TO_SENDER)
+		{
+			comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_MISSIONPLANNER);
+			comm_mavlink_broadcast(&(msg_frame));
+		}
+	}
 }
 
 
@@ -225,26 +316,6 @@ uint8_t navigation_bypass(char command, uint8_t index)
 }
 #endif
 
-/* fetch the next target to move to from the queue */
-void navigation_update_target()
-{
-	if(navigation_targets.state[navigation_targets.current_index] == DONE)
-	{
-		navigation_targets.current_index = (navigation_targets.current_index + 1) % N_TARGETS_MAX;
-	}
-
-	if(navigation_targets.state[navigation_targets.current_index] == VALID)
-	{
-		navigation_status.lon_target = navigation_targets.lon[navigation_targets.current_index];
-		navigation_status.lat_target = navigation_targets.lat[navigation_targets.current_index];
-		navigation_targets.state[navigation_targets.current_index] = CURRENT;
-	}
-	else if(navigation_targets.state[navigation_targets.current_index] == INVALID &&
-			navigation_targets.current_index != navigation_targets.last_index)
-	{//search queue for valid goals, until whole buffer is cycled
-		navigation_targets.current_index = (navigation_targets.current_index + 1) % N_TARGETS_MAX;
-	}
-}
 
 #if defined (NAVIGATION_TEST)
 void navigation_update_position();
@@ -276,6 +347,19 @@ void navigation_update_position()
 }
 #endif
 
+
+void navigation_update_current_target()
+{
+	if(mission_items.current_index < mission_items.count)
+	{
+		//TODO: check for frame and command variable of the mission_item.
+		navigation_status.lat_target = mission_items.item[mission_items.current_index].x;
+		navigation_status.lon_target = mission_items.item[mission_items.current_index].y;
+		navigation_status.current_state = GO_TO_TARGET;
+	}
+	//TODO: do we have to switch state here?
+}
+
 void navigation_update_state()
 {
 	int32_t distance_values[N_ULTRASONIC_SENSORS];
@@ -286,7 +370,7 @@ void navigation_update_state()
 		ultrasonic_get_distance(distance_values);
 
 //		for (i=0;i<N_ULTRASONIC_SENSORS;i++)
-//			serial_printf(stdout, "US %d val : %d \n", i, distance_values[i]);
+//			serial_printf(cli_stdout, "US %d val : %d \n", i, distance_values[i]);
 
 		if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) > navigation_status.max_dist_obs){
 			navigation_status.current_state = GO_TO_TARGET;
@@ -294,7 +378,7 @@ void navigation_update_state()
 		}else if ((distance_values[US_LEFT] < BACKWARD_THRESHOLD/2) || (distance_values[US_RIGHT] < BACKWARD_THRESHOLD/2)){
 			navigation_status.current_state = SPACE_NEEDED;
 		}else if (distance_values[US_FRONT_1] < BACKWARD_THRESHOLD && distance_values[US_FRONT_2] < BACKWARD_THRESHOLD){
-			serial_printf(stdout, "Wall ahead!\n");
+			serial_printf(cli_stdout, "Wall ahead!\n");
 			navigation_status.current_state = AVOID_WALL;
 		}
 
@@ -303,7 +387,7 @@ void navigation_update_state()
 
 		//We check if we're not facing the wall anymore
 //		for (i=0;i<N_ULTRASONIC_SENSORS;i++)
-//			serial_printf(stdout, "US %d val : %d \n", i, distance_values[i]);
+//			serial_printf(cli_stdout, "US %d val : %d \n", i, distance_values[i]);
 		if ((distance_values[US_LEFT] < BACKWARD_THRESHOLD/2) || (distance_values[US_RIGHT] < BACKWARD_THRESHOLD/2)){
 			navigation_status.current_state = SPACE_NEEDED;
 		}
@@ -325,7 +409,7 @@ void navigation_update_state()
 			if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) < navigation_status.max_dist_obs){
 				//We use a different strategy depending on the type of obstacle
 				if (distance_values[US_FRONT_1] < BACKWARD_THRESHOLD && distance_values[US_FRONT_2] < BACKWARD_THRESHOLD){
-					serial_printf(stdout, "Wall ahead!\n");
+					serial_printf(cli_stdout, "Wall ahead!\n");
 					navigation_status.current_state = AVOID_WALL;
 				}else
 					navigation_status.current_state = AVOID_OBSTACLE;
@@ -334,8 +418,8 @@ void navigation_update_state()
 				GPIO_write(Board_OBS_A_EN, 0);
 			}
 		}
-	}else{
-		if(navigation_targets.state[navigation_targets.current_index] == CURRENT)
+	}else{ //normal operation: continue on mission items
+		if(mission_items.item[mission_items.current_index].current)
 		{ //TODO: add conditions that may stop from changing state, for example low battery.
 
 			if(navigation_status.angle_valid)
@@ -344,7 +428,7 @@ void navigation_update_state()
 			}
 			else
 			{
-//				serial_printf(stdout, "Calibrate IMU (status: %d/9)\n",imu_get_calib_status());
+//				serial_printf(cli_stdout, "Calibrate IMU (status: %d/9)\n",imu_get_calib_status());
 				int i;
 				for (i = 0; i<(7-imu_get_calib_status());i++) //blink shorter for better calibration
 				{
@@ -361,17 +445,16 @@ void navigation_update_state()
 		{
 			ultrasonic_get_distance(distance_values);
 //			for (i=0;i<N_ULTRASONIC_SENSORS;i++)
-//				serial_printf(stdout, "US %d val : %d \n", i, distance_values[i]);
+//				serial_printf(cli_stdout, "US %d val : %d \n", i, distance_values[i]);
 			if(navigation_status.distance_to_target < TARGET_REACHED_DISTANCE)
 			{
-				navigation_targets.state[navigation_targets.current_index] = DONE;
-				navigation_status.current_state = STOP;
+				navigation_mission_item_reached();
 			}else if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) < navigation_status.max_dist_obs){
 				GPIO_write(Board_OBS_A_EN, 1);
 
 				//We use a different strategy depending on the type of obstacle
 				if (distance_values[US_FRONT_1] < BACKWARD_THRESHOLD && distance_values[US_FRONT_2] < BACKWARD_THRESHOLD){
-					serial_printf(stdout, "Wall ahead!\n");
+					serial_printf(cli_stdout, "Wall ahead!\n");
 					navigation_status.current_state = AVOID_WALL;
 				}else if ((distance_values[US_LEFT] < BACKWARD_THRESHOLD/2) || (distance_values[US_RIGHT] < BACKWARD_THRESHOLD/2)){
 					navigation_status.current_state = SPACE_NEEDED;
@@ -438,7 +521,7 @@ void navigation_move()
 				navigation_status.motor_values[0], navigation_status.motor_values[1]);
 	}
 
-	//		serial_printf(stdout, "speed l=%d, r=%d \n", motor_values[0], motor_values[1]);
+	//		serial_printf(cli_stdout, "speed l=%d, r=%d \n", motor_values[0], motor_values[1]);
 
 }
 #endif
@@ -471,12 +554,11 @@ void navigation_init()
 	navigation_status.lon_target = TARGET_LON;
 	navigation_status.distance_to_target = 0.0;
 	navigation_status.angle_to_target = 0.0;
-	navigation_status.current_state = AVOID_OBSTACLE;
+	navigation_status.current_state = STOP;
 	navigation_status.max_dist_obs = OBSTACLE_MAX_DIST;
 	GPIO_write(Board_OBS_A_EN, 1);
 
-	int i=navigation_add_target(TARGET_LAT, TARGET_LON, 0); //fill initial target to list
-
+	mission_items.count = 0;
 }
 #endif
 
@@ -486,7 +568,8 @@ void navigation_task()
 
 	while(1){
 
-		navigation_update_target();
+		//navigation_update_target();
+		navigation_update_current_target();
 		navigation_update_position();
 		navigation_update_state();
 		navigation_move();

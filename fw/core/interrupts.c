@@ -15,6 +15,8 @@
 #include "eps.h"
 #include "driverlib.h"
 
+/***** !!! don't forget to add the interrupt vector to app.cfg if you add a new ISR here !!! *****************/
+
 
 void port1_isr()
 {
