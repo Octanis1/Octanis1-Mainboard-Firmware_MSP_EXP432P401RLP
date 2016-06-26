@@ -33,7 +33,7 @@ void Task_sleep(int a);
 #define INIT_LON 6.591617
 #define TARGET_LAT 0
 #define TARGET_LON 6.591798
-#define TARGET_REACHED_DISTANCE 1
+#define TARGET_REACHED_DISTANCE 3
 
 #define PGAIN_A 1
 #define IGAIN_A 0
@@ -251,6 +251,27 @@ COMM_MAV_RESULT navigation_next_mission_item(COMM_MAV_MSG_TARGET *target, mavlin
 	return REPLY_TO_SENDER;
 }
 
+void navigation_mission_item_reached()
+{
+	//send MISSION_ITEM_REACHED ( #46 )
+	COMM_FRAME msg_frame;
+
+	mavlink_msg_mission_item_reached_pack(mavlink_system.sysid, MAV_COMP_ID_MISSIONPLANNER, &(msg_frame.mavlink_message),
+			mission_items.current_index);
+	comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_MISSIONPLANNER);
+	comm_mavlink_broadcast(&(msg_frame));
+
+
+	mission_items.item[mission_items.current_index].current = 0;
+	if(mission_items.item[mission_items.current_index].autocontinue)
+	{
+		if(navigation_next_mission_item(NULL, NULL, &(msg_frame.mavlink_message)) == REPLY_TO_SENDER)
+		{
+			comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_MISSIONPLANNER);
+			comm_mavlink_broadcast(&(msg_frame));
+		}
+	}
+}
 
 
 #if defined (NAVIGATION_TEST)
@@ -427,18 +448,7 @@ void navigation_update_state()
 //				serial_printf(stdout, "US %d val : %d \n", i, distance_values[i]);
 			if(navigation_status.distance_to_target < TARGET_REACHED_DISTANCE)
 			{
-				COMM_FRAME msg_frame;
-
-				//TODO: send MISSION_ITEM_REACHED ( #46 )
-				mission_items.item[mission_items.current_index].current = 0;
-				if(mission_items.item[mission_items.current_index].autocontinue)
-				{
-					if(navigation_next_mission_item(NULL, NULL, &(msg_frame.mavlink_message)) == REPLY_TO_SENDER)
-					{
-						comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_MISSIONPLANNER);
-						comm_mavlink_broadcast(&(msg_frame.mavlink_message));
-					}
-				}
+				navigation_mission_item_reached();
 			}else if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) < navigation_status.max_dist_obs){
 				GPIO_write(Board_OBS_A_EN, 1);
 
@@ -544,7 +554,7 @@ void navigation_init()
 	navigation_status.lon_target = TARGET_LON;
 	navigation_status.distance_to_target = 0.0;
 	navigation_status.angle_to_target = 0.0;
-	navigation_status.current_state = AVOID_OBSTACLE;
+	navigation_status.current_state = STOP;
 	navigation_status.max_dist_obs = OBSTACLE_MAX_DIST;
 	GPIO_write(Board_OBS_A_EN, 1);
 

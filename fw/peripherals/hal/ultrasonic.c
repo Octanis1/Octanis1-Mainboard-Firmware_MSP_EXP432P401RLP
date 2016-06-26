@@ -193,19 +193,16 @@ void ultrasonic_set_br(float a, float b, float c, float d, float e, float f, flo
 }
 
 int32_t ultrasonic_get_smallest (int32_t *distance_values, uint8_t size){
-	int32_t smallest = 0;
+	int32_t smallest = ULTRASONIC_MAX_SENSOR_VALUE;
+
+#ifdef USE_ULTRASONIC
 	int i = 0;
-
-	//Since some of the captor are not connected and thus return 0, we have to weed them out
-	for(i=0; i<size; i++){
-		if (smallest == 0 && distance_values[i] != 0)
-			smallest = distance_values[i];
-	}
-
+	//Since some of the sensors are not connected and thus return 0, we have to weed them out
 	for(i=0; i<size; i++){
 		if((distance_values[i] < smallest) && (distance_values[i] != 0))
 			smallest = distance_values[i];
 	}
+#endif
 
 	return smallest;
 }
@@ -213,9 +210,10 @@ int32_t ultrasonic_get_smallest (int32_t *distance_values, uint8_t size){
 /*
  * distance_values: integer times of flight in ms for each sensor
  */
-bool ultrasonic_get_distance(int32_t distance_values[])
+uint8_t ultrasonic_get_distance(int32_t distance_values[])
 {
-	bool retval=1;
+	uint8_t retval=1;
+#ifdef USE_ULTRASONIC
 	uint8_t j=0,
 			i=0,
 			arrayoffset=0; //the index offset to store the distance_value's for each array
@@ -271,6 +269,8 @@ bool ultrasonic_get_distance(int32_t distance_values[])
 	/* Turn off sensors */
 	GPIO_write(Board_ULTRASONIC_ENABLE, 0);
 	eps_switch_module(M5V_OFF);
+
+#endif
 
 	return retval;
 }

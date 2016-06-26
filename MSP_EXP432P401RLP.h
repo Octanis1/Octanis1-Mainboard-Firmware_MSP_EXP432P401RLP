@@ -59,6 +59,8 @@
 //#define UARTCAM_ENABLED 1
 //#define GSM_ENABLED 1
 
+//#define USE_ULTRASONIC 1
+
 #ifdef VERSION_0_5
 	#warning "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Use board v0.5 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 #else
