@@ -105,6 +105,22 @@ s32 imu_init() //function to be called before starting the imu task.
 		bit positions - 0 and 1*/
 		/* set the power mode as NORMAL*/
 		comres += bno055_set_power_mode(POWER_MODE_NORMAL);
+
+/*		For reading fusion data it is required to set the
+		operation modes of the sensor
+		operation mode can set from the register
+		page - page0
+		register - 0x3D
+		bit - 0 to 3
+		for sensor data read following operation mode have to set
+		*FUSION MODE
+			*0x08 - OPERATION_MODE_IMUPLUS
+			*0x09 - OPERATION_MODE_COMPASS
+			*0x0A - OPERATION_MODE_M4G
+			*0x0B - OPERATION_MODE_NDOF_FMC_OFF
+			*0x0C - OPERATION_MODE_NDOF
+			based on the user need configure the operation mode*/
+		comres = bno055_set_operation_mode(OPERATION_MODE_NDOF);
 	/*--------------------------------------------------------------------------*
 	************************* END INITIALIZATION *************************
 	*---------------------------------------------------------------------------*/
@@ -118,22 +134,7 @@ s8 bno055_get_heading(double *d_euler_data_h, double *d_euler_data_p, double *d_
 	/* Variable used to return value of
 	communication routine*/
 	s32 comres = ERROR;
-	/************************* START READ RAW FUSION DATA ********
-	For reading fusion data it is required to set the
-	operation modes of the sensor
-	operation mode can set from the register
-	page - page0
-	register - 0x3D
-	bit - 0 to 3
-	for sensor data read following operation mode have to set
-	*FUSION MODE
-		*0x08 - OPERATION_MODE_IMUPLUS
-		*0x09 - OPERATION_MODE_COMPASS
-		*0x0A - OPERATION_MODE_M4G
-		*0x0B - OPERATION_MODE_NDOF_FMC_OFF
-		*0x0C - OPERATION_MODE_NDOF
-		based on the user need configure the operation mode*/
-	comres = bno055_set_operation_mode(OPERATION_MODE_NDOF);
+
 	/*	API used to read Euler data output as double  - degree and radians
 		float functions also available in the BNO055 API */
 	comres += bno055_convert_double_euler_h_deg(d_euler_data_h);

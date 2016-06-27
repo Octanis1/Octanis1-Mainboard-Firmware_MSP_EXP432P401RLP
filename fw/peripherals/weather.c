@@ -195,36 +195,27 @@ void weather_task(){
         }
 
 #endif
-		if(external_board_connected)
-		{
-			bmp180_data_readout(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
-			float uv = mcp_get_data();
-			int uvint = (int)(1000.0*uv);
+//		if(external_board_connected)
+//		{
+//			bmp180_data_readout(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
+//			float uv = mcp_get_data();
+//			int uvint = (int)(1000.0*uv);
+//
+//			weather_data.ext_temp_sht21 = sht2x_get_temp(); //TODO: fix the fact that program stops here if sensor is not connected.
+//			weather_data.ext_humid = sht2x_get_humidity();
+//
+//		}
 
-			weather_data.ext_temp_sht21 = sht2x_get_temp(); //TODO: fix the fact that program stops here if sensor is not connected.
-			weather_data.ext_humid = sht2x_get_humidity();
-
-		}
-
-		bme280_data_readout(&(weather_data.int_temp),&(weather_data.int_press),&(weather_data.int_humid));
-		//note: bme280 can give pressure, humidity and temperature
-
-		// Logging:
-
-		uint32_t time = Seconds_get();
-//		Types_FreqHz freq1;
-//		Timestamp_getFreq(&freq1);
-
-
-
+//		bme280_data_readout(&(weather_data.int_temp),&(weather_data.int_press),&(weather_data.int_humid));
 
 		//	windsensor_getvalue();
 
 		weather_aggregate_data();
 
-		//		serial_printf(cli_stdout, "W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
+//		serial_printf(cli_stdout, "W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
 
-		Task_sleep(1000);
+		serial_printf(cli_stdout, "W ok");
+		Task_sleep(5000);
 
 
 #ifdef FLASH_ENABLED

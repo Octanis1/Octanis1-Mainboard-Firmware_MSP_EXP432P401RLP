@@ -24,6 +24,13 @@ static struct _imu_data {
 	unsigned char calib_status;
 } imu_data;
 
+static uint32_t seconds_since_reset;
+
+void imu_inc_sec()
+{
+	seconds_since_reset+=5;
+}
+
 // pitch Euler data in 100 degrees
 int16_t imu_get_pitch(){
 	return (int16_t)(100*imu_data.d_euler_data_p);
@@ -65,7 +72,10 @@ int16_t imu_get_accel_z(){
 
 void imu_task(){
 	/************* IMU STUFF moved here *************/
+	seconds_since_reset = 0;
+	uint32_t tmp_sec = 0;
 	i2c_helper_init_handle();
+
 
 	Task_sleep(500);
 
@@ -74,9 +84,9 @@ void imu_task(){
 	imu_init();
 
 	while(1){
-		imu_data.calib_status=bno055_check_calibration_status(); //this line alone lets the i2c bus crash
+//		imu_data.calib_status=bno055_check_calibration_status(); //this line alone lets the i2c bus crash
 		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r)); //this line alone lets the i2c bus crash
-		bno055_get_accel(&(imu_data.accel_x), &(imu_data.accel_y), &(imu_data.accel_z)); //commenting out this line alone still lets the i2c bus be blocked
+//		bno055_get_accel(&(imu_data.accel_x), &(imu_data.accel_y), &(imu_data.accel_z)); //commenting out this line alone still lets the i2c bus be blocked
 
 
 	//	if(calib_status > 8)
@@ -114,9 +124,13 @@ void imu_task(){
 			// BNO055 debug
 			//serial_printf(cli_stdout, "BNO begin \n", 0);
 
-		//	int b = bno055_begin(BNO055_MAIN, i2c_helper_handle);
+//			int b = bno055_begin(BNO055_MAIN, i2c_helper_handle);
 
-		//	serial_printf(cli_stdout, "bno startup %d \n", b);
+		if(seconds_since_reset > tmp_sec)
+		{
+			serial_printf(cli_stdout, "sec: %d, calib: %d, head:  %d \n", seconds_since_reset,imu_get_calib_status(), imu_get_heading());
+			tmp_sec = seconds_since_reset;
+		}
 
 
 		//only check every 10 seconds
@@ -124,7 +138,7 @@ void imu_task(){
 //		if(!(i_since_last_measurement++ % 20))
 //		motors_struts_get_position();
 
-		Task_sleep(500);
+		Task_sleep(50);
 
 	}
 

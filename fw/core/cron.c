@@ -8,6 +8,7 @@
 #include "../../Board.h"
 #include "cron.h"
 //
+#include "../peripherals/imu.h"
 //mavlink test
 #include "../peripherals/comm.h"
 #include "../lib/mavlink/common/mavlink.h"
@@ -16,6 +17,7 @@
 Void cron_quick_clock(UArg arg){
 	// flash led
 	GPIO_toggle(Board_LED_GREEN); // use red led for user inputs
+	imu_inc_sec();
 
 #ifdef MAVLINK_ON_UART0_ENABLED
 

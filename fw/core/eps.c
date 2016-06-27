@@ -52,6 +52,8 @@ void eps_init()
 
 uint8_t sendEpsCommand(uint8_t command)
 {
+#ifdef EPS_ENABLED
+
 	I2C_Transaction i2cTransaction;
 
 	int8_t iError = 0;
@@ -74,6 +76,9 @@ uint8_t sendEpsCommand(uint8_t command)
 	}
 
 	return readBuffer;
+#else
+	return COMM_OK;
+#endif
 }
 
 uint8_t eps_switch_module(uint8_t command) //use commands defined in eps.h
