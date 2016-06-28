@@ -52,7 +52,7 @@ static const char rn_txstop[] = "\r\n";
 static const char rn_join[] = "mac join abp\r\n";
 static const char rn_reset[] = "sys reset\r\n";
 
-int rn2483_open(){
+int rn2483_uart_open(){
 
 
 	UART_Params_init(&uartParams);
@@ -80,7 +80,7 @@ int rn2483_begin(){
     GPIO_write(Board_LORA_RESET_N, 0);
 
 #ifndef CONFIG_MODE
-	if(!rn2483_open()){
+	if(!rn2483_uart_open()){
 		serial_printf(cli_stdout, "rn2483 open error \n",0);
 		return 0;
 	}else{
@@ -150,7 +150,7 @@ int rn2483_config()
     GPIO_write(Board_LORA_RESET_N, 1);
     	char rxBuffer[RN2483_RXBUFFER_SIZE];
 
-	comm_result+=(!rn2483_open());
+	comm_result+=(!rn2483_uart_open());
 
 	Task_sleep(500);
 	UART_read(uart, rxBuffer, sizeof(rxBuffer)); //clean the reset message

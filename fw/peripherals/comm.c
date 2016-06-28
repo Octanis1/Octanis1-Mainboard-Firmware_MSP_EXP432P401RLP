@@ -79,6 +79,32 @@ void comm_clear_tx_flag(COMM_CHANNEL channel, int component_id)
 	comm_tx_slot_flags[channel][component_id/32] &= ~(1 << (component_id%32));
 }
 
+
+//TODO: remove following test code!!
+#define COMM_STRING_SIZE 175
+#define COMM_FRAME_SIZE 350
+#include "../lib/printf.h"
+#include "hal/rn2483.h"
+void comm_send_string_over_lora()
+{
+	char txdata[12] = "HelloOctanis";
+	int stringlength = 12;
+	/** Prepare hex string for LoRa **/
+	char hex_string_byte[2];
+	char hex_string[COMM_FRAME_SIZE]; //TODO: ATTENTION: this is too small! need to change this
+	memset(&hex_string, 0, sizeof(hex_string));
+
+	int i;
+	for(i=0; i<stringlength; i++){
+		memset(&hex_string_byte, 0, sizeof(hex_string_byte));
+		tfp_sprintf(hex_string_byte, "%02x", txdata[i]);
+		strcat(hex_string, hex_string_byte);
+	}
+	/** end hex string **/
+
+	rn2483_send_receive(hex_string, 2*stringlength);
+}
+
 void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 
 	static uint8_t buf[MAVLINK_MAX_PACKET_LEN];
@@ -95,9 +121,13 @@ void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 			{//successful TX
 				comm_clear_tx_flag(CHANNEL_APP_UART, msg->compid);
 			}
-			break;
 #endif
+			break;
 		case CHANNEL_LORA:
+#ifdef LORA_ENABLED
+			comm_send_string_over_lora(); //FIXME: this is just test code
+#endif
+			break;
 		case CHANNEL_ROCKBLOCK:
 		case CHANNEL_GSM:
 			   //sim800_send_http(msg)
@@ -238,7 +268,18 @@ void comm_init(){
 	mavlink_system.sysid = MAVLINK_SYSTEM_ID;                   ///< ID 25 for this rover
 	mavlink_system.compid = MAV_COMP_ID_ALL;     ///< The component sending the message is all, it could be also a Linux process
 
-	uint64_t system_time = 1000 * 1000 * (1234); //TODO get time on each message packing
+#ifdef LORA_ENABLED
+	#ifdef CONFIG_MODE
+		int comm_result=rn2483_config();
+		if(comm_result)
+			serial_printf(cli_stdout,"LoRa config failed: %d", comm_result);
+		else
+			serial_printf(cli_stdout,"LoRa config success: %d", comm_result);
+	#else
+		rn2483_begin();
+	#endif
+#endif
+
 }
 
 void comm_task(){
