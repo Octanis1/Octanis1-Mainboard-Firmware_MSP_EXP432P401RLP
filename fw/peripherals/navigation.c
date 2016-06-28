@@ -70,6 +70,7 @@ static mission_item_list_t mission_items;
 
 void navigation_update_current_target();
 
+
 float navigation_get_angle_to_target()
 {
 	return navigation_status.angle_to_target;
@@ -362,107 +363,106 @@ void navigation_update_current_target()
 
 void navigation_update_state()
 {
-	int32_t distance_values[N_ULTRASONIC_SENSORS];
-	int i = 0;
-	if(navigation_status.current_state == BYPASS){
+    int32_t distance_values[N_ULTRASONIC_SENSORS];
+    int32_t smallest = 0;
+    int32_t left_s = 0;
+    int32_t right_s = 0;
+    int32_t front1_s = 0;
+    int32_t front2_s = 0;
+    int i = 0;
+
+    ultrasonic_get_distance(distance_values);
+    smallest = ultrasonic_get_smallest(distance_values, N_ULTRASONIC_SENSORS);
+    left_s = distance_values[US_LEFT];
+    right_s = distance_values[US_RIGHT];
+    front1_s = distance_values[US_FRONT_1];
+    front2_s = distance_values[US_FRONT_2];
+
+    if(navigation_status.current_state == BYPASS){
 		//motor command is done directly in CLI
-	}else if(navigation_status.current_state == AVOID_OBSTACLE){
-		ultrasonic_get_distance(distance_values);
+    }else if(navigation_status.current_state == AVOID_OBSTACLE){
 
-//		for (i=0;i<N_ULTRASONIC_SENSORS;i++)
-//			serial_printf(cli_stdout, "US %d val : %d \n", i, distance_values[i]);
+        //for (i=0;i<N_ULTRASONIC_SENSORS;i++)
+        //serial_printf(cli_stdout, "US %d val : %d \n", i, distance_values[i]);
 
-		if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) > navigation_status.max_dist_obs){
-			navigation_status.current_state = GO_TO_TARGET;
-			GPIO_write(Board_OBS_A_EN, 0);
-		}else if ((distance_values[US_LEFT] < BACKWARD_THRESHOLD/2) || (distance_values[US_RIGHT] < BACKWARD_THRESHOLD/2)){
-			navigation_status.current_state = SPACE_NEEDED;
-		}else if (distance_values[US_FRONT_1] < BACKWARD_THRESHOLD && distance_values[US_FRONT_2] < BACKWARD_THRESHOLD){
-			serial_printf(cli_stdout, "Wall ahead!\n");
-			navigation_status.current_state = AVOID_WALL;
-		}
-
-	}else if (navigation_status.current_state == AVOID_WALL){
-		ultrasonic_get_distance(distance_values);
-
-		//We check if we're not facing the wall anymore
-//		for (i=0;i<N_ULTRASONIC_SENSORS;i++)
-//			serial_printf(cli_stdout, "US %d val : %d \n", i, distance_values[i]);
-		if ((distance_values[US_LEFT] < BACKWARD_THRESHOLD/2) || (distance_values[US_RIGHT] < BACKWARD_THRESHOLD/2)){
-			navigation_status.current_state = SPACE_NEEDED;
-		}
-		if (!((distance_values[US_FRONT_1] < BACKWARD_THRESHOLD) && (distance_values[US_FRONT_2] < BACKWARD_THRESHOLD))){
-
-			if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) > navigation_status.max_dist_obs){
-				navigation_status.current_state = GO_TO_TARGET;
-				GPIO_write(Board_OBS_A_EN, 0);
-
-			}else{
-				navigation_status.current_state = AVOID_OBSTACLE;
-			}
-		}
-
-	}else if (navigation_status.current_state == SPACE_NEEDED){
-		ultrasonic_get_distance(distance_values);
-		if (!((distance_values[US_LEFT] < BACKWARD_THRESHOLD/2) || (distance_values[US_RIGHT] < BACKWARD_THRESHOLD/2))){
-			//Check if we face another type of obstacle or if path is free
-			if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) < navigation_status.max_dist_obs){
-				//We use a different strategy depending on the type of obstacle
-				if (distance_values[US_FRONT_1] < BACKWARD_THRESHOLD && distance_values[US_FRONT_2] < BACKWARD_THRESHOLD){
-					serial_printf(cli_stdout, "Wall ahead!\n");
-					navigation_status.current_state = AVOID_WALL;
-				}else
-					navigation_status.current_state = AVOID_OBSTACLE;
-			}else{
-				navigation_status.current_state = GO_TO_TARGET;
-				GPIO_write(Board_OBS_A_EN, 0);
-			}
-		}
-	}else{ //normal operation: continue on mission items
-		if(mission_items.item[mission_items.current_index].current)
-		{ //TODO: add conditions that may stop from changing state, for example low battery.
-
-			if(navigation_status.angle_valid)
-			{
-				navigation_status.current_state = GO_TO_TARGET;
-			}
-			else
-			{
-//				serial_printf(cli_stdout, "Calibrate IMU (status: %d/9)\n",imu_get_calib_status());
-				int i;
-				for (i = 0; i<(7-imu_get_calib_status());i++) //blink shorter for better calibration
-				{
-					GPIO_toggle(Board_LED_RED);
-					Task_sleep(50);
-					GPIO_toggle(Board_LED_RED);
-					Task_sleep(50);
-				}
-				GPIO_write(Board_LED_RED,0);
-			}
-		}
-
-		if(navigation_status.current_state == GO_TO_TARGET)
-		{
-			ultrasonic_get_distance(distance_values);
-//			for (i=0;i<N_ULTRASONIC_SENSORS;i++)
-//				serial_printf(cli_stdout, "US %d val : %d \n", i, distance_values[i]);
-			if(navigation_status.distance_to_target < TARGET_REACHED_DISTANCE)
-			{
-				navigation_mission_item_reached();
-			}else if (ultrasonic_get_smallest (distance_values, N_ULTRASONIC_SENSORS) < navigation_status.max_dist_obs){
-				GPIO_write(Board_OBS_A_EN, 1);
-
-				//We use a different strategy depending on the type of obstacle
-				if (distance_values[US_FRONT_1] < BACKWARD_THRESHOLD && distance_values[US_FRONT_2] < BACKWARD_THRESHOLD){
-					serial_printf(cli_stdout, "Wall ahead!\n");
-					navigation_status.current_state = AVOID_WALL;
-				}else if ((distance_values[US_LEFT] < BACKWARD_THRESHOLD/2) || (distance_values[US_RIGHT] < BACKWARD_THRESHOLD/2)){
-					navigation_status.current_state = SPACE_NEEDED;
-				}else
-					navigation_status.current_state = AVOID_OBSTACLE;
-			}
-		}
+	if (smallest > navigation_status.max_dist_obs){
+	    navigation_status.current_state = GO_TO_TARGET;
+	    GPIO_write(Board_OBS_A_EN, 0);
+	}else if ((left_s < BACKWARD_THRESHOLD/2) || (right_s < BACKWARD_THRESHOLD/2)){
+	    navigation_status.current_state = SPACE_NEEDED;
+	}else if (front1_s < BACKWARD_THRESHOLD && front2_s < BACKWARD_THRESHOLD){
+	    serial_printf(cli_stdout, "Wall ahead!\n");
+	    navigation_status.current_state = AVOID_WALL;
 	}
+
+    }else if (navigation_status.current_state == AVOID_WALL){
+
+	//We check if we're not facing the wall anymore
+	if ((left_s < BACKWARD_THRESHOLD/2) || (right_s < BACKWARD_THRESHOLD/2)){
+	    navigation_status.current_state = SPACE_NEEDED;
+	}
+	if (!((front1_s < BACKWARD_THRESHOLD) && (front2_s < BACKWARD_THRESHOLD))){
+            if (smallest > navigation_status.max_dist_obs){
+		navigation_status.current_state = GO_TO_TARGET;
+		GPIO_write(Board_OBS_A_EN, 0);
+            }else{
+		navigation_status.current_state = AVOID_OBSTACLE;
+	    }
+	}
+
+    }else if (navigation_status.current_state == SPACE_NEEDED){
+	if (!((left_s < BACKWARD_THRESHOLD/2) || (right_s < BACKWARD_THRESHOLD/2))){
+	    //Check if we face another type of obstacle or if path is free
+	    if (smallest < navigation_status.max_dist_obs){
+		//We use a different strategy depending on the type of obstacle
+		if (front1_s < BACKWARD_THRESHOLD && front2_s < BACKWARD_THRESHOLD){
+		    serial_printf(cli_stdout, "Wall ahead!\n");
+		    navigation_status.current_state = AVOID_WALL;
+		}else
+		    navigation_status.current_state = AVOID_OBSTACLE;
+	    }else{
+		navigation_status.current_state = GO_TO_TARGET;
+		GPIO_write(Board_OBS_A_EN, 0);
+	    }
+	}
+    }else{ 
+        //normal operation: continue on mission items
+	if(mission_items.item[mission_items.current_index].current)
+	{ //TODO: add conditions that may stop from changing state, for example low battery.
+
+	    if(navigation_status.angle_valid){
+		navigation_status.current_state = GO_TO_TARGET;
+	    }else{
+                //serial_printf(cli_stdout, "Calibrate IMU (status: %d/9)\n",imu_get_calib_status());
+		for (i = 0; i<(7-imu_get_calib_status());i++) //blink shorter for better calibration
+		{
+		    GPIO_toggle(Board_LED_RED);
+		    Task_sleep(50);
+		    GPIO_toggle(Board_LED_RED);
+		    Task_sleep(50);
+		}
+		GPIO_write(Board_LED_RED,0);
+	    }
+	}
+
+	if(navigation_status.current_state == GO_TO_TARGET){
+	    ultrasonic_get_distance(distance_values);
+	    if(navigation_status.distance_to_target < TARGET_REACHED_DISTANCE){
+		navigation_mission_item_reached();
+	    }else if (smallest < navigation_status.max_dist_obs){
+		GPIO_write(Board_OBS_A_EN, 1);
+
+		//We use a different strategy depending on the type of obstacle
+		if (front1_s < BACKWARD_THRESHOLD && front2_s < BACKWARD_THRESHOLD){
+		    serial_printf(cli_stdout, "Wall ahead!\n");
+		    navigation_status.current_state = AVOID_WALL;
+		}else if ((left_s < BACKWARD_THRESHOLD/2) || (right_s < BACKWARD_THRESHOLD/2)){
+		    navigation_status.current_state = SPACE_NEEDED;
+		}else
+		    navigation_status.current_state = AVOID_OBSTACLE;
+	    }
+	}
+    }
 }
 
 
