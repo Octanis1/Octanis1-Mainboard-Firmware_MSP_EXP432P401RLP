@@ -4967,9 +4967,36 @@ struct bno055_gyro_double_t *gyro_xyz)
 		}
 	return com_rslt;
 }
+
+/*!
+ *	@brief This API is used to set the units to degrees.
+ *	Should be called once in the beginning.
+ *	(CUSTOM FUNCTION! not included in driver)
+ *
+ *	@return results of bus communication function
+ *	@retval 0 -> Success
+ *	@retval 1 -> Error
+ *
+ *
+ */
+BNO055_RETURN_FUNCTION_TYPE bno055_set_unit_to_deg()
+{
+	BNO055_RETURN_FUNCTION_TYPE com_rslt = ERROR;
+	u8 v_euler_unit_u8 = BNO055_ZERO_U8X;
+	/* Read the current Euler unit and set the
+	unit as degree if the unit is in radians */
+	com_rslt = bno055_get_euler_unit(&v_euler_unit_u8);
+	if (v_euler_unit_u8 != EULER_UNIT_DEG)
+		com_rslt += bno055_set_euler_unit(EULER_UNIT_DEG);
+
+	return com_rslt;
+}
+
 /*!
  *	@brief This API is used to convert the Euler h raw data
  *	to degree output as double
+ *
+ *	(MODIFIED FUNCTION)
  *
  *	@param v_euler_h_d : The double value of Euler h degree
  *
@@ -4985,26 +5012,33 @@ double *v_euler_h_d)
 	BNO055_RETURN_FUNCTION_TYPE com_rslt = ERROR;
 	s16 v_reg_euler_h_s16 = BNO055_ZERO_U8X;
 	double v_data_d = BNO055_ZERO_U8X;
-	u8 v_euler_unit_u8 = BNO055_ZERO_U8X;
-	/* Read the current Euler unit and set the
-	unit as degree if the unit is in radians */
-	com_rslt = bno055_get_euler_unit(&v_euler_unit_u8);
-	if (v_euler_unit_u8 != EULER_UNIT_DEG)
-		com_rslt += bno055_set_euler_unit(EULER_UNIT_DEG);
-		if (com_rslt ==  SUCCESS) {
-			/* Read Euler raw h data*/
-			com_rslt += bno055_read_euler_h(&v_reg_euler_h_s16);
-			if (com_rslt == SUCCESS) {
-				/* Convert raw Euler h to degree */
-				v_data_d =
-				(double)(v_reg_euler_h_s16/EULER_DIV_DEG);
-				*v_euler_h_d = v_data_d;
-			} else {
-			com_rslt = ERROR;
-			}
-		} else {
+//	u8 v_euler_unit_u8 = BNO055_ZERO_U8X;
+//	/* Read the current Euler unit and set the
+//	unit as degree if the unit is in radians */
+//	com_rslt = bno055_get_euler_unit(&v_euler_unit_u8);
+//	if (v_euler_unit_u8 != EULER_UNIT_DEG)
+//		com_rslt += bno055_set_euler_unit(EULER_UNIT_DEG);
+//
+//	if (com_rslt ==  SUCCESS)
+//	{
+		/* Read Euler raw h data*/
+		com_rslt = bno055_read_euler_h(&v_reg_euler_h_s16);
+		if (com_rslt == SUCCESS)
+		{
+			/* Convert raw Euler h to degree */
+			v_data_d =
+			(double)(v_reg_euler_h_s16/EULER_DIV_DEG);
+			*v_euler_h_d = v_data_d;
+		}
+		else
+		{
 		com_rslt = ERROR;
 		}
+//	}
+//	else
+//	{
+//		com_rslt = ERROR;
+//	}
 	return com_rslt;
 }
 /*!
@@ -5065,15 +5099,15 @@ double *v_euler_r_d)
 	BNO055_RETURN_FUNCTION_TYPE com_rslt = ERROR;
 	s16 v_reg_euler_r_s16 = BNO055_ZERO_U8X;
 	double v_data_d = BNO055_ZERO_U8X;
-	u8 v_euler_unit_u8 = BNO055_ZERO_U8X;
-	/* Read the current Euler unit and set the
-	unit as degree if the unit is in radians */
-	com_rslt = bno055_get_euler_unit(&v_euler_unit_u8);
-	if (v_euler_unit_u8 != EULER_UNIT_DEG)
-		com_rslt += bno055_set_euler_unit(EULER_UNIT_DEG);
-		if (com_rslt ==  SUCCESS) {
+//	u8 v_euler_unit_u8 = BNO055_ZERO_U8X;
+//	/* Read the current Euler unit and set the
+//	unit as degree if the unit is in radians */
+//	com_rslt = bno055_get_euler_unit(&v_euler_unit_u8);
+//	if (v_euler_unit_u8 != EULER_UNIT_DEG)
+//		com_rslt += bno055_set_euler_unit(EULER_UNIT_DEG);
+//		if (com_rslt ==  SUCCESS) {
 			/* Read Euler raw r data*/
-			com_rslt += bno055_read_euler_r(&v_reg_euler_r_s16);
+			com_rslt = bno055_read_euler_r(&v_reg_euler_r_s16);
 			if (com_rslt == SUCCESS) {
 				/* Convert raw Euler r to degree */
 				v_data_d =
@@ -5082,9 +5116,9 @@ double *v_euler_r_d)
 			} else {
 			com_rslt = ERROR;
 			}
-		} else {
-		com_rslt = ERROR;
-		}
+//		} else {
+//		com_rslt = ERROR;
+//		}
 	return com_rslt;
 }
 /*!
@@ -5145,13 +5179,13 @@ double *v_euler_p_d)
 	BNO055_RETURN_FUNCTION_TYPE com_rslt = ERROR;
 	s16 v_reg_euler_p_s16 = BNO055_ZERO_U8X;
 	double v_data_d = BNO055_ZERO_U8X;
-	u8 v_euler_unit_u8 = BNO055_ZERO_U8X;
-	/* Read the current Euler unit and set the
-	unit as degree if the unit is in radians */
-	com_rslt = bno055_get_euler_unit(&v_euler_unit_u8);
-	if (v_euler_unit_u8 != EULER_UNIT_DEG)
-		com_rslt += bno055_set_euler_unit(EULER_UNIT_DEG);
-		if (com_rslt ==  SUCCESS) {
+//	u8 v_euler_unit_u8 = BNO055_ZERO_U8X;
+//	/* Read the current Euler unit and set the
+//	unit as degree if the unit is in radians */
+//	com_rslt = bno055_get_euler_unit(&v_euler_unit_u8);
+//	if (v_euler_unit_u8 != EULER_UNIT_DEG)
+//		com_rslt += bno055_set_euler_unit(EULER_UNIT_DEG);
+//		if (com_rslt ==  SUCCESS) {
 			/* Read Euler raw p data*/
 			com_rslt += bno055_read_euler_p(&v_reg_euler_p_s16);
 			if (com_rslt == SUCCESS) {
@@ -5162,9 +5196,9 @@ double *v_euler_p_d)
 			} else {
 			com_rslt = ERROR;
 			}
-		} else {
-		com_rslt = ERROR;
-		}
+//		} else {
+//		com_rslt = ERROR;
+//		}
 	return com_rslt;
 }
 /*!

@@ -120,7 +120,9 @@ s32 imu_init() //function to be called before starting the imu task.
 			*0x0B - OPERATION_MODE_NDOF_FMC_OFF
 			*0x0C - OPERATION_MODE_NDOF
 			based on the user need configure the operation mode*/
-		comres = bno055_set_operation_mode(OPERATION_MODE_NDOF);
+		comres += bno055_set_operation_mode(OPERATION_MODE_NDOF);
+
+		comres += bno055_set_unit_to_deg();
 	/*--------------------------------------------------------------------------*
 	************************* END INITIALIZATION *************************
 	*---------------------------------------------------------------------------*/
@@ -138,8 +140,12 @@ s8 bno055_get_heading(double *d_euler_data_h, double *d_euler_data_p, double *d_
 	/*	API used to read Euler data output as double  - degree and radians
 		float functions also available in the BNO055 API */
 	comres += bno055_convert_double_euler_h_deg(d_euler_data_h);
+	Task_sleep(20);
 	comres += bno055_convert_double_euler_r_deg(d_euler_data_r);
+	Task_sleep(20);
 	comres += bno055_convert_double_euler_p_deg(d_euler_data_p);
+	Task_sleep(20);
+
 
 	return comres;
 }
@@ -206,9 +212,13 @@ unsigned char bno055_check_calibration_status()
 	unsigned char mag_calib_status = 0;
 	unsigned char sys_calib_status = 0;
 	bno055_get_accel_calib_stat(&accel_calib_status);
+	Task_sleep(20);
 	bno055_get_mag_calib_stat(&mag_calib_status);
+	Task_sleep(20);
 	bno055_get_gyro_calib_stat(&gyro_calib_status);
+	Task_sleep(20);
 	bno055_get_sys_calib_stat(&sys_calib_status);
+	Task_sleep(20);
 
 	return accel_calib_status+gyro_calib_status+mag_calib_status+sys_calib_status;
 }

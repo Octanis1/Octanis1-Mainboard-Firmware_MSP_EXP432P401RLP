@@ -84,7 +84,7 @@ void imu_task(){
 	imu_init();
 
 	while(1){
-//		imu_data.calib_status=bno055_check_calibration_status(); //this line alone lets the i2c bus crash
+		imu_data.calib_status=bno055_check_calibration_status(); //this line alone lets the i2c bus crash
 		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r)); //this line alone lets the i2c bus crash
 //		bno055_get_accel(&(imu_data.accel_x), &(imu_data.accel_y), &(imu_data.accel_z)); //commenting out this line alone still lets the i2c bus be blocked
 
@@ -138,7 +138,7 @@ void imu_task(){
 //		if(!(i_since_last_measurement++ % 20))
 //		motors_struts_get_position();
 
-		Task_sleep(50);
+		Task_sleep(1000);
 
 	}
 

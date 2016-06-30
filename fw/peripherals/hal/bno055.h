@@ -3802,6 +3802,19 @@ struct bno055_gyro_double_t *gyro_xyz);
 /**\name FUNCTIONS FOR READING EULER DATA OUTPUT AS DOUBLE PRECISION */
 /*************************************************************************/
 /*!
+ *	@brief This API is used to set the units to degrees.
+ *	Should be called once in the beginning.
+ *	(CUSTOM FUNCTION! not included in driver)
+ *
+ *	@return results of bus communication function
+ *	@retval 0 -> Success
+ *	@retval 1 -> Error
+ *
+ *
+ */
+BNO055_RETURN_FUNCTION_TYPE bno055_set_unit_to_deg();
+
+/*!
  *	@brief This API is used to convert the Euler h raw data
  *	to degree output as double
  *
