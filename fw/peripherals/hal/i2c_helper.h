@@ -16,8 +16,11 @@ void write8(unsigned char i2c_addr, I2C_Handle handle, uint8_t register_addr, ui
 
 extern I2C_Handle i2c_helper_handle;
 
+
 I2C_Handle i2c_helper_get_handle();
 
 void i2c_helper_init_handle();
+void i2c_helper_handle_restart();
+
 
 #endif /* FW_PERIPHERALS_HAL_I2C_HELPER_H_ */

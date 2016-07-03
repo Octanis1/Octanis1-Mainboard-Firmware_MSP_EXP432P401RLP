@@ -11,7 +11,7 @@
 #include "../../Board.h"
 #include "../core/eps.h"
 
-
+#include "imu.h"
 void vision_task(){
 	cli_init();
 
@@ -35,6 +35,9 @@ void vision_task(){
 //		//not all or none of the sensors returned a pulse
 //		}
 		Task_sleep(5000);
+		imu_print_last(); //TODO:remove
+		imu_task_still_running();
+
 //		eps_switch_module(M3V3_1_OFF);
 
 	}

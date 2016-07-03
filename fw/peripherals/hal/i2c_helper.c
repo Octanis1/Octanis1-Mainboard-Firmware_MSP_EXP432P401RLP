@@ -25,6 +25,19 @@ void i2c_helper_init_handle(){
 
 }
 
+void i2c_helper_handle_restart()
+{
+	I2C_close(i2c_helper_handle);
+	i2c_helper_handle = NULL;
+
+	/* Initialise I2C Bus */
+	I2C_Params      params;
+	I2C_Params_init(&params); //by default i2c is in blocking mode,
+//								which means a task's execution is blocked until the transfer is completed.
+//								No semaphores are needed, as queuing works automatically in the background.
+	i2c_helper_handle = I2C_open(Board_I2C0, &params);
+}
+
 
 uint8_t read8(unsigned char i2c_addr, I2C_Handle handle, uint8_t register_addr){
 

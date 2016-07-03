@@ -102,6 +102,8 @@ extern "C" {
 /* Board specific SPI CS pins */
 #define Board_Flash_CS				Octanis_Flash_CS
 
+/* IMU reset */
+#define Board_IMU_RST_N	 			Octanis_IMU_RST_N
 
 
 /* General board mappings */

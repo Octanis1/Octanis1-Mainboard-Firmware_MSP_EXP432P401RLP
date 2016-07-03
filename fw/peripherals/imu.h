@@ -9,6 +9,9 @@
 #define FW_PERIPHERALS_IMU_H_
 
 void imu_inc_sec();
+int imu_task_still_running();
+void imu_print_last();
+
 
 // pitch Euler data in 100 degrees
 int16_t imu_get_pitch();

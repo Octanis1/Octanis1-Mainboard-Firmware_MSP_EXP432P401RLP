@@ -81,6 +81,9 @@ s32 imu_init() //function to be called before starting the imu task.
 	/*	Based on the user need configure I2C interface.
 	 *	It is example code to explain how to use the bno055 API*/
 	  	I2C_routine();
+
+		Task_sleep(650); // Startup time after POR
+
 	/*--------------------------------------------------------------------------*
 	 *  This function used to assign the value/reference of
 	 *	the following parameters
@@ -598,13 +601,18 @@ s8 BNO055_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 	i2cTransaction.writeCount = cnt + 1;
 
 	i2cTransaction.slaveAddress = dev_addr; //Board_BNO055_MAINBOARD_I2CADDR;
-	int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
-	if (!ret) {
-//		serial_printf(cli_stdout, "bme280 i2c bus write error\n", 0);
-		iError = ERROR;
+	if(i2c_helper_handle != NULL)
+	{
+		int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
+
+		if (!ret) {
+		//		serial_printf(cli_stdout, "bme280 i2c bus write error\n", 0);
+			iError = ERROR;
+		}
 	}
-
+	else
+		iError = ERROR;
 	/*
 	* Please take the below function as your reference for
 	* write the data using I2C communication
@@ -655,19 +663,26 @@ s8 BNO055_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 
 	i2cTransaction.slaveAddress = dev_addr;
 
-	int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
+	if(i2c_helper_handle != NULL)
+	{
+		int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
-	if (!ret) {
-		serial_printf(cli_stdout, "bno055 read error \n", 0);
+		if (!ret) {
+			serial_printf(cli_stdout, "bno055 read error \n", 0);
+			iError = ERROR;
+		}else{
+			iError = SUCCESS;
+		}
+
+
+		for (stringpos = BNO055_ZERO_U8X; stringpos < cnt; stringpos++) {
+			*(reg_data + stringpos) = readBuffer[stringpos];
+		}
+	}
+	else
 		iError = ERROR;
-	}else{
-		iError = SUCCESS;
-	}
 
 
-	for (stringpos = BNO055_ZERO_U8X; stringpos < cnt; stringpos++) {
-		*(reg_data + stringpos) = readBuffer[stringpos];
-	}
 	return (s8)iError;
 }
 /*	Brief : The delay routine

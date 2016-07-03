@@ -25,4 +25,8 @@ unsigned int weather_get_ext_press();
 unsigned int weather_get_ext_humid();
 
 
+//TODO:remove!
+void weather_call_bme_from_other_task();
+
+
 void weather_task();

@@ -112,6 +112,11 @@ void log_weather(struct _weather_data *d)
     */
 }
 
+void weather_call_bme_from_other_task()
+{
+	bme280_data_readout(&(weather_data.int_temp),&(weather_data.int_press),&(weather_data.int_humid));
+}
+
 
 void weather_task(){
 	cli_init();
@@ -195,16 +200,16 @@ void weather_task(){
         }
 
 #endif
-//		if(external_board_connected)
-//		{
-//			bmp180_data_readout(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
-//			float uv = mcp_get_data();
-//			int uvint = (int)(1000.0*uv);
-//
-//			weather_data.ext_temp_sht21 = sht2x_get_temp(); //TODO: fix the fact that program stops here if sensor is not connected.
-//			weather_data.ext_humid = sht2x_get_humidity();
-//
-//		}
+		if(external_board_connected)
+		{
+			bmp180_data_readout(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
+			float uv = mcp_get_data();
+			int uvint = (int)(1000.0*uv);
+
+			weather_data.ext_temp_sht21 = sht2x_get_temp(); //TODO: fix the fact that program stops here if sensor is not connected.
+			weather_data.ext_humid = sht2x_get_humidity();
+
+		}
 
 //		bme280_data_readout(&(weather_data.int_temp),&(weather_data.int_press),&(weather_data.int_humid));
 
@@ -214,8 +219,8 @@ void weather_task(){
 
 //		serial_printf(cli_stdout, "W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
 
-		serial_printf(cli_stdout, "W ok");
-		Task_sleep(5000);
+//		serial_printf(cli_stdout, "W ok");
+		Task_sleep(10);
 
 
 #ifdef FLASH_ENABLED

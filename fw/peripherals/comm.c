@@ -229,7 +229,6 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 }
 
 
-
 void comm_init(){
 	cli_init();
 

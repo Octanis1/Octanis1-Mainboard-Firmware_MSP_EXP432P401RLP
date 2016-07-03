@@ -209,13 +209,19 @@ s8 BME280_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 	i2cTransaction.writeCount = cnt + 1;
 
 	i2cTransaction.slaveAddress = dev_addr; //Board_BME280_I2CADDR;
-	int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
-	if (!ret) {
-		//serial_printf(cli_stdout, "bme280 i2c bus write error\n", 0);
-		iError = ERROR;
+	if(i2c_helper_handle != NULL)
+	{
+		int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
+
+
+		if (!ret) {
+			//serial_printf(cli_stdout, "bme280 i2c bus write error\n", 0);
+			iError = ERROR;
+		}
 	}
-
+	else
+		iError = ERROR;
 	/*
 	* Please take the below function as your reference for
 	* write the data using I2C communication
@@ -266,19 +272,25 @@ s8 BME280_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 
 	i2cTransaction.slaveAddress = dev_addr;
 
-	int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
+	if(i2c_helper_handle != NULL)
+	{
+		int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
-	if (!ret) {
-	//	serial_printf(cli_stdout, "bme280 read error \n", 0);
+		if (!ret) {
+		//	serial_printf(cli_stdout, "bme280 read error \n", 0);
+			iError = ERROR;
+		}else{
+			iError = SUCCESS;
+		}
+
+
+		for (stringpos = BME280_INIT_VALUE; stringpos < cnt; stringpos++) {
+			*(reg_data + stringpos) = readBuffer[stringpos];
+		}
+	}
+	else
 		iError = ERROR;
-	}else{
-		iError = SUCCESS;
-	}
 
-
-	for (stringpos = BME280_INIT_VALUE; stringpos < cnt; stringpos++) {
-		*(reg_data + stringpos) = readBuffer[stringpos];
-	}
 	return (s8)iError;
 }
 
