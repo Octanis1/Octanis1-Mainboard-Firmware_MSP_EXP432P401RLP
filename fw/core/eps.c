@@ -124,10 +124,14 @@ uint16_t eps_get_iout()
 }
 
 void eps_task(){
+
+#ifndef MAVLINK_ON_UART0_ENABLED
 	cli_init();
+#endif
+
 #ifdef EPS_ENABLED
 	eps_init();
-	give_life_sign = 0;
+	give_life_sign = 1;
 #endif
 	while(1)
 	{
