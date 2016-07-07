@@ -8,6 +8,7 @@
 #include "../../Board.h"
 #include "comm.h"
 #include <string.h>
+#include "hal/rn2483.h"
 
 #include "navigation.h"
 
@@ -84,7 +85,6 @@ void comm_clear_tx_flag(COMM_CHANNEL channel, int component_id)
 #define COMM_STRING_SIZE 175
 #define COMM_FRAME_SIZE 350
 #include "../lib/printf.h"
-#include "hal/rn2483.h"
 void comm_send_string_over_lora()
 {
 	char txdata[12] = "HelloOctanis";

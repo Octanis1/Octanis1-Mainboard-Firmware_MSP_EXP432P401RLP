@@ -12,9 +12,9 @@
 #define RN2483_READ_TIMEOUT 1000
 #define RN2483_BAUD_RATE 57600
 
-static UART_Handle uart;
+static UART_Handle rn2483_uart;
 static UART_Params uartParams;
-static int rn2483_initialised = 1;
+static int rn2483_initialised = 0;
 
 #ifdef CONFIG_MODE
 //responses from the modem are "encapsulated" in "\r\n"
@@ -30,10 +30,10 @@ static int rn2483_initialised = 1;
 //		static const char rn_set_appskey[] ="mac set appskey 2B7E151628AED2A6ABF7158809CF4F3C\r\n";
 //		static const char rn_set_devaddr[] ="mac set devaddr 08050046\r\n";
 		static const char rn_set_nwkskey[] ="mac set nwkskey FAE2006DB71C34F2DDA6C33C19D92858\r\n";
-		static const char rn_set_appskey[] ="mac set appskey 9D4D8EC1B87CE76F0EC056D197BA8CD1\r\n";
+		static const char rn_set_appskey[] ="mac set appkey 01020304050607080910111213141516\r\n";
 		static const char rn_set_devaddr[] ="mac set devaddr 020312A1\r\n";
 		static const char rn_set_deveui[] =	"mac set deveui F03D291000000046\r\n";
-		static const char rn_set_appeui[] =	"mac set appeui 70B3D57ED0000171\r\n"; //TESTING
+		static const char rn_set_appeui[] =	"mac set appeui 70b3d57ed0000172\r\n"; // Octanis 1 App on the Field Station
 		static const char rn_save[] ="mac save\r\n";
 	#endif
 #endif
@@ -49,7 +49,8 @@ static const char rn_txbeacon[] = "mac tx uncnf 1 deadbeef\r\n";
 static const char rn_txstart[] = "mac tx uncnf 1 ";
 static const char rn_txstop[] = "\r\n";
 
-static const char rn_join[] = "mac join abp\r\n";
+static const char rn_join_abp[] = "mac join abp\r\n";
+static const char rn_join_otaa[] = "mac join otaa\r\n";
 static const char rn_reset[] = "sys reset\r\n";
 
 int rn2483_uart_open(){
@@ -63,9 +64,9 @@ int rn2483_uart_open(){
 	uartParams.readEcho = UART_ECHO_OFF;
 	uartParams.baudRate = 57600;
 
-	uart = UART_open(Board_UART3_LORACOMM, &uartParams);
+	rn2483_uart = UART_open(Board_UART3_LORACOMM, &uartParams);
 
-	if (uart == NULL) {
+	if (rn2483_uart == NULL) {
 		return 0;
 	}else{
 		return 1;
@@ -79,50 +80,52 @@ int rn2483_begin(){
 	//	reset the rn2483
     GPIO_write(Board_LORA_RESET_N, 0);
 
+	Task_sleep(500);
+
 #ifndef CONFIG_MODE
 	if(!rn2483_uart_open()){
-		serial_printf(cli_stdout, "rn2483 open error \n",0);
+		serial_printf(cli_stdout, "rn2483 UART port open error\r\n",0);
 		return 0;
 	}else{
-	#if VERBOSE==1
-		serial_printf(cli_stdout, "rn2483 opened\n",0);
-	#endif
-
+		serial_printf(cli_stdout, "rn2483 UART port opened\r\n");
 	}
 #endif
 
 	GPIO_write(Board_LORA_RESET_N, 1);
-	char rxBuffer[RN2483_RXBUFFER_SIZE];
+	char rn2483_rxBuffer[RN2483_RXBUFFER_SIZE];
 
-//	UART_write(uart, rn_reset, sizeof(rn_reset));
-//	UART_read(uart, rxBuffer, sizeof(rxBuffer));
+//	UART_write(rn2483_uart, rn_reset, sizeof(rn_reset));
+//	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
 
 	Task_sleep(500);
-	UART_read(uart, rxBuffer, sizeof(rxBuffer)); //clean the reset message
-	UART_read(uart, rxBuffer, sizeof(rxBuffer));
-	memset(&rxBuffer, 0, sizeof(rxBuffer));
+	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer)); //clean the reset message
+	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+	memset(&rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
 
 
 //	/*check parameters*/
 //	Task_sleep(500);
-//	UART_write(uart, rn_get_devaddr, sizeof(rn_get_devaddr));
-//	UART_read(uart, rxBuffer, sizeof(rxBuffer));
-//	Task_sleep(500);
-//
-//	UART_write(uart, rn_get_deveui, sizeof(rn_get_deveui));
-//	UART_read(uart, rxBuffer, sizeof(rxBuffer));
+//	UART_write(rn2483_uart, rn_get_devaddr, sizeof(rn_get_devaddr));
+//	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
 //	Task_sleep(500);
 
-
-
-	UART_write(uart, rn_join, sizeof(rn_join));
-	UART_read(uart, rxBuffer, sizeof(rxBuffer));
-
+	UART_write(rn2483_uart, rn_get_deveui, sizeof(rn_get_deveui));
+	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
 	Task_sleep(500);
 
-	if(!strcmp("ok\r\naccepted\r\n", rxBuffer)){
+	serial_printf(cli_stdout, "rn2483 deveui: %s.\r\n", rn2483_rxBuffer);
+
+	UART_write(rn2483_uart, rn_join_otaa, sizeof(rn_join_otaa));
+	Task_sleep(10000); // Time needed to complete OTAA.
+	memset(&rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
+	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+
+	if(!strcmp("ok\r\naccepted\r\n", rn2483_rxBuffer)){
+		serial_printf(cli_stdout, "rn2483 OTAA success: %s\r\n", rn2483_rxBuffer);
+		rn2483_initialised = 1;
 		return 1; //modem can now communicate with us
 	}else{
+		serial_printf(cli_stdout, "rn2483 error: OTAA failed. Message: %s\r\n", rn2483_rxBuffer);
 		return 0;
 	}
 
@@ -131,9 +134,9 @@ int rn2483_begin(){
 
 void rn2483_end(){
 
-
-	UART_close(uart);
-	uart = NULL;
+	rn2483_initialised = 0;
+	UART_close(rn2483_uart);
+	rn2483_uart = NULL;
 
 	//put module to sleep
 	//GPIO_write(Board_ROCKBLOCK_SLEEP, ROCKBLOCK_SLEEP);
@@ -148,51 +151,53 @@ int rn2483_config()
 	//	reset the rn2483
     GPIO_write(Board_LORA_RESET_N, 0);
     GPIO_write(Board_LORA_RESET_N, 1);
-    	char rxBuffer[RN2483_RXBUFFER_SIZE];
+    	char rn2483_rxBuffer[RN2483_RXBUFFER_SIZE];
 
 	comm_result+=(!rn2483_uart_open());
 
 	Task_sleep(500);
-	UART_read(uart, rxBuffer, sizeof(rxBuffer)); //clean the reset message
-	UART_read(uart, rxBuffer, sizeof(rxBuffer));
-	memset(&rxBuffer, 0, sizeof(rxBuffer));
+	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer)); //clean the reset message
+	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+	memset(&rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
 
 	Task_sleep(500);
-	UART_write(uart, rn_set_devaddr, sizeof(rn_set_devaddr));
-	UART_read(uart, rxBuffer, sizeof(rxBuffer));
+	UART_write(rn2483_uart, rn_set_devaddr, sizeof(rn_set_devaddr));
+	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
 	Task_sleep(500);
-	comm_result += !(rxBuffer[0] == 'o' && rxBuffer[1] == 'k');
-	rxBuffer[0] = 0;
+	comm_result += !(rn2483_rxBuffer[0] == 'o' && rn2483_rxBuffer[1] == 'k');
+	rn2483_rxBuffer[0] = 0;
 
-	UART_write(uart, rn_set_deveui, sizeof(rn_set_deveui));
-	UART_read(uart, rxBuffer, sizeof(rxBuffer));
-	Task_sleep(500);
-	comm_result += !(rxBuffer[0] == 'o' && rxBuffer[1] == 'k');
-	rxBuffer[0] = 0;
+	// NOT needed for OTAA:
+//	UART_write(rn2483_uart, rn_set_deveui, sizeof(rn_set_deveui));
+//	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+//	Task_sleep(500);
+//	comm_result += !(rn2483_rxBuffer[0] == 'o' && rn2483_rxBuffer[1] == 'k');
+//	rn2483_rxBuffer[0] = 0;
 
-	UART_write(uart, rn_set_appeui, sizeof(rn_set_appeui));
-	UART_read(uart, rxBuffer, sizeof(rxBuffer));
+	UART_write(rn2483_uart, rn_set_appeui, sizeof(rn_set_appeui));
+	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
 	Task_sleep(500);
-	comm_result += !(rxBuffer[0] == 'o' && rxBuffer[1] == 'k');
-	rxBuffer[0] = 0;
+	comm_result += !(rn2483_rxBuffer[0] == 'o' && rn2483_rxBuffer[1] == 'k');
+	rn2483_rxBuffer[0] = 0;
 
-	UART_write(uart, rn_set_nwkskey, sizeof(rn_set_nwkskey));
-	UART_read(uart, rxBuffer, sizeof(rxBuffer));
-	Task_sleep(500);
-	comm_result += !(rxBuffer[0] == 'o' && rxBuffer[1] == 'k');
-	rxBuffer[0] = 0;
+	// NOT needed for OTAA:
+//	UART_write(uart, rn_set_nwkskey, sizeof(rn_set_nwkskey));
+//	UART_read(uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+//	Task_sleep(500);
+//	comm_result += !(rn2483_rxBuffer[0] == 'o' && rn2483_rxBuffer[1] == 'k');
+//	rn2483_rxBuffer[0] = 0;
 
-	UART_write(uart, rn_set_appskey, sizeof(rn_set_appskey));
-	UART_read(uart, rxBuffer, sizeof(rxBuffer));
+	UART_write(rn2483_uart, rn_set_appskey, sizeof(rn_set_appskey));
+	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
 	Task_sleep(500);
-	comm_result += !(rxBuffer[0] == 'o' && rxBuffer[1] == 'k');
-	rxBuffer[0] = 0;
+	comm_result += !(rn2483_rxBuffer[0] == 'o' && rn2483_rxBuffer[1] == 'k');
+	rn2483_rxBuffer[0] = 0;
 
-	UART_write(uart, rn_save, sizeof(rn_save));
+	UART_write(rn2483_uart, rn_save, sizeof(rn_save));
 	Task_sleep(500);
-	UART_read(uart, rxBuffer, sizeof(rxBuffer));
+	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
 	Task_sleep(500);
-	comm_result += !(rxBuffer[0] == 'o' && rxBuffer[1] == 'k');
+	comm_result += !(rn2483_rxBuffer[0] == 'o' && rn2483_rxBuffer[1] == 'k');
 
 	return comm_result;
 }
@@ -202,11 +207,11 @@ int rn2483_config()
 
 int rn2483_send_receive(char * tx_buffer, int tx_size)
 {
-	char rxBuffer[RN2483_RXBUFFER_SIZE];
-	UART_read(uart, rxBuffer, sizeof(rxBuffer)); //clear the buffer: after 1st "ok", it receives a \n before "ok".
+	char rn2483_rxBuffer[RN2483_RXBUFFER_SIZE];
+	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer)); //clear the buffer: after 1st "ok", it receives a \n before "ok".
 												// this is a pretty bad hack and we should look where the character comes from .
 
-	memset(&rxBuffer, 0, sizeof(rxBuffer));
+	memset(&rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
 	char txBuffer[tx_size+18]; //18 for the aditionnal lora commands
 	memset(&txBuffer, 0, sizeof(txBuffer)); //important! always clean buffer before tx
 
@@ -217,11 +222,11 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 	strcat(txBuffer, tx_buffer);
 	strcat(txBuffer, rn_txstop);
 
-	int tx_ret = UART_write(uart, txBuffer, strlen(txBuffer));
-	int rx_ret = UART_read(uart, rxBuffer, sizeof(rxBuffer));
+	int tx_ret = UART_write(rn2483_uart, txBuffer, strlen(txBuffer));
+	int rx_ret = UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
 
 
-	if(!strcmp("ok\r\n", rxBuffer))
+	if(!strcmp("ok\r\n", rn2483_rxBuffer))
 	{
 		serial_printf(cli_stdout, "LoRa TX: %d \n", tx_ret);
 		GPIO_toggle(Board_LED_GREEN);
