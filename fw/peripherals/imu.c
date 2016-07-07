@@ -14,6 +14,11 @@
 #include "hal/bno055_support.h"
 #include "hal/i2c_helper.h"
 
+//mavlink includes
+#include "gps.h"
+#include "../peripherals/comm.h"
+#include "../lib/mavlink/common/mavlink.h"
+
 static struct _imu_data {
 	int16_t accel_x;
 	int16_t accel_y;
@@ -63,6 +68,31 @@ int16_t imu_get_accel_z(){
 	return (imu_data.accel_z);
 }
 
+
+COMM_FRAME* imu_pack_mavlink_raw_int()
+{
+	// Mavlink heartbeat
+	// Define the system type, in this case an airplane
+	int32_t lat = (int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
+	int32_t lon = (int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
+	int32_t alt = (int32_t)(1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
+	uint32_t msec = 1000 * (uint32_t)Seconds_get();
+	int32_t relative_alt = 0; //TODO!
+	int16_t vx = 0; //TODO
+	int16_t vy = 0; //TODO
+	int16_t vz = 0; //TODO
+
+	// Initialize the message buffer
+	static COMM_FRAME frame;
+
+	// Pack the message
+	mavlink_msg_global_position_int_pack(mavlink_system.sysid, MAV_COMP_ID_IMU, &(frame.mavlink_message),
+			msec, lat, lon, alt, relative_alt, vx, vy, vz,imu_get_heading());
+
+
+	return &frame;
+}
+
 void imu_task(){
 	/************* IMU STUFF moved here *************/
 	i2c_helper_init_handle();
@@ -76,8 +106,13 @@ void imu_task(){
 	while(1){
 		imu_data.calib_status=bno055_check_calibration_status(); //this line alone lets the i2c bus crash
 		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r)); //this line alone lets the i2c bus crash
-		bno055_get_accel(&(imu_data.accel_x), &(imu_data.accel_y), &(imu_data.accel_z)); //commenting out this line alone still lets the i2c bus be blocked
+//		bno055_get_accel(&(imu_data.accel_x), &(imu_data.accel_y), &(imu_data.accel_z)); //commenting out this line alone still lets the i2c bus be blocked
 
+
+#ifdef MAVLINK_ON_UART0_ENABLED
+		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_IMU);
+		comm_mavlink_broadcast(imu_pack_mavlink_raw_int());
+#endif
 
 	//	if(calib_status > 8)
 	//	{

@@ -21,6 +21,7 @@
 #include <string.h>
 
 //mavlink includes
+#include "imu.h"
 #include "../peripherals/comm.h"
 #include "../lib/mavlink/common/mavlink.h"
 
@@ -137,13 +138,12 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 			usec = 1000000 * usec;
 	}
 
-	/* MAVLINK HEARTBEAT */
 	// Initialize the message buffer
 	static COMM_FRAME frame;
 
 	// Pack the message
 	mavlink_msg_gps_raw_int_pack(mavlink_system.sysid, MAV_COMP_ID_GPS, &(frame.mavlink_message),
-		usec, gps_get_fix_type(), lat, lon, alt, gps_get_hdop(), gps_get_vdop(),
+		usec, gps_get_fix_quality(), lat, lon, alt, gps_get_hdop(), gps_get_vdop(), //TODO: change back 2nd argument to gps_get_fix_type() or make it conform to mavlink standard
 		(uint16_t)gps_get_int_speed(), cog, (uint8_t)gps_get_satellites_tracked());
 	return &frame;
 }

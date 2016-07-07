@@ -91,11 +91,49 @@ TEST correct_rad(void)
     PASS();
 }
 
+TEST go_space_needed(void)
+{
+
+    PASS();
+}
+
+TEST go_go_to_target(void)
+{
+
+    PASS();
+}
+
+
+TEST go_avoid_wall(void)
+{
+
+    PASS();
+}
+
+
+TEST go_avoid_obstacle(void)
+{
+
+    PASS();
+}
+
+TEST go_stop(void)
+{
+
+    PASS();
+}
+
+
 SUITE(angle_and_dist)
 {
     RUN_TEST(correct_rad);
     RUN_TEST(correct_distance);
     RUN_TEST(correct_angle);
+}
+
+SUITE(state)
+{
+    RUN_TEST(correct_rad);
 }
 
 // Test runner
