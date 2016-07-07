@@ -16,14 +16,16 @@
 //PWM speed scale (time in us) :
 #define PWM_PERIOD		40
 #define PWM_SPEED_100	40
-#define PWM_SPEED_80	32
-#define PWM_SPEED_70	28
-#define PWM_SPEED_60	24
-#define PWM_SPEED_50	20
-#define PWM_SPEED_40	16
-#define PWM_SPEED_20	8
-#define PWM_SPEED_10	4
+#define PWM_SPEED_80		32
+#define PWM_SPEED_70		28
+#define PWM_SPEED_60		24
+#define PWM_SPEED_50		20
+#define PWM_SPEED_40		16
+#define PWM_SPEED_20		8
+#define PWM_SPEED_10		4
 #define PWM_SPEED_0		0
+
+#define PID_SCALING_FACTOR	PWM_SPEED_100/5/45 //turn with maximum wheel speed difference (100%/80%) for 45° bearing error
 
 #define PWM_MINIMUM_SPEED	26 //this is the minimum speed we want so the motors are still visibly moving.
 

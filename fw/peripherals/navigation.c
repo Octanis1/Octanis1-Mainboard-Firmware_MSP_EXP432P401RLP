@@ -29,10 +29,10 @@ void Task_sleep(int a);
 #endif
 #define M_PI 3.14159265358979323846
 #define EARTH_RADIUS 6356752.3
-#define INIT_LAT 45.531993
-#define INIT_LON 6.591617
-#define TARGET_LAT 0
-#define TARGET_LON 6.591798
+#define INIT_LAT 0
+#define INIT_LON 0
+#define TARGET_LAT 1
+#define TARGET_LON 1
 #define TARGET_REACHED_DISTANCE 2 //meters
 
 #define PGAIN_A 1
@@ -42,6 +42,8 @@ void Task_sleep(int a);
 #define MOTOR_IMIN 0
 #define BACKWARD_THRESHOLD 200 //about 1m
 
+#define MIN_IMU_CALIB_STATUS	6 //to have angle valid = true
+
 typedef struct _navigation_status{
 	float lat_rover;
 	float lon_rover;
@@ -49,7 +51,7 @@ typedef struct _navigation_status{
 	float lat_target;
 	float lon_target;
 	float distance_to_target;
-	float angle_to_target;
+	float angle_to_target; // [-180, 180]. Positive means target is located to the right
 	float max_dist_obs;
 	int32_t motor_values[2]; // current motor speed
 	uint8_t angle_valid;
@@ -78,7 +80,7 @@ float navigation_get_angle_to_target()
 
 float navigation_degree_to_rad(float degree)
 {
-    float rad = degree/360 *2*M_PI;
+    float rad = degree/180*M_PI;
     return rad;
 }
 
@@ -125,9 +127,24 @@ float navigation_angle_to_target(float lat1, float lon1, float lat2, float lon2)
 }
 
 float navigation_angle_for_rover(float lat1, float lon1, float lat2, float lon2, float headX) {
-    float angle = navigation_angle_to_target(lat1, lon1, lat2, lon2);
-    angle = angle - headX;
-    return angle;
+    float bearing = navigation_angle_to_target(lat1, lon1, lat2, lon2);
+    bearing = bearing - headX;
+    // bound value between -180 and 180°
+    while(bearing < -180.0)
+    {
+    		bearing = bearing + 360.0;
+    }
+    while(bearing > 180.0)
+    {
+    		bearing = bearing - 360.0;
+    }
+    // if value is close to ±180°, we keep the same sign as previously to turn in just one direction:
+    if(fabsf(bearing) > 170.0)
+    {
+    		bearing=copysignf(bearing, navigation_status.angle_to_target);
+    }
+
+    return bearing;
 }
 
 
@@ -336,7 +353,7 @@ void navigation_update_position()
 		motors_struts_get_position();
 	}
 
-	navigation_status.angle_valid = (imu_get_calib_status()>=6);
+	navigation_status.angle_valid = (imu_get_calib_status() >= MIN_IMU_CALIB_STATUS);
 
 	// recalculate heading angle
 	navigation_status.heading_rover = imu_get_fheading();
@@ -463,6 +480,7 @@ void navigation_update_state()
 }
 
 
+
 #if defined (NAVIGATION_TEST)
 void navigation_move();
 #else
@@ -473,18 +491,18 @@ void navigation_move()
 
 	if(navigation_status.current_state == GO_TO_TARGET)
 	{
-		angular = pid_update(&pid_a, navigation_status.angle_to_target);
+		angular = pid_update(&pid_a, navigation_status.angle_to_target) * PID_SCALING_FACTOR;
 
 		if (angular > 0){
 			lspeed = PWM_SPEED_100;
-			rspeed = PWM_SPEED_100 - angular;
-			if (rspeed < PWM_SPEED_70)
-				rspeed = PWM_SPEED_70;
+			rspeed = PWM_SPEED_100 - (int32_t)(angular);
+			if (rspeed < PWM_SPEED_80)
+				rspeed = PWM_SPEED_80;
 		}else if (angular <= 0){
 			rspeed = PWM_SPEED_100;
-			lspeed = PWM_SPEED_100 + angular;
-			if (lspeed < PWM_SPEED_70)
-				lspeed = PWM_SPEED_70;
+			lspeed = PWM_SPEED_100 + (int32_t)(angular);
+			if (lspeed < PWM_SPEED_80)
+				lspeed = PWM_SPEED_80;
 
 		}
 		motors_wheels_move((int32_t)lspeed, (int32_t)rspeed, (int32_t)lspeed, (int32_t)rspeed);
@@ -565,7 +583,7 @@ void navigation_task()
 
 	while(1){
 
-		//navigation_update_target();
+//		navigation_update_target();
 		navigation_update_current_target();
 		navigation_update_position();
 		navigation_update_state();
