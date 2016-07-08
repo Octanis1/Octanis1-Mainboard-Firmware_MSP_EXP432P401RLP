@@ -12,6 +12,8 @@
 
 #include "navigation.h"
 
+#define LORA_FRAME_SIZE 		2*MAVLINK_MAX_PACKET_LEN
+
 #define N_TX_SLOT_FLAG_INTS		MAV_COMPONENT_ENUM_END/32+1 // +1 to round up
 int comm_tx_slot_flags[MAVLINK_COMM_NUM_BUFFERS][N_TX_SLOT_FLAG_INTS]; // 1-bit flags storing
 
@@ -81,17 +83,12 @@ void comm_clear_tx_flag(COMM_CHANNEL channel, int component_id)
 }
 
 
-//TODO: remove following test code!!
-#define COMM_STRING_SIZE 175
-#define COMM_FRAME_SIZE 350
 #include "../lib/printf.h"
-void comm_send_string_over_lora()
+void comm_send_string_over_lora(uint8_t* txdata, uint16_t stringlength)
 {
-	char txdata[12] = "HelloOctanis";
-	int stringlength = 12;
 	/** Prepare hex string for LoRa **/
 	char hex_string_byte[2];
-	char hex_string[COMM_FRAME_SIZE]; //TODO: ATTENTION: this is too small! need to change this
+	char hex_string[LORA_FRAME_SIZE]; //TODO: ATTENTION: this is too small! need to change this
 	memset(&hex_string, 0, sizeof(hex_string));
 
 	int i;
@@ -125,7 +122,7 @@ void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 			break;
 		case CHANNEL_LORA:
 #ifdef LORA_ENABLED
-			comm_send_string_over_lora(); //FIXME: this is just test code
+			comm_send_string_over_lora(buf, mavlink_msg_len); //FIXME: this is just test code
 #endif
 			break;
 		case CHANNEL_ROCKBLOCK:
