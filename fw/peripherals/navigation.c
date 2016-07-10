@@ -297,23 +297,37 @@ uint8_t navigation_bypass(char command, uint8_t index);
 #else
 uint8_t navigation_bypass(char command, uint8_t index)
 {
+	static int8_t strut_speed[4]; //initialized as zero at the first time
+
 	if(command == 'n')
 	{
 		navigation_status.current_state = STOP;
 		return 1;
 	}
-	else if(index>0 && index<5)
+	else if(command == 'u' || command== 'd' || command == 'h')
 	{
-		static int8_t strut_speed[4]; //initialized as zero at the first time
-		if(command == 'h')
-			strut_speed[index-1] = 0;
-		else if(command == 'u')
-			strut_speed[index-1] = 1;
-		else if(command == 'd')
-			strut_speed[index-1] = -1;
+		if(index>0 && index<5)
+		{
+			if(command == 'h')
+				strut_speed[index-1] = 0;
+			else if(command == 'u')
+				strut_speed[index-1] = 1;
+			else if(command == 'd')
+				strut_speed[index-1] = -1;
+		}
 		else
-			return 0;
-
+		{
+			uint8_t i=0;
+			for(i=0;i<4;i++)
+			{
+				if(command == 'h')
+					strut_speed[i] = 0;
+				else if(command == 'u')
+					strut_speed[i] = 1;
+				else if(command == 'd')
+					strut_speed[i] = -1;
+			}
+		}
 		motors_struts_move(strut_speed[0],strut_speed[1],strut_speed[2],strut_speed[3]);
 	}
 	else

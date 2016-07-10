@@ -78,6 +78,7 @@ uint8_t sendEpsCommand(uint8_t command)
 
 uint8_t eps_switch_module(uint8_t command) //use commands defined in eps.h
 {
+#ifdef EPS_ENABLED
 	static uint8_t resp = 0;
 	static uint8_t i=0;
 
@@ -100,7 +101,9 @@ uint8_t eps_switch_module(uint8_t command) //use commands defined in eps.h
 		resp = sendEpsCommand(command);
 		return OFF; // = error = 0
 	}
-
+#else
+	return ON;
+#endif
 }
 
 uint16_t eps_get_vbat()

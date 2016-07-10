@@ -325,6 +325,46 @@ void cmd_rbn(SerialDevice *io, int argc, char *argv[])
     serial_printf(io, "rb net? %d \n", rockblock_get_net_availability());
 }
 
+void cmd_motf(SerialDevice *io, int argc, char *argv[])
+{
+    serial_printf(io, "mot? %d \n", navigation_bypass('f',0));
+}
+
+void cmd_motb(SerialDevice *io, int argc, char *argv[])
+{
+    serial_printf(io, "mot? %d \n", navigation_bypass('b',0));
+}
+
+void cmd_motu(SerialDevice *io, int argc, char *argv[])
+{
+	if(argc<1)
+		serial_printf(io, "motu? %d \n", navigation_bypass('u',0));
+	else
+	{
+		serial_printf(io, "motu? %d \n", navigation_bypass('u',(*argv)[0]-'0'));
+	}
+}
+
+void cmd_motd(SerialDevice *io, int argc, char *argv[])
+{
+	if(argc<1)
+    		serial_printf(io, "motd? %d \n", navigation_bypass('d',0));
+	else
+	{
+		serial_printf(io, "motd? %d \n", navigation_bypass('d',(*argv)[0]-'0'));
+	}
+}
+
+void cmd_moth(SerialDevice *io, int argc, char *argv[])
+{
+	if(argc<1)
+    		serial_printf(io, "moth? %d \n", navigation_bypass('h',0));
+	else
+	{
+		serial_printf(io, "moth? %d \n", navigation_bypass('h',(*argv)[0]-'0'));
+	}
+}
+
 const struct shell_commands commands[] = {
     {"help", cmd_help},
     {"gps", cmd_gps},
@@ -337,6 +377,11 @@ const struct shell_commands commands[] = {
     {"tasks", cmd_tasks},
     {"rbs", cmd_rbs},
     {"rbn", cmd_rbn},
+	{"motf", cmd_motf},
+	{"motb", cmd_motb},
+	{"motu", cmd_motu},
+	{"motd", cmd_motd},
+	{"moth", cmd_moth},
     {NULL, NULL}
 };
 
