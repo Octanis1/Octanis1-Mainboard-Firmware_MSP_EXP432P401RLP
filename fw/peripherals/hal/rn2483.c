@@ -223,14 +223,63 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 	strcat(txBuffer, rn_txstop);
 
 	int tx_ret = UART_write(rn2483_uart, txBuffer, strlen(txBuffer));
-	int rx_ret = UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
-
+	int rx_ret = UART_read(rn2483_uart, rn2483_rxBuffer, 4); // 4 to read "ok\r\n"
 
 	if(!strcmp("ok\r\n", rn2483_rxBuffer))
 	{
+		int rx_ret = UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+
 		serial_printf(cli_stdout, "LoRa TX: %d \n", tx_ret);
 		GPIO_toggle(Board_LED_GREEN);
-		return 1; //modem can now communicate with us
+
+		if(!strcmp("mac_rx", rn2483_rxBuffer))
+		{
+			// we received downlink message
+			serial_printf(cli_stdout, "TX successful. RX: %s\r\n", rn2483_rxBuffer);
+			static uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+			static uint16_t mavlink_msg_len;
+
+
+			int i, port, digit;
+			uint8_t c;
+			port = 0
+			// read port number:
+			while((UART_read(rn2483_uart, &c, 1) == 1)){
+				digit = a2d(c);
+				if(digit < 0)
+					break;
+				else
+					port = port*10 + digit;
+			}
+
+			//TODO: continue coding here.
+			while((c = serial_getc(dev)) >= 0) {
+				if(mavlink_parse_char(CHANNEL_APP_UART, (uint8_t)c, &(frame.mavlink_message), &status)){
+					// --> deal with received message...
+					Mailbox_post(comm_mailbox, &frame, BIOS_NO_WAIT);
+				}
+			}
+
+			for(i; i<sizeof(rn2483_rxBuffer); i++){
+				memset(&hex_string_byte, 0, sizeof(hex_string_byte));
+				tfp_sprintf(hex_string_byte, "%02x", txdata[i]);
+				strcat(hex_string, hex_string_byte);
+			}
+			/** end hex string **/
+
+
+		}
+		else if(!strcmp("mac_tx_ok", rn2483_rxBuffer))
+		{
+			// no downlink message
+			serial_printf(cli_stdout, "TX successful \r\n");
+		}
+		else
+		{
+			serial_printf(cli_stdout, "unknown confirmation: %s \r\n", rn2483_rxBuffer);
+		}
+
+		return 1;
 	}
 	else
 	{
