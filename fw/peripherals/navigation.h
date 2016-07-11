@@ -42,7 +42,21 @@ COMM_MAV_RESULT navigation_next_mission_item(COMM_MAV_MSG_TARGET *target, mavlin
  */
 uint8_t navigation_bypass(char command, uint8_t index);
 
+mavlink_mission_item_t * navigation_mavlink_get_item_list();
+uint16_t navigation_mavlink_get_current_index();
+uint16_t navigation_mavlink_get_count();
+
+float navigation_get_lat_rover();
+float navigation_get_lon_rover();
+float navigation_get_heading_rover();
+float navigation_get_lat_target();
+float navigation_get_lon_target();
+float navigation_get_distance_to_target();
 float navigation_get_angle_to_target();
+float navigation_get_max_dist_obs();
+uint8_t navigation_get_angle_valid();
+enum _current_state navigation_get_current_state();
+
 void navigation_set_max_dist(float max_dist);
 
 //Compute angle and distance from the rover to the target

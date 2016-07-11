@@ -72,10 +72,69 @@ static mission_item_list_t mission_items;
 
 void navigation_update_current_target();
 
+mavlink_mission_item_t * navigation_mavlink_get_item_list()
+{
+	return mission_items.item;
+}
+
+uint16_t navigation_mavlink_get_current_index()
+{
+	return mission_items.current_index;
+}
+
+uint16_t navigation_mavlink_get_count()
+{
+	return mission_items.count;
+}
+
+float navigation_get_lat_rover()
+{
+	return navigation_status.lat_rover;
+}
+
+float navigation_get_lon_rover()
+{
+	return navigation_status.lon_rover;
+}
+
+float navigation_get_heading_rover()
+{
+	return navigation_status.heading_rover;
+}
+
+float navigation_get_lat_target()
+{
+	return navigation_status.lat_target;
+}
+
+float navigation_get_lon_target()
+{
+	return navigation_status.lon_target;
+}
+
+float navigation_get_distance_to_target()
+{
+	return navigation_status.distance_to_target;
+}
 
 float navigation_get_angle_to_target()
 {
 	return navigation_status.angle_to_target;
+}
+
+float navigation_get_max_dist_obs()
+{
+	return navigation_status.max_dist_obs;
+}
+
+uint8_t navigation_get_angle_valid()
+{
+	return navigation_status.angle_valid;
+}
+
+enum _current_state navigation_get_current_state()
+{
+	return navigation_status.current_state;
 }
 
 float navigation_degree_to_rad(float degree)

@@ -16,6 +16,23 @@ void imu_log(struct imu_data* imu)
 }
 */
 
+void log_write_navigation_status(void)
+{
+    float lat = gps_get_lat();
+    float lon = gps_get_lon();
+    uint8_t fix_qual = gps_get_fix_quality();
+
+    cmp_ctx_t *ctx = log_entry_create("gps");
+
+    cmp_write_array(ctx, 3);
+    cmp_write_float(ctx, lat);
+    cmp_write_float(ctx, lon);
+    cmp_write_uinteger(ctx, fix_qual);
+
+    log_entry_write_to_flash();
+}
+
+
 void log_write_gps(void)
 {
     float lat = gps_get_lat();
