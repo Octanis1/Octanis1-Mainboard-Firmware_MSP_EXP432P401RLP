@@ -112,14 +112,29 @@ void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 COMM_MAV_RESULT comm_process_command(COMM_MAV_MSG_TARGET*  msg_target, mavlink_message_t *msg, mavlink_message_t *answer_msg){
 	//TODO
 	uint16_t command = mavlink_msg_command_long_get_command(msg);
+	MAV_RESULT result = MAV_RESULT_ACCEPTED;
 	switch (command)
 	{
-		case MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN:
+		case MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN: //#246
+			break;
+		case MAV_CMD_NAV_LAND: //#21 [Land]
+			break;
+		case MAV_CMD_NAV_TAKEOFF: //#22 [Start]
+			break;
+		case MAV_CMD_OVERRIDE_GOTO: //#252 Hold / continue the current action [halt]
+			break;
+		case MAV_CMD_COMPONENT_ARM_DISARM: //#400 Arms / Disarms a component --- param1: 1 to arm, 0 to disarm
 			break;
 		default:
+			result = MAV_RESULT_UNSUPPORTED;
 			break;
-
 	}
+
+	mavlink_msg_command_ack_pack(mavlink_system.sysid, msg_target->component, answer_msg,
+			command, result);
+
+	return REPLY_TO_SENDER;
+
 }
 
 
@@ -132,10 +147,18 @@ int comm_mavlink_check_target(COMM_MAV_MSG_TARGET* target, mavlink_message_t *ms
 	{
 		return 1;
 	}
-	else{
+	else if(target->system == SBPC_SYSTEM_ID)
+	{
+		COMM_FRAME forward_frame;
+		(forward_frame.mavlink_message) = (*msg);
+
+		// forward to SBPC connected to UART0
+		comm_mavlink_post_outbox(CHANNEL_APP_UART, &forward_frame);
 		//TODO: forward the message to corresponding system
-		return 0;
+
 	}
+
+	return 0;
 }
 
 
@@ -148,99 +171,105 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 							// 	a mavlink message, and set to 'REPLY_TO_SENDER' if it wants to send an answer.
 
 	switch(msg->msgid){
-	  case MAVLINK_MSG_ID_HEARTBEAT:
-	        {
-		    // E.g. read GCS heartbeat and go into
-            // comm lost mode if timer times out
-	        }
-	        break;
-	case MAVLINK_MSG_ID_COMMAND_LONG:
+		case MAVLINK_MSG_ID_HEARTBEAT:
+		{
+		// E.g. read GCS heartbeat and go into
+		// comm lost mode if timer times out
+			break;
+		}
+		case MAVLINK_MSG_ID_COMMAND_LONG:
+		{
+			msg_target.system = mavlink_msg_command_long_get_target_system(msg);
+			msg_target.component = mavlink_msg_command_long_get_target_component(msg);
+
+			if(comm_mavlink_check_target(&msg_target,msg))
 			{
-				msg_target.system = mavlink_msg_command_long_get_target_system(msg);
-				msg_target.component = mavlink_msg_command_long_get_target_component(msg);
-
-				if(comm_mavlink_check_target(&msg_target,msg))
-				{
-					mav_result = comm_process_command(&msg_target, msg, &(answer_frame.mavlink_message));
-				}
+				mav_result = comm_process_command(&msg_target, msg, &(answer_frame.mavlink_message));
 			}
-		break;
+			break;
+		}
 
-	case MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT:
+		case MAVLINK_MSG_ID_SET_MODE:
+		{
+			msg_target.system = mavlink_msg_set_mode_get_target_system(msg);
+//			msg_target.component = mavlink_msg_set_mode_get_target_component(msg);
+
+			if(comm_mavlink_check_target(&msg_target,msg))
+			{
+				mav_result = comm_process_command(&msg_target, msg, &(answer_frame.mavlink_message));
+			}
+			break;
+		}
+		case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
+	//	{
+	//		mavlink_msg_param_value_pack(mavlink_system.sysid, uint8_t component_id, mavlink_message_t* msg,
+	//			       const char *param_id, float param_value, uint8_t param_type, uint16_t param_count, uint16_t param_index);
+	//
+			break;
+	//	}
+
+		case MAVLINK_MSG_ID_MISSION_ITEM:
+		{
+			msg_target.system = mavlink_msg_mission_item_get_target_system(msg);
+			msg_target.component = mavlink_msg_mission_item_get_target_component(msg);
+
+			if(comm_mavlink_check_target(&msg_target,msg))
+			{
+				mav_result = navigation_rx_mission_item(&msg_target, msg, &(answer_frame.mavlink_message));
+			}
+			break;
+		}
+
+		case MAVLINK_MSG_ID_MISSION_COUNT:
+		{
+			msg_target.system = mavlink_msg_mission_count_get_target_system(msg);
+			msg_target.component = mavlink_msg_mission_count_get_target_component(msg);
+
+			if(comm_mavlink_check_target(&msg_target,msg))
+			{
+				mav_result = navigation_rx_mission_items_start(&msg_target, msg, &(answer_frame.mavlink_message));
+			}
+			break;
+		}
+		case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:
+		{
+			msg_target.system = mavlink_msg_mission_request_list_get_target_system(msg);
+			msg_target.component = mavlink_msg_mission_request_list_get_target_component(msg);
+
+			if(comm_mavlink_check_target(&msg_target,msg))
+			{
+				mav_result = navigation_tx_mission_items_start(&msg_target, msg, &(answer_frame.mavlink_message));
+			}
+			break;
+		}
+		case MAVLINK_MSG_ID_MISSION_REQUEST:
+		{
+			msg_target.system = mavlink_msg_mission_request_get_target_system(msg);
+			msg_target.component = mavlink_msg_mission_request_get_target_component(msg);
+
+			if(comm_mavlink_check_target(&msg_target,msg))
+			{
+				mav_result = navigation_tx_mission_item(&msg_target, msg, &(answer_frame.mavlink_message));
+			}
+			break;
+		}
+		case MAVLINK_MSG_ID_MISSION_SET_CURRENT:
+		{
+			msg_target.system = mavlink_msg_mission_set_current_get_target_system(msg);
+			msg_target.component = mavlink_msg_mission_set_current_get_target_component(msg);
+
+			if(comm_mavlink_check_target(&msg_target,msg))
+			{
+				mav_result = navigation_next_mission_item(&msg_target, msg, &(answer_frame.mavlink_message));
+			}
+			break;
+		}
+
+
+		default:
 			GPIO_toggle(Board_LED_RED);
-		break;
-
-	case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
-//	{
-//		mavlink_msg_param_value_pack(mavlink_system.sysid, uint8_t component_id, mavlink_message_t* msg,
-//			       const char *param_id, float param_value, uint8_t param_type, uint16_t param_count, uint16_t param_index);
-//
-		break;
-//	}
-
-	case MAVLINK_MSG_ID_MISSION_ITEM:
-	{
-		msg_target.system = mavlink_msg_mission_item_get_target_system(msg);
-		msg_target.component = mavlink_msg_mission_item_get_target_component(msg);
-
-		if(comm_mavlink_check_target(&msg_target,msg))
-		{
-			mav_result = navigation_rx_mission_item(&msg_target, msg, &(answer_frame.mavlink_message));
-		}
-		break;
-	}
-
-
-	case MAVLINK_MSG_ID_MISSION_COUNT:
-	{
-		msg_target.system = mavlink_msg_mission_count_get_target_system(msg);
-		msg_target.component = mavlink_msg_mission_count_get_target_component(msg);
-
-		if(comm_mavlink_check_target(&msg_target,msg))
-		{
-			mav_result = navigation_rx_mission_items_start(&msg_target, msg, &(answer_frame.mavlink_message));
-		}
-		break;
-	}
-	case MAVLINK_MSG_ID_MISSION_REQUEST_LIST:
-	{
-		msg_target.system = mavlink_msg_mission_request_list_get_target_system(msg);
-		msg_target.component = mavlink_msg_mission_request_list_get_target_component(msg);
-
-		if(comm_mavlink_check_target(&msg_target,msg))
-		{
-			mav_result = navigation_tx_mission_items_start(&msg_target, msg, &(answer_frame.mavlink_message));
-		}
-		break;
-	}
-	case MAVLINK_MSG_ID_MISSION_REQUEST:
-	{
-		msg_target.system = mavlink_msg_mission_request_get_target_system(msg);
-		msg_target.component = mavlink_msg_mission_request_get_target_component(msg);
-
-		if(comm_mavlink_check_target(&msg_target,msg))
-		{
-			mav_result = navigation_tx_mission_item(&msg_target, msg, &(answer_frame.mavlink_message));
-		}
-		break;
-	}
-	case MAVLINK_MSG_ID_MISSION_SET_CURRENT:
-	{
-		msg_target.system = mavlink_msg_mission_set_current_get_target_system(msg);
-		msg_target.component = mavlink_msg_mission_set_current_get_target_component(msg);
-
-		if(comm_mavlink_check_target(&msg_target,msg))
-		{
-			mav_result = navigation_next_mission_item(&msg_target, msg, &(answer_frame.mavlink_message));
-		}
-		break;
-	}
-
-
-	default:
-		GPIO_toggle(Board_LED_RED);
-		//Do nothing
-		break;
+			//Do nothing
+			break;
 	}
 
 
