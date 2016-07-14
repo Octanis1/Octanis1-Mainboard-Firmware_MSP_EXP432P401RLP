@@ -65,7 +65,7 @@ bool log_read_mavlink_item_list(mission_item_list_t * item_list, uint32_t * time
 	if (ret == false)
 		return ret;
 
-	cmp_mem_access_ro_init(&ctx, &cma, buf, sizeof(buf));
+	cmp_mem_access_ro_init(&ctx, &cma, buf, LOG_ENTRY_DATA_LEN);
 
 	ret = cmp_read_array(&ctx, &array_l);
 	if (ret == false || array_l != 3)
@@ -118,11 +118,8 @@ void log_write_mavlink_item_list(void)
 {
     int i = 0;
     mavlink_mission_item_t * mav_list = navigation_mavlink_get_item_list();
-    mavlink_mission_item_t * mav_list_cpy = NULL;
     uint16_t current_index = navigation_mavlink_get_current_index();
     uint16_t count = navigation_mavlink_get_count();
-
-    memcpy(&mav_list_cpy, &mav_list, sizeof(mav_list)); 
 
     cmp_ctx_t *ctx = log_entry_create("mav");
 
@@ -131,7 +128,7 @@ void log_write_mavlink_item_list(void)
     cmp_write_uinteger(ctx, count);
     cmp_write_array(ctx, count);
     for(i=0; i<count; i++)
-        log_serialize_mavlink_item(ctx, mav_list_cpy[i]);
+        log_serialize_mavlink_item(ctx, mav_list[i]);
 
     log_entry_write_to_flash();
 }
