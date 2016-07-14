@@ -264,11 +264,14 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 				serial_printf(cli_stdout, "%d", c);
 				mav_byte = ((uint8_t)a2d(c))<<4;
 				if((c = serial_getc(lora_serialdev)) >= 0)
-					mav_byte += ((uint8_t)a2d(c));
+				{
+					serial_printf(cli_stdout, "%d", c);
+					mav_byte += ((uint8_t)a2d(c));}
 				else
 					break;
 
 				if(mavlink_parse_char(CHANNEL_LORA, mav_byte, &(frame.mavlink_message), &status)){
+					serial_printf(cli_stdout, "mavlink msg received over lora: ID=%d\r\n", frame.mavlink_message.msgid);
 					Mailbox_post(comm_mailbox, &frame, BIOS_NO_WAIT);
 				}
 			}
