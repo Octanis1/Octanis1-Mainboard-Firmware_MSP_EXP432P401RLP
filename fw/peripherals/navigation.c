@@ -25,6 +25,7 @@ void Task_sleep(int a);
 #include <math.h>
 #include "../lib/printf.h"
 #include "pid.h"
+#include "../lib/serial_printf.h"
 
 //Logging includes:
 #include "../core/log.h"

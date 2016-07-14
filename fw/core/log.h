@@ -14,7 +14,7 @@
 #include "../lib/cmp_mem_access/cmp_mem_access.h"
 
 #define LOG_ENTRY_HEADER_LEN    2 // length byte + crc8
-#define LOG_ENTRY_DATA_LEN      255
+#define LOG_ENTRY_DATA_LEN      1024
 
 /* Moved the struct in the .h, not sure if necessary */
 /*Biggest block is currently weather, with
