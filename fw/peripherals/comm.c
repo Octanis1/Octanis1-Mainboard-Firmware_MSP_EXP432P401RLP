@@ -116,10 +116,10 @@ void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 COMM_MAV_RESULT comm_process_command(COMM_MAV_MSG_TARGET*  msg_target, mavlink_message_t *msg, mavlink_message_t *answer_msg){
 	//TODO
 	uint16_t command = mavlink_msg_command_long_get_command(msg);
-	MAV_RESULT result = MAV_RESULT_ACCEPTED;
+	MAV_RESULT result = MAV_RESULT_DENIED;
 	switch (command)
 	{
-		case MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN: //#246
+		case MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN: //#246 --> shut down SBPC. forward command to olimex.
 			break;
 		case MAV_CMD_NAV_LAND: //#21 [Land]
 			break;
@@ -143,6 +143,17 @@ COMM_MAV_RESULT comm_process_command(COMM_MAV_MSG_TARGET*  msg_target, mavlink_m
 COMM_MAV_RESULT comm_set_mode(COMM_MAV_MSG_TARGET*  msg_target, mavlink_message_t *msg, mavlink_message_t *answer_msg){
 	MAV_MODE mode = mavlink_msg_set_mode_get_base_mode(msg);
 	mavlink_heartbeat.base_mode = mode;
+
+	if(mode >= MAV_MODE_MANUAL_ARMED)
+		// TODO: turn on SBPC and wait for boot to complete before changing state (via EPS)
+		// TODO: --> probably better to move mavlink_heartbeat variable to EPS module
+		// TODO: during boot process give status messages over MAV_MSG_STATUSTEXT
+		// TODO: add conditions that may stop from changing state to armed, for example low battery.
+		mavlink_heartbeat.system_status = MAV_STATE_ACTIVE;
+
+	else
+		// TODO: shut down SBPC before changing state
+		mavlink_heartbeat.system_status = MAV_STATE_STANDBY;
 
 	return NO_ANSWER;
 }
