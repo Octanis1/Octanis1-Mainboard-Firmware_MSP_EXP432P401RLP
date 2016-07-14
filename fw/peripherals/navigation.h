@@ -42,6 +42,10 @@ COMM_MAV_RESULT navigation_next_mission_item(COMM_MAV_MSG_TARGET *target, mavlin
  */
 uint8_t navigation_bypass(char command, uint8_t index);
 
+//testing functions
+mavlink_mission_item_t item_init(uint8_t preset);
+uint8_t item_compare (mavlink_mission_item_t item1, mavlink_mission_item_t item2);
+
 mavlink_mission_item_t * navigation_mavlink_get_item_list();
 uint16_t navigation_mavlink_get_current_index();
 uint16_t navigation_mavlink_get_count();

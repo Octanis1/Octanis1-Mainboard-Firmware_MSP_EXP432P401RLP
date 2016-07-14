@@ -1,4 +1,7 @@
 #include "log.h"
+#include "log_internal.h"
+#include <string.h>
+#include <stdbool.h>
 #include "../peripherals/weather.h"
 #include "../peripherals/gps.h"
 #include "../peripherals/imu.h"
@@ -17,6 +20,79 @@ void imu_log(struct imu_data* imu)
     log_entry_write_to_flash();
 }
 */
+
+bool log_read_mavlink_item(cmp_ctx_t * ctx, mavlink_mission_item_t * item)
+{
+	bool ret = 0;
+	uint32_t array_l = 0;
+
+	ret = cmp_read_array(ctx, &array_l);
+	if (ret == false || array_l != 14)
+		return false;
+	ret = cmp_read_float(ctx, &(item->param1));
+	ret = cmp_read_float(ctx, &(item->param2));
+	ret = cmp_read_float(ctx, &(item->param3));
+	ret = cmp_read_float(ctx, &(item->param4));
+	ret = cmp_read_float(ctx, &(item->x));
+	ret = cmp_read_float(ctx, &(item->y));
+	ret = cmp_read_float(ctx, &(item->z));
+	ret = cmp_read_ushort(ctx, &(item->seq));
+	ret = cmp_read_ushort(ctx, &(item->command));
+	ret = cmp_read_uchar(ctx, &(item->target_system));
+	ret = cmp_read_uchar(ctx, &(item->target_component));
+	ret = cmp_read_uchar(ctx, &(item->frame));
+	ret = cmp_read_uchar(ctx, &(item->current));
+	ret = cmp_read_uchar(ctx, &(item->autocontinue));
+
+	return ret;
+}
+
+bool log_read_mavlink_item_list(mission_item_list_t * item_list, uint32_t * time, char *name)
+{
+	cmp_mem_access_t cma;
+	cmp_ctx_t ctx;
+
+	uint16_t i = 0;
+	size_t entry_len = 0;
+	uint32_t addr = FLASH_BLOCK_SIZE;
+	uint32_t next_entry = 0;
+	uint8_t buf[LOG_ENTRY_DATA_LEN];
+	bool ret = 0;
+	uint32_t array_l = 0;
+	uint32_t name_sz = sizeof(name);
+
+	ret = log_read_entry(addr, buf, &entry_len, &next_entry);
+	if (ret == false)
+		return ret;
+
+	cmp_mem_access_ro_init(&ctx, &cma, buf, sizeof(buf));
+
+	ret = cmp_read_array(&ctx, &array_l);
+	if (ret == false || array_l != 3)
+		return false;
+
+	ret = cmp_read_uint(&ctx, time);
+	ret = cmp_read_str(&ctx, name, &name_sz);
+	if (strcmp(name, "mav") != 0)
+		return false;
+
+	ret = cmp_read_array(&ctx, &array_l);
+	if (ret == false || array_l != 3)
+		return false;
+	ret = cmp_read_ushort(&ctx, &(item_list->current_index));
+	ret = cmp_read_ushort(&ctx, &(item_list->count));
+	ret = cmp_read_array(&ctx, &array_l);
+	if (ret == false || array_l != item_list->count)
+		return false;
+
+	for (i=0; i<item_list->count && i < (N_TARGETS_MAX +1); i++){
+		ret = log_read_mavlink_item(&ctx, &(item_list->item[i]));
+		if (ret == false)
+			return false;
+	}
+
+	return ret;
+}
 
 void log_serialize_mavlink_item(cmp_ctx_t *ctx, mavlink_mission_item_t item)
 {

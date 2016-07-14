@@ -26,6 +26,14 @@ void Task_sleep(int a);
 #include "../lib/printf.h"
 #include "pid.h"
 
+//Logging includes:
+#include "../core/log.h"
+#include "../core/log_entries.h"
+#include "../lib/cmp/cmp.h"
+#include "../lib/cmp_mem_access/cmp_mem_access.h"
+#include "flash.h"
+#include "hal/spi_helper.h"
+
 #endif
 #define M_PI 3.14159265358979323846
 #define EARTH_RADIUS 6356752.3
@@ -650,19 +658,149 @@ void navigation_init()
 }
 #endif
 
+uint8_t item_compare (mavlink_mission_item_t item1, mavlink_mission_item_t item2)
+{
+	uint8_t ret = 1;
+	if (item1.param1 != item2.param1)
+		ret = 0;
+	if (item1.param2 != item2.param2)
+			ret = 0;
+	if (item1.param3 != item2.param3)
+			ret = 0;
+	if (item1.param4 != item2.param4)
+			ret = 0;
+	if (item1.x != item2.x)
+			ret = 0;
+	if (item1.y != item2.y)
+			ret = 0;
+	if (item1.z != item2.z)
+			ret = 0;
+	if (item1.command != item2.command)
+			ret = 0;
+	if (item1.seq != item2.seq)
+			ret = 0;
+	if (item1.current != item2.current)
+			ret = 0;
+	if (item1.autocontinue != item2.autocontinue)
+			ret = 0;
+	if (item1.frame != item2.frame)
+			ret = 0;
+	if (item1.target_component != item2.target_component)
+			ret = 0;
+	if (item1.target_system != item2.target_system)
+			ret = 0;
+	return ret;
+}
+
+mavlink_mission_item_t item_init(uint8_t preset)
+{
+	mavlink_mission_item_t item;
+
+	if (preset == 1)
+	{
+		item.param1 = 1.1;
+		item.param1 = 2.2;
+		item.param1 = 3.3;
+		item.param1 = 4.4;
+		item.x = 5.5;
+		item.y = 6.6;
+		item.z = 7.7;
+		item.command = 8;
+		item.seq = 9;
+		item.current = 10;
+		item.autocontinue = 11;
+		item.frame = 12;
+		item.target_component = 13;
+		item.target_system = 14;
+	}
+	else if (preset ==2)
+	{
+		item.param1 = 2.1;
+		item.param1 = 3.2;
+		item.param1 = 4.3;
+		item.param1 = 5.4;
+		item.x = 6.5;
+		item.y = 7.6;
+		item.z = 8.7;
+		item.command = 9;
+		item.seq = 10;
+		item.current = 11;
+		item.autocontinue = 12;
+		item.frame = 13;
+		item.target_component = 14;
+		item.target_system = 15;
+
+	}
+	else
+	{
+		item.param1 = 0;
+		item.param1 = 0;
+		item.param1 = 0;
+		item.param1 = 0;
+		item.x = 0;
+		item.y = 0;
+		item.z = 0;
+		item.command = 0;
+		item.seq = 0;
+		item.current = 0;
+		item.autocontinue = 0;
+		item.frame = 0;
+		item.target_component = 0;
+		item.target_system = 0;
+	}
+	return item;
+}
+
 void navigation_task()
 {
 	navigation_init();
 
+	/************* flash test START ****************/
+	spi_helper_init_handle();
+
+	// force enable logging
+	bool logging_enabled = true;
+
+
+	static uint8_t buf[250];
+	flash_id_read(buf);
+	const uint8_t flash_id[] = {0x01,0x20,0x18}; // S25FL127S ID
+	if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
+		// flash answers with correct ID
+		serial_printf(cli_stdout, "Flash ID OK\n");
+	} else {
+		serial_printf(cli_stdout, "Flash ID ERROR\n");
+	}
+
+    if (logging_enabled) {
+        if (!log_init()) {
+            serial_printf(cli_stdout, "log_init failed\n");
+            log_reset();
+        }
+    }
+    //serial_printf(cli_stdout, "log position 0x%x\n", log_write_pos());
+	/************* flash test END ****************/
+    char name[4];
+    uint32_t time = 0;
+    mission_item_list_t debug_list;
 	while(1){
 
 //		navigation_update_target();
-		navigation_update_current_target();
-		navigation_update_position();
-		navigation_update_state();
-		navigation_move();
+//		navigation_update_current_target();
+//		navigation_update_position();
+//		navigation_update_state();
+//		navigation_move();
 
-
+    	mission_items.count = 1;
+    	mission_items.current_index = 0;
+    	mission_items.item[0] = item_init(1);
+    	mission_items.item[1] = item_init(2);
+    	log_write_mavlink_item_list();
+    	log_read_mavlink_item_list(&debug_list, &time, name);
+    	if (item_compare(mission_items.item[0], debug_list.item[0]))
+    		serial_printf(cli_stdout, "item logging success\n");
+    	else
+    		serial_printf(cli_stdout, "item logging failed\n");
 		Task_sleep(500);
 
 	}

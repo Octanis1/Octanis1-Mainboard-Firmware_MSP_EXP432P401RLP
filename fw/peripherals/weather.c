@@ -23,7 +23,6 @@
 #include "../core/log_entries.h"
 #include "../lib/cmp/cmp.h"
 #include "../lib/cmp_mem_access/cmp_mem_access.h"
-#include "../hardware_test/mailbox_test.h"
 #include "flash.h"
 #include "hal/spi_helper.h"
 
