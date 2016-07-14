@@ -107,6 +107,23 @@ void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 
 }
 
+
+
+COMM_MAV_RESULT comm_process_command(COMM_MAV_MSG_TARGET*  msg_target, mavlink_message_t *msg, mavlink_message_t *answer_msg){
+	//TODO
+	uint16_t command = mavlink_msg_command_long_get_command(msg);
+	switch (command)
+	{
+		case MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN:
+			break;
+		default:
+			break;
+
+	}
+}
+
+
+
 //returns true if message target is this system --> you can then continue decoding the message.
 //otherwise it should forward the message to the corresponding target (i.e. EPS, SBC, etc...)
 int comm_mavlink_check_target(COMM_MAV_MSG_TARGET* target, mavlink_message_t *msg)
@@ -138,7 +155,15 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 	        }
 	        break;
 	case MAVLINK_MSG_ID_COMMAND_LONG:
-		// EXECUTE ACTION
+			{
+				msg_target.system = mavlink_msg_command_long_get_target_system(msg);
+				msg_target.component = mavlink_msg_command_long_get_target_component(msg);
+
+				if(comm_mavlink_check_target(&msg_target,msg))
+				{
+					mav_result = comm_process_command(&msg_target, msg, &(answer_frame.mavlink_message));
+				}
+			}
 		break;
 
 	case MAVLINK_MSG_ID_SET_POSITION_TARGET_GLOBAL_INT:
