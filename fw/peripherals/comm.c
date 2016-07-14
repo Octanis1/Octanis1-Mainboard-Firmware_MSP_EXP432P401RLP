@@ -15,6 +15,10 @@
 int comm_tx_slot_flags[MAVLINK_COMM_NUM_BUFFERS][N_TX_SLOT_FLAG_INTS]; // 1-bit flags storing
 
 mavlink_system_t mavlink_system;
+static mavlink_heartbeat_t mavlink_heartbeat;
+
+mavlink_heartbeat_t comm_get_mavlink_heartbeat()
+{return mavlink_heartbeat;}
 
 void comm_mavlink_post_outbox(COMM_CHANNEL channel, COMM_FRAME* frame); //post to mailbox for outgoing messages
 void comm_clear_tx_flag(COMM_CHANNEL channel, int component_id);
@@ -134,7 +138,13 @@ COMM_MAV_RESULT comm_process_command(COMM_MAV_MSG_TARGET*  msg_target, mavlink_m
 			command, result);
 
 	return REPLY_TO_SENDER;
+}
 
+COMM_MAV_RESULT comm_set_mode(COMM_MAV_MSG_TARGET*  msg_target, mavlink_message_t *msg, mavlink_message_t *answer_msg){
+	MAV_MODE mode = mavlink_msg_set_mode_get_base_mode(msg);
+	mavlink_heartbeat.base_mode = mode;
+
+	return NO_ANSWER;
 }
 
 
@@ -196,7 +206,7 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 
 			if(comm_mavlink_check_target(&msg_target,msg))
 			{
-				mav_result = comm_process_command(&msg_target, msg, &(answer_frame.mavlink_message));
+				mav_result = comm_set_mode(&msg_target, msg, &(answer_frame.mavlink_message));
 			}
 			break;
 		}
@@ -291,6 +301,12 @@ void comm_init(){
 
 	mavlink_system.sysid = MAVLINK_SYSTEM_ID;                   ///< ID 25 for this rover
 	mavlink_system.compid = MAV_COMP_ID_ALL;     ///< The component sending the message is all, it could be also a Linux process
+	// Mavlink heartbeat
+	// Define the system type, in this case a rover
+	mavlink_heartbeat.type = MAV_TYPE_GROUND_ROVER;
+	mavlink_heartbeat.autopilot = MAV_AUTOPILOT_GENERIC;
+	mavlink_heartbeat.base_mode = MAV_MODE_MANUAL_DISARMED; ///< Booting up
+	mavlink_heartbeat.system_status = MAV_STATE_STANDBY; ///< System ready for flight
 
 	uint64_t system_time = 1000 * 1000 * (1234); //TODO get time on each message packing
 }

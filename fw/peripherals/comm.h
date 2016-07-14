@@ -54,6 +54,7 @@ typedef enum comm_mav_result{
 } COMM_MAV_RESULT;
 
 extern mavlink_system_t mavlink_system;
+mavlink_heartbeat_t comm_get_mavlink_heartbeat(); //read only from outside this function
 
 int comm_check_tx_slots(MAV_COMPONENT component); //check if outgoing message can be sent for a given destination and component id
 void comm_set_all_tx_flags(COMM_CHANNEL channel);
