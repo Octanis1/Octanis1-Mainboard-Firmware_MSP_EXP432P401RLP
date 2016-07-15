@@ -12,6 +12,11 @@
 //mavlink wire protocol
 #include "../lib/mavlink/common/mavlink.h"
 
+// Mavlink system ID's for all subsystem currently in the rover.
+#define SBPC_SYSTEM_ID			13 // Single board computer: Olimex
+#define FBS_SYSTEM_ID			24 // Field base station
+#define APM_PLANNER_SYSTEM_ID	255 // AMP planner on operator's PC
+
 typedef enum comm_channels {
 	CHANNEL_APP_UART,
 	CHANNEL_LORA,
@@ -49,6 +54,7 @@ typedef enum comm_mav_result{
 } COMM_MAV_RESULT;
 
 extern mavlink_system_t mavlink_system;
+mavlink_heartbeat_t comm_get_mavlink_heartbeat(); //read only from outside this function
 
 int comm_check_tx_slots(MAV_COMPONENT component); //check if outgoing message can be sent for a given destination and component id
 void comm_set_all_tx_flags(COMM_CHANNEL channel);
