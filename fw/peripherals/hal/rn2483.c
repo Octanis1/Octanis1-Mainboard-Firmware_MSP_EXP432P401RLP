@@ -124,6 +124,7 @@ int rn2483_begin(){
 	if(!strcmp("ok\r\naccepted\r\n", rn2483_rxBuffer)){
 		serial_printf(cli_stdout, "rn2483 OTAA success: %s\r\n", rn2483_rxBuffer);
 		rn2483_initialised = 1;
+		GPIO_write(Board_LED_RED,1);
 		return 1; //modem can now communicate with us
 	}else{
 		serial_printf(cli_stdout, "rn2483 error: OTAA failed. Message: %s\r\n", rn2483_rxBuffer);
