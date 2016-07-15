@@ -5,7 +5,6 @@
  *      Author: Sam
  */
 #if defined(NAVIGATION_TEST)
-
 #else
 #include "../../Board.h"
 #endif
@@ -18,6 +17,8 @@
 #include "gps.h"
 #include "../peripherals/comm.h"
 #include "../lib/mavlink/common/mavlink.h"
+
+#define M_PI 3.14159265358979323846
 
 static struct _imu_data {
 	int16_t accel_x;
@@ -69,28 +70,64 @@ int16_t imu_get_accel_z(){
 }
 
 
-COMM_FRAME* imu_pack_mavlink_raw_int()
+COMM_FRAME* imu_pack_mavlink_hud()
 {
 	// Mavlink heartbeat
 	// Define the system type, in this case an airplane
-	int32_t lat = (int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
-	int32_t lon = (int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
-	int32_t alt = (int32_t)(1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
-	uint32_t msec = 1000 * (uint32_t)Seconds_get();
-	int32_t relative_alt = 0; //TODO!
-	int16_t vx = 0; //TODO
-	int16_t vy = 0; //TODO
-	int16_t vz = 0; //TODO
+	float airspeed = 0.; //TODO
+	float groundspeed = 0.; //TODO
+	float heading = imu_get_fheading()-360;
+//	if(heading>=0 && heading<270) heading *= 2;
+//	else heading = 720-heading*2;				DOES NOT WORK ON APM PLANNER
+	float throttle = 0.; //TODO
+	float alt = (1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
+	float climb = 0.; //TODO
 
 	// Initialize the message buffer
 	static COMM_FRAME frame;
 
 	// Pack the message
-	mavlink_msg_global_position_int_pack(mavlink_system.sysid, MAV_COMP_ID_IMU, &(frame.mavlink_message),
-			msec, lat, lon, alt, relative_alt, vx, vy, vz,imu_get_heading());
 
+	mavlink_msg_vfr_hud_pack(mavlink_system.sysid, MAV_COMP_ID_IMU, &(frame.mavlink_message),
+			airspeed, groundspeed, heading, throttle, alt, climb);
 
 	return &frame;
+}
+
+COMM_FRAME* imu_pack_mavlink_attitude()
+{
+	// Mavlink heartbeat
+	// Define the system type, in this case an airplane
+
+	uint32_t usec = 1000000 * (uint32_t)Seconds_get();
+	float roll = (float) imu_get_roll()/100;
+	float roll_deg = roll*M_PI/180;
+	float pitch = (float) imu_get_pitch()/100;
+	float pitch_deg = pitch*M_PI/180;
+	float yaw = imu_get_fheading()-360;
+	float yaw_deg = deg2rad(yaw);
+//	if(heading>=0 && heading<270) heading *= 2;
+//	else heading = 720-heading*2;				DOES NOT WORK ON APM PLANNER
+	float rollspeed = 0.; //TODO
+	float pitchspeed = 0.; //TODO
+	float yawspeed = 0.; //TODO
+
+	// Initialize the message buffer
+	static COMM_FRAME frame;
+
+	// Pack the message
+	mavlink_msg_attitude_pack(mavlink_system.sysid, MAV_COMP_ID_IMU, &(frame.mavlink_message), // ROLL AND PITCH DO NOT UPDATE ON AMP PLANNER
+			usec, roll_deg, pitch_deg, yaw_deg, rollspeed, pitchspeed, yawspeed);
+
+	return &frame;
+}
+
+float deg2rad(float deg)
+{
+	float rad;
+	if(deg>=0 && deg<180) rad = deg*M_PI/180;
+	else rad = (deg-360)*M_PI/180;
+	return rad;
 }
 
 void imu_task(){
@@ -111,7 +148,9 @@ void imu_task(){
 
 #ifdef MAVLINK_ON_UART0_ENABLED
 		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_IMU);
-		comm_mavlink_broadcast(imu_pack_mavlink_raw_int());
+		comm_mavlink_broadcast(imu_pack_mavlink_attitude());
+		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_IMU);
+		comm_mavlink_broadcast(imu_pack_mavlink_hud());
 #endif
 
 	//	if(calib_status > 8)
@@ -166,3 +205,4 @@ void imu_task(){
 
 
 }
+

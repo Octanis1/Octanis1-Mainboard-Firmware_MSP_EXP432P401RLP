@@ -29,6 +29,7 @@ int16_t imu_get_roll();
 // return IMU calib status
 uint8_t imu_get_calib_status();
 
+float deg2rad(float deg);
 
 void imu_task();
 
