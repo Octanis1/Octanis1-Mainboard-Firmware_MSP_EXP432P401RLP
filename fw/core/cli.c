@@ -206,14 +206,6 @@ void cmd_valid(SerialDevice *io, int argc, char *argv[])
 							//	}
 							//}
 
-
-//		if(strncmp ("mot", input, 3) == 0){ //motor command was sent
-//			if(navigation_bypass(input[3],(input[4]-'0')))
-//				tfp_sprintf(output, "okm\n");
-//			else
-//				tfp_sprintf(output, "inv\n");
-//			UART_write(uart, output, sizeof(output));
-//		}
 //		else if(strcmp("gps\n", input) == 0){
 //		   tfp_sprintf(output, "fq %d", gps_get_fix_quality());
 //		   UART_write(uart, output, sizeof(output));
@@ -335,6 +327,21 @@ void cmd_motb(SerialDevice *io, int argc, char *argv[])
     serial_printf(io, "mot? %d \n", navigation_bypass('b',0));
 }
 
+void cmd_motl(SerialDevice *io, int argc, char *argv[])
+{
+    serial_printf(io, "mot? %d \n", navigation_bypass('l',0));
+}
+
+void cmd_motr(SerialDevice *io, int argc, char *argv[])
+{
+    serial_printf(io, "mot? %d \n", navigation_bypass('r',0));
+}
+
+void cmd_motx(SerialDevice *io, int argc, char *argv[])
+{
+    serial_printf(io, "mot? %d \n", navigation_bypass('x',0));
+}
+
 void cmd_motu(SerialDevice *io, int argc, char *argv[])
 {
 	if(argc<1)
@@ -379,6 +386,9 @@ const struct shell_commands commands[] = {
     {"rbn", cmd_rbn},
 	{"motf", cmd_motf},
 	{"motb", cmd_motb},
+	{"motr", cmd_motr},
+	{"motl", cmd_motl},
+	{"motx", cmd_motx},
 	{"motu", cmd_motu},
 	{"motd", cmd_motd},
 	{"moth", cmd_moth},
