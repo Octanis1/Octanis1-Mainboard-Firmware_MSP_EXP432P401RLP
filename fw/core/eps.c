@@ -76,6 +76,37 @@ uint8_t sendEpsCommand(uint8_t command)
 	return readBuffer;
 }
 
+uint16_t readEpsReg(uint8_t reg)
+{
+	I2C_Transaction i2cTransaction;
+
+	int8_t iError = 0;
+	uint16_t readBuffer;
+
+	i2cTransaction.writeBuf = &reg;
+	i2cTransaction.writeCount = sizeof(reg);
+
+	i2cTransaction.readBuf = &readBuffer;
+	i2cTransaction.readCount = sizeof(readBuffer);
+
+	i2cTransaction.slaveAddress = Board_EPS_I2CADDR;
+
+	int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
+
+	if (!ret) {
+		iError = -1;
+		serial_printf(cli_stdout, "transaction failed %d \r\n",ret);
+
+	}else{
+		iError = 0;
+
+		serial_printf(cli_stdout, "read: %u \r\n",readBuffer);
+
+	}
+
+	return readBuffer;
+}
+
 uint8_t eps_switch_module(uint8_t command) //use commands defined in eps.h
 {
 #ifdef EPS_ENABLED
@@ -148,10 +179,11 @@ void eps_task(){
 		}
 
 		// get status data (TODO: do correct conversion)
-		rover_status_eps.v_bat = (uint16_t)((float)sendEpsCommand(V_BAT)*7.026+2582); //<-- flight version Payload1 calibrated value;  was set to: (float)sendEpsCommand(V_BAT)*6.67+2500)
-		rover_status_eps.v_solar = (uint16_t)((float)sendEpsCommand(V_SC)*29.23); //flight version was wrongly *27.5, should have been 29.23 for 1.2M
-		rover_status_eps.i_in = (uint16_t)((float)sendEpsCommand(I_IN)*1.19); //
-		rover_status_eps.i_out = (uint16_t)((float)sendEpsCommand(I_OUT)*4.76);// depends on current sense resistor on eps!
+		rover_status_eps.v_bat = (uint16_t)((float)readEpsReg(V_BAT)*7.026+2582); //<-- flight version Payload1 calibrated value;  was set to: (float)sendEpsCommand(V_BAT)*6.67+2500)
+		rover_status_eps.v_solar = (uint16_t)((float)readEpsReg(V_SC)*29.23); //flight version was wrongly *27.5, should have been 29.23 for 1.2M
+		rover_status_eps.i_in = (uint16_t)((float)readEpsReg(I_IN)*1.19); //
+		rover_status_eps.i_out = (uint16_t)((float)readEpsReg(I_OUT)*4.76);// depends on current sense resistor on eps!
+
 
 
 		Task_sleep(500);
