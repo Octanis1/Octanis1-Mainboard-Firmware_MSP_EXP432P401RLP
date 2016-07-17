@@ -292,6 +292,7 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 	}
 	else
 	{
+		serial_printf(cli_stdout, "TX rejected: %s \r\n",rn2483_rxBuffer);
 		return 0;
 	}
 

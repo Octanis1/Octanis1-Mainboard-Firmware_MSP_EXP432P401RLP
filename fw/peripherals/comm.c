@@ -88,7 +88,7 @@ void comm_clear_tx_flag(COMM_CHANNEL channel, int component_id)
 
 
 #include "../lib/printf.h"
-void comm_send_string_over_lora(uint8_t* txdata, uint16_t stringlength)
+void comm_send_mavlink_over_lora(uint8_t* txdata, uint16_t stringlength)
 {
 	/** Prepare hex string for LoRa **/
 	char hex_string_byte[2];
@@ -126,7 +126,7 @@ void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 			break;
 		case CHANNEL_LORA:
 #ifdef LORA_ENABLED
-			comm_send_string_over_lora(buf, mavlink_msg_len); //FIXME: this is just test code
+			comm_send_mavlink_over_lora(buf, mavlink_msg_len);
 #endif
 			break;
 		case CHANNEL_ROCKBLOCK:

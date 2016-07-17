@@ -76,9 +76,7 @@ COMM_FRAME* imu_pack_mavlink_hud()
 	// Define the system type, in this case an airplane
 	float airspeed = 0.; //TODO
 	float groundspeed = 0.; //TODO
-	float heading = imu_get_fheading()-360;
-//	if(heading>=0 && heading<270) heading *= 2;
-//	else heading = 720-heading*2;				DOES NOT WORK ON APM PLANNER
+	float heading = imu_get_fheading();
 	float throttle = 0.; //TODO
 	float alt = (1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
 	float climb = 0.; //TODO
@@ -104,7 +102,7 @@ COMM_FRAME* imu_pack_mavlink_attitude()
 	float roll_deg = roll*M_PI/180;
 	float pitch = (float) imu_get_pitch()/100;
 	float pitch_deg = pitch*M_PI/180;
-	float yaw = imu_get_fheading()-360;
+	float yaw = imu_get_fheading();
 	float yaw_deg = deg2rad(yaw);
 //	if(heading>=0 && heading<270) heading *= 2;
 //	else heading = 720-heading*2;				DOES NOT WORK ON APM PLANNER
@@ -141,17 +139,29 @@ void imu_task(){
 	imu_init();
 
 	while(1){
-		imu_data.calib_status=bno055_check_calibration_status(); //this line alone lets the i2c bus crash
-		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r)); //this line alone lets the i2c bus crash
+//		imu_data.calib_status=bno055_check_calibration_status(); //this line alone lets the i2c bus crash
+//		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r)); //this line alone lets the i2c bus crash
 //		bno055_get_accel(&(imu_data.accel_x), &(imu_data.accel_y), &(imu_data.accel_z)); //commenting out this line alone still lets the i2c bus be blocked
 
 
-#ifdef MAVLINK_ON_UART0_ENABLED
-		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_IMU);
-		comm_mavlink_broadcast(imu_pack_mavlink_attitude());
-		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_IMU);
-		comm_mavlink_broadcast(imu_pack_mavlink_hud());
+#ifdef MAVLINK_ON_LORA_ENABLED
+		comm_set_tx_flag(CHANNEL_LORA, MAV_COMP_ID_IMU);
 #endif
+
+#ifdef MAVLINK_ON_UART0_ENABLED
+//		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_IMU);
+#endif
+//		comm_mavlink_broadcast(imu_pack_mavlink_attitude());
+
+#ifdef MAVLINK_ON_LORA_ENABLED
+		comm_set_tx_flag(CHANNEL_LORA, MAV_COMP_ID_IMU);
+#endif
+
+#ifdef MAVLINK_ON_UART0_ENABLED
+//		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_IMU);
+#endif
+//		comm_mavlink_broadcast(imu_pack_mavlink_hud());
+
 
 	//	if(calib_status > 8)
 	//	{
@@ -198,7 +208,7 @@ void imu_task(){
 //		if(!(i_since_last_measurement++ % 20))
 //		motors_struts_get_position();
 
-		Task_sleep(500);
+		Task_sleep(200);
 
 	}
 
