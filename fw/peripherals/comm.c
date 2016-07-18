@@ -23,6 +23,17 @@ static mavlink_heartbeat_t mavlink_heartbeat;
 mavlink_heartbeat_t comm_get_mavlink_heartbeat()
 {return mavlink_heartbeat;}
 
+// We periodically check if we still get heartbeat messages from the SBC
+static int32_t t_last_sbc_heartbeat;
+static mavlink_heartbeat_t sbc_heartbeat;
+static float sbc_last_command_arm; //temporarily stores if the last command was arm or disarm. -1 if no command was sent
+#define SBC_HEARTBEAT_TIMEOUT 10
+
+char comm_sbc_running(){
+	return t_last_sbc_heartbeat > ((int32_t)Seconds_get() - (int32_t)SBC_HEARTBEAT_TIMEOUT);}
+char comm_sbc_still_active(){
+	return (comm_sbc_running() && sbc_heartbeat.base_mode == MAV_STATE_ACTIVE);}
+
 void comm_mavlink_post_outbox(COMM_CHANNEL channel, COMM_FRAME* frame); //post to mailbox for outgoing messages
 void comm_clear_tx_flag(COMM_CHANNEL channel, int component_id);
 
@@ -135,27 +146,44 @@ void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 		default:
 			break;
 	}
-
 }
 
-
-
-COMM_MAV_RESULT comm_process_command(COMM_MAV_MSG_TARGET*  msg_target, mavlink_message_t *msg, mavlink_message_t *answer_msg){
-	//TODO
+COMM_MAV_RESULT comm_process_command(COMM_MAV_MSG_TARGET*  msg_target, mavlink_message_t *msg, mavlink_message_t *answer_msg)
+{	//TODO
 	uint16_t command = mavlink_msg_command_long_get_command(msg);
+	uint8_t confirmation = mavlink_msg_command_long_get_confirmation(msg);
 	MAV_RESULT result = MAV_RESULT_DENIED;
 	switch (command)
 	{
-		case MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN: //#246 --> shut down SBPC. forward command to olimex.
+		case MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN: //#246 --> shut down SBC. forward command to olimex.
+			// TODO: shut down SBC
+			{
+				mavlink_msg_command_long_pack(mavlink_system.sysid, msg_target->component, answer_msg,
+				SBC_SYSTEM_ID, msg_target->component, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, confirmation, 0, 0, 0, 0, 0, 0, 0);
+
+				msg_target->system = SBC_SYSTEM_ID; //target system of the to be forwarded message.
+
+				return FORWARD_MESSAGE;}
 			break;
 		case MAV_CMD_NAV_LAND: //#21 [Land]
 			break;
 		case MAV_CMD_NAV_TAKEOFF: //#22 [Start]
 			break;
-		case MAV_CMD_OVERRIDE_GOTO: //#252 Hold / continue the current action [halt]
+		case MAV_CMD_OVERRIDE_GOTO: //#252 Hold / continue the current action [halt] --> used to pause/start driving
+		{
+			result = navigation_halt_resume(msg_target, msg);
 			break;
+		}
 		case MAV_CMD_COMPONENT_ARM_DISARM: //#400 Arms / Disarms a component --- param1: 1 to arm, 0 to disarm
-			break;
+			//forward to SBC board, if needed
+			{
+				float arm_disarm = mavlink_msg_command_long_get_param1(msg);
+				if(arm_disarm) mavlink_heartbeat.system_status = MAV_STATE_ACTIVE;
+				else mavlink_heartbeat.system_status = MAV_STATE_STANDBY;
+
+				return navigation_arm_disarm(msg_target, &sbc_heartbeat, answer_msg, &sbc_last_command_arm);
+				break;
+			}
 		default:
 			result = MAV_RESULT_UNSUPPORTED;
 			break;
@@ -172,17 +200,15 @@ COMM_MAV_RESULT comm_set_mode(COMM_MAV_MSG_TARGET*  msg_target, mavlink_message_
 	mavlink_heartbeat.base_mode = mode;
 
 	if(mode >= MAV_MODE_MANUAL_ARMED)
-		// TODO: turn on SBPC and wait for boot to complete before changing state (via EPS)
-		// TODO: --> probably better to move mavlink_heartbeat variable to EPS module
-		// TODO: during boot process give status messages over MAV_MSG_STATUSTEXT
-		// TODO: add conditions that may stop from changing state to armed, for example low battery.
+	{
 		mavlink_heartbeat.system_status = MAV_STATE_ACTIVE;
-
+	}
 	else
-		// TODO: shut down SBPC before changing state
+	{
 		mavlink_heartbeat.system_status = MAV_STATE_STANDBY;
-
-	return NO_ANSWER;
+	}
+	// send arm message to SBC is done with the following function:
+	return navigation_arm_disarm(msg_target, &sbc_heartbeat, answer_msg, &sbc_last_command_arm);
 }
 
 
@@ -195,12 +221,12 @@ int comm_mavlink_check_target(COMM_MAV_MSG_TARGET* target, mavlink_message_t *ms
 	{
 		return 1;
 	}
-	else if(target->system == SBPC_SYSTEM_ID)
+	else if(target->system == SBC_SYSTEM_ID)
 	{
 		COMM_FRAME forward_frame;
 		(forward_frame.mavlink_message) = (*msg);
 
-		// forward to SBPC connected to UART0
+		// forward to SBC connected to UART0
 		comm_mavlink_post_outbox(CHANNEL_APP_UART, &forward_frame);
 		//TODO: forward the message to corresponding system
 
@@ -224,8 +250,14 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 	switch(msg->msgid){
 		case MAVLINK_MSG_ID_HEARTBEAT:
 		{
-		// E.g. read GCS heartbeat and go into
-		// comm lost mode if timer times out
+			if(msg->sysid == SBC_SYSTEM_ID)
+			{
+				// TODO: check if heartbeat really changes its mode when armed.
+				// 			otherwise just change manually upon reception of COMMAND_ACK message
+				//mavlink_msg_heartbeat_decode(msg, &sbc_heartbeat);
+				sbc_heartbeat.base_mode = MAV_STATE_ACTIVE;
+				t_last_sbc_heartbeat = (int32_t)Seconds_get();
+			}
 			break;
 		}
 		case MAVLINK_MSG_ID_COMMAND_LONG:
@@ -238,6 +270,25 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 				mav_result = comm_process_command(&msg_target, msg, &(answer_frame.mavlink_message));
 			}
 			break;
+		}
+		case MAVLINK_MSG_ID_COMMAND_ACK:
+		{
+			// If acknowledge for shutdown of sbc, forward it to APM planner.
+			uint16_t command = mavlink_msg_command_ack_get_command(msg);
+			uint8_t result = mavlink_msg_command_ack_get_result(msg);
+			if(msg->sysid == SBC_SYSTEM_ID && command == MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN)
+			{
+				mavlink_msg_command_ack_pack(mavlink_system.sysid, 1, &(answer_frame.mavlink_message), //cmp id is usually 1 when receiving the command.
+						command, result);
+			}
+			else if(msg->sysid == SBC_SYSTEM_ID && command == MAV_CMD_COMPONENT_ARM_DISARM)
+			{
+				if(sbc_last_command_arm == 1)
+					sbc_heartbeat.base_mode = MAV_STATE_ACTIVE;
+				else if(sbc_last_command_arm == 0)
+					sbc_heartbeat.base_mode = MAV_STATE_STANDBY;
+			}
+
 		}
 
 		case MAVLINK_MSG_ID_SET_MODE:
@@ -329,7 +380,17 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 	{
 		comm_mavlink_post_outbox(src_channel, &answer_frame);
 	}
+	else if(mav_result == FORWARD_MESSAGE)
+	{
+		COMM_CHANNEL fwd_channel;
+		switch(msg_target.system){
+			case SBC_SYSTEM_ID: fwd_channel = CHANNEL_APP_UART; break;
+			case FBS_SYSTEM_ID: fwd_channel = CHANNEL_LORA; break;
+			case APM_PLANNER_SYSTEM_ID: fwd_channel = CHANNEL_LORA; break;
+		}
 
+		comm_mavlink_post_outbox(fwd_channel, &answer_frame);
+	}
 
 }
 
@@ -348,6 +409,10 @@ void comm_init(){
 	mavlink_heartbeat.autopilot = MAV_AUTOPILOT_GENERIC;
 	mavlink_heartbeat.base_mode = MAV_MODE_MANUAL_DISARMED; ///< Booting up
 	mavlink_heartbeat.system_status = MAV_STATE_STANDBY; ///< System ready for flight
+
+	t_last_sbc_heartbeat = -2*SBC_HEARTBEAT_TIMEOUT;
+	sbc_heartbeat.base_mode = MAV_STATE_BOOT;
+	sbc_last_command_arm = -1;
 
 #ifdef LORA_ENABLED
 	#ifdef CONFIG_MODE

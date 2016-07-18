@@ -69,29 +69,6 @@ int16_t imu_get_accel_z(){
 	return (imu_data.accel_z);
 }
 
-
-COMM_FRAME* imu_pack_mavlink_hud()
-{
-	// Mavlink heartbeat
-	// Define the system type, in this case an airplane
-	float airspeed = 0.; //TODO
-	float groundspeed = 0.; //TODO
-	float heading = imu_get_fheading();
-	float throttle = 0.; //TODO
-	float alt = (1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
-	float climb = 0.; //TODO
-
-	// Initialize the message buffer
-	static COMM_FRAME frame;
-
-	// Pack the message
-
-	mavlink_msg_vfr_hud_pack(mavlink_system.sysid, MAV_COMP_ID_IMU, &(frame.mavlink_message),
-			airspeed, groundspeed, heading, throttle, alt, climb);
-
-	return &frame;
-}
-
 COMM_FRAME* imu_pack_mavlink_attitude()
 {
 	// Mavlink heartbeat
@@ -149,18 +126,9 @@ void imu_task(){
 #endif
 
 #ifdef MAVLINK_ON_UART0_ENABLED
-//		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_IMU);
+		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_IMU);
 #endif
-//		comm_mavlink_broadcast(imu_pack_mavlink_attitude());
-
-#ifdef MAVLINK_ON_LORA_ENABLED
-		comm_set_tx_flag(CHANNEL_LORA, MAV_COMP_ID_IMU);
-#endif
-
-#ifdef MAVLINK_ON_UART0_ENABLED
-//		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_IMU);
-#endif
-//		comm_mavlink_broadcast(imu_pack_mavlink_hud());
+		comm_mavlink_broadcast(imu_pack_mavlink_attitude());
 
 
 	//	if(calib_status > 8)
