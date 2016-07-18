@@ -12,9 +12,7 @@
 #include "../peripherals/hal/i2c_helper.h"
 #include "eps.h"
 #include "cli.h"
-
-
-
+#include "../peripherals/comm.h"
 
 // define module states
 #define OFF	0
@@ -49,6 +47,28 @@ void eps_init()
 	i2c_helper_init_handle();
 	GPIO_enableInt(Board_EPS_ALIVE_REQ);
 }
+
+COMM_FRAME* eps_pack_mavlink_battery_status()
+{
+	// Initialize the message buffer
+	static COMM_FRAME frame;
+
+	uint16_t vbat[10] = {UINT16_MAX,};
+	vbat[0] = rover_status_eps.v_bat;
+	int32_t current_consumed = -1; //Consumed charge, in milliampere hours (1 = 1 mAh), -1: autopilot does not provide mAh consumption estimate
+	int16_t current_battery = rover_status_eps.i_out; //Battery current, in 10*milliamperes (1 = 10 milliampere), -1: autopilot does not measure the current
+	int32_t energy_consumed = -1;  //Consumed energy, in 100*Joules (intergrated U*I*dt) (1 = 100 Joule), -1: autopilot does not provide energy consumption estimate
+	int8_t battery_remaining = -1;	// Remaining battery energy: (0%: 0, 100%: 100), -1: autopilot does not estimate the remaining battery
+
+	mavlink_msg_battery_status_pack(mavlink_system.sysid, MAV_COMP_ID_SYSTEM_CONTROL, &(frame.mavlink_message),
+		0, MAV_BATTERY_FUNCTION_ALL, MAV_BATTERY_TYPE_LION, UINT16_MAX, vbat, current_battery, current_consumed, energy_consumed, battery_remaining);
+
+	//todo: correct battery temperature!
+
+	return &frame;
+}
+
+
 
 uint8_t sendEpsCommand(uint8_t command)
 {
@@ -184,6 +204,7 @@ void eps_task(){
 		rover_status_eps.i_in = (uint16_t)((float)readEpsReg(I_IN)*1.19); //
 		rover_status_eps.i_out = (uint16_t)((float)readEpsReg(I_OUT)*4.76);// depends on current sense resistor on eps!
 
+		eps_pack_mavlink_battery_status();
 
 
 		Task_sleep(500);

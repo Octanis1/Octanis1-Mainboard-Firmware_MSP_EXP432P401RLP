@@ -15,7 +15,7 @@
 
 //mavlink includes
 #include "gps.h"
-#include "../peripherals/comm.h"
+#include "comm.h"
 #include "../lib/mavlink/common/mavlink.h"
 
 #define M_PI 3.14159265358979323846
