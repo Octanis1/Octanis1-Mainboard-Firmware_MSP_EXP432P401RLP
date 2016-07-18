@@ -69,6 +69,14 @@ int16_t imu_get_accel_z(){
 	return (imu_data.accel_z);
 }
 
+void imu_update_attitude_from_mavlink(mavlink_message_t* msg){
+	imu_data.d_euler_data_r = (double)(180/M_PI * mavlink_msg_attitude_get_roll(msg));
+	imu_data.d_euler_data_p = (double)(180/M_PI * mavlink_msg_attitude_get_pitch(msg));
+	imu_data.d_euler_data_h = (double)(180/M_PI * mavlink_msg_attitude_get_yaw(msg));
+	if(imu_data.d_euler_data_h < 0.0)
+		imu_data.d_euler_data_h = imu_data.d_euler_data_h + 360.0;
+}
+
 COMM_FRAME* imu_pack_mavlink_attitude()
 {
 	// Mavlink heartbeat

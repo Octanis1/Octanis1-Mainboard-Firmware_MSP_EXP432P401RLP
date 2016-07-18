@@ -11,6 +11,7 @@
 #include "hal/rn2483.h"
 
 #include "navigation.h"
+#include "imu.h"
 
 #define LORA_FRAME_SIZE 		2*MAVLINK_MAX_PACKET_LEN
 
@@ -369,7 +370,10 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 			}
 			break;
 		}
-
+		case MAVLINK_MSG_ID_ATTITUDE:
+		{
+			imu_update_attitude_from_mavlink(msg);
+		}
 
 		default:
 			GPIO_toggle(Board_LED_RED);
