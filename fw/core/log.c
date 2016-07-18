@@ -70,6 +70,22 @@ LOG_INTERNAL void _log_entry_write_to_flash(struct logger *l)
     logger_unlock();
 }
 
+LOG_INTERNAL void _log_mav_write_to_flash(struct logger *l)
+{
+    size_t len = cmp_mem_access_get_pos(&l->cma);
+    uint8_t crc = crc8(0, (unsigned char *)&l->buffer[LOG_ENTRY_HEADER_LEN], len);
+    l->buffer[0] = len;
+    l->buffer[1] = crc;
+    len += LOG_ENTRY_HEADER_LEN;
+    _log_flash_write(l->mav_write_pos, l->buffer, len);
+    if(l->flash_write_pos == FLASH_BLOCK_SIZE)
+    	l->flash_write_pos = 2*FLASH_BLOCK_SIZE;
+    else
+    	l->flash_write_pos = FLASH_BLOCK_SIZE;
+
+    logger_unlock();
+}
+
 cmp_ctx_t *log_entry_create(const char *name)
 {
     return _log_entry_create(&logger, name);
@@ -78,6 +94,11 @@ cmp_ctx_t *log_entry_create(const char *name)
 void log_entry_write_to_flash(void)
 {
     _log_entry_write_to_flash(&logger);
+}
+
+void log_mav_write_to_flash(void)
+{
+    _log_mav_write_to_flash(&logger);
 }
 
 bool log_read_entry(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry)
@@ -198,11 +219,68 @@ void log_position_backup(void)
     _log_position_backup(&logger);
 }
 
+LOG_INTERNAL uint32_t _log_get_timestamp(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry)
+{
+	cmp_mem_access_t cma;
+	cmp_ctx_t ctx;
+
+	bool ret = 0;
+	uint32_t array_l = 0;
+	uint32_t time = 0;
+
+	if (!log_read_entry(addr, buf, entry_len, next_entry))
+		return false;
+
+	cmp_mem_access_ro_init(&ctx, &cma, buf, LOG_ENTRY_DATA_LEN);
+
+	ret = cmp_read_array(&ctx, &array_l);
+	if (ret == false || array_l != 3)
+		return false;
+
+	ret = cmp_read_uint(&ctx, &time);
+
+	return time;
+}
+
+//Assume end_addr is an array of size 2
+LOG_INTERNAL void _log_seek_last_mav_entry(uint32_t* end_addr)
+{
+	uint32_t timestamp[2];
+	size_t len = 0;
+	uint32_t next_entry = 0;
+
+	if (end_addr[0] == FLASH_BLOCK_SIZE && end_addr[1] == 2*FLASH_BLOCK_SIZE)
+		logger.mav_write_pos = FLASH_BLOCK_SIZE; //we haven't logged anything yet
+	else if (end_addr[0] == FLASH_BLOCK_SIZE)
+		logger.mav_write_pos = FLASH_BLOCK_SIZE;
+	else if (end_addr[1] == 2*FLASH_BLOCK_SIZE)
+		logger.mav_write_pos = 2*FLASH_BLOCK_SIZE;
+	else{
+		// we have to find the oldest entry
+		timestamp[0] = _log_get_timestamp(FLASH_BLOCK_SIZE, logger.buffer, &len, &next_entry);
+		timestamp[1] = _log_get_timestamp(2*FLASH_BLOCK_SIZE, logger.buffer, &len, &next_entry);
+
+		if (timestamp[0] > timestamp[1])
+			logger.mav_write_pos = 2*FLASH_BLOCK_SIZE;
+		else
+			logger.mav_write_pos = FLASH_BLOCK_SIZE;
+	}
+}
+
+void log_read_last_mav_entry (uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry)
+{
+	if(logger.mav_write_pos == FLASH_BLOCK_SIZE)
+		log_read_entry(2*FLASH_BLOCK_SIZE, buf, entry_len, next_entry);
+	else if(logger.mav_write_pos == 2*FLASH_BLOCK_SIZE)
+		log_read_entry(FLASH_BLOCK_SIZE, buf, entry_len, next_entry);
+}
+
 // returns false on error
 bool log_init(void)
 {
-    logger.flash_write_pos = FLASH_BLOCK_SIZE; // second block
+    logger.flash_write_pos = 3*FLASH_BLOCK_SIZE; // fourth block
     logger.backup_pos = 0;
+    logger.mav_write_pos = FLASH_BLOCK_SIZE; // second block
     uint32_t bkup_pos = 0;
     if (!_log_backup_table_get_last(&bkup_pos) || bkup_pos == 0) {
         // either empty flash or backup table full (very unlikely)
@@ -211,6 +289,14 @@ bool log_init(void)
         _log_position_backup(&logger);
         return true;
     }
+
+    uint32_t end_addr[2];
+    if(!_log_seek_end(FLASH_BLOCK_SIZE, &end_addr[0], &logger.buffer[0], sizeof(logger.buffer)))
+    	return false;
+    if(!_log_seek_end(2*FLASH_BLOCK_SIZE, &end_addr[1], &logger.buffer[0], sizeof(logger.buffer)))
+        	return false;
+    //we want to find the latest non-corrupted data
+    _log_seek_last_mav_entry(end_addr);
 
     uint32_t pos = 0;
     logger_lock();

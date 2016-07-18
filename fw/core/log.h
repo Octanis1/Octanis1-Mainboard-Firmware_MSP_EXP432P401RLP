@@ -30,13 +30,16 @@ struct logger {
     uint8_t buffer[LOG_ENTRY_HEADER_LEN + LOG_ENTRY_DATA_LEN];
     // flash state
     uint32_t flash_write_pos; // points at the next empty flash position
+    uint32_t mav_write_pos; // points at the next empty mavlink location
     uint32_t backup_pos; // points at the next empty backup position
 };
 
 
 cmp_ctx_t *log_entry_create(const char *name);
 void log_entry_write_to_flash(void);
+void log_mav_write_to_flash(void);
 bool log_read_entry(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry);
+void log_read_last_mav_entry (uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry);
 void log_position_backup(void);
 bool log_init(void);
 void log_reset(void);
