@@ -16,7 +16,7 @@
 //mavlink includes
 #include "gps.h"
 #include "comm.h"
-#include "../lib/mavlink/common/mavlink.h"
+#include "hal/time_since_boot.h"
 
 #define M_PI 3.14159265358979323846
 
@@ -29,6 +29,9 @@ static struct _imu_data {
 	double d_euler_data_r;
 	unsigned char calib_status;
 } imu_data;
+
+// contains the data from an external IMU (f.ex. the one connected to the SBC)
+static mavlink_attitude_t imu_attitude;
 
 // pitch Euler data in 100 degrees
 int16_t imu_get_pitch(){
@@ -70,38 +73,44 @@ int16_t imu_get_accel_z(){
 }
 
 void imu_update_attitude_from_mavlink(mavlink_message_t* msg){
-//	//note: IMU is placed in a way that roll and pitch are inversed and heading is mirrored.
-//	imu_data.d_euler_data_p = -(double)(180/M_PI * mavlink_msg_attitude_get_roll(msg));
-//	imu_data.d_euler_data_r = -(double)(180/M_PI * mavlink_msg_attitude_get_pitch(msg));
-//	imu_data.d_euler_data_h = -(double)(180/M_PI * mavlink_msg_attitude_get_yaw(msg));
-//	if(imu_data.d_euler_data_h < 0.0)
-//		imu_data.d_euler_data_h = imu_data.d_euler_data_h + 360.0;
+	mavlink_msg_attitude_decode(msg, &imu_attitude);
+#ifndef USE_ONBOARD_BNO055
+	//note: IMU is placed in a way that roll and pitch are inversed and heading is mirrored.
+	imu_data.d_euler_data_p = -(double)(180/M_PI * imu_attitude.roll);
+	imu_data.d_euler_data_r = -(double)(180/M_PI * imu_attitude.pitch);
+	imu_data.d_euler_data_h = -(double)(180/M_PI * imu_attitude.yaw);
+	if(imu_data.d_euler_data_h < 0.0)
+		imu_data.d_euler_data_h = imu_data.d_euler_data_h + 360.0;
+#endif
 }
 
 COMM_FRAME* imu_pack_mavlink_attitude()
 {
-	// Mavlink heartbeat
-	// Define the system type, in this case an airplane
+	// Initialize the message buffer
+	static COMM_FRAME frame;
 
-	uint32_t usec = 1000000 * (uint32_t)Seconds_get();
+#ifdef USE_ONBOARD_BNO055
 	float roll = (float) imu_get_roll()/100;
 	float roll_deg = roll*M_PI/180;
 	float pitch = (float) imu_get_pitch()/100;
 	float pitch_deg = pitch*M_PI/180;
 	float yaw = imu_get_fheading();
 	float yaw_deg = deg2rad(yaw);
-//	if(heading>=0 && heading<270) heading *= 2;
-//	else heading = 720-heading*2;				DOES NOT WORK ON APM PLANNER
 	float rollspeed = 0.; //TODO
 	float pitchspeed = 0.; //TODO
 	float yawspeed = 0.; //TODO
 
-	// Initialize the message buffer
-	static COMM_FRAME frame;
-
 	// Pack the message
 	mavlink_msg_attitude_pack(mavlink_system.sysid, MAV_COMP_ID_IMU, &(frame.mavlink_message), // ROLL AND PITCH DO NOT UPDATE ON AMP PLANNER
-			usec, roll_deg, pitch_deg, yaw_deg, rollspeed, pitchspeed, yawspeed);
+			ms_since_boot(), roll_deg, pitch_deg, yaw_deg, rollspeed, pitchspeed, yawspeed);
+#else
+	if(imu_attitude.time_boot_ms == 0) // no attitude information received yet
+		return NULL;
+
+	// just re-send the previously received message.
+	mavlink_msg_attitude_encode(mavlink_system.sysid, MAV_COMP_ID_IMU, &(frame.mavlink_message),
+			&imu_attitude);
+#endif
 
 	return &frame;
 }
@@ -122,13 +131,16 @@ void imu_task(){
 
 	cli_init();
 
+#ifdef USE_ONBOARD_BNO055
 	imu_init();
+#endif
 
 	while(1){
-//		imu_data.calib_status=bno055_check_calibration_status(); //this line alone lets the i2c bus crash
-//		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r)); //this line alone lets the i2c bus crash
+#ifdef USE_ONBOARD_BNO055
+		imu_data.calib_status=bno055_check_calibration_status(); //this line alone lets the i2c bus crash
+		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r)); //this line alone lets the i2c bus crash
 //		bno055_get_accel(&(imu_data.accel_x), &(imu_data.accel_y), &(imu_data.accel_z)); //commenting out this line alone still lets the i2c bus be blocked
-
+#endif
 
 #ifdef MAVLINK_ON_LORA_ENABLED
 		comm_set_tx_flag(CHANNEL_LORA, MAV_COMP_ID_IMU);
@@ -137,7 +149,9 @@ void imu_task(){
 #ifdef MAVLINK_ON_UART0_ENABLED
 		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_IMU);
 #endif
-		comm_mavlink_broadcast(imu_pack_mavlink_attitude());
+		COMM_FRAME* imu_frame = imu_pack_mavlink_attitude();
+		if(imu_frame!=NULL)
+			comm_mavlink_broadcast(imu_frame);
 
 
 	//	if(calib_status > 8)

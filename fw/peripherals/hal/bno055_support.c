@@ -72,6 +72,8 @@ struct bno055_t my_bno055;
 
 s32 imu_init() //function to be called before starting the imu task.
 {
+	//TODO: verify correct axis alignment!
+
 	/* Variable used to return value of
 	communication routine*/
 	s32 comres = ERROR;

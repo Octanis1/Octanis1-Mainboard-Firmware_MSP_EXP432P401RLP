@@ -27,18 +27,20 @@
 #include "flash.h"
 #include "hal/spi_helper.h"
 
+//mavlink includes:
+#include "comm.h"
+#include "hal/time_since_boot.h"
+
 // NOTE: set to 0 if it should not be logged
 #define LOG_GPS_TIMESTEP     5
 #define LOG_IMU_TIMESTEP     1
 #define LOG_WEATHER_TIMESTEP 5
 #define LOG_BACKUP_TIMESTEP  60
 
-typedef struct Types_FreqHz {
-    Bits32 hi;
-    // most significant 32-bits of frequency
-    Bits32 lo;
-    // least significant 32-bits of frequency
-} Types_FreqHz;
+#include <xdc/runtime/Types.h>
+
+static uint8_t external_board_connected = 0;
+
 
 static struct _weather_data {
 	int int_temp; //in 0.01 degree Centigrade
@@ -88,6 +90,23 @@ void weather_aggregate_data()
 	weather_data.ext_temp = (int)((10*weather_data.ext_temp_sht21+(float)weather_data.ext_temp_bmp180)*5);
 }
 
+COMM_FRAME* weather_pack_mavlink_pressure()
+{
+	uint32_t msec = ms_since_boot(); //1000 * (uint32_t)Seconds_get();
+	float press_abs = ((float)weather_data.int_press)/100; //Absolute pressure (hectopascal)
+	float press_diff = 0;
+	if(external_board_connected)
+		press_diff = ((float)weather_data.int_press - (float)weather_data.ext_press)/100;
+	// Initialize the message buffer
+	static COMM_FRAME frame;
+
+	// Pack the message
+	mavlink_msg_scaled_pressure_pack(mavlink_system.sysid, MAV_COMP_ID_PERIPHERAL, &(frame.mavlink_message),
+			msec, press_abs, press_diff, weather_data.int_temp);
+
+	return &frame;
+}
+
 uint8_t weather_check_external_connected()
 {
 	uint8_t j, is_connected = 0;
@@ -114,11 +133,11 @@ void log_weather(struct _weather_data *d)
 
 
 void weather_task(){
+	time_since_boot_init();
 	cli_init();
 
 	Task_sleep(500);
 
-	static uint8_t external_board_connected = 0;
 	external_board_connected = weather_check_external_connected();
 
 	i2c_helper_init_handle();
@@ -216,11 +235,19 @@ void weather_task(){
 //		Timestamp_getFreq(&freq1);
 
 
+#ifdef MAVLINK_ON_UART0_ENABLED
+		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_PERIPHERAL);
+#endif
+		comm_mavlink_broadcast(weather_pack_mavlink_pressure());
+
 
 
 		//	windsensor_getvalue();
 
 		weather_aggregate_data();
+
+
+
 
 		//		serial_printf(cli_stdout, "W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
 
