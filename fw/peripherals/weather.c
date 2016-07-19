@@ -137,9 +137,10 @@ void weather_task(){
 	// Initialize on-board sensors
 	bme280_init();
 
-
-#ifdef FLASH_ENABLED
-	/************* flash test START ****************/
+//TODO : the exact same code is copy-pasted in navigation_task(), we should figure out what goes where
+/*
+	#ifdef FLASH_ENABLED
+	uint32_t log_counter = 0;
 	spi_helper_init_handle();
 
     // force enable logging
@@ -163,12 +164,11 @@ void weather_task(){
         }
     }
     //serial_printf(cli_stdout, "log position 0x%x\n", log_write_pos());
-	/************* flash test END ****************/
 #endif
-
+*/
 
     while(1){
-
+/*
 #ifdef FLASH_ENABLED
 
         log_counter++;
@@ -194,6 +194,7 @@ void weather_task(){
         }
 
 #endif
+*/
 		if(external_board_connected)
 		{
 			bmp180_data_readout(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
@@ -225,10 +226,10 @@ void weather_task(){
 
 		Task_sleep(1000);
 
-
+/*
 #ifdef FLASH_ENABLED
         log_weather(&weather_data);
 #endif
-	}
+*/	}
 
 }

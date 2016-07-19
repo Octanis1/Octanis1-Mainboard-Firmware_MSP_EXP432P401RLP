@@ -54,14 +54,13 @@ bool log_read_mavlink_item_list(mission_item_list_t * item_list, uint32_t * time
 
 	uint16_t i = 0;
 	size_t entry_len = 0;
-	uint32_t addr = FLASH_BLOCK_SIZE;
 	uint32_t next_entry = 0;
 	uint8_t buf[LOG_ENTRY_DATA_LEN];
 	bool ret = 0;
 	uint32_t array_l = 0;
 	uint32_t name_sz = sizeof(name);
 
-	ret = log_read_entry(addr, buf, &entry_len, &next_entry);
+	ret = log_read_last_mav_entry(buf, &entry_len, &next_entry);
 	if (ret == false)
 		return ret;
 
@@ -130,7 +129,7 @@ void log_write_mavlink_item_list(void)
     for(i=0; i<count; i++)
         log_serialize_mavlink_item(ctx, mav_list[i]);
 
-    log_entry_write_to_flash();
+    log_mav_write_to_flash();
 }
 
 void log_write_navigation_status(void)

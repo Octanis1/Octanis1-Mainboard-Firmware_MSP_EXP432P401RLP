@@ -72,6 +72,8 @@ float navigation_degree_to_rad(float degree);
 
 void navigation_change_gain(char pid, char type, float gain);
 
+void navigation_restore_mission_items(mission_item_list_t item_list);
+
 //"Main" task of the file
 void navigation_task();
 

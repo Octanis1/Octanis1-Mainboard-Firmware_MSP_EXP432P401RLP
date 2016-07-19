@@ -26,7 +26,7 @@ LOG_INTERNAL void _log_flash_write(uint32_t addr, void *data, size_t len);
 LOG_INTERNAL bool _log_backup_table_get_last(uint32_t *addr);
 LOG_INTERNAL bool _log_seek_end(uint32_t base_addr, uint32_t *end_addr, uint8_t *buf, size_t len);
 LOG_INTERNAL void _log_position_backup(struct logger *l);
-LOG_INTERNAL void _log_seek_last_mav_entry(uint32_t* end_addr);
+LOG_INTERNAL void _log_seek_last_mav_entry();
 LOG_INTERNAL uint32_t _log_get_timestamp(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry);
 LOG_INTERNAL void _log_mav_write_to_flash(struct logger *l);
 
