@@ -245,7 +245,8 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 	COMM_MAV_RESULT mav_result = NO_ANSWER; // should be the return value of every external function that handles
 							// 	a mavlink message, and set to 'REPLY_TO_SENDER' if it wants to send an answer.
 
-	serial_printf(cli_stdout, "mavlink msg arrived in mailbox: ID=%d\r\n", msg->msgid);
+	if(src_channel == CHANNEL_LORA)
+		serial_printf(cli_stdout, "LoRa msg arrived in mailbox: ID=%d\r\n", msg->msgid);
 
 
 	switch(msg->msgid){

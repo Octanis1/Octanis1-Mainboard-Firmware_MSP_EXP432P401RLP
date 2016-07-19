@@ -115,7 +115,7 @@ uint16_t readEpsReg(uint8_t reg)
 
 	if (!ret) {
 		iError = -1;
-		serial_printf(cli_stdout, "transaction failed %d \r\n",ret);
+		serial_printf(cli_stdout, "EPS transaction failed %d \r\n",ret);
 
 	}else{
 		iError = 0;
