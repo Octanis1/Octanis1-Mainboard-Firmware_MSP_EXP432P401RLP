@@ -23,6 +23,9 @@ typedef struct _mission_item_list_t{
 	uint16_t count; //total number of mission items stored
 } mission_item_list_t;
 
+MAV_RESULT navigation_halt_resume(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg);
+COMM_MAV_RESULT navigation_arm_disarm(COMM_MAV_MSG_TARGET *target, mavlink_heartbeat_t* sbc_heartbeat, mavlink_message_t *answer_msg, float* arm_disarm);
+
 COMM_MAV_RESULT navigation_rx_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg);
 COMM_MAV_RESULT navigation_rx_mission_items_start(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg);
 

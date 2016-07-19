@@ -72,6 +72,8 @@ struct bno055_t my_bno055;
 
 s32 imu_init() //function to be called before starting the imu task.
 {
+	//TODO: verify correct axis alignment!
+
 	/* Variable used to return value of
 	communication routine*/
 	s32 comres = ERROR;
@@ -137,8 +139,8 @@ s8 bno055_get_heading(double *d_euler_data_h, double *d_euler_data_p, double *d_
 	/*	API used to read Euler data output as double  - degree and radians
 		float functions also available in the BNO055 API */
 	comres += bno055_convert_double_euler_h_deg(d_euler_data_h);
-//	comres += bno055_convert_double_euler_r_deg(d_euler_data_r);
-//	comres += bno055_convert_double_euler_p_deg(d_euler_data_p);
+	comres += bno055_convert_double_euler_r_deg(d_euler_data_r);
+	comres += bno055_convert_double_euler_p_deg(d_euler_data_p);
 
 	return comres;
 }

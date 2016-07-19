@@ -12,9 +12,7 @@
 #include "../peripherals/hal/i2c_helper.h"
 #include "eps.h"
 #include "cli.h"
-
-
-
+#include "../peripherals/comm.h"
 
 // define module states
 #define OFF	0
@@ -50,6 +48,28 @@ void eps_init()
 	GPIO_enableInt(Board_EPS_ALIVE_REQ);
 }
 
+COMM_FRAME* eps_pack_mavlink_battery_status()
+{
+	// Initialize the message buffer
+	static COMM_FRAME frame;
+
+	static uint16_t vbat[10] = {UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX};
+	vbat[0] = rover_status_eps.v_bat;
+	int32_t current_consumed = -1; //Consumed charge, in milliampere hours (1 = 1 mAh), -1: autopilot does not provide mAh consumption estimate
+	int16_t current_battery = rover_status_eps.i_out; //Battery current, in 10*milliamperes (1 = 10 milliampere), -1: autopilot does not measure the current
+	int32_t energy_consumed = -1;  //Consumed energy, in 100*Joules (intergrated U*I*dt) (1 = 100 Joule), -1: autopilot does not provide energy consumption estimate
+	int8_t battery_remaining = (rover_status_eps.v_bat - 3000)/11;	// Remaining battery energy: (0%: 0, 100%: 100), -1: autopilot does not estimate the remaining battery
+
+	mavlink_msg_battery_status_pack(mavlink_system.sysid, MAV_COMP_ID_SYSTEM_CONTROL, &(frame.mavlink_message),
+		0, MAV_BATTERY_FUNCTION_ALL, MAV_BATTERY_TYPE_LION, UINT16_MAX, vbat, current_battery, current_consumed, energy_consumed, battery_remaining);
+
+	//todo: correct battery temperature!
+
+	return &frame;
+}
+
+
+
 uint8_t sendEpsCommand(uint8_t command)
 {
 	I2C_Transaction i2cTransaction;
@@ -71,6 +91,37 @@ uint8_t sendEpsCommand(uint8_t command)
 		iError = -1;
 	}else{
 		iError = 0;
+	}
+
+	return readBuffer;
+}
+
+uint16_t readEpsReg(uint8_t reg)
+{
+	I2C_Transaction i2cTransaction;
+
+	int8_t iError = 0;
+	int8_t readBuffer; //TODO: change back to uint16
+
+	i2cTransaction.writeBuf = &reg;
+	i2cTransaction.writeCount = sizeof(reg);
+
+	i2cTransaction.readBuf = &readBuffer;
+	i2cTransaction.readCount = sizeof(readBuffer);
+
+	i2cTransaction.slaveAddress = Board_EPS_I2CADDR;
+
+	int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
+
+	if (!ret) {
+		iError = -1;
+		serial_printf(cli_stdout, "EPS transaction failed %d \r\n",ret);
+
+	}else{
+		iError = 0;
+
+		serial_printf(cli_stdout, "read: %u \r\n",readBuffer);
+
 	}
 
 	return readBuffer;
@@ -148,10 +199,16 @@ void eps_task(){
 		}
 
 		// get status data (TODO: do correct conversion)
-		rover_status_eps.v_bat = (uint16_t)((float)sendEpsCommand(V_BAT)*7.026+2582); //<-- flight version Payload1 calibrated value;  was set to: (float)sendEpsCommand(V_BAT)*6.67+2500)
-		rover_status_eps.v_solar = (uint16_t)((float)sendEpsCommand(V_SC)*29.23); //flight version was wrongly *27.5, should have been 29.23 for 1.2M
-		rover_status_eps.i_in = (uint16_t)((float)sendEpsCommand(I_IN)*1.19); //
-		rover_status_eps.i_out = (uint16_t)((float)sendEpsCommand(I_OUT)*4.76);// depends on current sense resistor on eps!
+		rover_status_eps.v_bat = (uint16_t)((float)readEpsReg(V_BAT)*7.026+2582); //<-- flight version Payload1 calibrated value;  was set to: (float)sendEpsCommand(V_BAT)*6.67+2500)
+		rover_status_eps.v_solar = (uint16_t)((float)readEpsReg(V_SC)*29.23); //flight version was wrongly *27.5, should have been 29.23 for 1.2M
+		rover_status_eps.i_in = (uint16_t)((float)readEpsReg(I_IN)*1.19); //
+		rover_status_eps.i_out = (uint16_t)((float)readEpsReg(I_OUT)*4.76);// depends on current sense resistor on eps!
+
+#ifdef MAVLINK_ON_UART0_ENABLED
+		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_SYSTEM_CONTROL);
+#endif
+		comm_mavlink_broadcast(eps_pack_mavlink_battery_status());
+
 
 
 		Task_sleep(500);

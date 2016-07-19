@@ -50,13 +50,16 @@
 #define VERSION_1
 #define FLASH_ENABLED 1
 
-//#define EPS_ENABLED 1
+
 //#define LORA_ENABLED 1
+//#define EPS_ENABLED 1
 //#define BLE_ENABLED 1
 #define MAVLINK_ON_UART0_ENABLED 1
+//#define MAVLINK_ON_LORA_ENABLED 1 //for verbose lora outputs
 //#define ROCKBLOCK_ENABLED 1
 //#define UARTCAM_ENABLED 1
 //#define GSM_ENABLED 1
+//#define USE_ONBOARD_BNO055 1 //in contrast to just decoding incoming mavlink attitude messages.
 
 //#define USE_ULTRASONIC 1
 

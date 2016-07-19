@@ -8,6 +8,10 @@
 #ifndef FW_PERIPHERALS_IMU_H_
 #define FW_PERIPHERALS_IMU_H_
 
+#include "../lib/mavlink/common/mavlink.h"
+
+//to externally set the attitude information from incoming mavlink message
+void imu_update_attitude_from_mavlink(mavlink_message_t* msg);
 
 // pitch Euler data in 100 degrees
 int16_t imu_get_pitch();
@@ -29,6 +33,7 @@ int16_t imu_get_roll();
 // return IMU calib status
 uint8_t imu_get_calib_status();
 
+float deg2rad(float deg);
 
 void imu_task();
 

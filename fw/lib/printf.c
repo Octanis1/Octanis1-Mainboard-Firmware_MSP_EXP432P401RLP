@@ -90,8 +90,8 @@ static int i2a (int num, char * bf)
     return n;
     }
 
-static int a2d(char ch)
-    {
+int a2d(char ch)
+{
     if (ch>='0' && ch<='9')
         return ch-'0';
     else if (ch>='a' && ch<='f')
@@ -99,7 +99,7 @@ static int a2d(char ch)
     else if (ch>='A' && ch<='F')
         return ch-'A'+10;
     else return -1;
-    }
+}
 
 char a2i(char ch, char** src,int base,int* nump)
 {

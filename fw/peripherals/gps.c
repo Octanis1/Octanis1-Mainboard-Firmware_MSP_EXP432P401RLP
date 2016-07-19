@@ -143,7 +143,7 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 
 	// Pack the message
 	mavlink_msg_gps_raw_int_pack(mavlink_system.sysid, MAV_COMP_ID_GPS, &(frame.mavlink_message),
-		usec, gps_get_fix_quality(), lat, lon, alt, gps_get_hdop(), gps_get_vdop(), //TODO: change back 2nd argument to gps_get_fix_type() or make it conform to mavlink standard
+		usec, gps_get_fix_type(), lat, lon, alt, gps_get_hdop(), gps_get_vdop(), //TODO: change back 2nd argument to gps_get_fix_type() or make it conform to mavlink standard
 		(uint16_t)gps_get_int_speed(), cog, (uint8_t)gps_get_satellites_tracked());
 	return &frame;
 }
@@ -198,12 +198,15 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 //		serial_printf(cli_stdout, "dgps_age:%d\n\r", gps_get_hdop());
 
 		ublox_6_close();
-		Task_sleep(1000);
-
-#ifdef MAVLINK_ON_UART0_ENABLED
-	comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
-	comm_mavlink_broadcast(gps_pack_mavlink_raw_int());
+#ifdef MAVLINK_ON_LORA_ENABLED
+		comm_set_tx_flag(CHANNEL_LORA, MAV_COMP_ID_GPS);
 #endif
+#ifdef MAVLINK_ON_UART0_ENABLED
+		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
+#endif
+		comm_mavlink_broadcast(gps_pack_mavlink_raw_int());
+
+		Task_sleep(50);
 
 
 	}

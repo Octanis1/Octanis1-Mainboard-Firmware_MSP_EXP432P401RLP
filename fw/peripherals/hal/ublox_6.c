@@ -2,10 +2,10 @@
 #include "ublox_6.h"
 
 
-static char rxBuffer[UBLOX_6_NMEABUFFER_SIZE];
+static char ublox_rxBuffer[UBLOX_6_NMEABUFFER_SIZE];
 
 
-static UART_Handle uart;
+static UART_Handle ublox_uart;
 static UART_Params uartParams;
 
 int ublox_6_open(){
@@ -21,10 +21,14 @@ int ublox_6_open(){
 	//uartParams.readTimeout = 10;
 	uartParams.dataLength = UART_LEN_8;
 
-	//Correct port for the mainboard
-	uart = UART_open(Board_UART1_GPS, &uartParams);
+#ifdef LORA_ENABLED
+	Task_sleep(30000); //To avoid crosstalk between LoRa and GPS UART (FIXME: this is an ugly workaround...)
+#endif
 
-		if (uart == NULL) {
+	//Correct port for the mainboard
+	ublox_uart = UART_open(Board_UART1_GPS, &uartParams);
+
+		if (ublox_uart == NULL) {
 			return 0;
 		}else{
 			return 1;
@@ -35,7 +39,7 @@ int ublox_6_open(){
 
 void ublox_6_close(){
 
-	UART_close(uart);
+	UART_close(ublox_uart);
 
 }
 
@@ -44,12 +48,12 @@ void ublox_6_close(){
 char * ublox_6_read(){
 
 //	int i=0;
-	UART_read(uart, rxBuffer, sizeof(rxBuffer));
+	UART_read(ublox_uart, ublox_rxBuffer, sizeof(ublox_rxBuffer));
 
-//	for(i=0;rxBuffer[i]!='\0';i++){
-//		System_printf("%c \n", rxBuffer[i]);
+//	for(i=0;ublox_rxBuffer[i]!='\0';i++){
+//		System_printf("%c \n", ublox_rxBuffer[i]);
 	    	/* SysMin will only print to the console when you call flush or exit */
 //	    System_flush();
 //	}
-	return rxBuffer;
+	return ublox_rxBuffer;
 }
