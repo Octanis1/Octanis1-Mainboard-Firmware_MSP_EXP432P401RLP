@@ -120,7 +120,7 @@ void comm_send_mavlink_over_lora(uint8_t* txdata, uint16_t stringlength)
 
 void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 
-	static uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+	static uint8_t buf[MAVLINK_MAX_PACKET_LEN + 5]; //todo: +5 is to test if we need some more space. remove if not helpful.
 	static uint16_t mavlink_msg_len;
 
 	// Copy the message to the send buffer and send

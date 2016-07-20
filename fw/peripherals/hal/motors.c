@@ -219,7 +219,8 @@ void motors_wheels_stop()
 
 	GPIO_write(Board_M5678_CURR_SENS_EN, 0); //turn current sensor off
 	GPIO_write(Board_M5678_ON, 0); //turn h-bridge off
-	eps_switch_module(M11V_OFF); // turn supply off
+
+//	eps_switch_module(M11V_OFF); // turn supply off TODO: as we connect the lidar motor to 11V, we dont turn it off.
 
 }
 

@@ -13,6 +13,7 @@
 #include "eps.h"
 #include "cli.h"
 #include "../peripherals/comm.h"
+#include <ti/sysbios/utils/Load.h>
 
 // define module states
 #define OFF	0
@@ -46,6 +47,33 @@ void eps_init()
 
 	i2c_helper_init_handle();
 	GPIO_enableInt(Board_EPS_ALIVE_REQ);
+}
+
+const static uint32_t onboard_control_sensors_present = 	MAV_SYS_STATUS_SENSOR_3D_GYRO +
+														MAV_SYS_STATUS_SENSOR_3D_ACCEL+
+														MAV_SYS_STATUS_SENSOR_3D_MAG +
+														MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE +
+														MAV_SYS_STATUS_SENSOR_GPS +
+														MAV_SYS_STATUS_SENSOR_YAW_POSITION +
+														MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS;
+
+COMM_FRAME* eps_pack_mavlink_sys_status()
+{
+	// Initialize the message buffer
+	static COMM_FRAME frame;
+
+	uint32_t onboard_control_sensors_enabled = onboard_control_sensors_present; //TODO
+	uint32_t onboard_control_sensors_health = onboard_control_sensors_present; //TODO
+	uint16_t load = (uint16_t)10*Load_getCPULoad(); //Maximum usage in percent of the mainloop time, (0%: 0, 100%: 1000) should be always below 1000
+	int8_t battery_remaining = (rover_status_eps.v_bat - 3000)/11;	// Remaining battery energy: (0%: 0, 100%: 100), -1: autopilot does not estimate the remaining battery
+	uint16_t drop_rate_comm=0; //Communication drops in percent, (0%: 0, 100%: 10'000), (UART, I2C, SPI, CAN), dropped packets on all links (packets that were corrupted on reception on the MAV)
+	uint16_t errors_comm=0; //Communication errors (UART, I2C, SPI, CAN), dropped packets on all links (packets that were corrupted on reception on the MAV)
+
+	mavlink_msg_sys_status_pack(mavlink_system.sysid, MAV_COMP_ID_SYSTEM_CONTROL, &(frame.mavlink_message),
+		   onboard_control_sensors_present, onboard_control_sensors_enabled, onboard_control_sensors_health, load,
+		   rover_status_eps.v_bat, rover_status_eps.i_out, battery_remaining, drop_rate_comm, errors_comm, 0,0,0,0);
+
+	return &frame;
 }
 
 COMM_FRAME* eps_pack_mavlink_battery_status()
@@ -89,6 +117,7 @@ uint8_t sendEpsCommand(uint8_t command)
 
 	if (!ret) {
 		iError = -1;
+
 	}else{
 		iError = 0;
 	}
@@ -101,7 +130,7 @@ uint16_t readEpsReg(uint8_t reg)
 	I2C_Transaction i2cTransaction;
 
 	int8_t iError = 0;
-	int8_t readBuffer; //TODO: change back to uint16
+	int16_t readBuffer;
 
 	i2cTransaction.writeBuf = &reg;
 	i2cTransaction.writeCount = sizeof(reg);
@@ -115,12 +144,13 @@ uint16_t readEpsReg(uint8_t reg)
 
 	if (!ret) {
 		iError = -1;
-		serial_printf(cli_stdout, "EPS transaction failed %d \r\n",ret);
+		return -1;
+//		serial_printf(cli_stdout, "EPS transaction failed %d \r\n",ret);
 
 	}else{
 		iError = 0;
 
-		serial_printf(cli_stdout, "read: %u \r\n",readBuffer);
+//		serial_printf(cli_stdout, "read: %u \r\n",readBuffer);
 
 	}
 
@@ -144,7 +174,6 @@ uint8_t eps_switch_module(uint8_t command) //use commands defined in eps.h
 				return OFF;};
 			//else try again or abandon after 3 times
 		}
-		serial_printf(cli_stdout, "EPS comm err \r\n",0);
 		return OFF; // = error = 0
 	}
 	else //turn off a module
@@ -199,15 +228,20 @@ void eps_task(){
 		}
 
 		// get status data (TODO: do correct conversion)
-		rover_status_eps.v_bat = (uint16_t)((float)readEpsReg(V_BAT)*7.026+2582); //<-- flight version Payload1 calibrated value;  was set to: (float)sendEpsCommand(V_BAT)*6.67+2500)
-		rover_status_eps.v_solar = (uint16_t)((float)readEpsReg(V_SC)*29.23); //flight version was wrongly *27.5, should have been 29.23 for 1.2M
-		rover_status_eps.i_in = (uint16_t)((float)readEpsReg(I_IN)*1.19); //
-		rover_status_eps.i_out = (uint16_t)((float)readEpsReg(I_OUT)*4.76);// depends on current sense resistor on eps!
+		rover_status_eps.v_bat = readEpsReg(V_BAT);
+		rover_status_eps.v_solar = readEpsReg(V_SC);
+		rover_status_eps.i_in = readEpsReg(I_IN);
+		rover_status_eps.i_out = readEpsReg(I_OUT);
 
 #ifdef MAVLINK_ON_UART0_ENABLED
 		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_SYSTEM_CONTROL);
 #endif
 		comm_mavlink_broadcast(eps_pack_mavlink_battery_status());
+
+#ifdef MAVLINK_ON_UART0_ENABLED
+		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_SYSTEM_CONTROL);
+#endif
+		comm_mavlink_broadcast(eps_pack_mavlink_sys_status());
 
 
 

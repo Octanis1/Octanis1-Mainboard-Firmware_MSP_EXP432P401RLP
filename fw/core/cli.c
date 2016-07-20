@@ -49,7 +49,7 @@ static void cli_uart_init(UART_SerialDevice *dev) {
     uartParams.readReturnMode = UART_RETURN_FULL;
     uartParams.writeMode = UART_MODE_BLOCKING;
     uartParams.readEcho = UART_ECHO_OFF;
-    uartParams.baudRate = 9600;
+    uartParams.baudRate = 9600;//115200;
     uart = UART_open(CLI_UART, &uartParams);
 
     if (uart == NULL) {
