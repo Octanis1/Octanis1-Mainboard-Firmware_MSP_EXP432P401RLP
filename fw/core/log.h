@@ -13,16 +13,14 @@
 #include "../lib/cmp/cmp.h"
 #include "../lib/cmp_mem_access/cmp_mem_access.h"
 
-#define LOG_ENTRY_HEADER_LEN    2 // length byte + crc8
-#define LOG_ENTRY_DATA_LEN      512
+#define LOG_ENTRY_HEADER_LEN    3 // length byte + crc8
+#define LOG_ENTRY_DATA_LEN      1124
 
 /* Moved the struct in the .h, not sure if necessary */
-/*Biggest block is currently weather, with
- * 6*4 bytes int (6*5)
- * a 3 char ID name (gps, imu, wea, ...) (+5)
- * 4 bytes timestamp (+5)
- * a crc8 (+2)
- * So the buffer need to be at least 42-bytes long*/
+/*Biggest block is currently the mavlink waypoints:
+ * 17 bytes of "header"
+ * and up to 21*52 = 1092 bytes of items
+ * so 1109 bytes*/
 struct logger {
     // entry buffer
     cmp_ctx_t ctx;

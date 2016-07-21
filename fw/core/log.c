@@ -6,7 +6,7 @@
 
 /*
 Logging format:
-- 1byte: length = n
+- 2byte: length = n
 - 1byte: crc8
 - nbytes: log data
 
@@ -62,8 +62,9 @@ LOG_INTERNAL void _log_entry_write_to_flash(struct logger *l)
 {
     size_t len = cmp_mem_access_get_pos(&l->cma);
     uint8_t crc = crc8(0, (unsigned char *)&l->buffer[LOG_ENTRY_HEADER_LEN], len);
-    l->buffer[0] = len;
-    l->buffer[1] = crc;
+    l->buffer[0] = (uint8_t)len; //LSB
+    l->buffer[1] = (uint8_t)(len>>8); //MSB
+    l->buffer[2] = crc;
     len += LOG_ENTRY_HEADER_LEN;
     _log_flash_write(l->flash_write_pos, l->buffer, len);
     l->flash_write_pos += len;
@@ -74,14 +75,15 @@ LOG_INTERNAL void _log_mav_write_to_flash(struct logger *l)
 {
     size_t len = cmp_mem_access_get_pos(&l->cma);
     uint8_t crc = crc8(0, (unsigned char *)&l->buffer[LOG_ENTRY_HEADER_LEN], len);
-    l->buffer[0] = len;
-    l->buffer[1] = crc;
+    l->buffer[0] = (uint8_t)len; //LSB
+    l->buffer[1] = (uint8_t)(len>>8); //MSB
+    l->buffer[2] = crc;
     len += LOG_ENTRY_HEADER_LEN;
     _log_flash_write(l->mav_write_pos, l->buffer, len);
-    if(l->flash_write_pos == FLASH_BLOCK_SIZE)
-    	l->flash_write_pos = 2*FLASH_BLOCK_SIZE;
+    if(l->mav_write_pos == FLASH_BLOCK_SIZE)
+    	l->mav_write_pos = 2*FLASH_BLOCK_SIZE;
     else
-    	l->flash_write_pos = FLASH_BLOCK_SIZE;
+    	l->mav_write_pos = FLASH_BLOCK_SIZE;
 
     logger_unlock();
 }
@@ -104,11 +106,11 @@ void log_mav_write_to_flash(void)
 bool log_read_entry(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry)
 {
     int ret;
-    uint8_t header[2];
+    uint8_t header[LOG_ENTRY_HEADER_LEN];
     logger_lock();
-    ret = flash_read(addr, header, 2);
-    size_t len = header[0];
-    uint8_t crc = header[1];
+    ret = flash_read(addr, header, LOG_ENTRY_HEADER_LEN);
+    size_t len = ((uint16_t)header[1]<<8) | header[0];
+    uint8_t crc = header[2];
     if (ret == 0 && len > 0) {
         ret = flash_read(addr + LOG_ENTRY_HEADER_LEN, buf, len);
     }
