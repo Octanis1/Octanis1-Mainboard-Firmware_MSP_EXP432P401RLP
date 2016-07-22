@@ -54,7 +54,7 @@ typedef struct _navigation_status{
 	float angle_to_target; // [-180, 180]. Positive means target is located to the right
 	float max_dist_obs;
 	int32_t motor_values[2]; // current motor speed
-	uint8_t angle_valid;
+	bool position_valid; // defines if GPS and heading angle are valid. if false, the rover shall not drive to target
 	enum _current_state{
 		STOP=0,
 		BYPASS,
@@ -64,6 +64,7 @@ typedef struct _navigation_status{
 		SPACE_NEEDED,
 	} current_state;
 	char halt;
+	char cmd_armed_disarmed; // received command to arm (1) or disarm (0)
 } navigation_status_t;
 
 static navigation_status_t navigation_status;
@@ -169,48 +170,41 @@ MAV_RESULT navigation_halt_resume(COMM_MAV_MSG_TARGET *target, mavlink_message_t
 }
 
 /* This function decides if the SBC should be armed or disarmed, depending on the current waypoint and state of this system.
- * Shall be called upon reception of a heartbeat from the SBC.
+ * Shall be in the navigation task
  */
-COMM_MAV_RESULT navigation_arm_disarm(COMM_MAV_MSG_TARGET *target, mavlink_heartbeat_t* sbc_heartbeat, mavlink_message_t *answer_msg, float* arm_disarm)
+void navigation_arm_disarm()
 {
-	(*arm_disarm) = -1;
-	mavlink_heartbeat_t mainboard_heartbeat = comm_get_mavlink_heartbeat();
-	if((sbc_heartbeat)->base_mode == MAV_STATE_BOOT)
+	if(navigation_status.position_valid)
 	{
-		// SBC is not yet running!
-		return NO_ANSWER;
-	}
-	//if we are only/again on the way to waypoint "HOME", SBPC shall be disarmed. Also if mainboard is disarmed
-	else if((mission_items.current_index == 0 || mainboard_heartbeat.base_mode == MAV_STATE_STANDBY)
-			&& sbc_heartbeat->base_mode == MAV_STATE_ACTIVE)
-	{
-		*arm_disarm = 0;
-		// this function prepares a DISARM command to be sent to the SBC.
-		mavlink_msg_command_long_pack(mavlink_system.sysid, target->component, answer_msg,
-		SBC_SYSTEM_ID, target->component, MAV_CMD_COMPONENT_ARM_DISARM, 0, *arm_disarm, 0, 0, 0, 0, 0, 0);
-
-
-		target->system = SBC_SYSTEM_ID; //target system of the to be forwarded message.
-
-		return FORWARD_MESSAGE;
-	}
-	//if we are ready to drive on waypoints other than "HOME", SBPC shall be armed.
-	else if((mission_items.current_index > 0 || mainboard_heartbeat.base_mode == MAV_STATE_ACTIVE) && sbc_heartbeat->base_mode == MAV_STATE_ACTIVE)
-	{
-		*arm_disarm = 1;
-		// this function prepares an ARM command to be sent to the SBC.
-		mavlink_msg_command_long_pack(mavlink_system.sysid, target->component, answer_msg,
-		SBC_SYSTEM_ID, target->component, MAV_CMD_COMPONENT_ARM_DISARM, 0, *arm_disarm, 0, 0, 0, 0, 0, 0);
-
-
-		target->system = SBC_SYSTEM_ID; //target system of the to be forwarded message.
-
-		return FORWARD_MESSAGE;
+		// condition to arm mainboard: know a valid position. TODO: add more conditions (EPS motor on state, etc...)
+		if(navigation_status.cmd_armed_disarmed == 1)
+		{
+			comm_arm_mainboard();
+			//condition to arm SBC:
+			if(comm_sbc_running()==1 && mission_items.current_index > 0)
+			{
+				if(comm_sbc_armed() == 0)
+					comm_arm_disarm_subsystems(1);
+			}
+		}
+		else
+		{
+			comm_arm_disarm_subsystems(0);
+			comm_disarm_mainboard();
+		}
 	}
 	else
 	{
-		return NO_ANSWER; //anyway APM planner uses the SET_MODE command, which requires no confirmation.
+		comm_arm_disarm_subsystems(0);
+		comm_disarm_mainboard();
 	}
+}
+
+
+// This function stores the information that "ARM/DISARM" has been received.
+void navigation_rxcmd_arm_disarm(float arm_disarm)
+{
+	navigation_status.cmd_armed_disarmed = (arm_disarm==1);
 }
 
 
@@ -460,7 +454,7 @@ void navigation_update_position()
 		motors_struts_get_position();
 	}
 
-	navigation_status.angle_valid = (imu_get_calib_status() >= MIN_IMU_CALIB_STATUS);
+	navigation_status.position_valid = imu_valid() && gps_valid();
 
 	// recalculate heading angle
 	navigation_status.heading_rover = imu_get_fheading();
@@ -493,7 +487,6 @@ void navigation_update_state()
     int32_t right_s = 0;
     int32_t front1_s = 0;
     int32_t front2_s = 0;
-    int i = 0;
 
     ultrasonic_get_distance(distance_values);
     smallest = ultrasonic_get_smallest(distance_values, N_ULTRASONIC_SENSORS);
@@ -553,22 +546,13 @@ void navigation_update_state()
         //normal operation: continue on mission items
 		if(mission_items.item[mission_items.current_index].current)
 		{
-			// Only go to target if heading angle is reliable AND
-
-			if(navigation_status.angle_valid == 1){
-
+			// Only go to target if mb is armed and rover must go to home OR sbc is armed and ready to record
+			if(comm_mainboard_armed() == 1 && (mission_items.current_index == 0 || comm_sbc_armed() == 1)){
 				navigation_status.current_state = GO_TO_TARGET;
 			}
-			else if(navigation_status.angle_valid == 0){
-				//serial_printf(cli_stdout, "Calibrate IMU (status: %d/9)\n",imu_get_calib_status());
-				for (i = 0; i<(7-imu_get_calib_status());i++) //blink shorter for better calibration
-				{
-					GPIO_toggle(Board_LED_RED);
-					Task_sleep(50);
-					GPIO_toggle(Board_LED_RED);
-					Task_sleep(50);
-				}
-				GPIO_write(Board_LED_RED,0);
+			else
+			{
+				navigation_status.current_state = STOP;
 			}
 		}
 
@@ -609,12 +593,9 @@ void navigation_move()
 {
 	static int32_t lspeed, rspeed;
 	float angular = 0;
-	mavlink_heartbeat_t hb = comm_get_mavlink_heartbeat();
 
-	//only move if ARMED and not on halt AND the SBC is ACTIVE
-	// 	 OR if this is waypoint "home" (--> the first to be reached).
-	if(navigation_status.halt == 0 && (hb.system_status == MAV_STATE_ACTIVE)
-			&& (comm_sbc_still_active() || (mission_items.current_index == 0)))
+	//only move if not on halt AND state = go_to_target
+	if(navigation_status.halt == 0)
 	{
 		if(navigation_status.current_state == GO_TO_TARGET)
 		{
@@ -706,6 +687,7 @@ void navigation_init()
 	navigation_status.current_state = STOP;
 	navigation_status.max_dist_obs = OBSTACLE_MAX_DIST;
 	navigation_status.halt = 0;
+	navigation_status.position_valid = false;
 	GPIO_write(Board_OBS_A_EN, 1);
 
 	mission_items.count = 0;
@@ -722,6 +704,7 @@ void navigation_task()
 		navigation_update_current_target();
 		navigation_update_position();
 		navigation_update_state();
+		navigation_arm_disarm();
 		navigation_move();
 
 

@@ -19,6 +19,8 @@
 #include "hal/time_since_boot.h"
 
 #define M_PI 3.14159265358979323846
+#define T_IMU_TASK 		200
+#define T_IMU_INVALID	5000 //time after which the rover shall consider imu data to be invalid.
 
 static struct _imu_data {
 	int16_t accel_x;
@@ -28,7 +30,17 @@ static struct _imu_data {
 	double d_euler_data_h;
 	double d_euler_data_r;
 	unsigned char calib_status;
+	uint32_t t_since_last_imu_update_ms; // is the rover already/still receiving valid IMU information?
 } imu_data;
+
+bool imu_valid()
+{
+#ifdef USE_ONBOARD_BNO055
+	return (imu_data.t_since_last_imu_update_ms < T_IMU_INVALID) && imu_data.calib_status > 6;
+#else
+	return (imu_data.t_since_last_imu_update_ms < T_IMU_INVALID);
+#endif
+}
 
 // contains the data from an external IMU (f.ex. the one connected to the SBC)
 static mavlink_attitude_t imu_attitude;
@@ -54,7 +66,11 @@ int16_t imu_get_roll(){
 
 // return IMU calib status
 uint8_t imu_get_calib_status(){
+#ifdef USE_ONBOARD_BNO055
 	return (uint8_t)(imu_data.calib_status);
+#else
+	return 9;
+#endif
 }
 
 // linear acceleration data in 100 m/s^2
@@ -81,6 +97,8 @@ void imu_update_attitude_from_mavlink(mavlink_message_t* msg){
 	imu_data.d_euler_data_h = -(double)(180/M_PI * imu_attitude.yaw);
 	if(imu_data.d_euler_data_h < 0.0)
 		imu_data.d_euler_data_h = imu_data.d_euler_data_h + 360.0;
+
+	imu_data.t_since_last_imu_update_ms = 0;
 #endif
 }
 
@@ -124,7 +142,8 @@ float deg2rad(float deg)
 }
 
 void imu_task(){
-	/************* IMU STUFF moved here *************/
+	imu_data.t_since_last_imu_update_ms = T_IMU_INVALID;
+
 	i2c_helper_init_handle();
 
 	Task_sleep(500);
@@ -138,7 +157,9 @@ void imu_task(){
 	while(1){
 #ifdef USE_ONBOARD_BNO055
 		imu_data.calib_status=bno055_check_calibration_status(); //this line alone lets the i2c bus crash
-		bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r)); //this line alone lets the i2c bus crash
+		if(bno055_get_heading(&(imu_data.d_euler_data_h), &(imu_data.d_euler_data_p), &(imu_data.d_euler_data_r)) == SUCCESS) //this line alone lets the i2c bus crash
+			imu_data.t_since_last_imu_update_ms = 0;
+
 //		bno055_get_accel(&(imu_data.accel_x), &(imu_data.accel_y), &(imu_data.accel_z)); //commenting out this line alone still lets the i2c bus be blocked
 #endif
 
@@ -199,7 +220,9 @@ void imu_task(){
 //		if(!(i_since_last_measurement++ % 20))
 //		motors_struts_get_position();
 
-		Task_sleep(200);
+		Task_sleep(T_IMU_TASK);
+		imu_data.t_since_last_imu_update_ms += T_IMU_TASK;
+
 
 	}
 

@@ -12,6 +12,8 @@
 
 extern SerialDevice *cli_stdout;
 
+uint16_t cli_mavlink_dropcount();
+
 // init must be called by every task using serial_printf before calling it for the first time.
 void cli_init();
 

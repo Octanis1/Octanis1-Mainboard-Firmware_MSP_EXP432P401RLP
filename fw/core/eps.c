@@ -14,6 +14,7 @@
 #include "cli.h"
 #include "../peripherals/comm.h"
 #include <ti/sysbios/utils/Load.h>
+#include <math.h>
 
 // define module states
 #define OFF	0
@@ -30,6 +31,7 @@ static struct _rover_status_eps {
 	uint16_t v_solar;
 	uint16_t i_in;
 	uint16_t i_out;
+	int16_t t_bat;
 } rover_status_eps;
 
 static uint8_t give_life_sign;
@@ -66,7 +68,7 @@ COMM_FRAME* eps_pack_mavlink_sys_status()
 	uint32_t onboard_control_sensors_health = onboard_control_sensors_present; //TODO
 	uint16_t load = (uint16_t)10*Load_getCPULoad(); //Maximum usage in percent of the mainloop time, (0%: 0, 100%: 1000) should be always below 1000
 	int8_t battery_remaining = (rover_status_eps.v_bat - 3000)/11;	// Remaining battery energy: (0%: 0, 100%: 100), -1: autopilot does not estimate the remaining battery
-	uint16_t drop_rate_comm=0; //Communication drops in percent, (0%: 0, 100%: 10'000), (UART, I2C, SPI, CAN), dropped packets on all links (packets that were corrupted on reception on the MAV)
+	uint16_t drop_rate_comm = cli_mavlink_dropcount(); //Communication drops in percent, (0%: 0, 100%: 10'000), (UART, I2C, SPI, CAN), dropped packets on all links (packets that were corrupted on reception on the MAV)
 	uint16_t errors_comm=0; //Communication errors (UART, I2C, SPI, CAN), dropped packets on all links (packets that were corrupted on reception on the MAV)
 
 	mavlink_msg_sys_status_pack(mavlink_system.sysid, MAV_COMP_ID_SYSTEM_CONTROL, &(frame.mavlink_message),
@@ -144,7 +146,7 @@ uint16_t readEpsReg(uint8_t reg)
 
 	if (!ret) {
 		iError = -1;
-		return -1;
+		return UINT16_MAX;
 //		serial_printf(cli_stdout, "EPS transaction failed %d \r\n",ret);
 
 	}else{
@@ -232,6 +234,20 @@ void eps_task(){
 		rover_status_eps.v_solar = readEpsReg(V_SC);
 		rover_status_eps.i_in = readEpsReg(I_IN);
 		rover_status_eps.i_out = readEpsReg(I_OUT);
+
+		uint16_t R_th = readEpsReg(T_BAT);
+
+		if(R_th != UINT16_MAX)
+		{
+			const static double A = 1.129148e-3;
+			const static double B = 2.34125e-4;
+			const static double C = 8.76741e-8;
+
+			double logR  = log((double)R_th);
+			double logR3 = logR * logR * logR;
+
+			rover_status_eps.t_bat = (int16_t)(100/(A + B * logR + C * logR3 ) - 273.15);
+		}
 
 #ifdef MAVLINK_ON_UART0_ENABLED
 		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_SYSTEM_CONTROL);

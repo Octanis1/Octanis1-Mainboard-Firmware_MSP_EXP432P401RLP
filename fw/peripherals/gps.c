@@ -31,6 +31,12 @@ static struct minmea_sentence_rmc gps_rmc_frame;
 static struct minmea_sentence_gsa gps_gsa_frame; //needed for MAVLINK infos
 static struct timespec gps_last_update;
 
+bool gps_valid()
+{
+	//TODO: wait to get a certain precision
+	return gps_get_lat() != 0;
+}
+
 uint8_t gps_get_fix_quality(){
 	return gps_gga_frame.fix_quality;
 }

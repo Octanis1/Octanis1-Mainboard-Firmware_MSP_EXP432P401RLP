@@ -13,6 +13,9 @@
 //to externally set the attitude information from incoming mavlink message
 void imu_update_attitude_from_mavlink(mavlink_message_t* msg);
 
+//
+bool imu_valid();
+
 // pitch Euler data in 100 degrees
 int16_t imu_get_pitch();
 

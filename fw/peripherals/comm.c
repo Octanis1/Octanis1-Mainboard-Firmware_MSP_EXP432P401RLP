@@ -20,9 +20,13 @@ int comm_tx_slot_flags[MAVLINK_COMM_NUM_BUFFERS][N_TX_SLOT_FLAG_INTS]; // 1-bit 
 
 mavlink_system_t mavlink_system;
 static mavlink_heartbeat_t mavlink_heartbeat;
+mavlink_heartbeat_t comm_get_mavlink_heartbeat(){return mavlink_heartbeat;}
 
-mavlink_heartbeat_t comm_get_mavlink_heartbeat()
-{return mavlink_heartbeat;}
+char comm_mainboard_armed()
+{return mavlink_heartbeat.base_mode == MAV_STATE_ACTIVE;}
+
+void comm_arm_mainboard() {mavlink_heartbeat.base_mode = MAV_STATE_ACTIVE;}
+void comm_disarm_mainboard() {mavlink_heartbeat.base_mode = MAV_STATE_STANDBY;}
 
 // We periodically check if we still get heartbeat messages from the SBC
 static int32_t t_last_sbc_heartbeat;
@@ -32,8 +36,8 @@ static float sbc_last_command_arm; //temporarily stores if the last command was 
 
 char comm_sbc_running(){
 	return t_last_sbc_heartbeat > ((int32_t)Seconds_get() - (int32_t)SBC_HEARTBEAT_TIMEOUT);}
-char comm_sbc_still_active(){
-	return (comm_sbc_running() && sbc_heartbeat.base_mode == MAV_STATE_ACTIVE);}
+char comm_sbc_armed(){
+	return (comm_sbc_running()==1 && sbc_heartbeat.base_mode == MAV_STATE_ACTIVE);}
 
 void comm_mavlink_post_outbox(COMM_CHANNEL channel, COMM_FRAME* frame); //post to mailbox for outgoing messages
 void comm_clear_tx_flag(COMM_CHANNEL channel, int component_id);
@@ -149,6 +153,25 @@ void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 	}
 }
 
+/**********************************************************************************
+ **********************************************************************************
+ *********** Functions relative to MAVlink message processing *********************
+ **********************************************************************************
+ **********************************************************************************
+ */
+
+// currently only sends arm command to SBC:
+void comm_arm_disarm_subsystems(float arm_disarm)
+{
+	COMM_FRAME frame;
+
+	// this function prepares an ARM or DISARM command to be sent to the SBC.
+	mavlink_msg_command_long_pack(mavlink_system.sysid, MAV_COMP_ID_ALL, &(frame.mavlink_message),
+	SBC_SYSTEM_ID, MAV_COMP_ID_ALL, MAV_CMD_COMPONENT_ARM_DISARM, 0, arm_disarm, 0, 0, 0, 0, 0, 0);
+
+	comm_mavlink_post_outbox(CHANNEL_APP_UART, &frame);
+}
+
 COMM_MAV_RESULT comm_process_command(COMM_MAV_MSG_TARGET*  msg_target, mavlink_message_t *msg, mavlink_message_t *answer_msg)
 {	//TODO
 	uint16_t command = mavlink_msg_command_long_get_command(msg);
@@ -178,11 +201,9 @@ COMM_MAV_RESULT comm_process_command(COMM_MAV_MSG_TARGET*  msg_target, mavlink_m
 		case MAV_CMD_COMPONENT_ARM_DISARM: //#400 Arms / Disarms a component --- param1: 1 to arm, 0 to disarm
 			//forward to SBC board, if needed
 			{
-				float arm_disarm = mavlink_msg_command_long_get_param1(msg);
-				if(arm_disarm) mavlink_heartbeat.system_status = MAV_STATE_ACTIVE;
-				else mavlink_heartbeat.system_status = MAV_STATE_STANDBY;
+				navigation_rxcmd_arm_disarm(mavlink_msg_command_long_get_param1(msg));
+				result = MAV_RESULT_ACCEPTED;
 
-				return navigation_arm_disarm(msg_target, &sbc_heartbeat, answer_msg, &sbc_last_command_arm);
 				break;
 			}
 		default:
@@ -195,24 +216,6 @@ COMM_MAV_RESULT comm_process_command(COMM_MAV_MSG_TARGET*  msg_target, mavlink_m
 
 	return REPLY_TO_SENDER;
 }
-
-COMM_MAV_RESULT comm_set_mode(COMM_MAV_MSG_TARGET*  msg_target, mavlink_message_t *msg, mavlink_message_t *answer_msg){
-	MAV_MODE mode = mavlink_msg_set_mode_get_base_mode(msg);
-	mavlink_heartbeat.base_mode = mode;
-
-	if(mode >= MAV_MODE_MANUAL_ARMED)
-	{
-		mavlink_heartbeat.system_status = MAV_STATE_ACTIVE;
-	}
-	else
-	{
-		mavlink_heartbeat.system_status = MAV_STATE_STANDBY;
-	}
-	// send arm message to SBC is done with the following function:
-	return navigation_arm_disarm(msg_target, &sbc_heartbeat, answer_msg, &sbc_last_command_arm);
-}
-
-
 
 //returns true if message target is this system --> you can then continue decoding the message.
 //otherwise it should forward the message to the corresponding target (i.e. EPS, SBC, etc...)
@@ -305,7 +308,15 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 
 			if(comm_mavlink_check_target(&msg_target,msg))
 			{
-				mav_result = comm_set_mode(&msg_target, msg, &(answer_frame.mavlink_message));
+				MAV_MODE mode = mavlink_msg_set_mode_get_base_mode(msg);
+				if(mode >= MAV_MODE_MANUAL_ARMED)
+				{
+					navigation_rxcmd_arm_disarm(1);
+				}
+				else
+				{
+					navigation_rxcmd_arm_disarm(0);
+				}
 			}
 			break;
 		}
