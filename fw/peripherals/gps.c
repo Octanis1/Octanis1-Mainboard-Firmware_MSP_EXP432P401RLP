@@ -29,6 +29,7 @@
 static struct minmea_sentence_gga gps_gga_frame;
 static struct minmea_sentence_rmc gps_rmc_frame;
 static struct minmea_sentence_gsa gps_gsa_frame; //needed for MAVLINK infos
+static struct minmea_sentence_vtg gps_vtg_frame;
 static struct timespec gps_last_update;
 
 bool gps_valid()
@@ -58,15 +59,19 @@ float gps_get_lon(){
 }
 
 float gps_get_speed(){
-	return minmea_tocoord(&gps_rmc_frame.speed);
+	return minmea_tofloat(&gps_rmc_frame.speed);
 }
 
 int32_t gps_get_int_speed(){
-	return (int32_t)(100*minmea_tocoord(&gps_rmc_frame.speed));
+	return (int32_t)(100*minmea_tofloat(&gps_rmc_frame.speed));
 }
 
 float gps_get_course(){
-	return minmea_tocoord(&gps_rmc_frame.course);
+	return minmea_tofloat(&gps_rmc_frame.course);
+}
+
+float gps_get_cog(){
+	return minmea_tofloat(&gps_vtg_frame.true_track_degrees);
 }
 
 float gps_get_altitude(){
@@ -132,7 +137,7 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 	int32_t lat = (int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
 	int32_t lon = (int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
 	int32_t alt = (int32_t)(1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
-	uint16_t cog = (uint16_t)(100.0 * gps_get_course());// Course over ground (NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. If unknown, set to: UINT16_MAX
+	uint16_t cog = (uint16_t)(100.0 * gps_get_cog());// Course over ground (NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. If unknown, set to: UINT16_MAX
 	uint64_t usec = gps_get_last_update_usec();
 	if(usec == 0)
 	{ //no time information in usec is available
@@ -196,6 +201,8 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 				{
 					minmea_parse_gsa(&gps_gsa_frame, nmeaframes);
 				}
+				case MINMEA_SENTENCE_VTG:
+					minmea_parse_vtg(&gps_vtg_frame, nmeaframes);
 			}
 
 			nmeaframes = strtok_r(NULL, "\n", &saveptr1);
