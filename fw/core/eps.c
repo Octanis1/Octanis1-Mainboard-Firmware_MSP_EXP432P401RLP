@@ -31,7 +31,7 @@ static struct _rover_status_eps {
 	uint16_t v_solar;
 	uint16_t i_in;
 	uint16_t i_out;
-	int16_t t_bat;
+	int16_t t_bat; // in 0.01 degrees celsius
 } rover_status_eps;
 
 static uint8_t give_life_sign;
@@ -91,7 +91,7 @@ COMM_FRAME* eps_pack_mavlink_battery_status()
 	int8_t battery_remaining = (rover_status_eps.v_bat - 3000)/11;	// Remaining battery energy: (0%: 0, 100%: 100), -1: autopilot does not estimate the remaining battery
 
 	mavlink_msg_battery_status_pack(mavlink_system.sysid, MAV_COMP_ID_SYSTEM_CONTROL, &(frame.mavlink_message),
-		0, MAV_BATTERY_FUNCTION_ALL, MAV_BATTERY_TYPE_LION, UINT16_MAX, vbat, current_battery, current_consumed, energy_consumed, battery_remaining);
+		0, MAV_BATTERY_FUNCTION_ALL, MAV_BATTERY_TYPE_LION, rover_status_eps.t_bat, vbat, current_battery, current_consumed, energy_consumed, battery_remaining);
 
 	//todo: correct battery temperature!
 
