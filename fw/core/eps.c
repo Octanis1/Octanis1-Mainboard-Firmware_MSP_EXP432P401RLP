@@ -16,6 +16,8 @@
 #include <ti/sysbios/utils/Load.h>
 #include <math.h>
 
+#define HEARTBEAT_TO_MEASUREMENT_RATIO	20 // Heartbeats to EPS are sent every 500ms. Battery status is asked every *ratio* times
+
 // define module states
 #define OFF	0
 #define ON	1
@@ -34,8 +36,6 @@ static struct _rover_status_eps {
 	int16_t t_bat; // in 0.01 degrees celsius
 } rover_status_eps;
 
-static uint8_t give_life_sign;
-
 void eps_init()
 {
 	rover_status_eps.stat3V3_1 = ON;  //GPS is active in the beginning
@@ -48,7 +48,6 @@ void eps_init()
 	rover_status_eps.i_out = 0;
 
 	i2c_helper_init_handle();
-	GPIO_enableInt(Board_EPS_ALIVE_REQ);
 }
 
 const static uint32_t onboard_control_sensors_present = 	MAV_SYS_STATUS_SENSOR_3D_GYRO +
@@ -215,19 +214,15 @@ void eps_task(){
 #endif
 
 #ifdef EPS_ENABLED
+
 	eps_init();
-	give_life_sign = 1;
+	sendEpsCommand(ALIVE);
+
+
 #endif
 	while(1)
 	{
 #ifdef EPS_ENABLED
-
-		// check if we need to confirm that we are alive.
-		if(give_life_sign)
-		{
-			sendEpsCommand(ALIVE);
-			give_life_sign = 0;
-		}
 
 		// get status data (TODO: do correct conversion)
 		rover_status_eps.v_bat = readEpsReg(V_BAT);
@@ -259,26 +254,14 @@ void eps_task(){
 #endif
 		comm_mavlink_broadcast(eps_pack_mavlink_sys_status());
 
-
-
-		Task_sleep(500);
-
-		// check if we need to confirm that we are alive. (do it twice per second)
-		if(give_life_sign)
+		int i;
+		for(i= 0; i< HEARTBEAT_TO_MEASUREMENT_RATIO; i++)
 		{
+			Task_sleep(500);
+			// heartbeat to EPS
 			sendEpsCommand(ALIVE);
-			give_life_sign = 0;
 		}
 #endif
-		Task_sleep(500);
-
-
+		Task_sleep(200);
 	}
-}
-
-
-void eps_ISR()
-{
- //TODO
-	give_life_sign = 1;
 }

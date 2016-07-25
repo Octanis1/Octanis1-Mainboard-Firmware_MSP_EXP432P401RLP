@@ -57,9 +57,9 @@ void port2_isr()
 {
 	switch(P2->IV) {
 #ifdef VERSION_1
-	case Board_EPS_ALIVE_REQ_IV:
-		eps_ISR();
-		GPIO_clearInt(Board_EPS_ALIVE_REQ);
+	case Board_ROCKBLOCK_NET:
+		// TODO
+		GPIO_clearInt(Board_ROCKBLOCK_NET);
 	case Board_LIGHTNING_INT_IV:                             // Pin 4 (lightning detector)
 		as3935_ISR();
 		GPIO_clearInt(Board_LIGHTNING_INT);

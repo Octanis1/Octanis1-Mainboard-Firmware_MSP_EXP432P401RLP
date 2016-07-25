@@ -88,7 +88,7 @@ extern "C" {
  */
 typedef enum MSP_EXP432P401RLP_GPIOName {
 	Octanis_LIGHTNING_INT,
-	Octanis_EPS_ALIVE_REQ,
+	Octanis_ROCKBLOCK_NET,
 	Octanis_GEIGER_COUNTER,
 	Octanis_LED0, //octanis led1
 	Octanis_LED1, //octanis led2

@@ -96,7 +96,6 @@ extern "C" {
  */
 
 /* EPS pins */
-#define Board_EPS_ALIVE_REQ			Octanis_EPS_ALIVE_REQ
 #define Board_EPS_ALIVE_REQ_IV		DIO_PORT_IV__IFG1 // pin 2.1
 
 /* Board specific SPI CS pins */
@@ -123,7 +122,7 @@ extern "C" {
 #define Board_LED_GREEN              Octanis_LED1
 
 #define Board_ROCKBLOCK_SLEEP		Octanis_ROCKBLOCK_SLEEP
-//#define Board_ROCKBLOCK_NET			Octanis_ROCKBLOCK_NET
+#define Board_ROCKBLOCK_NET			Octanis_ROCKBLOCK_NET
 
 /* LoRa module pin definitions */
 #define Board_LORA_RESET_N			Octanis_LORA_RESET_N
