@@ -110,12 +110,13 @@ COMM_FRAME* weather_pack_mavlink_pressure()
 uint8_t weather_check_external_connected()
 {
 	uint8_t j, is_connected = 0;
-	P1->OUT |= BIT5; //pre-condition the pin to HIGH
-	P1->DIR &= ~BIT5; //make UV sensor enable pin an input
+//	P1->OUT |= BIT5; //pre-condition the pin to HIGH
+//	P1->DIR &= ~BIT5; //make UV sensor enable pin an input
 	for(j=0; j++; j<20); //let pin fall to LOW if external board is connected.
-	is_connected = (((P1->IN) & BIT5) == 0); //if the pin is pulled down, the external weather monitor is connected
-	P1->DIR |= BIT5;
-	P1->OUT &= ~BIT5; //pre-condition the pin to HIGH
+	is_connected = (((P1->IN) & BIT5) == 1); //if the pin is pulled down, the external weather monitor is connected
+//	P1->DIR |= BIT5;
+//	P1->OUT &= ~BIT5; //pre-condition the pin to HIGH
+return 1; //TODO: adapt for new board!
 	return is_connected;
 }
 
@@ -217,8 +218,8 @@ void weather_task(){
 		if(external_board_connected)
 		{
 			bmp180_data_readout(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
-			float uv = mcp_get_data();
-			int uvint = (int)(1000.0*uv);
+//			float uv = mcp_get_data();
+//			int uvint = (int)(1000.0*uv);
 
 			weather_data.ext_temp_sht21 = sht2x_get_temp(); //TODO: fix the fact that program stops here if sensor is not connected.
 			weather_data.ext_humid = sht2x_get_humidity();

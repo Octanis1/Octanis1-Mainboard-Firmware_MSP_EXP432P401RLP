@@ -200,7 +200,7 @@ extern "C" {
 #define Board_ULTRASONIC_IN_7_IV			0x06
 
 /* UV captor pins */
-#define Board_UV_PIN		Octanis_UV_EN
+#define Board_UV_INT		Octanis_UV_INT
 #define Board_UV_ON 		1
 #define Board_UV_OFF		0
 

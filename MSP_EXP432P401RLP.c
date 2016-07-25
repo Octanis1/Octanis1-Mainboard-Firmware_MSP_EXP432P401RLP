@@ -158,6 +158,10 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	/*Octanis_GEIGER_COUNTER*/
 	GPIOMSP432_P1_0 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
 
+	/*Octanis_UV_INT Bidirectional Interrupt Output. Open-drain interrupt output pin. Must be at logic level high during power-up sequence to enable low power operation.*/
+	GPIOMSP432_P1_5 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
+
+
 
 	/********** Output pins **********/
     /* Octanis_LED1 (green) */
@@ -284,9 +288,6 @@ GPIO_PinConfig gpioPinConfigs[] = {
 
 	/* Octanis_M1_ANGLE_ENCODER_CS */
 	GPIOMSP432_P6_2 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
-
-	/*UV_EN*/
-	GPIOMSP432_P1_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
 	/*GEIGER_EN*/
 	GPIOMSP432_P9_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
