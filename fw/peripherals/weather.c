@@ -116,7 +116,8 @@ uint8_t weather_check_external_connected()
 	is_connected = (((P1->IN) & BIT5) == 1); //if the pin is pulled down, the external weather monitor is connected
 //	P1->DIR |= BIT5;
 //	P1->OUT &= ~BIT5; //pre-condition the pin to HIGH
-return 1; //TODO: adapt for new board!
+//return 1; //TODO: adapt for new board!
+	return 0;
 	return is_connected;
 }
 

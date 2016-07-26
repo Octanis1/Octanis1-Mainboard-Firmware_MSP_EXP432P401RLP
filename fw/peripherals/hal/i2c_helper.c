@@ -26,14 +26,14 @@ void i2c_helper_init_handle(){
 }
 
 
-uint8_t read8(unsigned char i2c_addr, I2C_Handle handle, uint8_t register_addr){
+uint8_t read8(unsigned char i2c_addr, uint8_t register_addr){
 
 	uint8_t readBuffer; //16 bits to be read only
 	uint16_t returnValue = 0;
 	I2C_Transaction i2cTransaction;
 
 
-	if(handle != NULL){
+	if(i2c_helper_handle != NULL){
 
 		i2cTransaction.writeBuf = &register_addr;
 		i2cTransaction.writeCount = sizeof(register_addr);
@@ -43,7 +43,7 @@ uint8_t read8(unsigned char i2c_addr, I2C_Handle handle, uint8_t register_addr){
 
 		i2cTransaction.slaveAddress = i2c_addr;
 
-		int ret = I2C_transfer(handle, &i2cTransaction);
+		int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
 		if (!ret) {
 //		    serial_printf(cli_stdout, "read8 error \n", 0);
@@ -56,13 +56,13 @@ uint8_t read8(unsigned char i2c_addr, I2C_Handle handle, uint8_t register_addr){
 	return returnValue;
 }
 
-uint16_t read16(unsigned char i2c_addr, I2C_Handle handle, uint8_t register_addr){
+uint16_t read16(unsigned char i2c_addr, uint8_t register_addr){
 
 	uint8_t readBuffer[2]; //16 bits to be read only
 	uint16_t returnValue = 0;
 	I2C_Transaction i2cTransaction;
 
-	if(handle != NULL){
+	if(i2c_helper_handle != NULL){
 
 		i2cTransaction.writeBuf = &register_addr;
 		i2cTransaction.writeCount = sizeof(register_addr);
@@ -72,7 +72,7 @@ uint16_t read16(unsigned char i2c_addr, I2C_Handle handle, uint8_t register_addr
 
 		i2cTransaction.slaveAddress = i2c_addr;
 
-		int ret = I2C_transfer(handle, &i2cTransaction);
+		int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
 		if (!ret) {
 //		    serial_printf(cli_stdout, "read16 error \n", 0);
@@ -88,22 +88,20 @@ uint16_t read16(unsigned char i2c_addr, I2C_Handle handle, uint8_t register_addr
 }
 
 
-void write8(unsigned char i2c_addr, I2C_Handle handle, uint8_t register_addr, uint8_t data) {
+void write8(unsigned char i2c_addr, uint8_t data) {
 
 	I2C_Transaction i2cTransaction;
-	uint8_t wb[2];
-	wb[0] = register_addr;
-	wb[1] = data;
+	uint8_t writebuffer = data;
 
-	if(handle != NULL){
+	if(i2c_helper_handle != NULL){
 
 		i2cTransaction.readBuf = NULL;
 		i2cTransaction.readCount = 0;
-		i2cTransaction.writeBuf = wb;
-		i2cTransaction.writeCount = 2;
+		i2cTransaction.writeBuf = &writebuffer;
+		i2cTransaction.writeCount = 1;
 
 		i2cTransaction.slaveAddress = i2c_addr;
-		int ret = I2C_transfer(handle, &i2cTransaction);
+		int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
 		if (!ret) {
 //		    serial_printf(cli_stdout, "write8 error\n", 0);

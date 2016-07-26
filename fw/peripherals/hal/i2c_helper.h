@@ -10,9 +10,9 @@
 
 
 
-uint8_t read8(unsigned char i2c_addr, I2C_Handle handle, uint8_t register_addr);
-uint16_t read16(unsigned char i2c_addr, I2C_Handle handle, uint8_t register_addr);
-void write8(unsigned char i2c_addr, I2C_Handle handle, uint8_t register_addr, uint8_t data);
+uint8_t read8(unsigned char i2c_addr, uint8_t register_addr);
+uint16_t read16(unsigned char i2c_addr, uint8_t register_addr);
+void write8(unsigned char i2c_addr, uint8_t data);
 
 extern I2C_Handle i2c_helper_handle;
 

@@ -12,6 +12,36 @@
 #include "../core/eps.h"
 
 
+//TODO: remove!!!
+#include "hal/i2c_helper.h"
+#define MotorSpeedSet             0x82
+#define PWMFrequenceSet           0x84
+#define DirectionSet              0xaa
+#define MotorSetA                 0xa1
+#define MotorSetB                 0xa5
+#define Nothing                   0x01
+#define EnableStepper             0x1a
+#define UnenableStepper           0x1b
+#define Stepernu                  0x1c
+#define I2CMotorDriverAdd         0x0f   // Set the address of the I2CMotorDriver
+void pwm_i2c_test()
+{
+	static unsigned char speed = 0;
+	static unsigned char freq = 0;
+	speed = speed + 50;
+	 write8(I2CMotorDriverAdd, MotorSpeedSet);
+	 write8(I2CMotorDriverAdd, speed);
+	 write8(I2CMotorDriverAdd, speed);
+
+	 freq++;
+	 write8(I2CMotorDriverAdd, PWMFrequenceSet);
+	 write8(I2CMotorDriverAdd, freq);
+	 write8(I2CMotorDriverAdd, freq);
+
+
+}
+
+
 void vision_task(){
 	cli_init();
 
@@ -23,6 +53,7 @@ void vision_task(){
 
 
 	while(1){
+
 //		eps_switch_module(M3V3_1_ON);
 //		if(ultrasonic_get_distance(distance_values))
 //		{
@@ -35,6 +66,9 @@ void vision_task(){
 //		//not all or none of the sensors returned a pulse
 //		}
 		Task_sleep(5000);
+
+		pwm_i2c_test();
+
 //		eps_switch_module(M3V3_1_OFF);
 
 	}
