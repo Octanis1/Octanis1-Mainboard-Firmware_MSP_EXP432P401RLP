@@ -95,10 +95,37 @@ int flash_id_read(uint8_t *id)
 int flash_read(uint32_t addr, void *buf, size_t len)
 {
     int ret;
+    uint32_t delta = FLASH_PAGE_SIZE - FLASH_USABLE_LENGTH;
+    uint32_t i = 0;
+    //We check if the addr isn't one of the forbidden byte(s) of the block
+    for (i=1; i<= delta; i++){
+    	if ((addr+i)%FLASH_PAGE_SIZE == 0)
+    		addr+=i;
+    }
+    //False result can be obtained if usable_lenght < addr < page_size
+    //However we prevent this with the for-loop used just before
+    size_t align = FLASH_USABLE_LENGTH - addr % FLASH_PAGE_SIZE;
+    align = align < len ? align : len;
+
     flash_spi_select();
     ret = flash_cmd_w_addr(FLASH_READ, addr);
     if (ret == 0) {
-        ret = flash_spi_receive(buf, len);
+        ret = flash_spi_receive(buf, align);
+        if (ret == 0) {
+        	size_t pos = align;
+        	i = 1;
+        	/*We never write the 256th byte so we have to
+        	 * jump over it*/
+        	while(pos < len) {
+        		size_t n = len - pos < FLASH_USABLE_LENGTH ? len - pos : FLASH_USABLE_LENGTH;
+        		ret = flash_cmd_w_addr(FLASH_READ, addr + pos + (i*delta));
+        		if (ret == 0) {
+        			ret = flash_spi_receive(buf + pos, n);
+        		}
+        		i++;
+        		pos += n;
+        	}
+        }
     }
     flash_spi_unselect();
     return ret;
@@ -111,7 +138,7 @@ int flash_page_program(uint32_t addr, const void *buf, size_t len);
 
 static int flash_page_program(uint32_t addr, const void *buf, size_t len)
 {
-    if (addr % FLASH_PAGE_SIZE + len > FLASH_PAGE_SIZE) {
+    if (addr % FLASH_PAGE_SIZE + len > FLASH_USABLE_LENGTH) {
         return -1;
     }
     int ret;
@@ -133,19 +160,30 @@ static int flash_page_program(uint32_t addr, const void *buf, size_t len)
 
 int flash_write(uint32_t addr, const void *buf, size_t len)
 {
+    uint32_t delta = FLASH_PAGE_SIZE - FLASH_USABLE_LENGTH;
     int ret;
-    size_t align = FLASH_PAGE_SIZE - addr % FLASH_PAGE_SIZE;
+    uint32_t i = 0;
+    //We check if the addr isn't one of the forbidden byte(s) of the block
+    for (i=1; i<= delta; i++){
+    	if ((addr+i)%FLASH_PAGE_SIZE == 0)
+    		addr+=i;
+    }
+
+    size_t align = FLASH_USABLE_LENGTH - addr % FLASH_PAGE_SIZE;
     align = align < len ? align : len;
     const uint8_t *p = (const uint8_t *) buf;
     ret = flash_page_program(addr, p, align);
     if (ret == 0) {
         size_t pos = align;
+        i = 1;
+        /* We can't write on the 256th byte due to uint8_t max number*/
         while (pos < len) {
-            size_t n = len - pos < FLASH_PAGE_SIZE ? len - pos : FLASH_PAGE_SIZE;
-            ret = flash_page_program(addr + pos, p + pos, n);
+            size_t n = len - pos < FLASH_USABLE_LENGTH ? len - pos : FLASH_USABLE_LENGTH;
+            ret = flash_page_program(addr + pos + (i*delta), p + pos, n);
             if (ret != 0) {
                 break;
             }
+            i++;
             pos += n;
         }
     }

@@ -847,6 +847,21 @@ void navigation_task()
     	navigation_restore_mission_items(item_list);
 
 #endif
+    uint8_t buff[500];
+    uint8_t buf2[500];
+    uint16_t i = 0;
+    uint16_t j = 0;
+    for(i=0;i<500;i++) {
+    	buff[i] = j;
+    	j++;
+    	if (j == 256)
+    		j=0;
+    }
+    const void *buf_v = buff;
+    void * buf2_v = buf2;
+    flash_write(0x40000, buf_v, 500);
+    flash_read(0x40000, buf2_v, 500);
+
 	while(1){
 
 //		navigation_update_target();

@@ -33,6 +33,7 @@ todo:
 #include "../lib/cmp_mem_access/cmp_mem_access.h"
 #include "../lib/crc8.h"
 #include "../peripherals/flash.h"
+#include "../peripherals/flash_defines.h"
 
 #if !defined(LOG_TEST) // Production code
 // todo: add mutex if logger needs to be threadsafe
@@ -133,7 +134,8 @@ LOG_INTERNAL bool _log_flash_erase_addr(uint32_t addr, size_t len, uint32_t *era
         *erase_addr = addr;
         return true;
     }
-    uint32_t end = (addr + len - 1);
+    uint32_t offset = (FLASH_BLOCK_SIZE/FLASH_PAGE_SIZE) - (uint32_t)addr/FLASH_PAGE_SIZE;
+    uint32_t end = (addr + len + offset - 1);
     if (addr - addr % FLASH_BLOCK_SIZE != end - end % FLASH_BLOCK_SIZE) {
         // write length passes into a new flash block
         *erase_addr = end - end % FLASH_BLOCK_SIZE;
@@ -156,6 +158,7 @@ LOG_INTERNAL void _log_flash_write(uint32_t addr, void *data, size_t len)
 LOG_INTERNAL bool _log_backup_table_get_last(uint32_t *backup_addr)
 {
     uint32_t addr = 0;
+    uint8_t i = 0;
     while(addr < FLASH_BLOCK_SIZE) {
         uint32_t val;
         logger_lock();
@@ -166,6 +169,11 @@ LOG_INTERNAL bool _log_backup_table_get_last(uint32_t *backup_addr)
             return true;
         }
         addr += 4;
+        //if page_size - usable_lengt >= 4 the following code doesn't work
+        for (i=0; i<4; i++){
+        	if ((addr+=i)%FLASH_PAGE_SIZE > FLASH_USABLE_LENGTH)
+        		addr+=4;
+        }
     }
     return false;
 }
