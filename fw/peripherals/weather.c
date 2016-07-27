@@ -8,7 +8,7 @@
 #include "weather.h"
 #include "hal/AS3935.h"
 #include "hal/bme280i2c.h"
-#include "hal/bmp180i2c.h"
+#include "hal/bmp280_support.h"
 #include "hal/SHT2x.h"
 #include "hal/windsensor.h"
 #include "hal/mcp3425.h"
@@ -149,7 +149,7 @@ void weather_task(){
 	// Initialize external sensors
 	if(external_board_connected)
 	{
-		bmp180_init(); //TODO: change to BMP280
+		bmp280_init(); //TODO: change to BMP280
 		//	mcp_init();
 		lightning_reset();
 		lightning_calibrate();
@@ -217,7 +217,7 @@ void weather_task(){
 #endif
 		if(external_board_connected)
 		{
-			bmp180_data_readout(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
+			bmp280_data_readout(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
 //			float uv = mcp_get_data();
 //			int uvint = (int)(1000.0*uv);
 
