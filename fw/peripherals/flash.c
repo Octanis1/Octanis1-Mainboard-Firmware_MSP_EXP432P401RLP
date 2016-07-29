@@ -92,6 +92,15 @@ int flash_id_read(uint8_t *id)
     return ret;
 }
 
+/* NOTICE : in flash_write and flash_read you'll notice that we add a 3*i offset when
+ * reading multiple page. This is a magic number to avoid loss of data, flash_write
+ * apparently not succeeding in writing the 3*i first entries of its buffer to the
+ * begining of the 1+ith page.
+ * The reason for the bug is unknow and the programmer choosed to go the easy
+ * way after failing at fixing it for more time that he would admit.
+ */
+
+//TODO: works with mavlink_log, should test it for standards log.
 int flash_read(uint32_t addr, void *buf, size_t len)
 {
     int ret;
@@ -158,6 +167,15 @@ static int flash_page_program(uint32_t addr, const void *buf, size_t len)
 
 #endif // FLASH_TEST
 
+/* NOTICE : in flash_write and flash_read you'll notice that we add a 3*i offset when
+ * reading multiple page. This is a magic number to avoid loss of data, flash_write
+ * apparently not succeeding in writing the 3*i first entries of its buffer to the
+ * begining of the 1+ith page.
+ * The reason for the bug is unknow and the programmer choosed to go the easy
+ * way after failing at fixing it for more time that he would admit.
+ */
+
+//TODO: works with mavlink_log, should test it for standards log.
 int flash_write(uint32_t addr, const void *buf, size_t len)
 {
     uint32_t delta = FLASH_PAGE_SIZE - FLASH_USABLE_LENGTH;
