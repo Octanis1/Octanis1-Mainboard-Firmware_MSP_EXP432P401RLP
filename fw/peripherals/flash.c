@@ -117,10 +117,10 @@ int flash_read(uint32_t addr, void *buf, size_t len)
         	/*We never write the 256th byte so we have to
         	 * jump over it*/
         	while(pos < len) {
-        		size_t n = len - pos < FLASH_USABLE_LENGTH ? len - pos : FLASH_USABLE_LENGTH;
+                size_t n = len - pos < FLASH_USABLE_LENGTH - (3*i) ? len - pos : FLASH_USABLE_LENGTH - (3*i);
         		ret = flash_cmd_w_addr(FLASH_READ, addr + pos + (i*delta));
         		if (ret == 0) {
-        			ret = flash_spi_receive(buf + pos, n);
+        			ret = flash_spi_receive(&buf[pos], n);
         		}
         		i++;
         		pos += n;
@@ -178,8 +178,8 @@ int flash_write(uint32_t addr, const void *buf, size_t len)
         i = 1;
         /* We can't write on the 256th byte due to uint8_t max number*/
         while (pos < len) {
-            size_t n = len - pos < FLASH_USABLE_LENGTH ? len - pos : FLASH_USABLE_LENGTH;
-            ret = flash_page_program(addr + pos + (i*delta), p + pos, n);
+            size_t n = len - pos < FLASH_USABLE_LENGTH - (3*i) ? len - pos : FLASH_USABLE_LENGTH - (3*i);
+            ret = flash_page_program(addr + pos + (i*delta) + 3*i, &p[pos], n);
             if (ret != 0) {
                 break;
             }
