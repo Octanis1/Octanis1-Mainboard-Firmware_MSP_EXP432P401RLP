@@ -96,15 +96,19 @@ COMM_FRAME* weather_pack_mavlink_pressure()
 	uint32_t msec = ms_since_boot(); //1000 * (uint32_t)Seconds_get();
 	float press_diff = 0;
 	float press_abs;
+	int16_t temp;
 
 	if(external_board_connected)
 	{
+		temp = weather_data.ext_temp;
 		press_abs = ((float)weather_data.ext_press)/100; //Absolute pressure (hectopascal)
 		press_diff = ((float)weather_data.int_press)/100 - press_abs;
 	}
 	else
+	{
+		temp = weather_data.int_temp;
 		press_abs = ((float)weather_data.int_press)/100; //Absolute pressure (hectopascal)
-
+	}
 
 
 	// Initialize the message buffer
@@ -112,7 +116,7 @@ COMM_FRAME* weather_pack_mavlink_pressure()
 
 	// Pack the message
 	mavlink_msg_scaled_pressure_pack(mavlink_system.sysid, MAV_COMP_ID_PERIPHERAL, &(frame.mavlink_message),
-			msec, press_abs, press_diff, weather_data.int_temp);
+			msec, press_abs, press_diff, temp);
 
 	return &frame;
 }
