@@ -61,7 +61,6 @@ float navigation_get_lon_target();
 float navigation_get_distance_to_target();
 float navigation_get_angle_to_target();
 float navigation_get_max_dist_obs();
-uint8_t navigation_get_angle_valid();
 enum _current_state navigation_get_current_state();
 
 void navigation_set_max_dist(float max_dist);

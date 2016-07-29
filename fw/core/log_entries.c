@@ -142,13 +142,12 @@ void log_write_navigation_status(void)
     float distance_to_target = navigation_get_distance_to_target();
     float angle_to_target = navigation_get_angle_to_target();
     float max_dist_obs = navigation_get_max_dist_obs();
-    uint8_t angle_valid = navigation_get_angle_valid();
     /*Strange enum related bug, not loging it currently*/
     //int8_t current_state = (int8_t) navigation_get_current_state();
 
     cmp_ctx_t *ctx = log_entry_create("nav");
 
-    cmp_write_array(ctx, 9);
+    cmp_write_array(ctx, 8);
     cmp_write_float(ctx, lat_rover);
     cmp_write_float(ctx, lon_rover);
     cmp_write_float(ctx, heading_rover);
@@ -157,7 +156,6 @@ void log_write_navigation_status(void)
     cmp_write_float(ctx, distance_to_target);
     cmp_write_float(ctx, angle_to_target);
     cmp_write_float(ctx, max_dist_obs);
-    cmp_write_uinteger(ctx, angle_valid);
     //cmp_write_integer(ctx, current_state);
 
     log_entry_write_to_flash();

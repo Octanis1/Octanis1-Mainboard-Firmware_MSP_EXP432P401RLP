@@ -139,10 +139,6 @@ float navigation_get_max_dist_obs()
 	return navigation_status.max_dist_obs;
 }
 
-uint8_t navigation_get_angle_valid()
-{
-	return navigation_status.angle_valid;
-}
 
 enum _current_state navigation_get_current_state()
 {
