@@ -42,22 +42,25 @@ static UART_Handle uart = NULL;
 static void cli_uart_init(UART_SerialDevice *dev) {
 	static UART_Params uartParams;
 
-    /* Create a UART with data processing off. */
-    UART_Params_init(&uartParams);
-    uartParams.writeDataMode = UART_DATA_BINARY;
-    uartParams.readDataMode = UART_DATA_BINARY;
-    uartParams.readReturnMode = UART_RETURN_FULL;
-    uartParams.writeMode = UART_MODE_BLOCKING;
-    uartParams.readEcho = UART_ECHO_OFF;
-    uartParams.baudRate = 9600;//115200;
-    uart = UART_open(CLI_UART, &uartParams);
+	if(uart == NULL)
+	{
+		/* Create a UART with data processing off. */
+		UART_Params_init(&uartParams);
+		uartParams.writeDataMode = UART_DATA_BINARY;
+		uartParams.readDataMode = UART_DATA_BINARY;
+		uartParams.readReturnMode = UART_RETURN_FULL;
+		uartParams.writeMode = UART_MODE_BLOCKING;
+		uartParams.readEcho = UART_ECHO_OFF;
+		uartParams.baudRate = 57600;
+		uart = UART_open(CLI_UART, &uartParams);
 
-    if (uart == NULL) {
-        System_abort("Error opening the UART");
-    }
+		if (uart == NULL) {
+			System_abort("Error opening the UART");
+		}
 
-    dev->fntab = &UART_SerialDevice_fntab;
-    dev->uart = uart;
+		dev->fntab = &UART_SerialDevice_fntab;
+		dev->uart = uart;
+	}
 }
 
 

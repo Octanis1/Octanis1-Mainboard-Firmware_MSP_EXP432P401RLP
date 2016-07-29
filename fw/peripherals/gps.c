@@ -166,12 +166,15 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 
     cli_init();
 
+    while(!ublox_6_open()){
+    		serial_printf(cli_stdout, "%d GPS UART error", 0);
+    		Task_sleep(5000);
+    	}
+
 	while (1) {
 
 		//initialise GPS device, open UART
-		if(!ublox_6_open()){
-//			serial_printf(cli_stdout, "%d GPS UART error", 0);
-		}
+
 
 		//get data from device (blocking call)
 		char * nmeabuffer = ublox_6_read();
@@ -210,16 +213,20 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 
 //		serial_printf(cli_stdout, "dgps_age:%d\n\r", gps_get_hdop());
 
-		ublox_6_close();
-#ifdef MAVLINK_ON_LORA_ENABLED
-		comm_set_tx_flag(CHANNEL_LORA, MAV_COMP_ID_GPS);
-#endif
-#ifdef MAVLINK_ON_UART0_ENABLED
-		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
-#endif
-		comm_mavlink_broadcast(gps_pack_mavlink_raw_int());
+//		ublox_6_close();
 
-		Task_sleep(50);
+		if((gps_rmc_frame.longitude.value != 0) && (gps_rmc_frame.latitude.value != 0) && (gps_rmc_frame.longitude.scale != 0) && (gps_rmc_frame.latitude.scale != 0))
+		{
+	#ifdef MAVLINK_ON_LORA_ENABLED
+			comm_set_tx_flag(CHANNEL_LORA, MAV_COMP_ID_GPS);
+	#endif
+	#ifdef MAVLINK_ON_UART0_ENABLED
+			comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
+	#endif
+			comm_mavlink_broadcast(gps_pack_mavlink_raw_int());
+		}
+
+		Task_sleep(10);
 
 
 	}
