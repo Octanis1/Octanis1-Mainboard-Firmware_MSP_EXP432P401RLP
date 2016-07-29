@@ -16,7 +16,7 @@
 *	sensor data using I2C or SPI communication
 *----------------------------------------------------------------------------*/
 #ifdef BMP280_API
-s32 bmp280_init();
+s32 bmp280_init(u16 update_period_ms);
 
 /*	\Brief: The function is used as I2C bus read
  *	\Return : Status of the I2C read

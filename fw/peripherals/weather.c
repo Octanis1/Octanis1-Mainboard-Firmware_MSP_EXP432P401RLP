@@ -42,12 +42,13 @@
 
 static uint8_t external_board_connected = 0;
 
+#define UPDATE_PERIOD			250 //task sleep ms
 
 static struct _weather_data {
 	int int_temp; //in 0.01 degree Centigrade
 	unsigned int int_press; //in Pa
 	unsigned int int_humid; //value of 42313 represents 42313 / 1024 = 41.321 %rH
-	int ext_temp_bmp180; //in 0.1 degree Centigrade
+	int ext_temp_bmp280; //in 0.01 degree Centigrade
 	float ext_temp_sht21;
 	int ext_temp; // average of both values in 0.01 degree Centigrade
 	unsigned int ext_press; //pressure in steps of 1.0 Pa
@@ -91,23 +92,36 @@ unsigned int weather_get_ext_humid(){
 /* function calculating averages etc. of measured sensor data */
 void weather_aggregate_data()
 {
-	// average SHT21 and BMP180 external temperature data and scale the result to 0.01 degree Celsius
-	weather_data.ext_temp = (int)((10*weather_data.ext_temp_sht21+(float)weather_data.ext_temp_bmp180)*5);
+	// average SHT21 and BMP280 external temperature data and scale the result to 0.01 degree Celsius
+	weather_data.ext_temp = (int)(50*weather_data.ext_temp_sht21) + weather_data.ext_temp_bmp280 / 2;
 }
 
 COMM_FRAME* weather_pack_mavlink_pressure()
 {
 	uint32_t msec = ms_since_boot(); //1000 * (uint32_t)Seconds_get();
-	float press_abs = ((float)weather_data.int_press)/100; //Absolute pressure (hectopascal)
 	float press_diff = 0;
+	float press_abs;
+	int16_t temp;
+
 	if(external_board_connected)
-		press_diff = ((float)weather_data.int_press - (float)weather_data.ext_press)/100;
+	{
+		temp = weather_data.ext_temp;
+		press_abs = ((float)weather_data.ext_press)/100; //Absolute pressure (hectopascal)
+		press_diff = ((float)weather_data.int_press)/100 - press_abs;
+	}
+	else
+	{
+		temp = weather_data.int_temp;
+		press_abs = ((float)weather_data.int_press)/100; //Absolute pressure (hectopascal)
+	}
+
+
 	// Initialize the message buffer
 	static COMM_FRAME frame;
 
 	// Pack the message
 	mavlink_msg_scaled_pressure_pack(mavlink_system.sysid, MAV_COMP_ID_PERIPHERAL, &(frame.mavlink_message),
-			msec, press_abs, press_diff, weather_data.int_temp);
+			msec, press_abs, press_diff, temp);
 
 	return &frame;
 }
@@ -154,7 +168,7 @@ void weather_task(){
 	// Initialize external sensors
 	if(external_board_connected)
 	{
-		bmp280_init(); //TODO: change to BMP280
+		bmp280_init(UPDATE_PERIOD);
 		si1133_begin();
 		//	mcp_init();
 		lightning_reset();
@@ -223,7 +237,7 @@ void weather_task(){
 #endif
 		if(external_board_connected)
 		{
-			bmp280_data_readout(&(weather_data.ext_temp_bmp180),&(weather_data.ext_press));
+			bmp280_data_readout(&(weather_data.ext_temp_bmp280),&(weather_data.ext_press));
 //			float uv = mcp_get_data();
 //			int uvint = (int)(1000.0*uv);
 
@@ -260,7 +274,7 @@ void weather_task(){
 
 		//		serial_printf(cli_stdout, "W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
 
-		Task_sleep(1000);
+		Task_sleep(UPDATE_PERIOD); //note: inside bmp280_init, the standby time of the sensor is set according to this value
 
 
 #ifdef FLASH_ENABLED

@@ -70,7 +70,7 @@
 struct bmp280_t bmp280;
 
 
-s32 bmp280_init()
+s32 bmp280_init(u16 update_period_ms)
 {
 	/* result of communication results*/
 	s32 com_rslt = ERROR;
@@ -95,34 +95,48 @@ s32 bmp280_init()
 	 *	by using the below API able to set the power mode as NORMAL*/
 	/* Set the power mode as NORMAL*/
 	com_rslt += bmp280_set_power_mode(BMP280_NORMAL_MODE);
+	Task_sleep(10); //some delay is apparently needed after mode changes
 	/*	For reading the pressure and temperature data it is required to
-		 *	set the work mode
-		 *	The measurement period in the Normal mode is depends on the setting of
-		 *	over sampling setting of pressure, temperature and standby time
-		 *
-		 *	OSS				pressure OSS	temperature OSS
-		 *	ultra low power			x1			x1
-		 *	low power			x2			x1
-		 *	standard resolution		x4			x1
-		 *	high resolution			x8			x2
-		 *	ultra high resolution		x16			x2
-		 */
-		/* The oversampling settings are set by using the following API*/
-		com_rslt += bmp280_set_work_mode(BMP280_ULTRA_LOW_POWER_MODE);
+	 *	set the work mode
+	 *	The measurement period in the Normal mode is depends on the setting of
+	 *	over sampling setting of pressure, temperature and standby time
+	 *
+	 *	OSS				pressure OSS	temperature OSS
+	 *	ultra low power			x1			x1
+	 *	low power			x2			x1
+	 *	standard resolution		x4			x1
+	 *	high resolution			x8			x2
+	 *	ultra high resolution		x16			x2
+	 */
+	/* The oversampling settings are set by using the following API*/
+	com_rslt += bmp280_set_work_mode(BMP280_ULTRA_LOW_POWER_MODE);
+	Task_sleep(10); //some delay is apparently needed after mode changes
+
 	/*------------------------------------------------------------------------*
 	************************* START GET and SET FUNCTIONS DATA ****************
 	*---------------------------------------------------------------------------*/
-		/* This API used to Write the standby time of the sensor input
-		 *	value have to be given*/
-		 /*	Normal mode comprises an automated perpetual cycling between an (active)
-		 *	Measurement period and an (inactive) standby period.
-		 *	The standby time is determined by the contents of the register t_sb.
-		 *	Standby time can be set using BMP280_STANDBYTIME_125_MS.
-		 *	Usage Hint : BMP280_set_standbydur(BMP280_STANDBYTIME_125_MS)*/
-
+	/* This API used to Write the standby time of the sensor input
+	*	value have to be given*/
+	/*	Normal mode comprises an automated perpetual cycling between an (active)
+	*	Measurement period and an (inactive) standby period.
+	*	The standby time is determined by the contents of the register t_sb.
+	*	Standby time can be set using BMP280_STANDBYTIME_125_MS.
+	*	Usage Hint : BMP280_set_standbydur(BMP280_STANDBYTIME_125_MS)*/
+	if(update_period_ms >= 4000)
+		com_rslt += bmp280_set_standby_durn(BMP280_STANDBY_TIME_4000_MS);
+	else if(update_period_ms >= 1000)
+		com_rslt += bmp280_set_standby_durn(BMP280_STANDBY_TIME_1000_MS);
+	else if(update_period_ms >= 250)
+		com_rslt += bmp280_set_standby_durn(BMP280_STANDBY_TIME_250_MS);
+	else if(update_period_ms >= 63)
+		com_rslt += bmp280_set_standby_durn(BMP280_STANDBY_TIME_63_MS);
+	else
 		com_rslt += bmp280_set_standby_durn(BMP280_STANDBY_TIME_1_MS);
-//
+	Task_sleep(10); //some delay is apparently needed after mode changes
+
 //		/* This API used to read back the written value of standby time*/
+//		/* The variable used to assign the standby time*/
+//		u8 v_standby_time_u8 = BMP280_INIT_VALUE;
 //		com_rslt += bmp280_get_standby_durn(&v_standby_time_u8);
 	/*-----------------------------------------------------------------*
 	************************* END GET and SET FUNCTIONS ****************
@@ -198,8 +212,8 @@ s8 BMP280_I2C_routine(void) {
 
 /************** I2C/SPI buffer length ******/
 
-#define	I2C_BUFFER_LEN 8
-#define BUFFER_LENGTH	0xFF
+#define	I2C_BUFFER_LEN 		8
+#define BUFFER_LENGTH		0xFF
 #define BMP280_DATA_INDEX	1
 #define BMP280_ADDRESS_INDEX	2
 
@@ -227,7 +241,7 @@ s8  BMP280_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 	writebuffer[BMP280_INIT_VALUE] = reg_addr;
 
 	for (stringpos = BMP280_INIT_VALUE; stringpos < cnt; stringpos++) {
-		*(reg_data + stringpos) = writebuffer[stringpos];
+		writebuffer[stringpos + 1] = *(reg_data + stringpos);
 	}
 
 	i2cTransaction.readBuf = NULL;
