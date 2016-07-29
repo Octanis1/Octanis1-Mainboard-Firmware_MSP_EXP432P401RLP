@@ -1,20 +1,18 @@
 #include "../../../Board.h"
 #include "ublox_6.h"
 
-
 static char ublox_rxBuffer[UBLOX_6_NMEABUFFER_SIZE];
 
-
 static UART_Handle ublox_uart;
-static UART_Params uartParams;
 
-int ublox_6_open(){
+void ublox_6_open(){
+	static UART_Params uartParams;
 
 	/* Create a UART with data processing off. */
 	UART_Params_init(&uartParams);
 	uartParams.writeDataMode = UART_DATA_TEXT;
-	uartParams.readDataMode = UART_DATA_BINARY;
-	uartParams.readReturnMode = UART_RETURN_FULL; //one NMEA frame per read
+	uartParams.readDataMode = UART_DATA_TEXT;
+	uartParams.readReturnMode = UART_RETURN_NEWLINE; //one NMEA frame per read
 	uartParams.readEcho = UART_ECHO_OFF;
 	uartParams.baudRate = 9600;
 	uartParams.readMode = UART_MODE_BLOCKING;
@@ -28,13 +26,8 @@ int ublox_6_open(){
 	//Correct port for the mainboard
 	ublox_uart = UART_open(Board_UART1_GPS, &uartParams);
 
-		if (ublox_uart == NULL) {
-			return 0;
-		}else{
-			return 1;
-		}
-
-
+	if (ublox_uart == NULL)
+		System_abort("Error opening the GPS UART");
 }
 
 void ublox_6_close(){
@@ -45,7 +38,7 @@ void ublox_6_close(){
 
 
 
-char * ublox_6_read(){
+char* ublox_6_read(){
 
 //	int i=0;
 	UART_read(ublox_uart, ublox_rxBuffer, sizeof(ublox_rxBuffer));

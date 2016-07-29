@@ -23,6 +23,7 @@
 //mavlink includes
 #include "imu.h"
 #include "../peripherals/comm.h"
+#include "../core/cli.h"
 #include "../lib/mavlink/common/mavlink.h"
 
 
@@ -159,17 +160,10 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 	return &frame;
 }
 
-
- void gps_task(){
-
-	char *saveptr1 = NULL; 
-
+void gps_task(){
     cli_init();
 
-    while(!ublox_6_open()){
-    		serial_printf(cli_stdout, "%d GPS UART error", 0);
-    		Task_sleep(5000);
-    	}
+    ublox_6_open();
 
 	while (1) {
 
@@ -177,13 +171,12 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 
 
 		//get data from device (blocking call)
-		char * nmeabuffer = ublox_6_read();
-		char * nmeaframes = strtok_r(nmeabuffer, "\n", &saveptr1);
+		static char * nmeaframes;
 
 		//parse gps data, this is non-deterministic as data just flys in on the serial line.
 		// this then looks for a valid nmea frame
 
-		while (nmeaframes != NULL){
+		while ((nmeaframes = ublox_6_read())){
 			int minmea_sentence = minmea_sentence_id(nmeaframes, false);
 
 			switch (minmea_sentence) {
@@ -197,7 +190,7 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 					if(minmea_parse_rmc(&gps_rmc_frame, nmeaframes)){
 						//update system time when valid RMC frame arrives
 						Seconds_set(gps_get_last_update_time());
-						}
+					}
 					break;
 				}
 				case MINMEA_SENTENCE_GSA:
@@ -208,7 +201,9 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 					minmea_parse_vtg(&gps_vtg_frame, nmeaframes);
 			}
 
-			nmeaframes = strtok_r(NULL, "\n", &saveptr1);
+			if(minmea_sentence == MINMEA_SENTENCE_RMC)
+				break;
+
 		}
 
 //		serial_printf(cli_stdout, "dgps_age:%d\n\r", gps_get_hdop());

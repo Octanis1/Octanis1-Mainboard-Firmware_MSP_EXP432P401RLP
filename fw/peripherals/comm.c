@@ -195,9 +195,17 @@ COMM_MAV_RESULT comm_process_command(COMM_MAV_MSG_TARGET*  msg_target, mavlink_m
 				return FORWARD_MESSAGE;}
 			break;
 		case MAV_CMD_NAV_LAND: //#21 [Land]
+		{
+			if(navigation_bypass('b',0))
+				result = MAV_RESULT_ACCEPTED;
 			break;
+		}
 		case MAV_CMD_NAV_TAKEOFF: //#22 [Start]
+		{
+			if(navigation_bypass('f',0))
+				result = MAV_RESULT_ACCEPTED;
 			break;
+		}
 		case MAV_CMD_OVERRIDE_GOTO: //#252 Hold / continue the current action [halt] --> used to pause/start driving
 		{
 			result = navigation_halt_resume(msg_target, msg);
