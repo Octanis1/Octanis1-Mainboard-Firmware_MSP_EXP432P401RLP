@@ -121,7 +121,7 @@
 #define SI1133_PARAM_THRESHOLD2_L   0X2A
 #define SI1133_PARAM_BURST   0X2B
 
-#define SI1133_ADDR 0x33
+#define SI1133_ADDR 0x55
 
   bool     si1133_begin();
   void     si1133_reset();

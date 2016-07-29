@@ -83,22 +83,22 @@ void si1133_reset() {
 /*********************************************************************/
 
 u32 si1133_readUV() {
-	u8 temp;
-	u32 uv;
-	temp=si1133_read8(SI1133_REG_HOSTOUT0, &temp);
+	u8 temp=0;
+	u32 uv=0;
+	si1133_read8(SI1133_REG_HOSTOUT0, &temp);
 	uv=temp<<8;
-	temp=si1133_read8(SI1133_REG_HOSTOUT1, &temp);
+	si1133_read8(SI1133_REG_HOSTOUT1, &temp);
 	uv= uv | temp;
  	return uv;
 }
 u32 si1133_readIR() {
-	u8 temp;
-	u32 ir;
-	temp=si1133_read8(SI1133_REG_HOSTOUT2, &temp);
+	u8 temp=0;
+	u32 ir=0;
+	si1133_read8(SI1133_REG_HOSTOUT2, &temp);
 	ir=temp<<16;
-	temp=si1133_read8(SI1133_REG_HOSTOUT3, &temp);
+	si1133_read8(SI1133_REG_HOSTOUT3, &temp);
 	ir=ir | (temp<<8);
-	temp=si1133_read8(SI1133_REG_HOSTOUT4, &temp);
+	si1133_read8(SI1133_REG_HOSTOUT4, &temp);
 	ir=ir|temp;
  	return ir;
 }
