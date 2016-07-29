@@ -42,7 +42,7 @@ bool si1133_begin(void) {
   uint8_t id;
   u8 response; //can be used to access the status after writing a parameter
   si1133_read8(SI1133_REG_PARTID, &id);
-  if (id != 0x55) return false; // mira si es si1133
+  if (id != 0x33) return false; // mira si es si1133
   //device reset at init
   si1133_reset();
   writeParam(SI1133_PARAM_MEASRATEH,0,&response);
