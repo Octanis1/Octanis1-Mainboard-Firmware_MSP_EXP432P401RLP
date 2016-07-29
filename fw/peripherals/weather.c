@@ -9,6 +9,7 @@
 #include "hal/AS3935.h"
 #include "hal/bme280i2c.h"
 #include "hal/bmp280_support.h"
+#include "hal/SI1133.h"
 #include "hal/SHT2x.h"
 #include "hal/windsensor.h"
 #include "hal/mcp3425.h"
@@ -51,6 +52,10 @@ static struct _weather_data {
 	int ext_temp; // average of both values in 0.01 degree Centigrade
 	unsigned int ext_press; //pressure in steps of 1.0 Pa
 	float ext_humid;
+	u32 uv_light;
+	u32 ir_light;
+	float vis_lux;
+	float irradiance;
 } weather_data;
 
 //in 0.01 degree Centigrade
@@ -150,6 +155,7 @@ void weather_task(){
 	if(external_board_connected)
 	{
 		bmp280_init(); //TODO: change to BMP280
+		si1133_begin();
 		//	mcp_init();
 		lightning_reset();
 		lightning_calibrate();
@@ -229,6 +235,8 @@ void weather_task(){
 		bme280_data_readout(&(weather_data.int_temp),&(weather_data.int_press),&(weather_data.int_humid));
 		//note: bme280 can give pressure, humidity and temperature
 
+		weather_data.uv_light=si1133_readUV();
+		weather_data.ir_light=si1133_readIR();
 		// Logging:
 
 		uint32_t time = Seconds_get();
