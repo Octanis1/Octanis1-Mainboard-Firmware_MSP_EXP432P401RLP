@@ -40,6 +40,8 @@ todo:
 LOG_INTERNAL void logger_lock(void){}
 LOG_INTERNAL void logger_unlock(void){}
 
+LOG_INTERNAL void _log_flash_write(uint32_t addr, void *data, size_t len);
+
 #include <ti/sysbios/hal/Seconds.h>
 LOG_INTERNAL uint32_t logger_timestamp_sec(void)
 {

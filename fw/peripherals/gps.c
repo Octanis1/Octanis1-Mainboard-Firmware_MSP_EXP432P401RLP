@@ -206,10 +206,6 @@ void gps_task(){
 
 		}
 
-//		serial_printf(cli_stdout, "dgps_age:%d\n\r", gps_get_hdop());
-
-//		ublox_6_close();
-
 		if((gps_rmc_frame.longitude.value != 0) && (gps_rmc_frame.latitude.value != 0) && (gps_rmc_frame.longitude.scale != 0) && (gps_rmc_frame.latitude.scale != 0))
 		{
 	#ifdef MAVLINK_ON_LORA_ENABLED
@@ -222,10 +218,6 @@ void gps_task(){
 		}
 
 		Task_sleep(10);
-
-
 	}
-
-
 }
 

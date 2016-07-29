@@ -48,8 +48,8 @@
 //#define VERSION_0_5 // define to use board v0.5 pin definitions, else undefine
 //#define VERSION_0_6
 #define VERSION_1
-//#define FLASH_ENABLED 1
 
+//#define FLASH_ENABLED 1
 //#define SBC_ENABLED	// if defined, it will wait for SBC to boot before sending mavlink messages and continue after waypoint 0.
 //#define LORA_ENABLED 1
 //#define EPS_ENABLED 1
@@ -60,7 +60,6 @@
 //#define UARTCAM_ENABLED 1
 //#define GSM_ENABLED 1
 //#define USE_ONBOARD_BNO055 1 //in contrast to just decoding incoming mavlink attitude messages.
-
 //#define USE_ULTRASONIC 1
 
 #ifdef VERSION_0_5
