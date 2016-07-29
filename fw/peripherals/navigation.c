@@ -25,6 +25,16 @@ void Task_sleep(int a);
 #include <math.h>
 #include "../lib/printf.h"
 #include "pid.h"
+#include "../lib/serial_printf.h"
+#include <string.h>
+
+//Logging includes:
+#include "../core/log.h"
+#include "../core/log_entries.h"
+#include "../lib/cmp/cmp.h"
+#include "../lib/cmp_mem_access/cmp_mem_access.h"
+#include "flash.h"
+#include "hal/spi_helper.h"
 
 #endif
 #define M_PI 3.14159265358979323846
@@ -74,10 +84,69 @@ static mission_item_list_t mission_items;
 
 void navigation_update_current_target();
 
+mavlink_mission_item_t * navigation_mavlink_get_item_list()
+{
+	return mission_items.item;
+}
+
+uint16_t navigation_mavlink_get_current_index()
+{
+	return mission_items.current_index;
+}
+
+uint16_t navigation_mavlink_get_count()
+{
+	return mission_items.count;
+}
+
+float navigation_get_lat_rover()
+{
+	return navigation_status.lat_rover;
+}
+
+float navigation_get_lon_rover()
+{
+	return navigation_status.lon_rover;
+}
+
+float navigation_get_heading_rover()
+{
+	return navigation_status.heading_rover;
+}
+
+float navigation_get_lat_target()
+{
+	return navigation_status.lat_target;
+}
+
+float navigation_get_lon_target()
+{
+	return navigation_status.lon_target;
+}
+
+float navigation_get_distance_to_target()
+{
+	return navigation_status.distance_to_target;
+}
 
 float navigation_get_angle_to_target()
 {
 	return navigation_status.angle_to_target;
+}
+
+float navigation_get_max_dist_obs()
+{
+	return navigation_status.max_dist_obs;
+}
+
+uint8_t navigation_get_angle_valid()
+{
+	return navigation_status.angle_valid;
+}
+
+enum _current_state navigation_get_current_state()
+{
+	return navigation_status.current_state;
 }
 
 float navigation_degree_to_rad(float degree)
@@ -241,6 +310,9 @@ COMM_MAV_RESULT navigation_rx_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_
 				mission_items.count = next_index + 1;
 				mission_item_rx_count = 0;
 			}
+#ifdef FLASH_ENABLED
+			log_write_mavlink_item_list();
+#endif
 		}
 		return REPLY_TO_SENDER;
 	}
@@ -694,9 +766,69 @@ void navigation_init()
 }
 #endif
 
+void navigation_restore_mission_items(mission_item_list_t item_list)
+{
+	int i = 0;
+	mission_items.count = item_list.count;
+	mission_items.current_index = item_list.current_index;
+	for(i=0;i<item_list.count;i++){
+		mission_items.item[i].param1 = item_list.item[i].param1;
+		mission_items.item[i].param2 = item_list.item[i].param2;
+		mission_items.item[i].param3 = item_list.item[i].param3;
+		mission_items.item[i].param4 = item_list.item[i].param4;
+		mission_items.item[i].x = item_list.item[i].x;
+		mission_items.item[i].y = item_list.item[i].y;
+		mission_items.item[i].z = item_list.item[i].z;
+		mission_items.item[i].seq = item_list.item[i].seq;
+		mission_items.item[i].command = item_list.item[i].command;
+		mission_items.item[i].target_system = item_list.item[i].target_system;
+		mission_items.item[i].target_component = item_list.item[i].target_component;
+		mission_items.item[i].frame = item_list.item[i].frame;
+		mission_items.item[i].current = item_list.item[i].current;
+		mission_items.item[i].autocontinue = item_list.item[i].autocontinue;
+
+	}
+}
+
 void navigation_task()
 {
 	navigation_init();
+#ifdef FLASH_ENABLED
+	/************* flash test START ****************/
+	spi_helper_init_handle();
+
+    // force enable logging
+    bool logging_enabled = true;
+
+
+	static uint8_t buf[250];
+	flash_id_read(buf);
+	const uint8_t flash_id[] = {0x01,0x20,0x18}; // S25FL127S ID
+	if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
+		// flash answers with correct ID
+		serial_printf(cli_stdout, "Flash ID OK\n");
+	} else {
+		serial_printf(cli_stdout, "Flash ID ERROR\n");
+	}
+
+    if (logging_enabled) {
+        if (!log_init()) {
+            serial_printf(cli_stdout, "log_init failed\n");
+            log_reset();
+        }
+    }
+    //serial_printf(cli_stdout, "log position 0x%x\n", log_write_pos());
+	/************* flash test END ****************/
+
+    //We look if we have mavlink mission item logged, in case we just suffered a crash
+
+    uint32_t time = 0;
+    char name[4]; //Name is a 3 characters long string
+    mission_item_list_t item_list;
+    if(log_read_mavlink_item_list(&item_list, &time, &name))
+    	navigation_restore_mission_items(item_list);
+
+#endif
 
 	while(1){
 
@@ -716,6 +848,7 @@ void navigation_task()
 		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_PATHPLANNER);
 #endif
 		comm_mavlink_broadcast(navigation_pack_mavlink_hud());
+
 
 		Task_sleep(500);
 

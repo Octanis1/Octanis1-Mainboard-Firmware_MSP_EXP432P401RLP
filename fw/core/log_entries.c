@@ -1,7 +1,12 @@
 #include "log.h"
+#include "log_internal.h"
+#include <string.h>
+#include <stdbool.h>
 #include "../peripherals/weather.h"
 #include "../peripherals/gps.h"
 #include "../peripherals/imu.h"
+#include "../peripherals/navigation.h"
+
 
 /* proposed alternative API:
 
@@ -15,6 +20,149 @@ void imu_log(struct imu_data* imu)
     log_entry_write_to_flash();
 }
 */
+
+bool log_read_mavlink_item(cmp_ctx_t * ctx, mavlink_mission_item_t * item)
+{
+	bool ret = 0;
+	uint32_t array_l = 0;
+
+	ret = cmp_read_array(ctx, &array_l);
+	if (ret == false || array_l != 14)
+		return false;
+	ret = cmp_read_float(ctx, &(item->param1));
+	ret = cmp_read_float(ctx, &(item->param2));
+	ret = cmp_read_float(ctx, &(item->param3));
+	ret = cmp_read_float(ctx, &(item->param4));
+	ret = cmp_read_float(ctx, &(item->x));
+	ret = cmp_read_float(ctx, &(item->y));
+	ret = cmp_read_float(ctx, &(item->z));
+	ret = cmp_read_ushort(ctx, &(item->seq));
+	ret = cmp_read_ushort(ctx, &(item->command));
+	ret = cmp_read_uchar(ctx, &(item->target_system));
+	ret = cmp_read_uchar(ctx, &(item->target_component));
+	ret = cmp_read_uchar(ctx, &(item->frame));
+	ret = cmp_read_uchar(ctx, &(item->current));
+	ret = cmp_read_uchar(ctx, &(item->autocontinue));
+
+	return ret;
+}
+
+bool log_read_mavlink_item_list(mission_item_list_t * item_list, uint32_t * time, char *name)
+{
+	cmp_mem_access_t cma;
+	cmp_ctx_t ctx;
+
+	uint16_t i = 0;
+	size_t entry_len = 0;
+	uint32_t next_entry = 0;
+	uint8_t buf[LOG_ENTRY_DATA_LEN];
+	bool ret = 0;
+	uint32_t array_l = 0;
+	uint32_t name_sz = sizeof(name);
+
+	ret = log_read_last_mav_entry(buf, &entry_len, &next_entry);
+	if (ret == false)
+		return ret;
+
+	cmp_mem_access_ro_init(&ctx, &cma, buf, LOG_ENTRY_DATA_LEN);
+
+	ret = cmp_read_array(&ctx, &array_l);
+	if (ret == false || array_l != 3)
+		return false;
+
+	ret = cmp_read_uint(&ctx, time);
+	ret = cmp_read_str(&ctx, name, &name_sz);
+	if (strcmp(name, "mav") != 0)
+		return false;
+
+	ret = cmp_read_array(&ctx, &array_l);
+	if (ret == false || array_l != 3)
+		return false;
+	ret = cmp_read_ushort(&ctx, &(item_list->current_index));
+	ret = cmp_read_ushort(&ctx, &(item_list->count));
+	ret = cmp_read_array(&ctx, &array_l);
+	if (ret == false || array_l != item_list->count)
+		return false;
+
+	for (i=0; i<item_list->count && i < (N_TARGETS_MAX +1); i++){
+		ret = log_read_mavlink_item(&ctx, &(item_list->item[i]));
+		if (ret == false)
+			return false;
+	}
+
+	return ret;
+}
+
+void log_serialize_mavlink_item(cmp_ctx_t *ctx, mavlink_mission_item_t item)
+{
+    cmp_write_array(ctx, 14);
+    cmp_write_float(ctx, item.param1);
+    cmp_write_float(ctx, item.param2);
+    cmp_write_float(ctx, item.param3);
+    cmp_write_float(ctx, item.param4);
+    cmp_write_float(ctx, item.x);
+    cmp_write_float(ctx, item.y);
+    cmp_write_float(ctx, item.z);
+    cmp_write_uinteger(ctx, item.seq);
+    cmp_write_uinteger(ctx, item.command);
+    cmp_write_uinteger(ctx, item.target_system);
+    cmp_write_uinteger(ctx, item.target_component);
+    cmp_write_uinteger(ctx, item.frame);
+    cmp_write_uinteger(ctx, item.current);
+    cmp_write_uinteger(ctx, item.autocontinue);
+
+}
+
+void log_write_mavlink_item_list(void)
+{
+    int i = 0;
+    mavlink_mission_item_t * mav_list = navigation_mavlink_get_item_list();
+    uint16_t current_index = navigation_mavlink_get_current_index();
+    uint16_t count = navigation_mavlink_get_count();
+
+    cmp_ctx_t *ctx = log_entry_create("mav");
+
+    cmp_write_array(ctx, 3);
+    cmp_write_uinteger(ctx, current_index);
+    cmp_write_uinteger(ctx, count);
+    cmp_write_array(ctx, count);
+    for(i=0; i<count; i++)
+        log_serialize_mavlink_item(ctx, mav_list[i]);
+
+    log_mav_write_to_flash();
+}
+
+void log_write_navigation_status(void)
+{
+    float lat_rover = navigation_get_lat_rover();
+    float lon_rover = navigation_get_lon_rover();
+    float heading_rover = navigation_get_heading_rover();
+    float lat_target = navigation_get_lat_target();
+    float lon_target = navigation_get_lon_target();
+    float distance_to_target = navigation_get_distance_to_target();
+    float angle_to_target = navigation_get_angle_to_target();
+    float max_dist_obs = navigation_get_max_dist_obs();
+    uint8_t angle_valid = navigation_get_angle_valid();
+    /*Strange enum related bug, not loging it currently*/
+    //int8_t current_state = (int8_t) navigation_get_current_state();
+
+    cmp_ctx_t *ctx = log_entry_create("nav");
+
+    cmp_write_array(ctx, 9);
+    cmp_write_float(ctx, lat_rover);
+    cmp_write_float(ctx, lon_rover);
+    cmp_write_float(ctx, heading_rover);
+    cmp_write_float(ctx, lat_target);
+    cmp_write_float(ctx, lon_target);
+    cmp_write_float(ctx, distance_to_target);
+    cmp_write_float(ctx, angle_to_target);
+    cmp_write_float(ctx, max_dist_obs);
+    cmp_write_uinteger(ctx, angle_valid);
+    //cmp_write_integer(ctx, current_state);
+
+    log_entry_write_to_flash();
+}
+
 
 void log_write_gps(void)
 {
