@@ -2,6 +2,7 @@
 #define FLASH_DEFINES_H
 
 #define FLASH_PAGE_SIZE 256 // may depend on flash chip
+#define FLASH_USABLE_LENGTH 255 //since the number of byte is encoded on uint8_t
 
 #define STATUS_BUSY     (1<<0)
 #define STATUS_WEL      (1<<1) // Write-Enable Latch status
