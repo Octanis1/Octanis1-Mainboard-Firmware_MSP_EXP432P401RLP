@@ -86,19 +86,19 @@ u32 si1133_readUV() {
 	u8 temp=0;
 	u32 uv=0;
 	si1133_read8(SI1133_REG_HOSTOUT0, &temp);
-	uv=temp<<8;
+	uv=temp;
 	si1133_read8(SI1133_REG_HOSTOUT1, &temp);
-	uv= uv | temp;
+	uv= (uv<<8) + temp;
  	return uv;
 }
 u32 si1133_readIR() {
 	u8 temp=0;
 	u32 ir=0;
 	si1133_read8(SI1133_REG_HOSTOUT2, &temp);
-	ir=temp<<16;
+	ir=temp;
 	si1133_read8(SI1133_REG_HOSTOUT3, &temp);
-	ir=ir | (temp<<8);
+	ir=(ir<<8) + (temp);
 	si1133_read8(SI1133_REG_HOSTOUT4, &temp);
-	ir=ir|temp;
+	ir= (ir<<8) + (temp);
  	return ir;
 }

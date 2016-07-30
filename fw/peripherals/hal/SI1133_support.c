@@ -135,8 +135,8 @@ s8  SI1133_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 	i2cTransaction.writeBuf = &reg_addr;
 	i2cTransaction.writeCount = sizeof(reg_addr);
 
-	i2cTransaction.readBuf = &readBuffer;
-	i2cTransaction.readCount = sizeof(readBuffer);
+	i2cTransaction.readBuf = readBuffer;
+	i2cTransaction.readCount = cnt;
 
 	i2cTransaction.slaveAddress = dev_addr;
 

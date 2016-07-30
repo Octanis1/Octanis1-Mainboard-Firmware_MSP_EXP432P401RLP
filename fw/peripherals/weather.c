@@ -42,7 +42,7 @@
 
 static uint8_t external_board_connected = 0;
 
-#define UPDATE_PERIOD			250 //task sleep ms
+#define UPDATE_PERIOD			2000 //task sleep ms
 
 static struct _weather_data {
 	int int_temp; //in 0.01 degree Centigrade
@@ -244,13 +244,17 @@ void weather_task(){
 			weather_data.ext_temp_sht21 = sht2x_get_temp(); //TODO: fix the fact that program stops here if sensor is not connected.
 			weather_data.ext_humid = sht2x_get_humidity();
 
+			weather_data.uv_light=si1133_readUV();
+			Task_sleep(100);
+			weather_data.ir_light=si1133_readIR();
+
+			serial_printf(cli_stdout, "uv: %u, ir: %u \n", weather_data.uv_light, weather_data.ir_light);
 		}
 
 		bme280_data_readout(&(weather_data.int_temp),&(weather_data.int_press),&(weather_data.int_humid));
 		//note: bme280 can give pressure, humidity and temperature
 
-		weather_data.uv_light=si1133_readUV();
-		weather_data.ir_light=si1133_readIR();
+
 		// Logging:
 
 		uint32_t time = Seconds_get();
@@ -268,11 +272,6 @@ void weather_task(){
 		//	windsensor_getvalue();
 
 		weather_aggregate_data();
-
-
-
-
-		//		serial_printf(cli_stdout, "W ok. T= %u, He=%u \n", weather_data.int_temp, weather_get_ext_humid());
 
 		Task_sleep(UPDATE_PERIOD); //note: inside bmp280_init, the standby time of the sensor is set according to this value
 
