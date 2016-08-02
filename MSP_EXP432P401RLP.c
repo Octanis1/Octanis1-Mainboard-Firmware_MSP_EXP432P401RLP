@@ -158,6 +158,8 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	/*Octanis_GEIGER_COUNTER*/
 	GPIOMSP432_P1_0 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
 
+	/* Octanis_EPS_INT */
+	GPIOMSP432_P2_5 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
 
 	/********** Output pins **********/
     /* Octanis_LED1 (green) */

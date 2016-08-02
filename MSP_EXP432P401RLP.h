@@ -52,7 +52,7 @@
 //#define FLASH_ENABLED 1
 //#define SBC_ENABLED	// if defined, it will wait for SBC to boot before sending mavlink messages and continue after waypoint 0.
 //#define LORA_ENABLED 1
-//#define EPS_ENABLED 1
+#define EPS_ENABLED 1
 //#define BLE_ENABLED 1
 #define MAVLINK_ON_UART0_ENABLED 1
 //#define MAVLINK_ON_LORA_ENABLED 1 //for verbose lora outputs
@@ -89,6 +89,7 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
 	Octanis_LIGHTNING_INT,
 	Octanis_ROCKBLOCK_NET,
 	Octanis_GEIGER_COUNTER,
+	Octanis_EPS_INT,
 	Octanis_LED0, //octanis led1
 	Octanis_LED1, //octanis led2
 	Octanis_ROCKBLOCK_SLEEP,
