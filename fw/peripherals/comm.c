@@ -23,10 +23,10 @@ static mavlink_heartbeat_t mavlink_heartbeat;
 mavlink_heartbeat_t comm_get_mavlink_heartbeat(){return mavlink_heartbeat;}
 
 char comm_mainboard_armed()
-{return mavlink_heartbeat.base_mode == MAV_STATE_ACTIVE;}
+{return mavlink_heartbeat.system_status == MAV_STATE_ACTIVE;}
 
-void comm_arm_mainboard() {mavlink_heartbeat.base_mode = MAV_STATE_ACTIVE;}
-void comm_disarm_mainboard() {mavlink_heartbeat.base_mode = MAV_STATE_STANDBY;}
+void comm_arm_mainboard() {mavlink_heartbeat.system_status = MAV_STATE_ACTIVE; mavlink_heartbeat.base_mode |= MAV_MODE_FLAG_SAFETY_ARMED;}
+void comm_disarm_mainboard() {mavlink_heartbeat.system_status = MAV_STATE_STANDBY; mavlink_heartbeat.base_mode &= ~MAV_MODE_FLAG_SAFETY_ARMED;}
 
 // We periodically check if we still get heartbeat messages from the SBC
 static int32_t t_last_sbc_heartbeat;
@@ -35,9 +35,10 @@ static float sbc_last_command_arm; //temporarily stores if the last command was 
 #define SBC_HEARTBEAT_TIMEOUT 10
 
 char comm_sbc_running(){
+//	return 1; //TODO: remove this line!!
 	return t_last_sbc_heartbeat > ((int32_t)Seconds_get() - (int32_t)SBC_HEARTBEAT_TIMEOUT);}
 char comm_sbc_armed(){
-	return (comm_sbc_running()==1 && sbc_heartbeat.base_mode == MAV_STATE_ACTIVE);}
+	return (comm_sbc_running()==1 && sbc_heartbeat.system_status == MAV_STATE_ACTIVE);}
 
 void comm_mavlink_post_outbox(COMM_CHANNEL channel, COMM_FRAME* frame); //post to mailbox for outgoing messages
 void comm_clear_tx_flag(COMM_CHANNEL channel, int component_id);
@@ -135,7 +136,7 @@ void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 		case CHANNEL_APP_UART:
 #ifdef MAVLINK_ON_UART0_ENABLED
 #ifdef SBC_ENABLED
-			if(sbc_heartbeat.base_mode == MAV_STATE_STANDBY || sbc_heartbeat.base_mode == MAV_STATE_ACTIVE)
+			if(sbc_heartbeat.system_status == MAV_STATE_STANDBY || sbc_heartbeat.system_status == MAV_STATE_ACTIVE)
 #endif
 			{
 				if(serial_write(cli_stdout, buf, mavlink_msg_len))
@@ -174,6 +175,7 @@ void comm_arm_disarm_subsystems(float arm_disarm)
 	mavlink_msg_command_long_pack(mavlink_system.sysid, MAV_COMP_ID_ALL, &(frame.mavlink_message),
 	SBC_SYSTEM_ID, MAV_COMP_ID_ALL, MAV_CMD_COMPONENT_ARM_DISARM, 0, arm_disarm, 0, 0, 0, 0, 0, 0);
 
+	sbc_last_command_arm = arm_disarm;
 	comm_mavlink_post_outbox(CHANNEL_APP_UART, &frame);
 }
 
@@ -272,8 +274,9 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 			{
 				// TODO: check if heartbeat really changes its mode when armed.
 				// 			otherwise just change manually upon reception of COMMAND_ACK message
-				//mavlink_msg_heartbeat_decode(msg, &sbc_heartbeat);
-				sbc_heartbeat.base_mode = MAV_STATE_ACTIVE;
+//				mavlink_msg_heartbeat_decode(msg, &sbc_heartbeat);
+				if(sbc_heartbeat.system_status < MAV_STATE_STANDBY)
+					sbc_heartbeat.system_status = MAV_STATE_STANDBY; //just to be sure to change it from booting state.
 				t_last_sbc_heartbeat = (int32_t)Seconds_get();
 			}
 			break;
@@ -302,14 +305,14 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 			else if(msg->sysid == SBC_SYSTEM_ID && command == MAV_CMD_COMPONENT_ARM_DISARM)
 			{
 				if(sbc_last_command_arm == 1)
-					sbc_heartbeat.base_mode = MAV_STATE_ACTIVE;
+					sbc_heartbeat.system_status = MAV_STATE_ACTIVE;
 				else if(sbc_last_command_arm == 0)
-					sbc_heartbeat.base_mode = MAV_STATE_STANDBY;
+					sbc_heartbeat.system_status = MAV_STATE_STANDBY;
 			}
 			else if(msg->sysid == SBC_SYSTEM_ID && command == MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN)
 			{
 				if(result == MAV_RESULT_ACCEPTED)
-					sbc_heartbeat.base_mode = MAV_STATE_POWEROFF;
+					sbc_heartbeat.system_status = MAV_STATE_POWEROFF;
 			}
 
 
@@ -322,7 +325,7 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 			if(comm_mavlink_check_target(&msg_target,msg))
 			{
 				MAV_MODE mode = mavlink_msg_set_mode_get_base_mode(msg);
-				if(mode >= MAV_MODE_MANUAL_ARMED)
+				if(mode & MAV_MODE_FLAG_SAFETY_ARMED)
 				{
 					navigation_rxcmd_arm_disarm(1);
 				}
@@ -443,7 +446,8 @@ void comm_init(){
 	mavlink_heartbeat.system_status = MAV_STATE_STANDBY; ///< System ready for flight
 
 	t_last_sbc_heartbeat = -2*SBC_HEARTBEAT_TIMEOUT;
-	sbc_heartbeat.base_mode = MAV_STATE_BOOT;
+	sbc_heartbeat.system_status = MAV_STATE_BOOT;
+//	sbc_heartbeat.system_status = MAV_STATE_STANDBY; //TODO: remove, is just for testing purposes!!
 	sbc_last_command_arm = -1;
 
 #ifdef LORA_ENABLED

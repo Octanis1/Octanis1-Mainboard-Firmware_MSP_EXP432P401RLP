@@ -254,13 +254,15 @@ void navigation_arm_disarm()
 		}
 		else
 		{
-			comm_arm_disarm_subsystems(0);
+			if(comm_sbc_armed())
+				comm_arm_disarm_subsystems(0);
 			comm_disarm_mainboard();
 		}
 	}
 	else
 	{
-		comm_arm_disarm_subsystems(0);
+		if(comm_sbc_armed())
+			comm_arm_disarm_subsystems(0);
 		comm_disarm_mainboard();
 	}
 }
