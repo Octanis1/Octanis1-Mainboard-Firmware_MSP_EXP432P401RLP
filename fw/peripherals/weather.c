@@ -5,6 +5,8 @@
  */
 #include "../../Board.h"
 
+#include <stdint.h>
+
 #include "weather.h"
 #include "hal/AS3935.h"
 #include "hal/bme280i2c.h"
@@ -37,6 +39,7 @@
 #define LOG_IMU_TIMESTEP     1
 #define LOG_WEATHER_TIMESTEP 5
 #define LOG_BACKUP_TIMESTEP  60
+#define HUMIDITY_CONSTANT 	 1024.0
 
 #include <xdc/runtime/Types.h>
 
@@ -89,6 +92,26 @@ unsigned int weather_get_ext_humid(){
 	return (int)(1024*weather_data.ext_humid);
 }
 
+//units?
+uint32_t weather_get_uv_light(){
+	return weather_data.uv_light;
+}
+
+//units?
+uint32_t weather_get_ir_light(){
+	return weather_data.ir_light;
+}
+
+//units?
+float weather_get_vis_lux(){
+	return weather_data.vis_lux;
+}
+
+//units?
+float weather_get_irradiance(){
+	return weather_data.irradiance;
+}
+
 /* function calculating averages etc. of measured sensor data */
 void weather_aggregate_data()
 {
@@ -126,6 +149,48 @@ COMM_FRAME* weather_pack_mavlink_pressure()
 	return &frame;
 }
 
+COMM_FRAME* weather_pack_mavlink_ext_humidity()
+{
+	uint32_t msec = ms_since_boot(); //1000 * (uint32_t)Seconds_get();
+	const char *name_ext = "eh";
+	float ext_humidity_value = (weather_data.ext_humid)/HUMIDITY_CONSTANT;
+
+	static COMM_FRAME frame;
+
+	mavlink_msg_named_value_float_pack(mavlink_system.sysid, MAV_COMP_ID_PERIPHERAL, &(frame.mavlink_message),
+			msec, name_ext, ext_humidity_value);
+
+	return &frame;
+}
+
+COMM_FRAME* weather_pack_mavlink_int_humidity()
+{
+	uint32_t msec = ms_since_boot(); //1000 * (uint32_t)Seconds_get();
+	const char *name_int = "ih";
+	float int_humidity_value = (weather_data.int_humid)/HUMIDITY_CONSTANT;
+
+	static COMM_FRAME frame;
+
+	mavlink_msg_named_value_float_pack(mavlink_system.sysid, MAV_COMP_ID_PERIPHERAL, &(frame.mavlink_message),
+			msec, name_int, int_humidity_value);
+
+	return &frame;
+}
+
+COMM_FRAME* weather_pack_mavlink_uv()
+{
+	uint32_t msec = ms_since_boot(); //1000 * (uint32_t)Seconds_get();
+	const char *name = "uv";
+	int32_t uv_value = weather_data.uv_light;
+
+	static COMM_FRAME frame;
+
+	mavlink_msg_named_value_int_pack(mavlink_system.sysid, MAV_COMP_ID_PERIPHERAL, &(frame.mavlink_message),
+		       msec, name, uv_value); //generic values
+
+	return &frame;
+}
+
 uint8_t weather_check_external_connected()
 {
 	uint8_t j, is_connected = 0;
@@ -135,7 +200,7 @@ uint8_t weather_check_external_connected()
 	is_connected = (((P1->IN) & BIT5) == 1); //if the pin is pulled down, the external weather monitor is connected
 //	P1->DIR |= BIT5;
 //	P1->OUT &= ~BIT5; //pre-condition the pin to HIGH
-return 1; //TODO: adapt for new board!
+return 0; //TODO: adapt for new board!
 	return is_connected;
 }
 
@@ -267,6 +332,20 @@ void weather_task(){
 #endif
 		comm_mavlink_broadcast(weather_pack_mavlink_pressure());
 
+#ifdef MAVLINK_ON_UART0_ENABLED
+		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_PERIPHERAL);
+#endif
+		comm_mavlink_broadcast(weather_pack_mavlink_ext_humidity());
+
+#ifdef MAVLINK_ON_UART0_ENABLED
+		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_PERIPHERAL);
+#endif
+		comm_mavlink_broadcast(weather_pack_mavlink_int_humidity());
+
+#ifdef MAVLINK_ON_UART0_ENABLED
+		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_PERIPHERAL);
+#endif
+		comm_mavlink_broadcast(weather_pack_mavlink_uv());
 
 
 		//	windsensor_getvalue();
