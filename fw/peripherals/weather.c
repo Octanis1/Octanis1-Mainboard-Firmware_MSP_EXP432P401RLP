@@ -5,8 +5,6 @@
  */
 #include "../../Board.h"
 
-#include <stdint.h>
-
 #include "weather.h"
 #include "hal/AS3935.h"
 #include "hal/bme280i2c.h"

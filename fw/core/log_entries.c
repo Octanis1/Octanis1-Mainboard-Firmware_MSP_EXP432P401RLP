@@ -66,7 +66,7 @@ void log_write_weather(void)
 
     cmp_ctx_t *ctx = log_entry_create("wea");
 
-    cmp_write_array(ctx, 10);
+    cmp_write_array(ctx, 6);
     cmp_write_uinteger(ctx, int_press);
     cmp_write_integer(ctx, int_temp);
     cmp_write_uinteger(ctx, int_humi);
