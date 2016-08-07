@@ -159,7 +159,7 @@ COMM_FRAME* weather_pack_mavlink_pressure()
 * external temperature un hundredths of Kelvins as measured by sht21, external humidity in k%, uv light,
 * infrared light, visible light, irradiance, activity in counts per minute, health effect in uSv per annum
 */
-COMM_FRAME* weather_pack_mavlink()
+COMM_FRAME* weather_pack_mavlink_rc_channels()
 {
 	uint32_t msec = ms_since_boot(); //1000 * (uint32_t)Seconds_get();
 	int ext_temp_bmp280 = weather_data.ext_temp_bmp280 + KELVIN;   //in hundredths of Kelvins
@@ -330,7 +330,12 @@ void weather_task(){
 #ifdef MAVLINK_ON_UART0_ENABLED
 		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_PERIPHERAL);
 #endif
-		comm_mavlink_broadcast(weather_pack_mavlink());
+		comm_mavlink_broadcast(weather_pack_mavlink_pressure());
+
+#ifdef MAVLINK_ON_UART0_ENABLED
+		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_PERIPHERAL);
+#endif
+		comm_mavlink_broadcast(weather_pack_mavlink_rc_channels());
 
 		//	windsensor_getvalue();
 
