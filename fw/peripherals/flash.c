@@ -103,38 +103,30 @@ int flash_id_read(uint8_t *id)
 //TODO: works with mavlink_log, should test it for standards log.
 int flash_read(uint32_t addr, void *buf, size_t len)
 {
-    int ret;
-    uint32_t delta = FLASH_PAGE_SIZE - FLASH_USABLE_LENGTH;
-    uint32_t i = 0;
-    //We check if the addr isn't one of the forbidden byte(s) of the block
-    for (i=1; i<= delta; i++){
-    	if ((addr+i)%FLASH_PAGE_SIZE == 0)
-    		addr+=i;
-    }
-    //False result can be obtained if usable_lenght < addr < page_size
-    //However we prevent this with the for-loop used just before
-    size_t align = FLASH_USABLE_LENGTH - addr % FLASH_PAGE_SIZE;
+    int ret = 0;
+    size_t pos = 0;
+
+    //Find number of bytes until end of page
+    size_t align = FLASH_PAGE_SIZE - (addr % FLASH_PAGE_SIZE);
     align = align < len ? align : len;
 
+    //reduce length of bytes to read if full page is supposed to be read
+    if (align >= FLASH_PAGE_SIZE) {
+    	align = align / 2;
+    }
+
+    //TODO: maybe have to redo spi select/unselect for every read
+
     flash_spi_select();
-    ret = flash_cmd_w_addr(FLASH_READ, addr);
-    if (ret == 0) {
-        ret = flash_spi_receive(buf, align);
-        if (ret == 0) {
-        	size_t pos = align;
-        	i = 1;
-        	/*We never write the 256th byte so we have to
-        	 * jump over it*/
-        	while(pos < len) {
-                size_t n = len - pos < FLASH_USABLE_LENGTH - (3*i) ? len - pos : FLASH_USABLE_LENGTH - (3*i);
-        		ret = flash_cmd_w_addr(FLASH_READ, addr + pos + (i*delta));
-        		if (ret == 0) {
-        			ret = flash_spi_receive(&buf[pos], n);
-        		}
-        		i++;
-        		pos += n;
-        	}
-        }
+    while (pos < len && ret == 0) {
+
+    	ret = flash_cmd_w_addr(FLASH_READ, addr + pos);
+    	if (ret == 0) {
+			ret = flash_spi_receive(&buf[pos], align);
+		}
+
+    	pos += align;
+    	align = len - pos < FLASH_PAGE_SIZE / 2 ? len - pos : FLASH_PAGE_SIZE / 2;
     }
     flash_spi_unselect();
     return ret;
@@ -147,10 +139,35 @@ int flash_page_program(uint32_t addr, const void *buf, size_t len);
 
 static int flash_page_program(uint32_t addr, const void *buf, size_t len)
 {
-    if (addr % FLASH_PAGE_SIZE + len > FLASH_USABLE_LENGTH) {
+    int ret;
+
+    if (addr % FLASH_PAGE_SIZE + len > FLASH_PAGE_SIZE) {
         return -1;
     }
-    int ret;
+
+    //workaround as library does not allow to flash single page in one go.
+    //if more than possible bytes to write, split in two.
+    if (len > FLASH_USABLE_LENGTH) {
+    	flash_write_enable();
+    	flash_spi_select();
+    	ret = flash_cmd_w_addr(FLASH_PP, addr);
+		if (ret == 0) {
+			ret = flash_spi_send(buf, FLASH_USABLE_LENGTH);
+		}
+		flash_spi_unselect();
+		if (ret == 0) {
+			ret = flash_wait_until_done(FLASH_PAGE_PROGRAM_TIMEOUT_MS);
+		}
+    	flash_write_disable();
+
+    	if (ret != 0) {
+    		return ret;
+    	}
+
+    	addr = addr + FLASH_USABLE_LENGTH;
+    	len = len - FLASH_USABLE_LENGTH;
+    }
+
     flash_write_enable();
     flash_spi_select();
     ret = flash_cmd_w_addr(FLASH_PP, addr);
@@ -176,34 +193,57 @@ static int flash_page_program(uint32_t addr, const void *buf, size_t len)
  */
 
 //TODO: works with mavlink_log, should test it for standards log.
-int flash_write(uint32_t addr, const void *buf, size_t len)
+int flash_write(uint32_t addr, const void *buf, size_t len, FLASH_WRITE_MODE write_mode)
 {
-    uint32_t delta = FLASH_PAGE_SIZE - FLASH_USABLE_LENGTH;
-    int ret;
-    uint32_t i = 0;
-    //We check if the addr isn't one of the forbidden byte(s) of the block
-    for (i=1; i<= delta; i++){
-    	if ((addr+i)%FLASH_PAGE_SIZE == 0)
-    		addr+=i;
+    int ret = 0;
+    size_t rewrite_beginning = 0;
+    size_t rewrite_end = 0;
+
+    uint8_t write_buffer[FLASH_PAGE_SIZE]; //TODO: verify if buffer not too big for stack
+    const uint8_t *p_data = (const uint8_t *) buf;
+
+    size_t pos = 0;
+    size_t align = FLASH_PAGE_SIZE - (addr % FLASH_PAGE_SIZE);
+    align = align < len ? align : len;
+
+    //need to read page until begin of newly written area
+    if (write_mode == FLASH_READ_ERASE_WRITE && addr % FLASH_PAGE_SIZE > 0) {
+    	rewrite_beginning = addr % FLASH_PAGE_SIZE;
+    	ret = flash_read(addr  - (addr % FLASH_PAGE_SIZE), write_buffer, rewrite_beginning);
+
     }
 
-    size_t align = FLASH_USABLE_LENGTH - addr % FLASH_PAGE_SIZE;
-    align = align < len ? align : len;
-    const uint8_t *p = (const uint8_t *) buf;
-    ret = flash_page_program(addr, p, align);
-    if (ret == 0) {
-        size_t pos = align;
-        i = 1;
-        /* We can't write on the 256th byte due to uint8_t max number*/
-        while (pos < len) {
-            size_t n = len - pos < FLASH_USABLE_LENGTH - (3*i) ? len - pos : FLASH_USABLE_LENGTH - (3*i);
-            ret = flash_page_program(addr + pos + (i*delta) + 3*i, &p[pos], n);
-            if (ret != 0) {
-                break;
-            }
-            i++;
-            pos += n;
-        }
+    while (pos < len && ret == 0) {
+
+		//need to read page from end of newly written area //TODO: verify following calculation
+    	if (write_mode == FLASH_READ_ERASE_WRITE && (addr + pos + align) % FLASH_PAGE_SIZE > 0) {
+    		rewrite_end = FLASH_PAGE_SIZE - ((addr + pos + align) % FLASH_PAGE_SIZE);
+			ret = flash_read(addr + pos + align, &(write_buffer[(addr + pos + align) % FLASH_PAGE_SIZE]), FLASH_PAGE_SIZE - ((addr + pos + align) % FLASH_PAGE_SIZE));
+		}
+
+    	//erase page (sector) before writing new data
+    	if (ret == 0 && (write_mode == FLASH_READ_ERASE_WRITE || write_mode == FLASH_ERASE_WRITE)) {
+    		ret = flash_sector_erase(addr + pos);
+    	}
+
+    	//write old data back if required
+    	if (ret == 0 && rewrite_beginning > 0) {
+    		ret = flash_page_program(addr - (addr % FLASH_PAGE_SIZE), write_buffer, rewrite_beginning);
+    		rewrite_beginning = 0;
+    	}
+    	if (ret == 0 && rewrite_end > 0) {
+    		ret = flash_page_program(addr + pos + align, &(write_buffer[(addr + pos + align) % FLASH_PAGE_SIZE]), rewrite_end);
+    		rewrite_end = 0;
+		}
+
+    	//write new data
+    	if (ret == 0) {
+    		ret = flash_page_program(addr + pos, &(p_data[pos]), align);
+    	}
+
+    	//update pointers and counters
+    	pos += align;
+		align = len - pos < FLASH_PAGE_SIZE ? len - pos : FLASH_PAGE_SIZE;
     }
     return ret;
 }
