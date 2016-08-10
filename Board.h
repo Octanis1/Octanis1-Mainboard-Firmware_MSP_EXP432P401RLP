@@ -200,10 +200,12 @@ extern "C" {
 #define Board_ULTRASONIC_IN_7_CCTL		TIMER_A0->CCTL[3]
 #define Board_ULTRASONIC_IN_7_IV			0x06
 
-/* UV captor pins */
-#define Board_UV_INT		Octanis_UV_INT
-#define Board_UV_ON 		1
-#define Board_UV_OFF		0
+/* UV sensor pins */
+#define Board_UV_INT			Octanis_UV_INT
+#define 	Board_UV_INT_PORT	GPIO_PORT_P1
+#define 	Board_UV_INT_PIN		GPIO_PIN5
+#define Board_UV_ON 			1
+#define Board_UV_OFF			0
 
 /* Windsensor pins */
 #define Board_WINDSENSOR_SLEEP			Octanis_WINDSENSOR_SLEEP
