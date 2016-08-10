@@ -99,7 +99,7 @@ u16 si1133_readUV() {
 	uv=temp;
 	si1133_read8(SI1133_REG_HOSTOUT1, &temp);
 	uv= (uv<<8) + temp;
- 	return uv;
+ 	return (u16)(1.5625 * (float)uv); //divide by 64 and multiply by 100
 }
 u16 si1133_readIR() {
 	u8 temp=0;
@@ -128,5 +128,5 @@ u16 si1133_readDEEP_UV() {
  	deep=temp;
  	si1133_read8(SI1133_REG_HOSTOUT7, &temp);
  	deep= (deep<<8) + temp;
- 	return deep;
+ 	return (u16)(1.5625 * (float)deep); //divide by 64 and multiply by 100
 }
