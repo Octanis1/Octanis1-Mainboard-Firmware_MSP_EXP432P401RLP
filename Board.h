@@ -84,6 +84,7 @@ extern "C" {
 /* Board specific I2C addresses */
 #define Board_EPS_I2CADDR					(0x48)
 #define Board_BMP180_I2CADDR					(0x77) //temp/pres
+#define Board_BMP280_I2CADDR					(0x77) //temp/pres
 #define Board_BNO055_MAINBOARD_I2CADDR			(0x28) //IMU 1
 #define Board_BNO055_WEATHERSTRIP_I2CADDR		(0x29) //IMU 2
 #define Board_MCP3425AD_I2CADDR					(0x68) //ADC for UV
@@ -199,10 +200,12 @@ extern "C" {
 #define Board_ULTRASONIC_IN_7_CCTL		TIMER_A0->CCTL[3]
 #define Board_ULTRASONIC_IN_7_IV			0x06
 
-/* UV captor pins */
-#define Board_UV_PIN		Octanis_UV_EN
-#define Board_UV_ON 		1
-#define Board_UV_OFF		0
+/* UV sensor pins */
+#define Board_UV_INT			Octanis_UV_INT
+#define 	Board_UV_INT_PORT	GPIO_PORT_P1
+#define 	Board_UV_INT_PIN		GPIO_PIN5
+#define Board_UV_ON 			1
+#define Board_UV_OFF			0
 
 /* Windsensor pins */
 #define Board_WINDSENSOR_SLEEP			Octanis_WINDSENSOR_SLEEP

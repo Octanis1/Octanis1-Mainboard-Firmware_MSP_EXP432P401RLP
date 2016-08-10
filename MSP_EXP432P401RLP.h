@@ -90,6 +90,7 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
 	Octanis_ROCKBLOCK_NET,
 	Octanis_GEIGER_COUNTER,
 	Octanis_EPS_INT,
+	Octanis_UV_INT,
 	Octanis_LED0, //octanis led1
 	Octanis_LED1, //octanis led2
 	Octanis_ROCKBLOCK_SLEEP,
@@ -117,7 +118,6 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
 
 	Octanis_M5678_CURR_SENS_EN,
 	Octanis_M1_ANGLE_ENCODER_CS,
-	Octanis_UV_EN,
 	Octanis_GEIGER_EN,
 	Octanis_Flash_CS,
 #ifndef VERSION_0_5

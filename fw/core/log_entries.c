@@ -204,6 +204,11 @@ void log_write_weather(void)
     unsigned int ex_press = weather_get_ext_press();
     int ex_temp = weather_get_ext_temp();
     unsigned int ex_humi = weather_get_ext_humid();
+    uint32_t  uv_light = weather_get_uv_light();
+	uint32_t  ir_light = weather_get_ir_light();
+	float vis_lux = weather_get_vis_lux();
+	float irradiance = weather_get_irradiance();
+
 
     cmp_ctx_t *ctx = log_entry_create("wea");
 
@@ -214,6 +219,7 @@ void log_write_weather(void)
     cmp_write_uinteger(ctx, ex_press);
     cmp_write_integer(ctx, ex_temp);
     cmp_write_uinteger(ctx, ex_humi);
+
 
     log_entry_write_to_flash();
 }

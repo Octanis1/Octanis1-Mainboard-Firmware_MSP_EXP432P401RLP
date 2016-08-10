@@ -53,6 +53,8 @@
 #include "i2c_helper.h"
 #include "bme280i2c.h"
 
+#define HUMIDITY_CONSTANT   	10.24 //value of 42313 represents 42313 / 1024 = 41.321 %rH
+
 
 /*----------------------------------------------------------------------------*
  *  struct bme280_t parameters can be accessed by using bme280
@@ -127,9 +129,6 @@ s32 bme280_data_readout(int* temp_s32, unsigned int* press_u32, unsigned int* hu
 	/* result of communication results*/
 	s32 com_rslt = ERROR;
 
-
-
-
 /*------------------------------------------------------------------*
 ************ START READ TRUE PRESSURE, TEMPERATURE
 AND HUMIDITY DATA ********
@@ -142,6 +141,10 @@ AND HUMIDITY DATA ********
 
 	/* API is used to read the true temperature, humidity and pressure*/
 	com_rslt += bme280_read_pressure_temperature_humidity(press_u32, temp_s32, humity_u32);
+
+	// convert humidity value:
+	(*humity_u32) = (u16)((float)(*humity_u32))/HUMIDITY_CONSTANT; //value of 42313 represents 42313 / 1024 = 41.321 %rH
+
 /*--------------------------------------------------------------------*
 ************ END READ TRUE PRESSURE, TEMPERATURE AND HUMIDITY ********
 *-------------------------------------------------------------------------*/
