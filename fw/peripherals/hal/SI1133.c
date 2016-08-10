@@ -64,7 +64,7 @@ bool si1133_begin(void) {
   writeParam(SI1133_PARAM_ADCPSOT0,BITS_16, &response);
   writeParam(SI1133_PARAM_MEASCONFIG0,COUNT0, &response);
   //=======================================================
-  writeParam(SI1133_PARAM_ADCCONFIG1,RATE_NORMAL| F_LARGE_IR, &response );
+  writeParam(SI1133_PARAM_ADCCONFIG1,RATE_NORMAL| F_SMALL_IR, &response );
   writeParam(SI1133_PARAM_ADCSENS1,0, &response);
   writeParam(SI1133_PARAM_ADCPSOT1,BITS_24, &response);
   writeParam(SI1133_PARAM_MEASCONFIG1,COUNT1 , &response);
@@ -85,17 +85,17 @@ void si1133_reset() {
 u32 si1133_readUV() {
 	u8 temp=0;
 	u32 uv=0;
-	si1133_read8(SI1133_REG_HOSTOUT0, &temp);
-	uv=temp;
-	si1133_read8(SI1133_REG_HOSTOUT1, &temp);
+//	si1133_read8(SI1133_REG_HOSTOUT1, &temp);
+//	uv=temp;
+	si1133_read8(SI1133_REG_HOSTOUT2, &temp);
 	uv= (uv<<8) + temp;
  	return uv;
 }
 u32 si1133_readIR() {
 	u8 temp=0;
 	u32 ir=0;
-	si1133_read8(SI1133_REG_HOSTOUT2, &temp);
-	ir=temp;
+//	si1133_read8(SI1133_REG_HOSTOUT3, &temp);
+//	ir=temp;
 	si1133_read8(SI1133_REG_HOSTOUT3, &temp);
 	ir=(ir<<8) + (temp);
 	si1133_read8(SI1133_REG_HOSTOUT4, &temp);

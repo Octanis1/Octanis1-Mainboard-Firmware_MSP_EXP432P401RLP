@@ -196,7 +196,7 @@ uint8_t weather_check_external_connected()
 	is_connected = (((P1->IN) & BIT5) == 1); //if the pin is pulled down, the external weather monitor is connected
 //	P1->DIR |= BIT5;
 //	P1->OUT &= ~BIT5; //pre-condition the pin to HIGH
-return 0; //TODO: adapt for new board!
+return 1; //TODO: adapt for new board!
 	return is_connected;
 }
 
@@ -307,8 +307,8 @@ void weather_task(){
 //			float uv = mcp_get_data();
 //			int uvint = (int)(1000.0*uv);
 
-			weather_data.ext_temp_sht21 = sht2x_get_temp(); //TODO: fix the fact that program stops here if sensor is not connected.
-			weather_data.ext_humid = sht2x_get_humidity();
+//			weather_data.ext_temp_sht21 = sht2x_get_temp(); //TODO: fix the fact that program stops here if sensor is not connected.
+//			weather_data.ext_humid = sht2x_get_humidity();
 
 			weather_data.uv_light=si1133_readUV();
 			Task_sleep(100);
