@@ -27,6 +27,8 @@ void Task_sleep(int a);
 #include "pid.h"
 #include "../lib/serial_printf.h"
 #include <string.h>
+#include "hal/time_since_boot.h"
+#include "hal/adc.h"
 
 //Logging includes:
 #include "../core/log.h"
@@ -427,13 +429,45 @@ void navigation_mission_item_reached()
 	}
 }
 
+COMM_FRAME* navigation_pack_rc_channels_scaled()
+{
+	uint32_t msec = ms_since_boot();
+
+	static COMM_FRAME frame;
+
+	uint8_t port 		 = 0;
+	int16_t chan7_scaled = 0;
+	int16_t chan8_scaled = 0;
+	uint8_t rssi 		 = 0;
+
+	int16_t left_side = navigation_status.motor_values[0];
+	int16_t right_side = navigation_status.motor_values[1];
+
+	//get currents
+	static uint16_t sensor_values[N_WHEELS];
+
+	/* initialize to 0 to reset the running average inside the adc readout function */
+	sensor_values[0] = 0;
+	sensor_values[1] = 0;
+	sensor_values[2] = 0;
+	sensor_values[3] = 0;
+
+	adc_read_motor_sensors(sensor_values);
+
+	mavlink_msg_rc_channels_scaled_pack(mavlink_system.sysid, MAV_COMP_ID_PATHPLANNER, &(frame.mavlink_message),
+			msec, port, left_side, right_side, sensor_values[0],sensor_values[1], sensor_values[2], sensor_values[3],
+			chan7_scaled, chan8_scaled, rssi);
+
+	return &frame;
+}
+
 // message that is continuously at each task call
 COMM_FRAME* navigation_pack_mavlink_hud()
 {
 	// Mavlink heartbeat
 	// Define the system type, in this case an airplane
 	float airspeed = 0.; //TODO
-	float groundspeed = 0.; //TODO
+	float groundspeed = motors_get_groundspeed();
 	int16_t heading = imu_get_heading();
 	uint16_t throttle = (navigation_status.motor_values[0] + navigation_status.motor_values[1]);
 	float alt = (1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
@@ -525,13 +559,13 @@ void navigation_update_position()
 		navigation_status.old_lon = navigation_status.lon_rover;
 
 		motors_gps_input(delta_lon, delta_lat); //reinitialises odometer
-		motors_wheels_update_distance(navigation_status.motor_values, heading); //wants heading
+		motors_wheels_update_distance(navigation_status.motor_values, heading);
 	}
 	else
 	{
 		//we didn't get a new gps position --> update position using odometry.
 		//TODO
-		motors_wheels_update_distance(navigation_status.motor_values, heading); //wants heading
+		motors_wheels_update_distance(navigation_status.motor_values, heading);
 		motors_struts_get_position();
 
 		gps_update_position(&(navigation_status.lat_rover), &(navigation_status.lon_rover));
@@ -857,11 +891,14 @@ void navigation_task()
 #ifdef MAVLINK_ON_UART0_ENABLED
 		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_PATHPLANNER);
 #endif
+		comm_mavlink_broadcast(navigation_pack_rc_channels_scaled());
+
+#ifdef MAVLINK_ON_UART0_ENABLED
+		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_PATHPLANNER);
+#endif
 		comm_mavlink_broadcast(navigation_pack_mavlink_hud());
 
-
 		Task_sleep(500);
-
 	}
 }
 

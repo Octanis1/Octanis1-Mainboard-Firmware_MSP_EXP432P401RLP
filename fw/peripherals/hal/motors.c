@@ -22,11 +22,17 @@
 #define KILO					1000
 #define MAX_RECENT_VALUES		75
 #define VALUES_AFTER_GPS_RESET  25
+#define ONLY_VOLTAGES			1
+#define RIGHT					0
+#define LEFT					1
+#define STRAIGHT				2
+
+#define SENSOR_VALUES_UNAVAILABLE
 
 static float friction_factor = INITIAL_FRICTION_FACTOR;
 
-void motors_distance_odometer(uint16_t sensor_values[N_WHEELS], float voltage[N_WHEELS], float heading);
-int motors_navigation_error(uint16_t sensor_values[N_WHEELS], float voltage[N_WHEELS]);
+void motors_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_WHEELS], float heading);
+int motors_navigation_error(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_WHEELS]);
 
 PWM_Handle pwm5_handle, pwm6_handle, pwm7_handle, pwm8_handle;
 PWM_Params pwm5_params, pwm6_params, pwm7_params, pwm8_params;
@@ -42,6 +48,7 @@ struct odometer{
 	int first_time; //true/false
 	int gps_time; //in msec
 	int odo_time; //in msec
+	float velocity; //in meters
 } odometer;
 
 int motors_init()
@@ -176,7 +183,7 @@ int motors_wheels_update_distance(int32_t voltage[N_SIDES], float heading)
 	}
 }
 
-int motors_navigation_error(uint16_t sensor_values[N_WHEELS], float voltage[N_WHEELS])
+int motors_navigation_error(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_WHEELS])
 {
 	int error = 0;
 	int ratio[N_WHEELS];
@@ -192,24 +199,42 @@ int motors_navigation_error(uint16_t sensor_values[N_WHEELS], float voltage[N_WH
 		return 0;
 }
 
-void motors_distance_odometer(uint16_t sensor_values[N_WHEELS], float voltage[N_WHEELS], float heading)
+void motors_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_WHEELS], float heading)
 {
 	//take values for sensors and convert to distance
 	float distance_meters, circumference, velocity, delta_time = 0;
 	float speed[N_WHEELS], rps[N_WHEELS];
 	int i = 0;
 	float x_to_longitude = Y_TO_LATTITUDE * cos(MISSION_LATTITUDE);
+	char direction;
+
+	if (voltage[0]>voltage[1]) {
+		direction = RIGHT;
+	}
+	else if (voltage[0]<voltage[1]) {
+		direction = LEFT;
+	}
+	else {
+		direction = STRAIGHT;
+	}
 
 	circumference = WHEEL_RADIUS * 2 * M_PI;
-
+#ifdef SENSOR_VALUES_AVAILABLE
 	for (i=0; i<N_WHEELS; i++) {
-		rps[i] = sensor_values[i] * friction_factor / voltage[i%N_SIDES];
+		rps[i] = friction_factor * voltage[i%N_SIDES] / sensor_values[i];
 		speed[i] = rps[i] * circumference;
 		velocity += speed[i];
 	}
-
+#endif
+#ifdef SENSOR_VALUES_UNAVAILABLE
+	for (i=0; i<N_WHEELS; i++) {
+		rps[i] = friction_factor * voltage[i%N_SIDES];
+		speed[i] = rps[i] * circumference;
+		velocity += speed[i];
+	}
+#endif
 	velocity = velocity / (N_WHEELS*KILO);
-
+	odometer.velocity = velocity * KILO;
 	uint32_t msec = ms_since_boot();
 
 	if (odometer.first_time) {
@@ -226,20 +251,27 @@ void motors_distance_odometer(uint16_t sensor_values[N_WHEELS], float voltage[N_
 		else
 			odometer.i++;
 	}
-	//only straight forward!
+
 	distance_meters = delta_time * velocity;
 	odometer.right_left[odometer.i] = sin(heading) * distance_meters;
 	odometer.up_down[odometer.i] = cos(heading) * distance_meters;
 	odometer.x += sin(heading) * distance_meters;
 	odometer.y += cos(heading) * distance_meters;
 
-	//turning left
-	//odometer.x += sin(heading - 0.5 * M_PI) * distance_meters * TURNING_CONSTANT;
-	//odometer.y += cos(heading - 0.5 * M_PI) * distance_meters * TURNING_CONSTANT;
-
-	//turning right
-	//odometer.x += sin(heading + 0.5 * M_PI) * distance_meters * TURNING_CONSTANT;
-	//odometer.y += cos(heading + 0.5 * M_PI) * distance_meters * TURNING_CONSTANT;
+	switch (direction){
+	case LEFT:
+		odometer.x += sin(heading - 0.5 * M_PI) * distance_meters * TURNING_CONSTANT;
+		odometer.y += cos(heading - 0.5 * M_PI) * distance_meters * TURNING_CONSTANT;
+		break;
+	case RIGHT:
+		odometer.x += sin(heading + 0.5 * M_PI) * distance_meters * TURNING_CONSTANT;
+		odometer.y += cos(heading + 0.5 * M_PI) * distance_meters * TURNING_CONSTANT;
+		break;
+	case STRAIGHT:
+		break;
+	default:
+		break;
+	}
 
 	//convert distance to polar coordinates
 	odometer.lon = odometer.x / x_to_longitude;
@@ -375,4 +407,9 @@ void motors_pwm_close()
 	PWM_close(pwm6_handle); //turns off the pwm signal
 	PWM_close(pwm7_handle); //turns off the pwm signal
 	PWM_close(pwm8_handle); //turns off the pwm signal
+}
+
+float motors_get_groundspeed()
+{
+	return odometer.velocity;
 }

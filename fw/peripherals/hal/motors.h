@@ -55,9 +55,14 @@ void motors_struts_move(int8_t front_left, int8_t front_right, int8_t rear_left,
 void motors_wheels_stop();
 void motors_struts_stop();
 
+/*Takes care of odometry.
+ */
 int motors_wheels_update_distance(int32_t voltage[N_SIDES], float heading);
+
 void motors_gps_input(float delta_lon, float delta_lat);
 void motors_struts_get_position();
+
+float motors_get_groundspeed();
 
 
 #endif /* FW_PERIPHERALS_HAL_MOTORS_H_ */
