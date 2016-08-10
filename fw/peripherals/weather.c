@@ -58,8 +58,10 @@ static struct _weather_data {
 	int ext_temp; // average of both values in 0.01 degree Centigrade
 	unsigned int ext_press; //pressure in steps of 1.0 Pa
 	float ext_humid;
-	u32 uv_light;
-	u32 ir_light;
+	u16 uv_light;
+	u16 ir_light;
+	u16 vis_light;
+	u16 deep_uv_light;
 	float vis_lux;
 	float irradiance;
 	u16 activity; //in counts per minute
@@ -299,14 +301,15 @@ void weather_task(){
 		{
 			bmp280_data_readout(&(weather_data.ext_temp_bmp280),&(weather_data.ext_press));
 
-//			weather_data.ext_temp_sht21 = sht2x_get_temp(); //TODO: fix the fact that program stops here if sensor is not connected.
-//			weather_data.ext_humid = sht2x_get_humidity();
+			//weather_data.ext_temp_sht21 = sht2x_get_temp(); //TODO: fix the fact that program stops here if sensor is not connected.
+			//weather_data.ext_humid = sht2x_get_humidity();
 
 			weather_data.uv_light=si1133_readUV();
-			Task_sleep(100);
 			weather_data.ir_light=si1133_readIR();
+			weather_data.vis_light=si1133_readVIS();
+			weather_data.deep_uv_light=si1133_readDEEP_UV();
 
-			serial_printf(cli_stdout, "uv: %u, ir: %u \n", weather_data.uv_light, weather_data.ir_light);
+			serial_printf(cli_stdout, "uv: %u, ir: %u \n","vis: %u, deep_uv: %u \n", weather_data.uv_light, weather_data.ir_light,weather_data.vis_light, weather_data.deep_uv_light);
 		}
 
 		bme280_data_readout(&(weather_data.int_temp),&(weather_data.int_press),&(weather_data.int_humid));

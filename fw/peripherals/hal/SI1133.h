@@ -9,8 +9,8 @@
 #define RATE_LONG   0X20 //97.6us
 #define RATE_VLONG  0X40  //195us
 //============================
-#define BITS_24 0X00
-#define BITS_16 0X40
+#define BITS_24 0X40
+#define BITS_16 0X00
 //============================
 #define COUNT0 0X40
 #define COUNT1 0X80
@@ -92,7 +92,7 @@
 #define SI1133_PARAM_ADCSENS1   0X07
 #define SI1133_PARAM_ADCPSOT1   0X08
 #define SI1133_PARAM_MEASCONFIG1  0X09
-#define SI1133_PARAM_ADCCONFIG20  0X0A
+#define SI1133_PARAM_ADCCONFIG2  0X0A
 #define SI1133_PARAM_ADCSENS2   0X0B
 #define SI1133_PARAM_ADCPSOT2   0X0C
 #define SI1133_PARAM_MEASCONFIG2  0X0D
@@ -125,5 +125,7 @@
 
   bool     si1133_begin();
   void     si1133_reset();
-  u32 si1133_readUV();
-  u32 si1133_readIR();
+  u16 si1133_readUV();
+  u16 si1133_readIR();
+  u16 si1133_readVIS();
+  u16 si1133_readDEEP_UV();
