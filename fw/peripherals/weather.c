@@ -33,10 +33,15 @@
 #include "hal/time_since_boot.h"
 
 // NOTE: set to 0 if it should not be logged
-#define LOG_GPS_TIMESTEP     5
-#define LOG_IMU_TIMESTEP     1
-#define LOG_WEATHER_TIMESTEP 5
-#define LOG_BACKUP_TIMESTEP  60
+#define LOG_GPS_TIMESTEP      5
+#define LOG_IMU_TIMESTEP      1
+#define LOG_WEATHER_TIMESTEP  5
+#define LOG_BACKUP_TIMESTEP   60
+#define HUMIDITY_CONSTANT 	  1.024
+#define CPM_CONVERSION_FACTOR 0.0224 //see wiki for origin of factor
+#define RC_CHANNELS			  18
+#define SIGNAL_STRENGTH		  255
+#define KELVIN				  27315
 
 #include <xdc/runtime/Types.h>
 
@@ -59,6 +64,8 @@ static struct _weather_data {
 	u16 deep_uv_light;
 	float vis_lux;
 	float irradiance;
+	u16 activity; //in counts per minute
+	float health_effect; //in uSv/a
 } weather_data;
 
 //in 0.01 degree Centigrade
@@ -91,12 +98,33 @@ unsigned int weather_get_ext_humid(){
 	return (int)(1024*weather_data.ext_humid);
 }
 
+//units?
+uint32_t weather_get_uv_light(){
+	return weather_data.uv_light;
+}
+
+//units?
+uint32_t weather_get_ir_light(){
+	return weather_data.ir_light;
+}
+
+//units?
+float weather_get_vis_lux(){
+	return weather_data.vis_lux;
+}
+
+//units?
+float weather_get_irradiance(){
+	return weather_data.irradiance;
+}
+
 /* function calculating averages etc. of measured sensor data */
 void weather_aggregate_data()
 {
 	// average SHT21 and BMP280 external temperature data and scale the result to 0.01 degree Celsius
 	weather_data.ext_temp = (int)(50*weather_data.ext_temp_sht21) + weather_data.ext_temp_bmp280 / 2;
 }
+
 
 COMM_FRAME* weather_pack_mavlink_pressure()
 {
@@ -107,7 +135,7 @@ COMM_FRAME* weather_pack_mavlink_pressure()
 
 	if(external_board_connected)
 	{
-		temp = weather_data.ext_temp;
+		temp = weather_data.int_temp;
 		press_abs = ((float)weather_data.ext_press)/100; //Absolute pressure (hectopascal)
 		press_diff = ((float)weather_data.int_press)/100 - press_abs;
 	}
@@ -124,6 +152,39 @@ COMM_FRAME* weather_pack_mavlink_pressure()
 	// Pack the message
 	mavlink_msg_scaled_pressure_pack(mavlink_system.sysid, MAV_COMP_ID_PERIPHERAL, &(frame.mavlink_message),
 			msec, press_abs, press_diff, temp);
+
+	return &frame;
+}
+
+
+/*Order: internal humidiy in k%, external temperature un hundredths of Kelvins as measured by bmp280,
+* external temperature un hundredths of Kelvins as measured by sht21, external humidity in k%, uv light,
+* infrared light, visible light, irradiance, activity in counts per minute, health effect in uSv per annum
+*/
+COMM_FRAME* weather_pack_mavlink_rc_channels()
+{
+	uint32_t msec = ms_since_boot(); //1000 * (uint32_t)Seconds_get();
+	int ext_temp_bmp280 = weather_data.ext_temp_bmp280 + KELVIN;   //in hundredths of Kelvins
+	int ext_temp_sht21 = weather_data.ext_temp_sht21 + KELVIN;	   //in hundredths of Kelvins
+	float int_humidity = weather_data.int_humid/HUMIDITY_CONSTANT; //in k%
+	float ext_humidity = weather_data.ext_humid/HUMIDITY_CONSTANT; //in k%
+
+	uint16_t chan11_raw = 0;
+	uint16_t chan12_raw = 0;
+	uint16_t chan13_raw = 0;
+	uint16_t chan14_raw = 0;
+	uint16_t chan15_raw = 0;
+	uint16_t chan16_raw = 0;
+	uint16_t chan17_raw = 0;
+	uint16_t chan18_raw = 0;
+
+	static COMM_FRAME frame;
+
+	mavlink_msg_rc_channels_pack(mavlink_system.sysid, MAV_COMP_ID_PERIPHERAL, &(frame.mavlink_message),
+			msec, RC_CHANNELS, int_humidity, ext_temp_bmp280, ext_temp_sht21, ext_humidity, weather_data.uv_light,
+			weather_data.ir_light, weather_data.vis_lux, weather_data.irradiance, weather_data.activity,
+			weather_data.health_effect, chan11_raw, chan12_raw, chan13_raw, chan14_raw, chan15_raw,chan16_raw,
+			chan17_raw, chan18_raw, SIGNAL_STRENGTH);
 
 	return &frame;
 }
@@ -211,6 +272,11 @@ void weather_task(){
 
 
     while(1){
+    	weather_data.activity = get_last_minute_count();
+    	float activity = weather_data.activity;
+    	weather_data.health_effect = activity/CPM_CONVERSION_FACTOR;
+    	float health_effect = weather_data.health_effect;
+    	serial_printf(cli_stdout, "mSv/a, %f\n", health_effect);
 
 #ifdef FLASH_ENABLED
 
@@ -245,6 +311,7 @@ void weather_task(){
 
 			//weather_data.ext_temp_sht21 = sht2x_get_temp(); //TODO: fix the fact that program stops here if sensor is not connected.
 			//weather_data.ext_humid = sht2x_get_humidity();
+
 			weather_data.uv_light=si1133_readUV();
 			weather_data.ir_light=si1133_readIR();
 			weather_data.vis_light=si1133_readVIS();
@@ -263,13 +330,15 @@ void weather_task(){
 //		Types_FreqHz freq1;
 //		Timestamp_getFreq(&freq1);
 
-
 #ifdef MAVLINK_ON_UART0_ENABLED
 		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_PERIPHERAL);
 #endif
 		comm_mavlink_broadcast(weather_pack_mavlink_pressure());
 
-
+#ifdef MAVLINK_ON_UART0_ENABLED
+		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_PERIPHERAL);
+#endif
+		comm_mavlink_broadcast(weather_pack_mavlink_rc_channels());
 
 		//	windsensor_getvalue();
 

@@ -34,6 +34,7 @@ void geiger_turn_on_off(uint8_t on_off){
 	}
 }
 
+
 void geiger_count(){
 
 	static uint8_t first_time = 1;
