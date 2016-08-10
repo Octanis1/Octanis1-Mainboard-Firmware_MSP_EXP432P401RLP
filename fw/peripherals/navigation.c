@@ -310,6 +310,7 @@ COMM_MAV_RESULT navigation_rx_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_
 			}
 #ifdef FLASH_ENABLED
 			log_write_mavlink_item_list();
+			serial_printf(cli_stdout,"waypoint list stored on flash done \n");
 #endif
 		}
 		return REPLY_TO_SENDER;
@@ -489,15 +490,22 @@ uint8_t navigation_bypass(char command, uint8_t index)
 	}
 	else
 	{
+		if(command == 'x')
+		{
+			motors_wheels_stop();
+			navigation_status.current_state = STOP;
+			return 1;
+		}
 		switch(command)
 		{
-		case 'f': motors_wheels_move(PWM_SPEED_100, PWM_SPEED_100, PWM_SPEED_100, PWM_SPEED_100);break;
-		case 'b': motors_wheels_move(-PWM_SPEED_100, -PWM_SPEED_100, -PWM_SPEED_100, -PWM_SPEED_100);break;
-		case 'l': motors_wheels_move(PWM_SPEED_80, PWM_SPEED_100, PWM_SPEED_80, PWM_SPEED_100);break;
-		case 'r': motors_wheels_move(PWM_SPEED_100, PWM_SPEED_80, PWM_SPEED_100, PWM_SPEED_80);break;
-		case 'x': motors_wheels_stop();break;
+		case 'f': navigation_status.motor_values[0] = PWM_SPEED_100; navigation_status.motor_values[1] = PWM_SPEED_100; break;
+		case 'b': navigation_status.motor_values[0] = -PWM_SPEED_100; navigation_status.motor_values[1] = -PWM_SPEED_100; break;
+		case 'l': navigation_status.motor_values[0] = PWM_SPEED_80; navigation_status.motor_values[1] = PWM_SPEED_100; break;
+		case 'r': navigation_status.motor_values[0] = PWM_SPEED_100; navigation_status.motor_values[1] = PWM_SPEED_80; break;
 		default: return 0;
 		}
+		motors_wheels_move(navigation_status.motor_values[0], navigation_status.motor_values[1],
+				navigation_status.motor_values[0], navigation_status.motor_values[1]);
 	}
 
 	navigation_status.current_state = BYPASS;
