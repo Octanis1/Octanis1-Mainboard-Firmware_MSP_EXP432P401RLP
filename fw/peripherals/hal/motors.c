@@ -11,11 +11,38 @@
 #include "spi_helper.h"
 #include "AS5050A.h"
 #include "../../core/eps.h"
+#include "time_since_boot.h"
 
+#define INITIAL_FRICTION_FACTOR 1
+#define BLOCKED_THRESHOLD		1
+#define AIR_THRESHOLD			1
+#define TURNING_CONSTANT		1
+#define MISSION_LATTITUDE		0	//to be defined separately for each mission
+#define Y_TO_LATTITUDE			30.81840482
+#define KILO					1000
+#define MAX_RECENT_VALUES		75
+#define VALUES_AFTER_GPS_RESET  25
+
+static float friction_factor = INITIAL_FRICTION_FACTOR;
+
+void motors_distance_odometer(uint16_t sensor_values[N_WHEELS], float voltage[N_WHEELS], float heading);
+int motors_navigation_error(uint16_t sensor_values[N_WHEELS], float voltage[N_WHEELS]);
 
 PWM_Handle pwm5_handle, pwm6_handle, pwm7_handle, pwm8_handle;
 PWM_Params pwm5_params, pwm6_params, pwm7_params, pwm8_params;
 
+struct odometer{
+	float right_left[MAX_RECENT_VALUES]; //stores all recent values for x
+	float up_down[MAX_RECENT_VALUES];	  //stores all recent values for y
+	int i;
+	float x;   //in m
+	float y;   //in m
+	float lat; //in seconds
+	float lon; //in seconds
+	int first_time; //true/false
+	int gps_time; //in msec
+	int odo_time; //in msec
+} odometer;
 
 int motors_init()
 {
@@ -126,7 +153,7 @@ void motors_wheels_move(int32_t front_left, int32_t front_right, int32_t rear_le
 }
 
 
-void motors_wheels_update_distance()
+int motors_wheels_update_distance(int32_t voltage[N_SIDES], float heading)
 {
 	static uint16_t sensor_values[N_WHEELS];
 
@@ -138,10 +165,115 @@ void motors_wheels_update_distance()
 
 	adc_read_motor_sensors(sensor_values);
 
-
-
+	//check to see if a wheel is blocked or off the ground
+	if(motors_navigation_error(sensor_values, voltage)) {
+		return 0;
+	}
+	else {
+		//function to estimate the distance needs curvature.
+		motors_distance_odometer(sensor_values, voltage, heading);
+		return 1;
+	}
 }
 
+int motors_navigation_error(uint16_t sensor_values[N_WHEELS], float voltage[N_WHEELS])
+{
+	int error = 0;
+	int ratio[N_WHEELS];
+	int i = 0;
+	for (i=0; i<N_WHEELS; i++) {
+		ratio[i] = sensor_values[i] / voltage[i%N_SIDES];
+		if (ratio[i]>BLOCKED_THRESHOLD || ratio[i]<AIR_THRESHOLD) {
+			error++;
+			return 1;
+		}
+	}
+	if (!error)
+		return 0;
+}
+
+void motors_distance_odometer(uint16_t sensor_values[N_WHEELS], float voltage[N_WHEELS], float heading)
+{
+	//take values for sensors and convert to distance
+	float distance_meters, circumference, velocity, delta_time = 0;
+	float speed[N_WHEELS], rps[N_WHEELS];
+	int i = 0;
+	float x_to_longitude = Y_TO_LATTITUDE * cos(MISSION_LATTITUDE);
+
+	circumference = WHEEL_RADIUS * 2 * M_PI;
+
+	for (i=0; i<N_WHEELS; i++) {
+		rps[i] = sensor_values[i] * friction_factor / voltage[i%N_SIDES];
+		speed[i] = rps[i] * circumference;
+		velocity += speed[i];
+	}
+
+	velocity = velocity / (N_WHEELS*KILO);
+
+	uint32_t msec = ms_since_boot();
+
+	if (odometer.first_time) {
+		odometer.gps_time = msec;
+		odometer.odo_time = msec;
+		odometer.first_time = 0;
+		odometer.i++;
+	}
+	else {
+		delta_time = msec - odometer.odo_time;
+		odometer.odo_time = msec;
+		if (odometer.i == (MAX_RECENT_VALUES-1))
+			odometer.i = VALUES_AFTER_GPS_RESET;
+		else
+			odometer.i++;
+	}
+	//only straight forward!
+	distance_meters = delta_time * velocity;
+	odometer.right_left[odometer.i] = sin(heading) * distance_meters;
+	odometer.up_down[odometer.i] = cos(heading) * distance_meters;
+	odometer.x += sin(heading) * distance_meters;
+	odometer.y += cos(heading) * distance_meters;
+
+	//turning left
+	//odometer.x += sin(heading - 0.5 * M_PI) * distance_meters * TURNING_CONSTANT;
+	//odometer.y += cos(heading - 0.5 * M_PI) * distance_meters * TURNING_CONSTANT;
+
+	//turning right
+	//odometer.x += sin(heading + 0.5 * M_PI) * distance_meters * TURNING_CONSTANT;
+	//odometer.y += cos(heading + 0.5 * M_PI) * distance_meters * TURNING_CONSTANT;
+
+	//convert distance to polar coordinates
+	odometer.lon = odometer.x / x_to_longitude;
+	odometer.lat = odometer.y / Y_TO_LATTITUDE;
+}
+
+void motors_gps_input(float delta_lat, float delta_lon)
+{
+	//recalibrate friction_factor
+	float update = 0;
+	update = ((delta_lat / odometer.lat)+(delta_lon / odometer.lon))/2;
+	friction_factor = friction_factor * update;
+
+	//reinitialize odometer_distance
+	int i;
+	float x_to_longitude = Y_TO_LATTITUDE * cos(MISSION_LATTITUDE);
+
+	odometer.x = 0;
+	odometer.y = 0;
+	odometer.first_time = 1;
+
+	for (i = 0; i<VALUES_AFTER_GPS_RESET; i++) //later values not reinitialised because not deemed necessary - possibly not the case!
+	{
+		odometer.right_left[i] = odometer.right_left[i + MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET];
+		odometer.up_down[i] = odometer.up_down[i + MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET];
+
+		odometer.x += odometer.right_left[i];
+		odometer.y += odometer.up_down[i];
+	}
+
+	//convert distance to polar coordinates
+	odometer.lon = odometer.x / x_to_longitude;
+	odometer.lat = odometer.y / Y_TO_LATTITUDE;
+}
 
 /*
  * arguments determine the direction of the struts movement

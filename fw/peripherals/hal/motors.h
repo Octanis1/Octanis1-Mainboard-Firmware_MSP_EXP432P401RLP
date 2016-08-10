@@ -10,6 +10,7 @@
 
 /* Definitions for wheels */
 #define N_WHEELS			4
+#define N_SIDES				2
 #define WHEEL_RADIUS		0.1 //[m]
 #define SPEED_FACTOR		0.00001875 //[rps/pwm value]
 
@@ -32,6 +33,8 @@
 #define PH_FORWARD		0
 #define PH_REVERSE		1
 
+#define M_PI 3.14159265358979323846
+
 /* Definitions for struts */
 
 #define N_STRUTS			4
@@ -52,7 +55,8 @@ void motors_struts_move(int8_t front_left, int8_t front_right, int8_t rear_left,
 void motors_wheels_stop();
 void motors_struts_stop();
 
-void motors_wheels_update_distance();
+int motors_wheels_update_distance(int32_t voltage[N_SIDES], float heading);
+void motors_gps_input(float delta_lon, float delta_lat);
 void motors_struts_get_position();
 
 

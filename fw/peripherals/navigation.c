@@ -57,13 +57,15 @@ void Task_sleep(int a);
 typedef struct _navigation_status{
 	float lat_rover;
 	float lon_rover;
+	float old_lat;
+	float old_lon;
 	float heading_rover;
 	float lat_target;
 	float lon_target;
 	float distance_to_target;
 	float angle_to_target; // [-180, 180]. Positive means target is located to the right
 	float max_dist_obs;
-	int32_t motor_values[2]; // current motor speed
+	int32_t motor_values[2]; // current voltage to controll motor speed
 	bool position_valid; // defines if GPS and heading angle are valid. if false, the rover shall not drive to target
 	enum _current_state{
 		STOP=0,
@@ -511,17 +513,28 @@ void navigation_update_position();
 #else
 void navigation_update_position()
 {
-	if(gps_update_new_position(&(navigation_status.lat_rover), &(navigation_status.lon_rover)))
+	float heading = (gps_get_cog()/360)*2*M_PI;
+	if(gps_update_position(&(navigation_status.lat_rover), &(navigation_status.lon_rover)))
 	{
 		//we get a new gps position
+		float delta_lon, delta_lat = 0;
+		delta_lon = navigation_status.lon_rover - navigation_status.old_lon;
+		delta_lat = navigation_status.lat_rover - navigation_status.old_lat;
+
+		navigation_status.old_lat = navigation_status.lat_rover;
+		navigation_status.old_lon = navigation_status.lon_rover;
+
+		motors_gps_input(delta_lon, delta_lat); //reinitialises odometer
+		motors_wheels_update_distance(navigation_status.motor_values, heading); //wants heading
 	}
 	else
 	{
 		//we didn't get a new gps position --> update position using odometry.
 		//TODO
-		motors_wheels_update_distance();
-
+		motors_wheels_update_distance(navigation_status.motor_values, heading); //wants heading
 		motors_struts_get_position();
+
+		gps_update_position(&(navigation_status.lat_rover), &(navigation_status.lon_rover));
 	}
 
 	navigation_status.position_valid = imu_valid() && gps_valid();
@@ -535,7 +548,6 @@ void navigation_update_position()
 			navigation_status.lat_target, navigation_status.lon_target);
 }
 #endif
-
 
 void navigation_update_current_target()
 {

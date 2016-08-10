@@ -25,6 +25,7 @@ float gps_get_altitude();
 uint32_t gps_get_int_altitude();
 float gps_get_course();
 
+float gps_get_cog();
 
 int gps_get_lat_scale();
 int gps_get_lon_scale();
@@ -35,5 +36,7 @@ uint16_t gps_get_hdop();
 uint16_t gps_get_vdop();
 
 int gps_get_last_update_time();
+
+uint8_t gps_update_position(float* lat_, float* lon_);
 
 #endif

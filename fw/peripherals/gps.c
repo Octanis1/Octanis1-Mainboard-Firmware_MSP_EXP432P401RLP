@@ -26,6 +26,8 @@
 #include "../core/cli.h"
 #include "../lib/mavlink/common/mavlink.h"
 
+#define NUMBER_GPS_POINTS 50
+
 
 static struct minmea_sentence_gga gps_gga_frame;
 static struct minmea_sentence_rmc gps_rmc_frame;
@@ -116,20 +118,36 @@ uint64_t gps_get_last_update_usec()
 	return gps_rmc_frame.time.microseconds;
 }
 
-uint8_t gps_update_new_position(float* lat_, float* lon_)
+uint8_t gps_update_position(float* lat_, float* lon_)
 {
-	if(gps_get_validity())
+	static int i;
+	int j;
+	float lat[NUMBER_GPS_POINTS];
+	float lon[NUMBER_GPS_POINTS];
+	if ((i+1)!=NUMBER_GPS_POINTS)
 	{
-		(*lat_)=gps_get_lat();
-		(*lon_)=gps_get_lon();
-		//return 1 if the gps position has changed significatly.
+		lat[i] = gps_get_lat();
+		lon[i] = gps_get_lon();
+		(*lat_) = 0;
+		(*lon_) = 0;
+		i++;
+		return 0;
+	}
+	else
+	{
+		lat[i] = gps_get_lat();
+		lon[i] = gps_get_lon();
+		for (j = 0; j < NUMBER_GPS_POINTS; j++)
+		{
+			(*lat_) += lat[j];
+			(*lon_) += lon[j];
+		}
+		(*lat_) = (*lat_) / NUMBER_GPS_POINTS;
+		(*lon_) = (*lon_) / NUMBER_GPS_POINTS;
+		i=0;
 		return 1;
 	}
-
-	//else: no update performed.
-	return 0;
 }
-
 
 COMM_FRAME* gps_pack_mavlink_raw_int()
 {
