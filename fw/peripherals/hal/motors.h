@@ -16,6 +16,7 @@
 //PWM speed scale (time in us) :
 #define PWM_PERIOD		40
 #define PWM_SPEED_100	40
+#define PWM_SPEED_90		36
 #define PWM_SPEED_80		32
 #define PWM_SPEED_70		28
 #define PWM_SPEED_60		24

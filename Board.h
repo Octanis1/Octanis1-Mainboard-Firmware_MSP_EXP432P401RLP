@@ -250,10 +250,10 @@ extern "C" {
 #define Board_M1_ANGLE_ENCODER_CS	Octanis_M1_ANGLE_ENCODER_CS
 
 #define Board_M5678_ON	 			Octanis_M5678_ON
-#define Board_M5_IN2					Octanis_M5_IN2
-#define Board_M6_IN2					Octanis_M6_IN2
-#define Board_M7_IN2					Octanis_M7_IN2
-#define Board_M8_IN2					Octanis_M8_IN2
+#define Board_M5_PH					Octanis_M5_PH
+#define Board_M6_PH					Octanis_M6_PH
+#define Board_M7_PH					Octanis_M7_PH
+#define Board_M8_PH					Octanis_M8_PH
 
 #ifdef VERSION_0_5
 	#define Board_M5_EN_PWM           	Octanis_PWM_TA1_2

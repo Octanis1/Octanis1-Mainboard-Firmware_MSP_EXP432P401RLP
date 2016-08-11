@@ -87,41 +87,39 @@ void motors_wheels_move(int32_t front_left, int32_t front_right, int32_t rear_le
 	/* determine direction of the wheel (forward/backward) */
 	if(front_left < 0)
 	{
-		GPIO_write(Board_M5_IN2, PH_REVERSE);
-		front_left = PWM_SPEED_100+front_left;
+		GPIO_write(Board_M5_PH, PH_REVERSE); //set phase
+		front_left = -front_left;
 	}
-	else	{
-		GPIO_write(Board_M5_IN2, PH_FORWARD);}
-	PWM_setDuty(pwm5_handle, (front_left));
+	else
+		GPIO_write(Board_M5_PH, PH_FORWARD); //set phase
 
-	Task_sleep(50); //wait delay the other turn-on's to limit current peak
 	if(front_right < 0)
 	{
-		GPIO_write(Board_M6_IN2, PH_REVERSE);
-		front_right = PWM_SPEED_100+front_right;
+		GPIO_write(Board_M6_PH, PH_REVERSE); //set phase
+		front_right = -front_right;
 	}
-	else{
-		GPIO_write(Board_M6_IN2, PH_FORWARD);}
-	PWM_setDuty(pwm6_handle, (front_right));
-	Task_sleep(50); //wait delay the other turn-on's to limit current peak
+	else
+		GPIO_write(Board_M6_PH, PH_FORWARD); //set phase
 
 	if(rear_left < 0)
 	{
-		GPIO_write(Board_M7_IN2, PH_REVERSE);
-		rear_left = PWM_SPEED_100+rear_left;
+		GPIO_write(Board_M7_PH, PH_REVERSE); //set phase
+		rear_left = -rear_left;
 	}
-	else{
-		GPIO_write(Board_M7_IN2, PH_FORWARD);}
-	PWM_setDuty(pwm7_handle, (rear_left));
-	Task_sleep(50); //wait delay the other turn-on's to limit current peak
+	else
+		GPIO_write(Board_M7_PH, PH_FORWARD); //set phase
 
 	if(rear_right < 0)
 	{
-		GPIO_write(Board_M8_IN2, PH_REVERSE);
-		rear_right = PWM_SPEED_100+rear_right;
+		GPIO_write(Board_M8_PH, PH_REVERSE); //set phase
+		rear_right = -rear_right;
 	}
-	else{
-		GPIO_write(Board_M8_IN2, PH_FORWARD);}
+	else
+		GPIO_write(Board_M8_PH, PH_FORWARD); //set phase
+
+	PWM_setDuty(pwm5_handle, (front_left));
+	PWM_setDuty(pwm6_handle, (front_right));
+	PWM_setDuty(pwm7_handle, (rear_left));
 	PWM_setDuty(pwm8_handle, (rear_right));
 }
 
@@ -212,10 +210,10 @@ void motors_wheels_stop()
 	PWM_setDuty(pwm7_handle, 0);
 	PWM_setDuty(pwm8_handle, 0);
 
-	GPIO_write(Board_M5_IN2, 0);
-	GPIO_write(Board_M6_IN2, 0);
-	GPIO_write(Board_M7_IN2, 0);
-	GPIO_write(Board_M8_IN2, 0);
+	GPIO_write(Board_M5_PH, 0);
+	GPIO_write(Board_M6_PH, 0);
+	GPIO_write(Board_M7_PH, 0);
+	GPIO_write(Board_M8_PH, 0);
 
 	GPIO_write(Board_M5678_CURR_SENS_EN, 0); //turn current sensor off
 	GPIO_write(Board_M5678_ON, 0); //turn h-bridge off
