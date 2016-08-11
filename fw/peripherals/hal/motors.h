@@ -41,6 +41,31 @@
 
 #include <stdint.h>
 
+//Definitions for GPS / odometry cycle
+#define MAX_RECENT_VALUES		 75
+#define VALUES_AFTER_GPS_RESET   25
+
+struct odo{
+	float right_left[MAX_RECENT_VALUES]; //stores all recent values for x
+	float up_down[MAX_RECENT_VALUES];	 //stores all recent values for y
+	float radius[MAX_RECENT_VALUES];
+	float angle[MAX_RECENT_VALUES];
+	float lat[MAX_RECENT_VALUES];
+	float lon[MAX_RECENT_VALUES];
+	float distance[MAX_RECENT_VALUES];   //in metres
+	int i;
+	float x;   			//in m
+	float y;   			//in m
+	float lattitude;	//in seconds
+	float longitude; 	//in seconds
+	float checked_lat; 	//in seconds
+	float checked_lon; 	//in seconds
+	int first_time; 	//true/false
+	int odo_time; 		//in msec
+	float velocity; 	//in meters
+	float heading; 		//in rad
+} odo;
+
 int motors_init();
 int motors_pwm_init();
 void motors_pwm_close();
@@ -57,12 +82,17 @@ void motors_struts_stop();
 
 /*Takes care of odometry.
  */
-int motors_wheels_update_distance(int32_t voltage[N_SIDES], float heading);
+int motors_wheels_update_distance(int32_t voltage[N_SIDES]);
 
-void motors_gps_input(float delta_lon, float delta_lat);
-void motors_struts_get_position();
+void motors_gps_input(float delta_lon, float delta_lat, float heading);
+
+void motors_recalibrate(float delta_lat, float delta_lon, float delta_heading);
+void motors_reinitialize_odometer(float gps_heading);
+
+void motors_reset_odo_i();
 
 float motors_get_groundspeed();
+
 
 
 #endif /* FW_PERIPHERALS_HAL_MOTORS_H_ */

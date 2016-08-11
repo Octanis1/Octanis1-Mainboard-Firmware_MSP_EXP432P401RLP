@@ -19,15 +19,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "hal/motors.h"
 
 //mavlink includes
 #include "imu.h"
 #include "../peripherals/comm.h"
 #include "../core/cli.h"
 #include "../lib/mavlink/common/mavlink.h"
-
-#define NUMBER_GPS_POINTS 50
-
 
 static struct minmea_sentence_gga gps_gga_frame;
 static struct minmea_sentence_rmc gps_rmc_frame;
@@ -120,31 +118,31 @@ uint64_t gps_get_last_update_usec()
 
 uint8_t gps_update_position(float* lat_, float* lon_)
 {
-	static int i;
-	int j;
-	float lat[NUMBER_GPS_POINTS];
-	float lon[NUMBER_GPS_POINTS];
-	if ((i+1)!=NUMBER_GPS_POINTS)
+	int j, k;
+	if ((odo.i+1)!=MAX_RECENT_VALUES)
 	{
-		lat[i] = gps_get_lat();
-		lon[i] = gps_get_lon();
+		odo.lat[odo.i] = gps_get_lat();
+		odo.lon[odo.i] = gps_get_lon();
 		(*lat_) = 0;
 		(*lon_) = 0;
-		i++;
 		return 0;
 	}
 	else
 	{
-		lat[i] = gps_get_lat();
-		lon[i] = gps_get_lon();
-		for (j = 0; j < NUMBER_GPS_POINTS; j++)
+		odo.lat[odo.i] = gps_get_lat();
+		odo.lon[odo.i] = gps_get_lon();
+		for (j = 0; j < MAX_RECENT_VALUES; j++)
 		{
-			(*lat_) += lat[j];
-			(*lon_) += lon[j];
+			(*lat_) += odo.lat[j];
+			(*lon_) += odo.lon[j];
 		}
-		(*lat_) = (*lat_) / NUMBER_GPS_POINTS;
-		(*lon_) = (*lon_) / NUMBER_GPS_POINTS;
-		i=0;
+		(*lat_) = (*lat_) / MAX_RECENT_VALUES;
+		(*lon_) = (*lon_) / MAX_RECENT_VALUES;
+		for (k = 0; k < VALUES_AFTER_GPS_RESET; k++)
+		{
+			odo.lat[k] = odo.lat[k + MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET];
+			odo.lon[k] = odo.lon[k + MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET];
+		}
 		return 1;
 	}
 }

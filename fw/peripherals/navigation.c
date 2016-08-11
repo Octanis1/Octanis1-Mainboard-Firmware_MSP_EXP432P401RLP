@@ -547,10 +547,12 @@ void navigation_update_position();
 #else
 void navigation_update_position()
 {
+	float delta_heading; //needs to be determined!!!
+	float gps_heading;   //needs to be determined!!!
 	float heading = (gps_get_cog()/360)*2*M_PI;
 	if(gps_update_position(&(navigation_status.lat_rover), &(navigation_status.lon_rover)))
 	{
-		//we get a new gps position
+		//We get a new gps position. The distance measured by odometer is deleted for the distance from the old point to the new point. The part thereafter is kept.
 		float delta_lon, delta_lat = 0;
 		delta_lon = navigation_status.lon_rover - navigation_status.old_lon;
 		delta_lat = navigation_status.lat_rover - navigation_status.old_lat;
@@ -558,14 +560,15 @@ void navigation_update_position()
 		navigation_status.old_lat = navigation_status.lat_rover;
 		navigation_status.old_lon = navigation_status.lon_rover;
 
-		motors_gps_input(delta_lon, delta_lat); //reinitialises odometer
-		motors_wheels_update_distance(navigation_status.motor_values, heading);
+		motors_recalibrate(delta_lat, delta_lon, delta_heading);
+		motors_reinitialize_odometer(gps_heading);
+		motors_wheels_update_distance(navigation_status.motor_values);
 	}
 	else
 	{
 		//we didn't get a new gps position --> update position using odometry.
 		//TODO
-		motors_wheels_update_distance(navigation_status.motor_values, heading);
+		motors_wheels_update_distance(navigation_status.motor_values);
 		motors_struts_get_position();
 
 		gps_update_position(&(navigation_status.lat_rover), &(navigation_status.lon_rover));
