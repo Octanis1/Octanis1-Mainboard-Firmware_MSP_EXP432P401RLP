@@ -15,8 +15,8 @@ uint8_t gps_get_fix_quality();
 int gps_get_satellites_tracked();
 
 //unscaled lat and lon integers
-float gps_get_lat();
-float gps_get_lon();
+float gps_get_lat(); //in degrees
+float gps_get_lon(); //in degrees
 
 float gps_get_speed();
 int32_t gps_get_int_speed();
@@ -25,7 +25,7 @@ float gps_get_altitude();
 uint32_t gps_get_int_altitude();
 float gps_get_course();
 
-float gps_get_cog();
+float gps_get_cog(); //in degrees
 
 int gps_get_lat_scale();
 int gps_get_lon_scale();

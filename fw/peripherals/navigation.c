@@ -40,6 +40,7 @@ void Task_sleep(int a);
 
 #endif
 #define M_PI 3.14159265358979323846
+#define PERIOD 6.28318530717958647693
 #define EARTH_RADIUS 6356752.3
 #define INIT_LAT 0
 #define INIT_LON 0
@@ -547,9 +548,10 @@ void navigation_update_position();
 #else
 void navigation_update_position()
 {
-	float delta_heading; //needs to be determined!!!
-	float gps_heading;   //needs to be determined!!!
-	float heading = (gps_get_cog()/360)*2*M_PI;
+	float gps_heading = (gps_get_cog()/360) * PERIOD;
+	float delta_heading = gps_heading - odo.old_gps_heading;
+	odo.old_gps_heading = gps_heading;
+
 	if(gps_update_position(&(navigation_status.lat_rover), &(navigation_status.lon_rover)))
 	{
 		//We get a new gps position. The distance measured by odometer is deleted for the distance from the old point to the new point. The part thereafter is kept.

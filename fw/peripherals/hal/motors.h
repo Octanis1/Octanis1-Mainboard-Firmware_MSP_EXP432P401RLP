@@ -53,13 +53,14 @@ struct odo{
 	float lat[MAX_RECENT_VALUES];
 	float lon[MAX_RECENT_VALUES];
 	float distance[MAX_RECENT_VALUES];   //in metres
+	float old_gps_heading;				 //in rad
 	int i;
 	float x;   			//in m
 	float y;   			//in m
-	float lattitude;	//in seconds
-	float longitude; 	//in seconds
-	float checked_lat; 	//in seconds
-	float checked_lon; 	//in seconds
+	float lattitude;	//in degrees
+	float longitude; 	//in degrees
+	float checked_lat; 	//in degrees
+	float checked_lon; 	//in degrees
 	int first_time; 	//true/false
 	int odo_time; 		//in msec
 	float velocity; 	//in meters

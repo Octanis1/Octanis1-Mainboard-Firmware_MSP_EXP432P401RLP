@@ -23,7 +23,7 @@
 #define AIR_THRESHOLD			 1
 #define MISSION_LATTITUDE		 0
 
-#define Y_TO_LATTITUDE			 30.81840482 //true constants
+#define Y_TO_LATTITUDE			 110946.257352 //true constants
 #define KILO					 1000
 #define WHEEL_DISTANCE			 0.44
 
