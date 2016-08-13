@@ -28,7 +28,7 @@ int motors_init()
 }
 
 int motors_pwm_init(){
-	uint32_t period = PWM_PERIOD; /* PWM period in microseconds -> 50kHz*/
+	uint32_t period = PWM_PERIOD; /* PWM period in microseconds -> 40kHz*/
 
 	PWM_Params_init(&pwm5_params);
 	pwm5_params.period = period;             	// Period in microseconds
@@ -74,7 +74,6 @@ int motors_pwm_init(){
 void motors_wheels_move(int32_t front_left, int32_t front_right, int32_t rear_left, int32_t rear_right)
 {
 	serial_printf(cli_stdout, "mv %d %d %d %d\n\r",front_left, front_right, rear_left, rear_right);
-
 
 	eps_switch_module(M11V_ON);
 
@@ -126,7 +125,7 @@ void motors_wheels_move(int32_t front_left, int32_t front_right, int32_t rear_le
 
 void motors_wheels_update_distance()
 {
-	static uint16_t sensor_values[N_WHEELS];
+	static int32_t sensor_values[N_WHEELS];
 
 	/* initialize to 0 to reset the running average inside the adc readout function */
 	sensor_values[0] = 0;
@@ -137,7 +136,7 @@ void motors_wheels_update_distance()
 	adc_read_motor_sensors(sensor_values);
 
 
-
+	serial_printf(cli_stdout, "current: %d \n\r",sensor_values[0]);
 }
 
 
@@ -179,7 +178,7 @@ void motors_struts_move(int8_t front_left, int8_t front_right, int8_t rear_left,
 
 void motors_struts_get_position()
 {
-	static uint16_t motor_sensor_values[N_STRUTS];
+	static int32_t motor_sensor_values[N_STRUTS];
 
 	/* initialize to 0 to reset the running average inside the adc readout function */
 	motor_sensor_values[0] = 0;

@@ -50,9 +50,9 @@
 #define VERSION_1
 
 //#define FLASH_ENABLED 1
-#define SBC_ENABLED	// if defined, it will wait for SBC to boot before sending mavlink messages and continue after waypoint 0.
+//#define SBC_ENABLED	// if defined, it will wait for SBC to boot before sending mavlink messages and continue after waypoint 0.
 //#define LORA_ENABLED 1
-#define EPS_ENABLED 1
+//#define EPS_ENABLED 1
 //#define BLE_ENABLED 1
 #define MAVLINK_ON_UART0_ENABLED 1
 //#define MAVLINK_ON_LORA_ENABLED 1 //for verbose lora outputs

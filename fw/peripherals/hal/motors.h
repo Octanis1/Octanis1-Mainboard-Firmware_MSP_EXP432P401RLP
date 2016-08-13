@@ -14,17 +14,17 @@
 #define SPEED_FACTOR		0.00001875 //[rps/pwm value]
 
 //PWM speed scale (time in us) :
-#define PWM_PERIOD		40
-#define PWM_SPEED_100	40
-#define PWM_SPEED_90		36
-#define PWM_SPEED_80		32
-#define PWM_SPEED_70		28
-#define PWM_SPEED_60		24
-#define PWM_SPEED_50		20
-#define PWM_SPEED_40		16
-#define PWM_SPEED_20		8
-#define PWM_SPEED_10		4
-#define PWM_SPEED_0		0
+#define PWM_PERIOD		50
+#define PWM_SPEED_100	1.0*PWM_PERIOD
+#define PWM_SPEED_90		0.9*PWM_PERIOD
+#define PWM_SPEED_80		0.8*PWM_PERIOD
+#define PWM_SPEED_70		0.7*PWM_PERIOD
+#define PWM_SPEED_60		0.6*PWM_PERIOD
+#define PWM_SPEED_50		0.5*PWM_PERIOD
+#define PWM_SPEED_40		0.4*PWM_PERIOD
+#define PWM_SPEED_20		0.2*PWM_PERIOD
+#define PWM_SPEED_10		0.1*PWM_PERIOD
+#define PWM_SPEED_0		0*PWM_PERIOD
 
 #define PID_SCALING_FACTOR	PWM_SPEED_100/5/45 //turn with maximum wheel speed difference (100%/80%) for 45° bearing error
 

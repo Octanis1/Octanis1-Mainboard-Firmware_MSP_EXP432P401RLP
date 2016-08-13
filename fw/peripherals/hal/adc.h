@@ -17,8 +17,8 @@
 
 
 void adc_isr();
-uint8_t adc_read_motor_sensors(uint16_t wheel_sensor_values[]);
-uint8_t adc_read_strut_sensor_values(uint16_t strut_sensor_values[]);
+uint8_t adc_read_motor_sensors(int32_t wheel_sensor_values[]);
+uint8_t adc_read_strut_sensor_values(int32_t strut_sensor_values[]);
 
 
 void adc_init(void);
