@@ -28,7 +28,7 @@ int motors_init()
 }
 
 int motors_pwm_init(){
-	uint32_t period = PWM_PERIOD; /* PWM period in microseconds -> 40kHz*/
+	uint32_t period = PWM_PERIOD; /* PWM period in microseconds -> 20kHz*/
 
 	PWM_Params_init(&pwm5_params);
 	pwm5_params.period = period;             	// Period in microseconds
@@ -133,7 +133,9 @@ void motors_wheels_update_distance()
 	sensor_values[2] = 0;
 	sensor_values[3] = 0;
 
-	adc_read_motor_sensors(sensor_values);
+	if(GPIO_read(Board_M5678_CURR_SENS_EN)){ //only measure if sensors are on.
+		adc_read_motor_sensors(sensor_values);
+	}
 
 
 	serial_printf(cli_stdout, "current: %d \n\r",sensor_values[0]);

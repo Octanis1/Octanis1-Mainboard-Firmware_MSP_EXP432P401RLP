@@ -8,6 +8,7 @@
 #include "adc.h"
 #include "driverlib.h"
 #include "motors.h"
+#include "../../Board.h"
 
 #define VOFFSET_VAL_12BIT			2021 // offset value from Vref (1.25V in 12 bits); empirically determined. (TODO: verify!)
 #define CURRENT_SCALING_FACTOR_uA	(float)125000/2048	//divide by this factor to get from ADC counts to mA (full scale = ±125mA)
@@ -108,13 +109,15 @@ uint8_t adc_read_motor_sensors(int32_t wheel_sensor_values[N_WHEELS])
 				wheel_sensor_values[1] += ADC14->MEM[22];
 				while(wheel_conversion_done == 0);
 				wheel_sensor_values[0] += ADC14->MEM[23];
+
+				Task_sleep(1);
 			}
 
 			ADC14_disableConversion();
 			for(j = 0; j<N_WHEELS;j++)
 			{
 				wheel_sensor_values[j] -= VOFFSET_VAL_12BIT*N_ADC_AVG_WHEEL;
-				wheel_sensor_values[j] = (float)wheel_sensor_values[j] * (CURRENT_SCALING_FACTOR_uA / N_ADC_AVG_WHEEL);
+				wheel_sensor_values[j] = (float)wheel_sensor_values[j] * (float)((float)CURRENT_SCALING_FACTOR_uA/(float)N_ADC_AVG_WHEEL );
 			}
 			return ADC_SUCCESS;
 		}

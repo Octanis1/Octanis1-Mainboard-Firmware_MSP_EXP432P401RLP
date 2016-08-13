@@ -12,7 +12,7 @@
 
 #define ADC_SUCCESS 	1
 #define ADC_ERROR	0
-#define N_ADC_AVG_WHEEL	10 //number of samples to average
+#define N_ADC_AVG_WHEEL	40 //number of samples to average
 #define N_ADC_AVG_STRUT	5
 
 
