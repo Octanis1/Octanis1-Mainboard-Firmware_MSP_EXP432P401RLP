@@ -96,10 +96,10 @@ int gps_get_validity(){
 }
 
 uint16_t gps_get_hdop(){
-	return gps_gsa_frame.hdop.value;
+	return minmea_tofloat(&gps_gsa_frame.hdop)*100;
 }
 uint16_t gps_get_vdop(){
-	return gps_gsa_frame.vdop.value;
+	return minmea_tofloat(&gps_gsa_frame.vdop)*100;
 }
 
 int gps_get_dgps_age(){
