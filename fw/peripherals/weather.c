@@ -40,7 +40,7 @@
 
 static uint8_t external_board_connected = 0;
 
-#define UPDATE_PERIOD			2000 //task sleep ms
+#define UPDATE_PERIOD			500 //task sleep ms
 
 static struct _weather_data {
 	s32 int_temp; 			// in 0.01 degree C

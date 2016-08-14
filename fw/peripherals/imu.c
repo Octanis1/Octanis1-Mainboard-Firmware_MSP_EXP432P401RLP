@@ -19,7 +19,7 @@
 #include "hal/time_since_boot.h"
 
 #define M_PI 3.14159265358979323846
-#define T_IMU_TASK 		200
+#define T_IMU_TASK 		100
 #define T_IMU_INVALID	5000 //time after which the rover shall consider imu data to be invalid.
 
 static struct _imu_data {

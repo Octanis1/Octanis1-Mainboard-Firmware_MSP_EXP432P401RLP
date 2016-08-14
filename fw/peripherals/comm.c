@@ -9,14 +9,61 @@
 #include "comm.h"
 #include <string.h>
 #include "hal/rn2483.h"
+#include "hal/time_since_boot.h"
 
 #include "navigation.h"
 #include "imu.h"
 
 #define LORA_FRAME_SIZE 		2*MAVLINK_MAX_PACKET_LEN
 
-#define N_TX_SLOT_FLAG_INTS		MAV_COMPONENT_ENUM_END/32+1 // +1 to round up
-int comm_tx_slot_flags[MAVLINK_COMM_NUM_BUFFERS][N_TX_SLOT_FLAG_INTS]; // 1-bit flags storing
+#define MSG_ID_FIELD				N_COMM_CHANNELS
+
+#define N_PERIODIC_MAVLINK_MSG	13
+#define P_INF					UINT32_MAX
+static const uint32_t mavlink_message_periods[N_PERIODIC_MAVLINK_MSG][N_COMM_CHANNELS+1] = {
+/* Definitions of the minimal time in ms between two consecutive message transmissions.
+ * --> only applies to periodically sent messages (i.e. measurements, status updates, etc.)
+ *
+ *	UART			LORA			ROCKBLOCK	GSM		| MESSAGE_ID */
+	{5000,		5000,		600000,		P_INF,	MAVLINK_MSG_ID_HEARTBEAT},
+	{10000,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_SYS_STATUS},
+	{200,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_GPS_RAW_INT},
+	{1000,		30000,		P_INF,		P_INF,	MAVLINK_MSG_ID_SCALED_IMU},
+	{500,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_SCALED_PRESSURE},
+	{500,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_ATTITUDE},
+	{P_INF,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_GLOBAL_POSITION_INT},
+	{1000,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_RC_CHANNELS_SCALED},
+	{500,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_VFR_HUD},
+	{30000,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_RADIO_STATUS},
+	{30000,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_BATTERY_STATUS},
+	{P_INF,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_WIND_COV},
+	{10000,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_RC_CHANNELS},
+};
+
+static uint32_t mavlink_periodic_msg_tx_times[N_PERIODIC_MAVLINK_MSG][N_COMM_CHANNELS]= {{0,},};
+
+#define N_IRREGULAR_MAVLINK_MSG	14
+static const uint8_t mavlink_message_allow_tx[N_IRREGULAR_MAVLINK_MSG][N_COMM_CHANNELS+1] = {
+/* Definitions of the minimal time in ms between two consecutive message transmissions.
+ * --> only applies to periodically sent messages (i.e. measurements, status updates, etc.)
+ *
+ *	UART		LORA		RCKBLK	GSM		| MESSAGE_ID */
+	{0,		1,		0,		0,		MAVLINK_MSG_ID_SET_MODE},
+	{1,		0,		0,		0,		MAVLINK_MSG_ID_MISSION_ITEM},
+	{0,		0,		1,		0,		MAVLINK_MSG_ID_MISSION_ITEM},
+	{1,		0,		0,		0,		MAVLINK_MSG_ID_MISSION_REQUEST},
+	{0,		1,		0,		0,		MAVLINK_MSG_ID_MISSION_SET_CURRENT},
+	{1,		1,		1,		0,		MAVLINK_MSG_ID_MISSION_CURRENT},
+	{1,		0,		0,		0,		MAVLINK_MSG_ID_MISSION_REQUEST_LIST},
+	{1,		0,		0,		0,		MAVLINK_MSG_ID_MISSION_COUNT},
+	{1,		1,		1,		0,		MAVLINK_MSG_ID_MISSION_ITEM_REACHED},
+	{1,		0,		0,		0,		MAVLINK_MSG_ID_MISSION_ACK},
+	{1,		1,		0,		0,		MAVLINK_MSG_ID_COMMAND_LONG},
+	{1,		1,		0,		0,		MAVLINK_MSG_ID_COMMAND_ACK},
+	{1,		0,		0,		0,		MAVLINK_MSG_ID_ENCAPSULATED_DATA},
+	{1,		1,		0,		0,		MAVLINK_MSG_ID_STATUSTEXT},
+};
+
 
 mavlink_system_t mavlink_system;
 static mavlink_heartbeat_t mavlink_heartbeat;
@@ -45,48 +92,69 @@ void comm_clear_tx_flag(COMM_CHANNEL channel, int component_id);
 
 /* PUBLIC */
 
-int comm_check_tx_slots(MAV_COMPONENT component) //check if outgoing message can be sent for a given destination and component id
+uint8_t comm_mavlink_broadcast(COMM_FRAME* frame) //posts to mailbox for all available channel slots for a given component
 {
-	int ch_iter = 0;
-#ifdef MAVLINK_ON_UART0_ENABLED
-	for(ch_iter = 0; ch_iter<MAVLINK_COMM_NUM_BUFFERS; ch_iter++)
-#else
-	for(ch_iter = 1; ch_iter<MAVLINK_COMM_NUM_BUFFERS; ch_iter++)
-#endif
+	int per_id, irr_id = 0;
+	uint8_t retval = BROADCAST_SUCCESS;
+
+	//search for the index of the message id in periodic messages set:
+	for(per_id = 0; per_id<N_PERIODIC_MAVLINK_MSG; per_id++)
 	{
-		if(( (comm_tx_slot_flags[ch_iter][component/32] & (1 << (component%32) )) != 0 ))
-		{
-			return ch_iter;
+		if((frame->mavlink_message.msgid) == mavlink_message_periods[per_id][MSG_ID_FIELD])
+		{//found the index
+			int ch_id;
+			for(ch_id=0;ch_id<N_COMM_CHANNELS;ch_id++)
+			{
+				if(ms_since_boot() - mavlink_periodic_msg_tx_times[per_id][ch_id] > mavlink_message_periods[per_id][ch_id])
+				{
+					comm_mavlink_post_outbox(ch_id, frame);
+					mavlink_periodic_msg_tx_times[per_id][ch_id] += mavlink_message_periods[per_id][ch_id];
+					retval|=1<<ch_id;
+				}
+			}
+			if(retval == 0)
+				retval = BROADCAST_ALL_BUSY;
+			return retval;
 		}
 	}
-	return COMM_CHANNEL_NONE;
-}
 
-void comm_mavlink_broadcast(COMM_FRAME* frame) //posts to mailbox for all available channel slots for a given component
-{
-	int open_slot;
-	while((open_slot = comm_check_tx_slots((frame->mavlink_message).compid)) > COMM_CHANNEL_NONE)
+	//search for the index of the message id in irregular messages set:
+	for(irr_id = 0; irr_id<N_IRREGULAR_MAVLINK_MSG; irr_id++)
 	{
-		comm_mavlink_post_outbox(open_slot, frame);
-		comm_clear_tx_flag(open_slot, (frame->mavlink_message).compid);
+		if(frame->mavlink_message.msgid == mavlink_message_allow_tx[irr_id][MSG_ID_FIELD])
+		{//found the index
+			int ch_id;
+			for(ch_id=0;ch_id<N_COMM_CHANNELS;ch_id++)
+			{
+				if(mavlink_message_allow_tx[irr_id][ch_id])
+				{
+					comm_mavlink_post_outbox(ch_id, frame);
+					retval|=1<<ch_id;
+				}
+			}
+			if(retval == 0)
+				retval = BROADCAST_IRR_MSG_NOT_IN_SET;
+			return retval;
+		}
+	}
+
+	if(irr_id == N_IRREGULAR_MAVLINK_MSG && per_id == N_PERIODIC_MAVLINK_MSG)
+	{
+		serial_printf(cli_stdout,"Failed attempt to send mavlink message. MSG ID unknown \n");
+		return BROADCAST_MSG_UNKNOWN;
+	}
+	else
+	{
+		serial_printf(cli_stdout,"ERROR in broadcasting fx \n");
+		return BROADCAST_ERROR;
 	}
 }
 
 void comm_mavlink_post_inbox(COMM_CHANNEL channel, mavlink_message_t *message); //post to mailbox for incoming messages
 
-
-void comm_set_all_tx_flags(COMM_CHANNEL channel)
-{
-	int i;
-	for(i=0;i<N_TX_SLOT_FLAG_INTS;i++)
-	{
-		comm_tx_slot_flags[channel][i] = 0xFFFFFFFF;
-	}
-}
-
 void comm_set_tx_flag(COMM_CHANNEL channel, int component_id)
 {
-	comm_tx_slot_flags[channel][component_id/32] |= 1 << (component_id%32);  // Set the bit at the k-th position in comm_tx_slot_flags
+//TODO: remove this function
 }
 
 /* PRIVATE */
@@ -96,11 +164,6 @@ void comm_mavlink_post_outbox(COMM_CHANNEL channel, COMM_FRAME* frame) //post to
 	frame->channel = channel;
 	frame->direction = CHANNEL_OUT;
 	Mailbox_post(comm_mailbox, frame, BIOS_NO_WAIT);
-}
-
-void comm_clear_tx_flag(COMM_CHANNEL channel, int component_id)
-{
-	comm_tx_slot_flags[channel][component_id/32] &= ~(1 << (component_id%32));
 }
 
 
@@ -139,10 +202,7 @@ void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 			if(sbc_heartbeat.system_status == MAV_STATE_STANDBY || sbc_heartbeat.system_status == MAV_STATE_ACTIVE)
 #endif
 			{
-				if(serial_write(cli_stdout, buf, mavlink_msg_len))
-				{//successful TX
-					comm_clear_tx_flag(CHANNEL_APP_UART, msg->compid);
-				}
+				serial_write(cli_stdout, buf, mavlink_msg_len);
 			}
 #endif
 			break;
@@ -221,6 +281,8 @@ COMM_MAV_RESULT comm_process_command(COMM_MAV_MSG_TARGET*  msg_target, mavlink_m
 
 				break;
 			}
+		case MAV_CMD_SET_MESSAGE_INTERVAL:
+		case MAV_CMD_GET_MESSAGE_INTERVAL:
 		default:
 			result = MAV_RESULT_UNSUPPORTED;
 			break;

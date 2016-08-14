@@ -11,6 +11,7 @@
 #include <stdint.h>
 //mavlink wire protocol
 #include "../lib/mavlink/common/mavlink.h"
+#include "../lib/mavlink/mavlink_types.h"
 
 // Mavlink system ID's for all subsystem currently in the rover.
 #define SBC_SYSTEM_ID			13 // Single board computer: Olimex
@@ -27,7 +28,7 @@ typedef enum comm_channels {
 	// This array size is defined MAVLINK_COMM_NUM_BUFFERS (currently = 4), so this is the
 	// maximum number of channels to define!
 //	CHANNEL_BLE,
-
+	N_COMM_CHANNELS
 } COMM_CHANNEL;
 #define COMM_CHANNEL_NONE -1
 
@@ -64,11 +65,14 @@ char comm_sbc_running();
 char comm_sbc_armed();
 void comm_arm_disarm_subsystems(float arm_disarm);
 
-int comm_check_tx_slots(MAV_COMPONENT component); //check if outgoing message can be sent for a given destination and component id
-void comm_set_all_tx_flags(COMM_CHANNEL channel);
 void comm_set_tx_flag(COMM_CHANNEL channel, int component_id);
 
-void comm_mavlink_broadcast(COMM_FRAME* frame); //posts to mailbox for all available channel slots for a given component
+#define BROADCAST_SUCCESS		0x00
+#define BROADCAST_MSG_UNKNOWN	0xFF
+#define BROADCAST_ALL_BUSY		0xF0
+#define BROADCAST_IRR_MSG_NOT_IN_SET		0x10
+#define BROADCAST_ERROR			0xE0
+uint8_t comm_mavlink_broadcast(COMM_FRAME* frame); //posts to mailbox for all available channel slots for a given component
 
 void comm_mavlink_post_inbox(COMM_CHANNEL channel, mavlink_message_t *message); //post to mailbox for incoming messages
 

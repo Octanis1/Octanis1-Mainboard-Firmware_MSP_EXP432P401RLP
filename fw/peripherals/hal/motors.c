@@ -138,7 +138,7 @@ void motors_wheels_update_distance()
 	}
 
 
-	serial_printf(cli_stdout, "current: %d \n\r",sensor_values[0]);
+//	serial_printf(cli_stdout, "current: %d \n\r",sensor_values[0]);
 }
 
 
