@@ -21,9 +21,9 @@
 
 #define BLOCKED_THRESHOLD		 1  //defined by user
 #define AIR_THRESHOLD			 1
-#define MISSION_LATTITUDE		 0
+#define MISSION_LATITUDE		 0
 
-#define Y_TO_LATTITUDE			 110946.257352 //true constants
+#define Y_TO_LATITUDE			 110946.257352 //true constants
 #define KILO					 1000
 #define WHEEL_DISTANCE			 0.44
 
@@ -31,11 +31,11 @@
 
 static float friction_factor = INITIAL_FRICTION_FACTOR;
 static float angle_constant = INITIAL_ANGLE_CONSTANT;
-float x_to_longitude = Y_TO_LATTITUDE * cos(MISSION_LATTITUDE);
+float x_to_longitude = Y_TO_LATITUDE * cos(MISSION_LATITUDE);
 
-void motors_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_WHEELS]);
-void motors_update_xy();
-void motors_get_radius_and_angle(float speed[N_WHEELS], float delta_time);
+void motors_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_WHEELS], int position_i);
+void motors_update_xy(int position_i);
+void motors_get_radius_and_angle(float speed[N_WHEELS], float delta_time, int position_i);
 int motors_navigation_error(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_WHEELS]);
 
 PWM_Handle pwm5_handle, pwm6_handle, pwm7_handle, pwm8_handle;
@@ -150,7 +150,7 @@ void motors_wheels_move(int32_t front_left, int32_t front_right, int32_t rear_le
 }
 
 
-int motors_wheels_update_distance(int32_t voltage[N_SIDES])
+int motors_run_odometer(int32_t voltage[N_SIDES], int position_i)
 {
 	static uint16_t sensor_values[N_WHEELS];
 
@@ -168,7 +168,7 @@ int motors_wheels_update_distance(int32_t voltage[N_SIDES])
 	}
 	else {
 		//function to estimate the distance needs curvature.
-		motors_distance_odometer(sensor_values, voltage);
+		motors_distance_odometer(sensor_values, voltage, position_i);
 		return 1;
 	}
 }
@@ -189,7 +189,7 @@ int motors_navigation_error(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_
 		return 0;
 }
 
-void motors_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_WHEELS])
+void motors_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_WHEELS], int position_i)
 {
 	float circumference, velocity, delta_time = 0;
 	float speed[N_WHEELS], rps[N_WHEELS];
@@ -218,40 +218,38 @@ void motors_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t voltage[
 	msec = ms_since_boot();
 	delta_time = msec - odo.odo_time;
 	odo.odo_time = msec;
-	motors_get_radius_and_angle(speed, delta_time);
-	odo.distance[odo.i] = delta_time * velocity;
-	motors_update_xy();
-	odo.x += odo.right_left[odo.i];
-	odo.y += odo.up_down[odo.i];
+	motors_get_radius_and_angle(speed, delta_time, position_i);
+	odo.distance[position_i] = delta_time * velocity;
+	motors_update_xy(position_i);
+	odo.x += odo.right_left[position_i];
+	odo.y += odo.up_down[position_i];
 
 	//convert distance to polar coordinates
 	odo.longitude = odo.x / x_to_longitude;
-	odo.lattitude = odo.y / Y_TO_LATTITUDE;
-
-	motors_reset_odo_i();
+	odo.latitude = odo.y / Y_TO_LATITUDE;
 }
 
-void motors_update_xy()
+void motors_update_xy(int position_i)
 {
-	odo.right_left[odo.i] = odo.radius[odo.i] - odo.radius[odo.i] * cos(odo.angle[odo.i]);
-	odo.up_down[odo.i] = odo.radius[odo.i] * sin(odo.angle[odo.i]);
-	odo.x += odo.right_left[odo.i];
-	odo.y += odo.up_down[odo.i];
-	odo.heading += odo.angle[odo.i];
+	odo.right_left[position_i] = odo.radius[position_i] - odo.radius[position_i] * cos(odo.angle[position_i]);
+	odo.up_down[position_i] = odo.radius[position_i] * sin(odo.angle[position_i]);
+	odo.x += odo.right_left[position_i];
+	odo.y += odo.up_down[position_i];
+	odo.heading += odo.angle[position_i];
 }
 
-void motors_get_radius_and_angle(float speed[N_WHEELS], float delta_time)
+void motors_get_radius_and_angle(float speed[N_WHEELS], float delta_time, int position_i)
 {
 	float radius, angle;
 
 	radius = (WHEEL_DISTANCE / 2) * (speed[0] + speed[1])/(speed[0] - speed[1]);
 	angle = speed[0] * delta_time * M_PI / (radius + WHEEL_DISTANCE / 2);
 
-	odo.radius[odo.i] = radius;
-	odo.angle[odo.i] = angle * angle_constant;
+	odo.radius[position_i] = radius;
+	odo.angle[position_i] = angle * angle_constant;
 }
 
-void motors_recalibrate(float delta_lat, float delta_lon, float delta_heading)
+void motors_recalibrate_odometer(float delta_lat, float delta_lon, float delta_heading)
 {
 	//recalibrate friction_factor
 	float update_friction, x_sum, y_sum, angle_sum = 0;
@@ -262,7 +260,7 @@ void motors_recalibrate(float delta_lat, float delta_lon, float delta_heading)
 		y_sum += odo.up_down[i];
 	}
 	odo.checked_lat = x_sum / x_to_longitude;
-	odo.checked_lon = y_sum / Y_TO_LATTITUDE;
+	odo.checked_lon = y_sum / Y_TO_LATITUDE;
 	update_friction = sqrt(odo.checked_lat * odo.checked_lat + odo.checked_lon * odo.checked_lon)/sqrt(delta_lat * delta_lat + delta_lon * delta_lon); //look at units of delta_lat and delta_lon!!!
 	friction_factor = friction_factor / update_friction;
 
@@ -281,7 +279,7 @@ void motors_reinitialize_odometer(float gps_heading)
 	odo.y = 0;
 	odo.first_time = 1;
 
-	//initialize x, y, lat, lon
+	//initialize x, y, lat, lon, heading
 	for (i = 0; i < VALUES_AFTER_GPS_RESET; i++) //later values not reinitialised because not deemed necessary - possibly not the case!
 	{
 		odo.right_left[i] = odo.right_left[i + MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET];
@@ -293,8 +291,22 @@ void motors_reinitialize_odometer(float gps_heading)
 		odo.heading += odo.angle[i];
 	}
 	odo.longitude = odo.x / x_to_longitude;
-	odo.lattitude = odo.y / Y_TO_LATTITUDE;
+	odo.latitude = odo.y / Y_TO_LATITUDE;
 	odo.heading = odo.heading + gps_heading;
+}
+
+float motors_get_latitude()
+{
+	float latitude;
+	latitude = odo.latitude;
+	return latitude;
+}
+
+float motors_get_longitude()
+{
+	float longitude;
+	longitude = odo.longitude;
+	return longitude;
 }
 
 /*
@@ -399,15 +411,29 @@ void motors_pwm_close()
 	PWM_close(pwm8_handle); //turns off the pwm signal
 }
 
-void motors_reset_odo_i()
-{
-	if (odo.i == (MAX_RECENT_VALUES-1))
-		odo.i = VALUES_AFTER_GPS_RESET;
-	else
-		odo.i++;
-}
-
 float motors_get_groundspeed()
 {
 	return odo.velocity;
+}
+
+void motors_initialize()
+{
+	int i;
+	odo.x = 0;
+	odo.y = 0;
+	odo.latitude = 0;
+	odo.longitude = 0;
+	odo.checked_lat = 0;
+	odo.checked_lon = 0;
+	odo.old_gps_heading = 0;
+	odo.odo_time = 0;
+	odo.velocity = 0;
+	for (i = 0; i < MAX_RECENT_VALUES; i++)
+	{
+		odo.distance[i] = 0;
+		odo.angle[i] = 0;
+		odo.radius[i] = 0;
+		odo.right_left[i] = 0;
+		odo.up_down[i] = 0;
+	}
 }

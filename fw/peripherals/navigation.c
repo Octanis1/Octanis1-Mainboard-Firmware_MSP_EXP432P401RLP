@@ -56,12 +56,13 @@ void Task_sleep(int a);
 #define BACKWARD_THRESHOLD 200 //about 1m
 
 #define MIN_IMU_CALIB_STATUS	6 //to have angle valid = true
-
+/*
 typedef struct _navigation_status{
 	float lat_rover;
 	float lon_rover;
-	float old_lat;
-	float old_lon;
+	float old_lat;  		 //used for recalibrating factors
+	float old_lon;			 //used for recalibrating factors
+	char position_i; 		 //variable for timing of gps / odometry data
 	float heading_rover;
 	float lat_target;
 	float lon_target;
@@ -83,15 +84,18 @@ typedef struct _navigation_status{
 } navigation_status_t;
 
 static navigation_status_t navigation_status;
+*/
 static pid_controler_t pid_a;
 
 static mission_item_list_t mission_items;
+
+static int first_time = 1;
 
 void navigation_update_current_target();
 
 mavlink_mission_item_t * navigation_mavlink_get_item_list()
 {
-	return mission_items.item;
+    return mission_items.item;
 }
 
 uint16_t navigation_mavlink_get_current_index()
@@ -548,34 +552,75 @@ void navigation_update_position();
 #else
 void navigation_update_position()
 {
+	float gps_latitude, gps_longitude, odo_latitude, odo_longitude;
 	float gps_heading = (gps_get_cog()/360) * PERIOD;
 	float delta_heading = gps_heading - odo.old_gps_heading;
 	odo.old_gps_heading = gps_heading;
+	//float delta_lon, delta_lat = 0;
 
-	if(gps_update_position(&(navigation_status.lat_rover), &(navigation_status.lon_rover)))
+	//if first_time, initialize all structures
+	/*
+	if(first_time)
+	{
+		navigation_initialize();
+		motors_initialize();
+		gps_initialize();
+		first_time = 0;
+	}
+	*/
+
+	//gps_latitude = gps_get_latitude();
+	//gps_longitude = gps_get_longitude();
+
+	//delta_lon = gps_longitude - navigation_status.old_lon;
+	//delta_lat = gps_latitude - navigation_status.old_lat;
+
+	gps_run_gps(navigation_status.position_i);  //saves a gps point
+
+	if (navigation_status.position_i == (MAX_RECENT_VALUES-1))
+	{
+		//motors_recalibrate_odometer(delta_lat, delta_lon, delta_heading);
+		//motors_reinitialize_odometer(gps_heading);
+		gps_calculate_position();	//calculates a gps position from a number of gps points
+		gps_reset_gps();
+		navigation_status.position_i = VALUES_AFTER_GPS_RESET;
+	}
+	else
+	{
+		navigation_status.position_i++;
+	}
+
+	motors_run_odometer(navigation_status.motor_values, navigation_status.position_i);     //saves an odometer position
+
+	//odo_latitude = motors_get_latitude();
+	//odo_longitude = motors_get_longitude();
+	//navigation_status.lat_rover = gps_latitude + odo_latitude;
+	//navigation_status.lon_rover = gps_longitude + odo_longitude;
+
+
+	/*
+	if(gps_update_position())
 	{
 		//We get a new gps position. The distance measured by odometer is deleted for the distance from the old point to the new point. The part thereafter is kept.
 		float delta_lon, delta_lat = 0;
-		delta_lon = navigation_status.lon_rover - navigation_status.old_lon;
-		delta_lat = navigation_status.lat_rover - navigation_status.old_lat;
+		delta_lon = odo.gps_longitude - navigation_status.old_lon;
+		delta_lat = odo.gps_latitude - navigation_status.old_lat;
 
-		navigation_status.old_lat = navigation_status.lat_rover;
-		navigation_status.old_lon = navigation_status.lon_rover;
+		navigation_status.old_lat = odo.gps_latitude;
+		navigation_status.old_lon = odo.gps_longitude;
 
 		motors_recalibrate(delta_lat, delta_lon, delta_heading);
 		motors_reinitialize_odometer(gps_heading);
+
 		motors_wheels_update_distance(navigation_status.motor_values);
 	}
 	else
 	{
-		//we didn't get a new gps position --> update position using odometry.
-		//TODO
 		motors_wheels_update_distance(navigation_status.motor_values);
 		motors_struts_get_position();
-
-		gps_update_position(&(navigation_status.lat_rover), &(navigation_status.lon_rover));
 	}
-
+	*/
+	//checks if position is valid
 	navigation_status.position_valid = imu_valid() && gps_valid();
 
 	// recalculate heading angle
@@ -587,6 +632,16 @@ void navigation_update_position()
 			navigation_status.lat_target, navigation_status.lon_target);
 }
 #endif
+
+void navigation_initialize()
+{
+	navigation_status.lon_rover = 0;
+	navigation_status.lat_rover = 0;
+	navigation_status.position_i = 1;
+	navigation_status.old_lat = 0;
+	navigation_status.old_lon = 0;
+	navigation_status.heading_rover = 0;
+}
 
 void navigation_update_current_target()
 {
@@ -837,6 +892,13 @@ void navigation_restore_mission_items(mission_item_list_t item_list)
 		mission_items.item[i].autocontinue = item_list.item[i].autocontinue;
 
 	}
+}
+
+int navigation_get_position_i()
+{
+	int position_i;
+	position_i = navigation_status.position_i;
+	return position_i;
 }
 
 void navigation_task()

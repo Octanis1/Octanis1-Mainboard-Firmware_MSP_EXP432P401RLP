@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "hal/motors.h"
+#include "navigation.h"
 
 //mavlink includes
 #include "imu.h"
@@ -32,6 +33,13 @@ static struct minmea_sentence_rmc gps_rmc_frame;
 static struct minmea_sentence_gsa gps_gsa_frame; //needed for MAVLINK infos
 static struct minmea_sentence_vtg gps_vtg_frame;
 static struct timespec gps_last_update;
+
+static struct gps{
+	float lon[MAX_RECENT_VALUES];
+	float lat[MAX_RECENT_VALUES];
+	float position_latitude;
+	float position_longitude;
+}gps;
 
 bool gps_valid()
 {
@@ -116,45 +124,77 @@ uint64_t gps_get_last_update_usec()
 	return gps_rmc_frame.time.microseconds;
 }
 
-uint8_t gps_update_position(float* lat_, float* lon_)
+void gps_run_gps(int position_i)
 {
-	int j, k;
-	if ((odo.i+1)!=MAX_RECENT_VALUES)
+	gps.lon[position_i] = gps_get_lon();
+	gps.lat[position_i] = gps_get_lat();
+}
+
+void gps_calculate_position()
+{
+	int i;
+	float latitude, longitude;
+	for (i = 0; i < (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET); i++)
 	{
-		odo.lat[odo.i] = gps_get_lat();
-		odo.lon[odo.i] = gps_get_lon();
-		(*lat_) = 0;
-		(*lon_) = 0;
-		return 0;
+		longitude += gps.lon[i];
+		latitude += gps.lat[i];
 	}
-	else
+	gps.position_longitude = longitude / (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET);
+	gps.position_latitude = latitude / (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET);
+}
+
+void gps_reset_gps()
+{
+	int i;
+	for (i = 0; i < VALUES_AFTER_GPS_RESET; i++)
 	{
-		odo.lat[odo.i] = gps_get_lat();
-		odo.lon[odo.i] = gps_get_lon();
-		for (j = 0; j < MAX_RECENT_VALUES; j++)
-		{
-			(*lat_) += odo.lat[j];
-			(*lon_) += odo.lon[j];
-		}
-		(*lat_) = (*lat_) / MAX_RECENT_VALUES;
-		(*lon_) = (*lon_) / MAX_RECENT_VALUES;
-		for (k = 0; k < VALUES_AFTER_GPS_RESET; k++)
-		{
-			odo.lat[k] = odo.lat[k + MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET];
-			odo.lon[k] = odo.lon[k + MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET];
-		}
-		return 1;
+		gps.lon[i] = gps.lon[i + MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET];
+		gps.lat[i] = gps.lat[i + MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET];
 	}
+}
+
+float gps_get_latitude()
+{
+	float latitude;
+	latitude = gps.position_latitude;
+	return latitude;
+}
+
+float gps_get_longitude()
+{
+	float longitude;
+	longitude = gps.position_longitude;
+	return longitude;
 }
 
 COMM_FRAME* gps_pack_mavlink_raw_int()
 {
+	int position_i;
+	position_i = navigation_get_position_i();
+	int i;
+	float latitude, longitude;
+	if ((position_i + 1) == MAX_RECENT_VALUES){
+		for (i = 0; i < (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET); i++)
+		{
+			latitude += gps.lat[i];
+			longitude += gps.lon[i];
+		}
+		//gps.position_latitude = latitude / (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET);
+		//gps.position_longitude = longitude / (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET);
+	}
 	// Mavlink heartbeat
 	// Define the system type, in this case an airplane
-	int32_t lat = (int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
-	int32_t lon = (int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
+	//int32_t lat = (int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
+	//int32_t lon = (int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
+	//int32_t lat = (int32_t)(10000000.0 * gps.lat[position_i]);
+	//int32_t lon = (int32_t)(10000000.0 * gps.lon[position_i]);
+	int32_t lon = (int32_t)(10000000.0 * gps.position_longitude);
+	int32_t lat = (int32_t)(10000000.0 * gps.position_latitude);
+	//int32_t lat = (int32_t)(10000000.0 * gps.lat[position_i + 1]);
+	//int32_t lon = (int32_t)(10000000.0 * gps.lon[position_i + 1]);
 	int32_t alt = (int32_t)(1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
-	uint16_t cog = (uint16_t)(100.0 * gps_get_cog());// Course over ground (NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. If unknown, set to: UINT16_MAX
+	//uint16_t cog = (uint16_t)(100.0 * gps_get_cog());// Course over ground (NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. If unknown, set to: UINT16_MAX
+	uint16_t cog = (uint16_t)(position_i);
 	uint64_t usec = gps_get_last_update_usec();
 	if(usec == 0)
 	{ //no time information in usec is available
@@ -232,8 +272,19 @@ void gps_task(){
 	#endif
 			comm_mavlink_broadcast(gps_pack_mavlink_raw_int());
 		}
-
 		Task_sleep(10);
 	}
 }
-
+/*
+void gps_initialize()
+{
+	int i;
+	gps.position_latitude = 0;
+	gps.position_longitude = 0;
+	for (i = 0; i < MAX_RECENT_VALUES; i++)
+	{
+		gps.lat[i] = 0;
+		gps.lon[i] = 0;
+	}
+}
+*/

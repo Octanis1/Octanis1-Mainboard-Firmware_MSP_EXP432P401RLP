@@ -23,6 +23,34 @@ typedef struct _mission_item_list_t{
 	uint16_t count; //total number of mission items stored
 } mission_item_list_t;
 
+typedef struct _navigation_status{
+	float lat_rover;
+	float lon_rover;
+	float old_lat;  		 //used for recalibrating factors
+	float old_lon;			 //used for recalibrating factors
+	int position_i; 		 //variable for timing of gps / odometry data
+	float heading_rover;
+	float lat_target;
+	float lon_target;
+	float distance_to_target;
+	float angle_to_target; // [-180, 180]. Positive means target is located to the right
+	float max_dist_obs;
+	int32_t motor_values[2]; // current voltage to controll motor speed
+	bool position_valid; // defines if GPS and heading angle are valid. if false, the rover shall not drive to target
+	enum _current_state{
+		STOP=0,
+		BYPASS,
+		GO_TO_TARGET,
+		AVOID_OBSTACLE,
+		AVOID_WALL,
+		SPACE_NEEDED,
+	} current_state;
+	char halt;
+	char cmd_armed_disarmed; // received command to arm (1) or disarm (0)
+} navigation_status_t;
+
+static navigation_status_t navigation_status;
+
 MAV_RESULT navigation_halt_resume(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg);
 void navigation_rxcmd_arm_disarm(float arm_disarm);
 
@@ -71,10 +99,13 @@ float navigation_angle_to_target(float lat_current, float lon_current, float lat
 //correct angle by taking into acount current heading of the rover (imu)
 float navigation_angle_for_rover(float lat1, float lon1, float lat2, float lon2, float headX);
 float navigation_degree_to_rad(float degree);
+void navigation_initialize(); //initializes structure navigation_status
 
 void navigation_change_gain(char pid, char type, float gain);
 
 void navigation_restore_mission_items(mission_item_list_t item_list);
+
+int navigation_get_position_i();
 
 //"Main" task of the file
 void navigation_task();
