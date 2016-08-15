@@ -37,6 +37,12 @@ static struct timespec gps_last_update;
 static struct gps{
 	float lon[MAX_RECENT_VALUES];
 	float lat[MAX_RECENT_VALUES];
+	float first_third_latitude;
+	float second_third_latitude;
+	float third_third_latitude;
+	float first_third_longitude;
+	float second_third_longitude;
+	float third_third_longitude;
 	float position_latitude;
 	float position_longitude;
 }gps;
@@ -126,31 +132,34 @@ uint64_t gps_get_last_update_usec()
 
 void gps_run_gps(int position_i)
 {
-	gps.lon[position_i] = gps_get_lon();
-	gps.lat[position_i] = gps_get_lat();
+	if (position_i < VALUES_AFTER_GPS_RESET){
+		gps.first_third_latitude += gps_get_lat();
+		gps.first_third_longitude += gps_get_lon();
+	}
+	else if (position_i < (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET)){
+		gps.second_third_latitude += gps_get_lat();
+		gps.second_third_longitude += gps_get_lon();
+	}
+	else{
+		gps.third_third_latitude += gps_get_lat();
+		gps.third_third_longitude += gps_get_lon();
+	}
 }
 
 void gps_calculate_position()
 {
-	int i;
-	float latitude, longitude;
-	for (i = 0; i < (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET); i++)
-	{
-		longitude += gps.lon[i];
-		latitude += gps.lat[i];
-	}
-	gps.position_longitude = longitude / (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET);
-	gps.position_latitude = latitude / (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET);
+	gps.position_longitude = (gps.first_third_longitude + gps.second_third_longitude) / (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET);
+	gps.position_latitude = (gps.first_third_latitude + gps.second_third_latitude) / (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET);
 }
 
 void gps_reset_gps()
 {
-	int i;
-	for (i = 0; i < VALUES_AFTER_GPS_RESET; i++)
-	{
-		gps.lon[i] = gps.lon[i + MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET];
-		gps.lat[i] = gps.lat[i + MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET];
-	}
+	gps.first_third_latitude = gps.third_third_latitude;
+	gps.first_third_longitude = gps.third_third_longitude;
+	gps.second_third_latitude = 0;
+	gps.second_third_longitude = 0;
+	gps.third_third_latitude = 0;
+	gps.third_third_longitude = 0;
 }
 
 float gps_get_latitude()
@@ -171,27 +180,12 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 {
 	int position_i;
 	position_i = navigation_get_position_i();
-	int i;
-	float latitude, longitude;
-	if ((position_i + 1) == MAX_RECENT_VALUES){
-		for (i = 0; i < (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET); i++)
-		{
-			latitude += gps.lat[i];
-			longitude += gps.lon[i];
-		}
-		//gps.position_latitude = latitude / (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET);
-		//gps.position_longitude = longitude / (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET);
-	}
 	// Mavlink heartbeat
 	// Define the system type, in this case an airplane
 	//int32_t lat = (int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
 	//int32_t lon = (int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
-	//int32_t lat = (int32_t)(10000000.0 * gps.lat[position_i]);
-	//int32_t lon = (int32_t)(10000000.0 * gps.lon[position_i]);
 	int32_t lon = (int32_t)(10000000.0 * gps.position_longitude);
 	int32_t lat = (int32_t)(10000000.0 * gps.position_latitude);
-	//int32_t lat = (int32_t)(10000000.0 * gps.lat[position_i + 1]);
-	//int32_t lon = (int32_t)(10000000.0 * gps.lon[position_i + 1]);
 	int32_t alt = (int32_t)(1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
 	//uint16_t cog = (uint16_t)(100.0 * gps_get_cog());// Course over ground (NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. If unknown, set to: UINT16_MAX
 	uint16_t cog = (uint16_t)(position_i);
