@@ -29,6 +29,29 @@
 
 #define SENSOR_VALUES_UNAVAILABLE
 
+struct odo{
+	float first_third_x;		//in m
+	float second_third_x;		//in m
+	float third_third_x;		//in m
+	float first_third_y;		//in m
+	float second_third_y;		//in m
+	float third_third_y;		//in m
+	float radius;
+	float angle;
+	float first_third_angle;
+	float second_third_angle;
+	float third_third_angle;
+	float old_gps_heading;				 //in rad
+	float latitude;	//in degrees
+	float longitude; 	//in degreess
+	float checked_lat; 	//in degrees
+	float checked_lon; 	//in degrees
+	int first_time; 	//true/false
+	int odo_time; 		//in msec
+	float velocity; 	//in meters
+	float heading; 		//in rad
+} odo;
+
 static float friction_factor = INITIAL_FRICTION_FACTOR;
 static float angle_constant = INITIAL_ANGLE_CONSTANT;
 float x_to_longitude = Y_TO_LATITUDE * cos(MISSION_LATITUDE);
@@ -219,23 +242,28 @@ void motors_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t voltage[
 	delta_time = msec - odo.odo_time;
 	odo.odo_time = msec;
 	motors_get_radius_and_angle(speed, delta_time, position_i);
-	odo.distance[position_i] = delta_time * velocity;
 	motors_update_xy(position_i);
-	odo.x += odo.right_left[position_i];
-	odo.y += odo.up_down[position_i];
 
 	//convert distance to polar coordinates
-	odo.longitude = odo.x / x_to_longitude;
-	odo.latitude = odo.y / Y_TO_LATITUDE;
+	odo.longitude = (odo.first_third_x + odo.second_third_x + odo.third_third_x) / x_to_longitude;
+	odo.latitude = (odo.first_third_y + odo.second_third_y + odo.third_third_y) / Y_TO_LATITUDE;
 }
 
 void motors_update_xy(int position_i)
 {
-	odo.right_left[position_i] = odo.radius[position_i] - odo.radius[position_i] * cos(odo.angle[position_i]);
-	odo.up_down[position_i] = odo.radius[position_i] * sin(odo.angle[position_i]);
-	odo.x += odo.right_left[position_i];
-	odo.y += odo.up_down[position_i];
-	odo.heading += odo.angle[position_i];
+	if (position_i < VALUES_AFTER_GPS_RESET){
+		odo.first_third_x += odo.radius - odo.radius * cos(odo.angle);
+		odo.first_third_y = odo.radius * sin(odo.angle);
+	}
+	else if (position_i < (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET)){
+		odo.second_third_x += odo.radius - odo.radius * cos(odo.angle);
+		odo.second_third_y = odo.radius * sin(odo.angle);
+	}
+	else {
+		odo.third_third_x += odo.radius - odo.radius * cos(odo.angle);
+		odo.third_third_y = odo.radius * sin(odo.angle);
+	}
+	odo.heading += odo.angle;
 }
 
 void motors_get_radius_and_angle(float speed[N_WHEELS], float delta_time, int position_i)
@@ -245,53 +273,52 @@ void motors_get_radius_and_angle(float speed[N_WHEELS], float delta_time, int po
 	radius = (WHEEL_DISTANCE / 2) * (speed[0] + speed[1])/(speed[0] - speed[1]);
 	angle = speed[0] * delta_time * M_PI / (radius + WHEEL_DISTANCE / 2);
 
-	odo.radius[position_i] = radius;
-	odo.angle[position_i] = angle * angle_constant;
+	odo.radius = radius;
+	odo.angle = angle * angle_constant;
+	if (position_i < VALUES_AFTER_GPS_RESET){
+		odo.first_third_angle += angle;
+	}
+	else if (position_i < (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET)){
+		odo.second_third_angle += angle;
+	}
+	else {
+		odo.third_third_angle += angle;
+	}
 }
 
 void motors_recalibrate_odometer(float delta_lat, float delta_lon, float delta_heading)
 {
 	//recalibrate friction_factor
 	float update_friction, x_sum, y_sum, angle_sum = 0;
-	int i, j;
-	for (i = 0; i < (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET); i++)
-	{
-		x_sum += odo.right_left[i];
-		y_sum += odo.up_down[i];
-	}
+	x_sum = odo.first_third_x + odo.second_third_x;
+	y_sum = odo.first_third_y + odo.second_third_y;
 	odo.checked_lat = x_sum / x_to_longitude;
 	odo.checked_lon = y_sum / Y_TO_LATITUDE;
 	update_friction = sqrt(odo.checked_lat * odo.checked_lat + odo.checked_lon * odo.checked_lon)/sqrt(delta_lat * delta_lat + delta_lon * delta_lon); //look at units of delta_lat and delta_lon!!!
 	friction_factor = friction_factor / update_friction;
 
 	//recalibrate angle_constant
-	for (j = 0; j < (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET); j++)
-	{
-		angle_sum += odo.angle[j];
-	}
+	angle_sum = odo.first_third_angle + odo.second_third_angle;
 	angle_constant = delta_heading / angle_sum;
 }
 
 void motors_reinitialize_odometer(float gps_heading)
 {
-	int i;
-	odo.x = 0;
-	odo.y = 0;
 	odo.first_time = 1;
-
-	//initialize x, y, lat, lon, heading
-	for (i = 0; i < VALUES_AFTER_GPS_RESET; i++) //later values not reinitialised because not deemed necessary - possibly not the case!
-	{
-		odo.right_left[i] = odo.right_left[i + MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET];
-		odo.up_down[i] = odo.up_down[i + MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET];
-		odo.x += odo.right_left[i];
-		odo.y += odo.up_down[i];
-		odo.radius[i] = odo.radius[i + MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET];
-		odo.angle[i] = odo.angle[i + MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET];
-		odo.heading += odo.angle[i];
-	}
-	odo.longitude = odo.x / x_to_longitude;
-	odo.latitude = odo.y / Y_TO_LATITUDE;
+	odo.first_third_x = odo.third_third_x;
+	odo.first_third_y = odo.third_third_y;
+	odo.second_third_x = 0;
+	odo.second_third_y = 0;
+	odo.third_third_x = 0;
+	odo.third_third_y = 0;
+	odo.radius = 0;
+	odo.angle = gps_heading + odo.third_third_angle;
+	odo.first_third_angle = odo.third_third_angle;
+	odo.second_third_angle = 0;
+	odo.third_third_angle = 0;
+	odo.heading = odo.third_third_angle;
+	odo.longitude = (odo.first_third_x + odo.second_third_x + odo.third_third_x) / x_to_longitude;
+	odo.latitude = (odo.first_third_y + odo.second_third_y + odo.third_third_y) / Y_TO_LATITUDE;
 	odo.heading = odo.heading + gps_heading;
 }
 
@@ -418,9 +445,6 @@ float motors_get_groundspeed()
 
 void motors_initialize()
 {
-	int i;
-	odo.x = 0;
-	odo.y = 0;
 	odo.latitude = 0;
 	odo.longitude = 0;
 	odo.checked_lat = 0;
@@ -428,12 +452,14 @@ void motors_initialize()
 	odo.old_gps_heading = 0;
 	odo.odo_time = 0;
 	odo.velocity = 0;
-	for (i = 0; i < MAX_RECENT_VALUES; i++)
-	{
-		odo.distance[i] = 0;
-		odo.angle[i] = 0;
-		odo.radius[i] = 0;
-		odo.right_left[i] = 0;
-		odo.up_down[i] = 0;
-	}
+	odo.first_third_angle = 0;
+	odo.second_third_angle = 0;
+	odo.third_third_angle = 0;
+	odo.first_third_x = 0;
+	odo.first_third_y = 0;
+	odo.second_third_x = 0;
+	odo.second_third_y = 0;
+	odo.third_third_x = 0;
+	odo.third_third_y = 0;
+	odo.radius = 0;
 }

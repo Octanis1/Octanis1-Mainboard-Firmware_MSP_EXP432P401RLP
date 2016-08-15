@@ -22,7 +22,7 @@ typedef struct _mission_item_list_t{
 	uint16_t current_index; //if higher than count-1, it means we are done with all mission items
 	uint16_t count; //total number of mission items stored
 } mission_item_list_t;
-
+/*
 typedef struct _navigation_status{
 	float lat_rover;
 	float lon_rover;
@@ -50,7 +50,7 @@ typedef struct _navigation_status{
 } navigation_status_t;
 
 static navigation_status_t navigation_status;
-
+*/
 MAV_RESULT navigation_halt_resume(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg);
 void navigation_rxcmd_arm_disarm(float arm_disarm);
 

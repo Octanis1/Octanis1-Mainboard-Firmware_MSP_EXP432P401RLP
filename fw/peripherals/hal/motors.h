@@ -45,25 +45,6 @@
 #define MAX_RECENT_VALUES		 15
 #define VALUES_AFTER_GPS_RESET   5
 
-struct odo{
-	float right_left[MAX_RECENT_VALUES]; //stores all recent values for x
-	float up_down[MAX_RECENT_VALUES];	 //stores all recent values for y
-	float radius[MAX_RECENT_VALUES];
-	float angle[MAX_RECENT_VALUES];
-	float distance[MAX_RECENT_VALUES];   //in metres
-	float old_gps_heading;				 //in rad
-	float x;   			//in m
-	float y;   			//in m
-	float latitude;	//in degrees
-	float longitude; 	//in degreess
-	float checked_lat; 	//in degrees
-	float checked_lon; 	//in degrees
-	int first_time; 	//true/false
-	int odo_time; 		//in msec
-	float velocity; 	//in meters
-	float heading; 		//in rad
-} odo;
-
 int motors_init();
 int motors_pwm_init();
 void motors_pwm_close();

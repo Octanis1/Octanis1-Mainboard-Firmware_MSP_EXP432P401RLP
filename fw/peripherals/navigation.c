@@ -56,7 +56,7 @@ void Task_sleep(int a);
 #define BACKWARD_THRESHOLD 200 //about 1m
 
 #define MIN_IMU_CALIB_STATUS	6 //to have angle valid = true
-/*
+
 typedef struct _navigation_status{
 	float lat_rover;
 	float lon_rover;
@@ -64,6 +64,7 @@ typedef struct _navigation_status{
 	float old_lon;			 //used for recalibrating factors
 	char position_i; 		 //variable for timing of gps / odometry data
 	float heading_rover;
+	float old_gps_heading;
 	float lat_target;
 	float lon_target;
 	float distance_to_target;
@@ -84,7 +85,7 @@ typedef struct _navigation_status{
 } navigation_status_t;
 
 static navigation_status_t navigation_status;
-*/
+
 static pid_controler_t pid_a;
 
 static mission_item_list_t mission_items;
@@ -552,10 +553,10 @@ void navigation_update_position();
 #else
 void navigation_update_position()
 {
-	float gps_latitude, gps_longitude, odo_latitude, odo_longitude;
+	float gps_latitude, gps_longitude, odo_latitude, odo_longitude, delta_heading;
 	float gps_heading = (gps_get_cog()/360) * PERIOD;
-	float delta_heading = gps_heading - odo.old_gps_heading;
-	odo.old_gps_heading = gps_heading;
+	delta_heading = gps_heading - navigation_status.old_gps_heading;
+	navigation_status.old_gps_heading = gps_heading;
 	//float delta_lon, delta_lat = 0;
 
 	//if first_time, initialize all structures

@@ -20,7 +20,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "hal/motors.h"
-#include "navigation.h"
 
 //mavlink includes
 #include "imu.h"
