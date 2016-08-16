@@ -183,7 +183,7 @@ int motors_run_odometer(int32_t voltage[N_SIDES], int position_i)
 	sensor_values[2] = 0;
 	sensor_values[3] = 0;
 
-	adc_read_motor_sensors(sensor_values);
+	//adc_read_motor_sensors(sensor_values);
 
 	//check to see if a wheel is blocked or off the ground
 	if(motors_navigation_error(sensor_values, voltage)) {
@@ -196,7 +196,7 @@ int motors_run_odometer(int32_t voltage[N_SIDES], int position_i)
 	}
 }
 
-int motors_navigation_error(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_WHEELS])
+int motors_navigation_error(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_SIDES])
 {
 	int error = 0;
 	int ratio[N_WHEELS];
@@ -212,7 +212,7 @@ int motors_navigation_error(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_
 		return 0;
 }
 
-void motors_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_WHEELS], int position_i)
+void motors_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_SIDES], int position_i)
 {
 	float circumference, velocity, delta_time = 0;
 	float speed[N_WHEELS], rps[N_WHEELS];

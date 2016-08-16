@@ -557,7 +557,11 @@ void navigation_update_position()
 	float gps_heading = (gps_get_cog()/360) * PERIOD;
 	delta_heading = gps_heading - navigation_status.old_gps_heading;
 	navigation_status.old_gps_heading = gps_heading;
-	//float delta_lon, delta_lat = 0;
+
+	navigation_status.motor_values[0] = 0.1; //manually changing voltages
+	navigation_status.motor_values[1] = 0.1;
+
+	float delta_lon, delta_lat = 0;
 
 	//if first_time, initialize all structures
 	/*
@@ -570,8 +574,8 @@ void navigation_update_position()
 	}
 	*/
 
-	//gps_latitude = gps_get_latitude();
-	//gps_longitude = gps_get_longitude();
+	gps_latitude = gps_get_latitude();
+	gps_longitude = gps_get_longitude();
 
 	//delta_lon = gps_longitude - navigation_status.old_lon;
 	//delta_lat = gps_latitude - navigation_status.old_lat;
@@ -581,7 +585,7 @@ void navigation_update_position()
 	if (navigation_status.position_i == (MAX_RECENT_VALUES-1))
 	{
 		//motors_recalibrate_odometer(delta_lat, delta_lon, delta_heading);
-		//motors_reinitialize_odometer(gps_heading);
+		motors_reinitialize_odometer(gps_heading);
 		gps_calculate_position();	//calculates a gps position from a number of gps points
 		gps_reset_gps();
 		navigation_status.position_i = VALUES_AFTER_GPS_RESET;
@@ -593,11 +597,14 @@ void navigation_update_position()
 
 	motors_run_odometer(navigation_status.motor_values, navigation_status.position_i);     //saves an odometer position
 
-	//odo_latitude = motors_get_latitude();
-	//odo_longitude = motors_get_longitude();
-	//navigation_status.lat_rover = gps_latitude + odo_latitude;
-	//navigation_status.lon_rover = gps_longitude + odo_longitude;
+	odo_latitude = motors_get_latitude();
+	odo_longitude = motors_get_longitude();
 
+	navigation_status.lat_rover = gps_latitude + odo_latitude;
+	navigation_status.lon_rover = gps_longitude + odo_longitude;
+
+	gps_receive_lat_rover(navigation_status.lat_rover);
+	gps_receive_lon_rover(navigation_status.lon_rover);
 
 	/*
 	if(gps_update_position())

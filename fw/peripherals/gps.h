@@ -43,6 +43,11 @@ void gps_reset_gps();
 float gps_get_latitude();
 float gps_get_longitude();
 
+void gps_receive_lat_rover(float lat_rover);
+void gps_receive_lon_rover(float lon_rover);
+
 void gps_initialize();
+
+float gps_get_lati();
 
 #endif
