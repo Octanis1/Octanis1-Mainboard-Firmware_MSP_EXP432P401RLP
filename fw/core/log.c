@@ -152,8 +152,10 @@ LOG_INTERNAL void _log_flash_write(uint32_t addr, void *data, size_t len)
     if (_log_flash_erase_addr(addr, len, &erase_addr)) {
         flash_block_erase(erase_addr);
     }
-    flash_write(addr, data, len, FLASH_READ_ERASE_WRITE);
+    flash_write(addr, data, len);
 }
+
+//TODO rewrite log functions
 
 // get the latest position in the backup
 // returns true if backup_addr is valid, otherwise assume empty or corrupt backup table
@@ -173,8 +175,8 @@ LOG_INTERNAL bool _log_backup_table_get_last(uint32_t *backup_addr)
         addr += 4;
         //if page_size - usable_lengt >= 4 the following code doesn't work
         for (i=0; i<4; i++){
-        	if ((addr+=i)%FLASH_PAGE_SIZE > FLASH_USABLE_LENGTH)
-        		addr+=4;
+//        	if ((addr+=i)%FLASH_PAGE_SIZE > FLASH_USABLE_LENGTH)
+//        		addr+=4;
         }
     }
     return false;
@@ -220,7 +222,7 @@ LOG_INTERNAL void _log_position_backup(struct logger *l)
     uint32_t write_pos = l->flash_write_pos;
     uint32_t bkup_pos = l->backup_pos;
     if (bkup_pos + 4 < FLASH_BLOCK_SIZE) {
-        flash_write(bkup_pos, (uint8_t *)&write_pos, 4, FLASH_READ_ERASE_WRITE);
+        flash_write(bkup_pos, (uint8_t *)&write_pos, 4);
         l->backup_pos += 4;
     } // if backup table is full, just continue without
     logger_unlock();

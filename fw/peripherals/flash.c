@@ -13,8 +13,10 @@
 */
 
 #define FLASH_PAGE_PROGRAM_TIMEOUT_MS   (2)
-#define FLASH_SECTOR_ERASE_TIMEOUT_MS   (780)
-#define FLASH_BLOCK_ERASE_TIMEOUT_MS    (12600)
+#define FLASH_REGISTER_PROGRAM_TIMEOUT_MS   (200)
+#define FLASH_BLOCK_64KB_ERASE_TIMEOUT_MS   (780)
+#define FLASH_BLOCK1_64KB_ERASE_TIMEOUT_MS  (12600)
+#define FLASH_BLOCK_256KB_ERASE_TIMEOUT_MS  (3120)
 #define FLASH_CHIP_ERASE_TIMEOUT_MS     (210000)
 
 // defined in hal/flash_spi.c
@@ -23,34 +25,6 @@ void flash_spi_unselect(void);
 int flash_spi_send(const void *txbuf, size_t len);
 int flash_spi_receive(void *rxbuf, size_t len);
 void flash_os_sleep_ms(uint32_t ms);
-
-static int flash_read_status(uint8_t *sr)
-{
-    int ret;
-    uint8_t cmd = FLASH_RDSR;
-    flash_spi_select();
-    ret = flash_spi_send(&cmd, 1);
-    if (ret == 0) {
-        ret = flash_spi_receive(sr, 1);
-    }
-    flash_spi_unselect();
-    return ret;
-}
-
-// wait until the flash program/erase operation is finished
-static int flash_wait_until_done(uint32_t timeout_ms)
-{
-    int ret;
-    while (timeout_ms-- > 0) {
-        uint8_t status;
-        ret = flash_read_status(&status);
-        if (ret != 0 || (status & STATUS_BUSY) == 0) {
-            return ret;
-        }
-        flash_os_sleep_ms(1);
-    }
-    return -1;
-}
 
 static int flash_cmd(uint8_t cmd)
 {
@@ -80,11 +54,90 @@ static void flash_write_disable(void)
     flash_spi_unselect();
 }
 
+int flash_read_status(uint8_t *sr)
+{
+    int ret;
+    uint8_t cmd = FLASH_RDSR1;
+    flash_spi_select();
+    ret = flash_spi_send(&cmd, 1);
+    if (ret == 0) {
+        ret = flash_spi_receive(sr, 1);
+    }
+    flash_spi_unselect();
+    return ret;
+}
+
+static int flash_read_status2(uint8_t *sr)
+{
+    int ret;
+    uint8_t cmd = FLASH_RDSR2;
+    flash_spi_select();
+    ret = flash_spi_send(&cmd, 1);
+    if (ret == 0) {
+        ret = flash_spi_receive(sr, 1);
+    }
+    flash_spi_unselect();
+    return ret;
+}
+
+static int flash_read_config(uint8_t *cr)
+{
+    int ret;
+    uint8_t cmd = FLASH_RDCR;
+    flash_spi_select();
+    ret = flash_spi_send(&cmd, 1);
+    if (ret == 0) {
+        ret = flash_spi_receive(cr, 1);
+    }
+    flash_spi_unselect();
+    return ret;
+}
+
+// wait until the flash program/erase operation is finished
+static int flash_wait_until_done(uint32_t timeout_ms)
+{
+    int ret;
+    while (timeout_ms-- > 0) {
+        uint8_t status;
+        ret = flash_read_status(&status);
+        if (ret != 0 || (status & STATUS_BUSY) == 0) {
+            return ret;
+        }
+        flash_os_sleep_ms(1);
+    }
+    return -1;
+}
+
+int flash_write_registers(uint8_t *sr1, uint8_t *cr, uint8_t *sr2)
+{
+	int ret;
+	int ret2;
+	uint8_t cmd = FLASH_WRR;
+	flash_write_enable();
+	flash_spi_select();
+	ret = flash_spi_send(&cmd, 1);
+	//write one config register after the other, null pointer stops process
+	if (ret == 0 && sr1) {
+		ret = flash_spi_send(sr1, 1);
+		if (ret == 0 && cr) {
+			ret = flash_spi_send(cr, 1);
+			if (ret == 0 && sr2) {
+				ret = flash_spi_send(sr2, 1);
+			}
+		}
+	}
+	//this is required to start the procedure to write the registers.
+	flash_spi_unselect();
+	ret2 = flash_wait_until_done(FLASH_REGISTER_PROGRAM_TIMEOUT_MS);
+	flash_write_disable();
+	return ret == 0 ? ret2 : ret;
+}
+
 int flash_id_read(uint8_t *id)
 {
     int ret;
     flash_spi_select();
-    ret = flash_cmd(FLASH_JEDEC_ID);
+    ret = flash_cmd(FLASH_RDID);
     if (ret == 0) {
         ret = flash_spi_receive(id, 3);
     }
@@ -92,41 +145,35 @@ int flash_id_read(uint8_t *id)
     return ret;
 }
 
-/* NOTICE : in flash_write and flash_read you'll notice that we add a 3*i offset when
- * reading multiple page. This is a magic number to avoid loss of data, flash_write
- * apparently not succeeding in writing the 3*i first entries of its buffer to the
- * begining of the 1+ith page.
- * The reason for the bug is unknow and the programmer choosed to go the easy
- * way after failing at fixing it for more time that he would admit.
- */
+int flash_read_registers(uint8_t *buf)
+{
+	int ret = 0;
+	ret = flash_read_status(buf);
+	if (ret == 0) {
+		ret = flash_read_config(&(buf[1]));
+	}
+	if (ret == 0) {
+		ret = flash_read_status2(&(buf[2]));
+	}
+}
 
 //TODO: works with mavlink_log, should test it for standards log.
 int flash_read(uint32_t addr, void *buf, size_t len)
 {
     int ret = 0;
     size_t pos = 0;
+    uint8_t *p_buf = (uint8_t*)buf;
 
-    //Find number of bytes until end of page
-    size_t align = FLASH_PAGE_SIZE - (addr % FLASH_PAGE_SIZE);
-    align = align < len ? align : len;
-
-    //reduce length of bytes to read if full page is supposed to be read
-    if (align >= FLASH_PAGE_SIZE) {
-    	align = align / 2;
-    }
-
-    //TODO: maybe have to redo spi select/unselect for every read
+    //read is consecutive and independent of page
+    size_t align = len < FLASH_MAX_MESSAGE ? len : FLASH_MAX_MESSAGE;
 
     flash_spi_select();
+	ret = flash_cmd_w_addr(FLASH_READ, addr);
+
     while (pos < len && ret == 0) {
-
-    	ret = flash_cmd_w_addr(FLASH_READ, addr + pos);
-    	if (ret == 0) {
-			ret = flash_spi_receive(&buf[pos], align);
-		}
-
+		ret = flash_spi_receive(&p_buf[pos], align);
     	pos += align;
-    	align = len - pos < FLASH_PAGE_SIZE / 2 ? len - pos : FLASH_PAGE_SIZE / 2;
+    	align = len - pos < FLASH_MAX_MESSAGE ? len - pos : FLASH_MAX_MESSAGE;
     }
     flash_spi_unselect();
     return ret;
@@ -147,38 +194,28 @@ static int flash_page_program(uint32_t addr, const void *buf, size_t len)
 
     //workaround as library does not allow to flash single page in one go.
     //if more than possible bytes to write, split in two.
-    if (len > FLASH_USABLE_LENGTH) {
-    	flash_write_enable();
-    	flash_spi_select();
-    	ret = flash_cmd_w_addr(FLASH_PP, addr);
+
+	flash_write_enable();
+	flash_spi_select();
+	ret = flash_cmd_w_addr(FLASH_PP, addr);
+	if (len > FLASH_MAX_MESSAGE) {
 		if (ret == 0) {
-			ret = flash_spi_send(buf, FLASH_USABLE_LENGTH);
+			ret = flash_spi_send(buf, FLASH_MAX_MESSAGE);
 		}
-		flash_spi_unselect();
 		if (ret == 0) {
-			ret = flash_wait_until_done(FLASH_PAGE_PROGRAM_TIMEOUT_MS);
+			ret = flash_spi_send(&(buf[FLASH_MAX_MESSAGE]), len - FLASH_MAX_MESSAGE);
 		}
-    	flash_write_disable();
+	} else {
+		if (ret == 0) {
+			ret = flash_spi_send(buf, len);
+		}
+	}
+	flash_spi_unselect();
+	if (ret == 0) {
+		ret = flash_wait_until_done(FLASH_PAGE_PROGRAM_TIMEOUT_MS);
+	}
+	flash_write_disable();
 
-    	if (ret != 0) {
-    		return ret;
-    	}
-
-    	addr = addr + FLASH_USABLE_LENGTH;
-    	len = len - FLASH_USABLE_LENGTH;
-    }
-
-    flash_write_enable();
-    flash_spi_select();
-    ret = flash_cmd_w_addr(FLASH_PP, addr);
-    if (ret == 0) {
-        ret = flash_spi_send(buf, len);
-    }
-    flash_spi_unselect();
-    if (ret == 0) {
-        ret = flash_wait_until_done(FLASH_PAGE_PROGRAM_TIMEOUT_MS);
-    }
-    flash_write_disable();
     return ret;
 }
 
@@ -193,49 +230,17 @@ static int flash_page_program(uint32_t addr, const void *buf, size_t len)
  */
 
 //TODO: works with mavlink_log, should test it for standards log.
-int flash_write(uint32_t addr, const void *buf, size_t len, FLASH_WRITE_MODE write_mode)
+int flash_write(uint32_t addr, const void *buf, size_t len)
 {
     int ret = 0;
-    size_t rewrite_beginning = 0;
-    size_t rewrite_end = 0;
 
-    uint8_t write_buffer[FLASH_PAGE_SIZE]; //TODO: verify if buffer not too big for stack
     const uint8_t *p_data = (const uint8_t *) buf;
 
     size_t pos = 0;
     size_t align = FLASH_PAGE_SIZE - (addr % FLASH_PAGE_SIZE);
     align = align < len ? align : len;
 
-    //need to read page until begin of newly written area
-    if (write_mode == FLASH_READ_ERASE_WRITE && addr % FLASH_PAGE_SIZE > 0) {
-    	rewrite_beginning = addr % FLASH_PAGE_SIZE;
-    	ret = flash_read(addr  - (addr % FLASH_PAGE_SIZE), write_buffer, rewrite_beginning);
-
-    }
-
     while (pos < len && ret == 0) {
-
-		//need to read page from end of newly written area //TODO: verify following calculation
-    	if (write_mode == FLASH_READ_ERASE_WRITE && (addr + pos + align) % FLASH_PAGE_SIZE > 0) {
-    		rewrite_end = FLASH_PAGE_SIZE - ((addr + pos + align) % FLASH_PAGE_SIZE);
-			ret = flash_read(addr + pos + align, &(write_buffer[(addr + pos + align) % FLASH_PAGE_SIZE]), FLASH_PAGE_SIZE - ((addr + pos + align) % FLASH_PAGE_SIZE));
-		}
-
-    	//erase page (sector) before writing new data
-    	if (ret == 0 && (write_mode == FLASH_READ_ERASE_WRITE || write_mode == FLASH_ERASE_WRITE)) {
-    		ret = flash_sector_erase(addr + pos);
-    	}
-
-    	//write old data back if required
-    	if (ret == 0 && rewrite_beginning > 0) {
-    		ret = flash_page_program(addr - (addr % FLASH_PAGE_SIZE), write_buffer, rewrite_beginning);
-    		rewrite_beginning = 0;
-    	}
-    	if (ret == 0 && rewrite_end > 0) {
-    		ret = flash_page_program(addr + pos + align, &(write_buffer[(addr + pos + align) % FLASH_PAGE_SIZE]), rewrite_end);
-    		rewrite_end = 0;
-		}
-
     	//write new data
     	if (ret == 0) {
     		ret = flash_page_program(addr + pos, &(p_data[pos]), align);
@@ -248,7 +253,26 @@ int flash_write(uint32_t addr, const void *buf, size_t len, FLASH_WRITE_MODE wri
     return ret;
 }
 
+//sector erase (4kB) only works for first 64kB
 int flash_sector_erase(uint32_t addr)
+{
+    int ret;
+    if (addr < FLASH_BLOCK_SIZE) {
+		flash_write_enable();
+		flash_spi_select();
+		ret = flash_cmd_w_addr(FLASH_P4E, addr);
+		flash_spi_unselect();
+		if (ret == 0) {
+			ret = flash_wait_until_done(FLASH_BLOCK_64KB_ERASE_TIMEOUT_MS);
+		}
+		flash_write_disable();
+		return ret;
+    }
+    return -1;
+}
+
+//Only valid if using 64kB block size
+int flash_block_erase(uint32_t addr)
 {
     int ret;
     flash_write_enable();
@@ -256,21 +280,11 @@ int flash_sector_erase(uint32_t addr)
     ret = flash_cmd_w_addr(FLASH_SE, addr);
     flash_spi_unselect();
     if (ret == 0) {
-        ret = flash_wait_until_done(FLASH_SECTOR_ERASE_TIMEOUT_MS);
-    }
-    flash_write_disable();
-    return ret;
-}
-
-int flash_block_erase(uint32_t addr)
-{
-    int ret;
-    flash_write_enable();
-    flash_spi_select();
-    ret = flash_cmd_w_addr(FLASH_BE, addr);
-    flash_spi_unselect();
-    if (ret == 0) {
-        ret = flash_wait_until_done(FLASH_BLOCK_ERASE_TIMEOUT_MS);
+    	if (addr < FLASH_BLOCK_SIZE) {
+    		ret = flash_wait_until_done(FLASH_BLOCK1_64KB_ERASE_TIMEOUT_MS);
+    	} else {
+    		ret = flash_wait_until_done(FLASH_BLOCK_64KB_ERASE_TIMEOUT_MS);
+    	}
     }
     flash_write_disable();
     return ret;
@@ -281,7 +295,7 @@ int flash_chip_erase(void)
     int ret;
     flash_write_enable();
     flash_spi_select();
-    ret = flash_cmd(FLASH_CE);
+    ret = flash_cmd(FLASH_BE);
     flash_spi_unselect();
     if (ret == 0) {
         ret = flash_wait_until_done(FLASH_CHIP_ERASE_TIMEOUT_MS);

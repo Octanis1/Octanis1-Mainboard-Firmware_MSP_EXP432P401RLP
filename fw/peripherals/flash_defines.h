@@ -1,8 +1,9 @@
 #ifndef FLASH_DEFINES_H
 #define FLASH_DEFINES_H
 
-#define FLASH_PAGE_SIZE 256 // may depend on flash chip
-#define FLASH_USABLE_LENGTH 255 //since the number of byte is encoded on uint8_t
+#define FLASH_PAGE_SIZE (256) // may depend on flash chip, can be increased to 512
+#define FLASH_MAX_MESSAGE (255)
+#define FLASH_BLOCK_SIZE (65536) // can be increased to 256kB
 
 #define STATUS_BUSY     (1<<0)
 #define STATUS_WEL      (1<<1) // Write-Enable Latch status
@@ -23,8 +24,9 @@
 #define FLASH_RST             0x99 // Reset Memory
 #define FLASH_EQIO            0x38 // Enable Quad I/O
 #define FLASH_RSTQIO          0xff // Reset Quad I/O
-#define FLASH_RDSR            0x05 // Read Status Register
-#define FLASH_WRSR            0x01 // Write Status Register
+#define FLASH_RDSR1           0x05 // Read Status Register 1
+#define FLASH_RDSR2           0x07 // Read Status Register 2
+#define FLASH_WRR             0x01 // Write Registers (SR1 CR SR2)
 #define FLASH_RDCR            0x35 // Read Configuration Register
 
 // Read
@@ -39,16 +41,16 @@
 #define FLASH_RBSPI           0xec // SPI Read Burst with Wrap
 
 // Identification
-#define FLASH_JEDEC_ID        0x9f // JEDEC-ID Read
+#define FLASH_RDID            0x9f // JEDEC-ID Read
 #define FLASH_QUAD_J_ID       0xaf // Quad I/O J-ID Read
 #define FLASH_SFDP            0x5a // Serial Flash Discoverable Parameters
 
 // Write
 #define FLASH_WREN            0x06 // Write Enable
 #define FLASH_WRDI            0x04 // Write Disable
-#define FLASH_SE              0x20 // Erase 4 KBytes of Memory Array
-#define FLASH_BE              0xd8 // Erase 64, 32 or 8 KBytes of Memory Array
-#define FLASH_CE              0xc7 // Erase Full Array
+#define FLASH_P4E             0x20 // Erase 4 KBytes of Memory Array
+#define FLASH_SE              0xd8 // Erase 64, 32 or 8 KBytes of Memory Array
+#define FLASH_BE              0xc7 // Erase Full Array
 #define FLASH_PP              0x02 // Page Program
 #define FLASH_SPI_QUAD_PP     0x32 // SQI Quad Page Program
 #define FLASH_WRSU            0xb0 // Suspends Program/Erase

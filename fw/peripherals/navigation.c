@@ -791,7 +791,7 @@ void navigation_restore_mission_items(mission_item_list_t item_list)
 void navigation_task()
 {
 	navigation_init();
-#ifdef FLASH_ENABLED
+//#ifdef FLASH_ENABLED
 	/************* flash test START ****************/
 	spi_helper_init_handle();
 
@@ -799,7 +799,18 @@ void navigation_task()
     bool logging_enabled = true;
 
 
-	static uint8_t buf[250];
+	static uint8_t buf[1000];
+	static uint8_t buf_in[1000];
+	flash_read_registers(buf);
+
+	uint8_t sr1 = 0x00;
+	uint8_t cr = 0xC0;
+	uint8_t sr2 = 0x00;
+
+	flash_read_status(buf);
+
+	int ret_wrr = flash_write_registers(&sr1, &cr, &sr2);
+
 	flash_id_read(buf);
 	const uint8_t flash_id[] = {0x01,0x20,0x18}; // S25FL127S ID
 	if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
@@ -808,6 +819,26 @@ void navigation_task()
 	} else {
 		serial_printf(cli_stdout, "Flash ID ERROR\n");
 	}
+
+	for(int i = 0; i < 1000; i++)
+	{
+		buf[i] = rand();
+	}
+
+	flash_block_erase(0x000000);
+
+	flash_write(0x000000, buf, 1000);
+	flash_read(0x000000, buf_in, 1000);
+
+	int error_count = 0;
+	for(int i = 0; i < 1000; i++)
+	{
+		if(buf[i] != buf_in[i])
+		{
+			error_count++;
+		}
+	}
+
 
     if (logging_enabled) {
         if (!log_init()) {
@@ -826,8 +857,8 @@ void navigation_task()
     if(log_read_mavlink_item_list(&item_list, &time, &name))
     	navigation_restore_mission_items(item_list);
 
-#endif
-
+//#endif
+/*
 	while(1){
 
 //		navigation_update_target();
@@ -851,5 +882,6 @@ void navigation_task()
 		Task_sleep(500);
 
 	}
+	*/
 }
 

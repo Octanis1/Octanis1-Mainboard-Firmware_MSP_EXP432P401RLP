@@ -8,21 +8,18 @@
 extern "C" {
 #endif
 
-typedef enum flash_write_mode {
-	FLASH_READ_ERASE_WRITE,
-	FLASH_ERASE_WRITE,
-	FLASH_WRITE
-
-} FLASH_WRITE_MODE;
-
 // read the 3-byte flash JEDEC-ID, id[0] = manufacturer, id[1-2] = device type
 int flash_id_read(uint8_t *id);
+
+int flash_read_registers(uint8_t *buf);
+int flash_write_registers(uint8_t *sr1, uint8_t *cr, uint8_t *sr2);
+int flash_read_status(uint8_t *buf);
 
 // reads data from flash
 int flash_read(uint32_t addr, void *buf, size_t len);
 
 // write data to flash
-int flash_write(uint32_t addr, const void *buf, size_t len, FLASH_WRITE_MODE write_mode);
+int flash_write(uint32_t addr, const void *buf, size_t len);
 
 // erase a 4 KByte sector at address addr
 // Note: does not work for Spansion S25FL127S, use flash_block_erase() instead
