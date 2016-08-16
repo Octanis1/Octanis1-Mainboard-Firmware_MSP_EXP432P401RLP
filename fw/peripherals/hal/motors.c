@@ -41,15 +41,15 @@ struct odo{
 	float first_third_angle;
 	float second_third_angle;
 	float third_third_angle;
-	float old_gps_heading;				 //in rad
-	float latitude;	//in degrees
-	float longitude; 	//in degreess
-	float checked_lat; 	//in degrees
-	float checked_lon; 	//in degrees
-	int first_time; 	//true/false
-	int odo_time; 		//in msec
-	float velocity; 	//in meters
-	float heading; 		//in rad
+	float old_gps_heading;		//in rad
+	float latitude;				//in degrees
+	float longitude; 			//in degreess
+	float checked_lat; 			//in degrees
+	float checked_lon; 			//in degrees
+	int first_time; 			//true/false
+	int odo_time; 				//in msec
+	float velocity; 			//in meters/s
+	float heading; 				//in rad
 } odo;
 
 static float friction_factor = INITIAL_FRICTION_FACTOR;
