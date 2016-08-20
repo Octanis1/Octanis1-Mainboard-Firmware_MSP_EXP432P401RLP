@@ -48,6 +48,4 @@ void gps_receive_lon_rover(float lon_rover);
 
 void gps_initialize();
 
-float gps_get_lati();
-
 #endif

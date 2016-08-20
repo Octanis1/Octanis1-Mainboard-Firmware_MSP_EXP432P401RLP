@@ -20,6 +20,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "hal/motors.h"
+#include "navigation.h"
+#include "hal/time_since_boot.h"
 
 //mavlink includes
 #include "imu.h"
@@ -175,11 +177,6 @@ float gps_get_longitude()
 	return longitude;
 }
 
-float gps_get_lati()
-{
-	return 0.1;
-}
-
 void gps_receive_lat_rover(float lat_rover)
 {
 	gps.lat_rover = lat_rover;
@@ -189,6 +186,49 @@ void gps_receive_lon_rover(float lon_rover)
 {
 	gps.lon_rover = lon_rover;
 }
+/*
+COMM_FRAME* gps_pack_mavlink_global_position_int()
+{
+	int position_i;
+	float heading;
+	int32_t relative_alt = 0;
+	int16_t vx = 0;
+	int16_t vy = 0;
+	int16_t vz = 0;
+
+	position_i = navigation_get_position_i();
+	heading = navigation_get_heading_rover();
+
+	int32_t lon = (int32_t)(10000000.0 * gps.lon_rover);
+	int32_t lat = (int32_t)(10000000.0 * gps.lat_rover);
+
+	int32_t alt = (int32_t)(position_i);
+
+	uint16_t hdg = (uint16_t)(heading);
+
+
+	/*
+	uint64_t usec = gps_get_last_update_usec();
+	if(usec == 0)
+	{ //no time information in usec is available
+		usec = (uint64_t)gps_get_last_update_time();
+		if(usec == 0)
+			//no time information from GPS is available --> use system time (since boot)
+			usec = 1000000 * (uint64_t)Seconds_get();
+		else
+			usec = 1000000 * usec;
+	}*//*
+
+	uint32_t msec = ms_since_boot(); //1000 * (uint32_t)Seconds_get();
+
+	static COMM_FRAME frame;
+
+	mavlink_msg_global_position_int_pack(mavlink_system.sysid, MAV_COMP_ID_GPS, &(frame.mavlink_message), msec, lat, lon,
+			alt, relative_alt, vx, vy, vz, hdg);
+
+	return &frame;
+}
+*/
 
 COMM_FRAME* gps_pack_mavlink_raw_int()
 {
@@ -199,12 +239,10 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 	//longitude = navigation_get_longi();
 	// Mavlink heartbeat
 	// Define the system type, in this case an airplane
-	//int32_t lat = (int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
-	//int32_t lon = (int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
-	//int32_t lon = (int32_t)(10000000.0 * gps.position_longitude);
-	//int32_t lat = (int32_t)(10000000.0 * gps.position_latitude);
-	int32_t lon = (int32_t)(10000000.0 * gps.lon_rover);
-	int32_t lat = (int32_t)(10000000.0 * gps.lat_rover);
+	int32_t lat = (int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
+	int32_t lon = (int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
+	//int32_t lon = (int32_t)(10000000.0 * gps.lon_rover);
+	//int32_t lat = (int32_t)(10000000.0 * gps.lat_rover);
 	//int32_t lon = (int32_t) (100000);
 	//int32_t lat = (int32_t) (100000);
 	int32_t alt = (int32_t)(1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
@@ -286,10 +324,16 @@ void gps_task(){
 			comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
 	#endif
 			comm_mavlink_broadcast(gps_pack_mavlink_raw_int());
+/*
+	#ifdef MAVLINK_ON_UART0_ENABLED
+			comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
+	#endif
+			comm_mavlink_broadcast(gps_pack_mavlink_global_position_int());*/
 		}
 		Task_sleep(10);
 	}
 }
+
 /*
 void gps_initialize()
 {

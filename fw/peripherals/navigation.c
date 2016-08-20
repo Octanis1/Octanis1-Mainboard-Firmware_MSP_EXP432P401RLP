@@ -553,12 +553,15 @@ void navigation_update_position();
 #else
 void navigation_update_position()
 {
-	float gps_latitude, gps_longitude, odo_latitude, odo_longitude, delta_heading;
-	float gps_heading = (gps_get_cog()/360) * PERIOD;
-	delta_heading = gps_heading - navigation_status.old_gps_heading;
-	navigation_status.old_gps_heading = gps_heading;
+	float gps_latitude, gps_longitude, odo_latitude, odo_longitude, delta_heading, gps_heading, odo_heading;
 
-	navigation_status.motor_values[0] = 0.1; //manually changing voltages
+	//gps_heading = (gps_get_cog()/360) * PERIOD;
+	gps_heading = 0;
+	//delta_heading = gps_heading - navigation_status.old_gps_heading;
+	//navigation_status.old_gps_heading = gps_heading;
+	//odo_heading = motors_get_odo_heading;
+
+	navigation_status.motor_values[0] = 0.0; //manually changing voltages
 	navigation_status.motor_values[1] = 0.1;
 
 	float delta_lon, delta_lat = 0;
@@ -632,7 +635,15 @@ void navigation_update_position()
 	navigation_status.position_valid = imu_valid() && gps_valid();
 
 	// recalculate heading angle
+#ifdef IMU_AVALABLE
 	navigation_status.heading_rover = imu_get_fheading();
+#endif
+#ifndef IMU_AVALABLE
+	gps_heading = 0;
+	//odo_heading = motors_get_odo_heading();
+	odo_heading = 0;
+	navigation_status.heading_rover = gps_heading + odo_heading;
+#endif
 	navigation_status.angle_to_target = navigation_angle_for_rover(navigation_status.lat_rover,navigation_status.lon_rover,
 			navigation_status.lat_target, navigation_status.lon_target, navigation_status.heading_rover);
 	// recalculate distance to target

@@ -41,7 +41,6 @@ struct odo{
 	float first_third_angle;
 	float second_third_angle;
 	float third_third_angle;
-	float old_gps_heading;		//in rad
 	float latitude;				//in degrees
 	float longitude; 			//in degreess
 	float checked_lat; 			//in degrees
@@ -228,7 +227,7 @@ void motors_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t voltage[
 		velocity += speed[i];
 	}
 #endif
-#ifdef SENSOR_VALUES_UNAVAILABLE
+#ifndef SENSOR_VALUES_AVAILABLE
 	for (i=0; i<N_WHEELS; i++) {
 		rps[i] = friction_factor * voltage[i%N_SIDES];
 		speed[i] = rps[i] * circumference;
@@ -253,15 +252,15 @@ void motors_update_xy(int position_i)
 {
 	if (position_i < VALUES_AFTER_GPS_RESET){
 		odo.first_third_x += odo.radius - odo.radius * cos(odo.angle);
-		odo.first_third_y = odo.radius * sin(odo.angle);
+		odo.first_third_y += odo.radius * sin(odo.angle);
 	}
 	else if (position_i < (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET)){
 		odo.second_third_x += odo.radius - odo.radius * cos(odo.angle);
-		odo.second_third_y = odo.radius * sin(odo.angle);
+		odo.second_third_y += odo.radius * sin(odo.angle);
 	}
 	else {
 		odo.third_third_x += odo.radius - odo.radius * cos(odo.angle);
-		odo.third_third_y = odo.radius * sin(odo.angle);
+		odo.third_third_y += odo.radius * sin(odo.angle);
 	}
 	odo.heading += odo.angle;
 }
@@ -312,7 +311,7 @@ void motors_reinitialize_odometer(float gps_heading)
 	odo.third_third_x = 0;
 	odo.third_third_y = 0;
 	odo.radius = 0;
-	odo.angle = gps_heading + odo.third_third_angle;
+	odo.angle = odo.third_third_angle;
 	odo.first_third_angle = odo.third_third_angle;
 	odo.second_third_angle = 0;
 	odo.third_third_angle = 0;
@@ -334,6 +333,11 @@ float motors_get_longitude()
 	float longitude;
 	longitude = odo.longitude;
 	return longitude;
+}
+
+float motors_get_odo_heading()
+{
+	return odo.heading;
 }
 
 /*
@@ -449,7 +453,6 @@ void motors_initialize()
 	odo.longitude = 0;
 	odo.checked_lat = 0;
 	odo.checked_lon = 0;
-	odo.old_gps_heading = 0;
 	odo.odo_time = 0;
 	odo.velocity = 0;
 	odo.first_third_angle = 0;

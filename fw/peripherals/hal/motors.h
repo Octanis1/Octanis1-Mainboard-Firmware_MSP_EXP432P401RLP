@@ -68,6 +68,7 @@ float motors_get_latitude();
 float motors_get_longitude();
 
 float motors_get_groundspeed();
+float motors_get_odo_heading();
 
 void motors_struts_get_position();
 
