@@ -111,6 +111,15 @@ uint8_t  ccr_edgetype  = 0;
 void timer_a0_isr()
 {
 	switch( TIMER_A0->IV ) {
+
+	//interrupt with CCR for the Lightning sensor AS3935
+	case Board_LIGHTNING_IN_IV:
+		ccr_timestamp = Timer_A_getCaptureCompareCount(Board_LIGHTNING_IN_TAx_MODULE, Board_LIGHTNING_IN_CCR );
+		ccr_edgetype  = Board_LIGHTNING_IN_CCTL & TIMER_A_CCTLN_CCI; //1=rising, 0=falling
+		AS3935_ccr_ISR(ccr_timestamp,ccr_edgetype);
+		Timer_A_clearCaptureCompareInterrupt(Board_LIGHTNING_IN_TAx_MODULE,Board_LIGHTNING_IN_CCR);
+		break;
+
 // check if board definitions are still the same
 //#if((Board_WINDSENSOR_IN_TAx_MODULE)==(TIMER_A0_BASE))
 	case Board_WINDSENSOR_IN_IV:

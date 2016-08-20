@@ -220,9 +220,16 @@ extern "C" {
 
 
 /* Lightning sensor */
+//remapped port !
 #define Board_LIGHTNING_INT			Octanis_LIGHTNING_INT
 #ifdef VERSION_1
-	#define Board_LIGHTNING_INT_IV		DIO_PORT_IV__IFG0
+	#define Board_LIGHTNING_IN_PORT			GPIO_PORT_P2
+	#define Board_LIGHTNING_IN_PIN			GPIO_PIN0
+	#define Board_LIGHTNING_IN_SELECT		GPIO_PRIMARY_MODULE_FUNCTION
+	#define Board_LIGHTNING_IN_TAx_MODULE	TIMER_A0_BASE
+	#define Board_LIGHTNING_IN_CCR			TIMER_A_CAPTURECOMPARE_REGISTER_0
+	#define Board_LIGHTNING_IN_CCTL			TIMER_A0->CCTL[0]
+	#define Board_LIGHTNING_INT_IV			DIO_PORT_IV__IFG0
 #else
 	#define Board_LIGHTNING_INT_IV		DIO_PORT_IV__IFG4
 #endif

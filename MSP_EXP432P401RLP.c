@@ -507,6 +507,7 @@ void MSP_EXP432P401RLP_initPWM(void)
     		PM_TA1CCR2A, PM_NONE, PM_UCA2RXD, PM_UCA2TXD,
 		PM_TA1CCR3A, PM_NONE, PM_TA1CCR4A, PM_NONE
 	};
+
 #endif
 #ifdef VERSION_1
     const uint8_t port7Map [] = {
@@ -515,11 +516,21 @@ void MSP_EXP432P401RLP_initPWM(void)
             PM_NONE, PM_TA1CCR1A, PM_NONE, PM_TA1CCR2A
         };
 
-        const uint8_t port3Map [] = {
-        		PM_NONE, PM_NONE, PM_UCA2RXD, PM_UCA2TXD,
+    const uint8_t port3Map [] = {
+        	PM_NONE, PM_NONE, PM_UCA2RXD, PM_UCA2TXD,
     		PM_TA1CCR3A, PM_NONE, PM_TA1CCR4A, PM_NONE
         };
+
+    const uint8_t port2Map [] = {
+    		PM_TA0CCR0A, PM_NONE, PM_NONE, PM_NONE,
+			PM_NONE, PM_NONE, PM_NONE, PM_NONE
+	};
+
 #endif
+     /* Mapping capture compare registers to Port 2 */
+     MAP_PMAP_configurePorts((const uint8_t *) port2Map, P2MAP, 1,
+          PMAP_ENABLE_RECONFIGURATION);
+
     /* Mapping capture compare registers to Port 7 */
     MAP_PMAP_configurePorts((const uint8_t *) port7Map, P7MAP, 1,
         PMAP_ENABLE_RECONFIGURATION);

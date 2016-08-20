@@ -21,13 +21,53 @@
 #include "../../../Board.h"
 #include "i2c_helper.h"
 #include "AS3935.h"
+#include "driverlib.h"
 
 // i2c address is defined as Board_AS3935_I2CADDR
 
+void AS3935_ccr_ISR(uint16_t timestamp, uint8_t edgetype);
+Timer_Handle timer;
+
+const Timer_A_ContinuousModeConfig continuousModeConfig =
+{
+        TIMER_A_CLOCKSOURCE_ACLK,           		// ACLK Clock Source
+        TIMER_A_CLOCKSOURCE_DIVIDER_1,      		// ACLK/1 = 32.768khz
+        TIMER_A_TAIE_INTERRUPT_DISABLE,     		// Enable Overflow ISR ???
+        TIMER_A_DO_CLEAR                    		// Clear Counter
+};
+
+Timer_A_CaptureModeConfig captureModeConfig =
+{
+		Board_ULTRASONIC_IN_0_CCR,        		// CC Register for the first input pin to be initialized.
+		TIMER_A_CAPTUREMODE_RISING_AND_FALLING_EDGE,
+		TIMER_A_CAPTURE_INPUTSELECT_CCIxA,        // CCIxB Input Select
+        TIMER_A_CAPTURE_SYNCHRONOUS,              // Synchronized Capture
+        TIMER_A_CAPTURECOMPARE_INTERRUPT_ENABLE,  // Enable interrupt
+        TIMER_A_OUTPUTMODE_OUTBITVALUE            // Output bit value
+};
+
+uint16_t pulse_rising_time; //record timestamp when pulse was sent out
+uint16_t pulse_falling_time; //record timestamp when the interrupt was triggered by the echoed pulse
 
 void AS3935_init()
 {
-	//GPIO_enableInt(Board_LIGHTNING_INT)
+	/* configure input pins as capture/compare functions: */
+	GPIO_setAsPeripheralModuleFunctionInputPin(Board_LIGHTNING_IN_PORT,
+			Board_LIGHTNING_IN_PIN,  Board_LIGHTNING_IN_SELECT);
+
+	/* configure the timer as continuous Mode and capture mode for each input pin separately */
+	captureModeConfig.captureRegister = Board_LIGHTNING_IN_CCR;
+	MAP_Timer_A_configureContinuousMode(Board_LIGHTNING_IN_TAx_MODULE, &continuousModeConfig);
+	Timer_A_initCapture(Board_LIGHTNING_IN_TAx_MODULE, &captureModeConfig);
+
+	/* Enabling global timer interrupts and starting timer */
+	MAP_Interrupt_enableInterrupt(INT_TA0_N);
+	/* Starting the Timer_A0 in continuous mode */
+	MAP_Timer_A_startCounter(Board_LIGHTNING_IN_TAx_MODULE, TIMER_A_CONTINUOUS_MODE);
+    /* Enable each CCR interrupt */
+	Timer_A_enableCaptureCompareInterrupt(Board_LIGHTNING_IN_TAx_MODULE, Board_LIGHTNING_IN_CCR );
+	/* Enabling MASTER interrupts */
+	MAP_Interrupt_enableMaster();
 }
 
 uint8_t _rawRegisterRead(uint8_t reg_addr)
@@ -286,4 +326,23 @@ void as3935_ISR()
 {
  //TODO
 
+}
+
+/*****************************************************************************************
+ * ASM3935_ccr_ISR() gets called in the TIMER_Ax ISR if triggered by AS3935 int pin (p2.0)
+ * Arguments:
+ * *index : ultrasonic input pin that triggered the CCR (0-7)
+ * *timestamp : ...
+ * *edgetype : 1=rising, 0=falling
+ *****************************************************************************************/
+void AS3935_ccr_ISR(uint16_t timestamp, uint8_t edgetype)
+{
+	if(edgetype)
+	{//bit is high -> rising edge
+		pulse_rising_time=timestamp;
+	}
+	else
+	{//input bit is low -> falling edge
+		pulse_falling_time=timestamp;
+	}
 }

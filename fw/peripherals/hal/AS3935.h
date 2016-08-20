@@ -50,6 +50,7 @@
 #define AS3935_DIRECT_COMMAND	0x96		//register content to write
 
 
+void AS3935_ccr_ISR(uint16_t timestamp, uint8_t edgetype);
 void lightning_reset();
 uint8_t lightning_calibrate();
 
