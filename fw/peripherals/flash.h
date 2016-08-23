@@ -32,6 +32,9 @@ int flash_block_erase(uint32_t addr);
 // erase the chip
 int flash_chip_erase(void);
 
+// init flash chip
+int flash_init();
+
 #ifdef __cplusplus
 }
 #endif

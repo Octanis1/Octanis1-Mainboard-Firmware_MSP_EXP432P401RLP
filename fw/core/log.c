@@ -34,11 +34,19 @@ todo:
 #include "../lib/crc8.h"
 #include "../peripherals/flash.h"
 #include "../peripherals/flash_defines.h"
+#include "../../Board.h"
 
-#if !defined(LOG_TEST) // Production code
-// todo: add mutex if logger needs to be threadsafe
-LOG_INTERNAL void logger_lock(void){}
-LOG_INTERNAL void logger_unlock(void){}
+#include <ti/sysbios/BIOS.h>
+#include <ti/sysbios/knl/Semaphore.h>
+
+// mutex if logger needs to be threadsafe
+
+LOG_INTERNAL void logger_lock(void) {
+	Semaphore_pend(semLog, BIOS_WAIT_FOREVER);
+}
+LOG_INTERNAL void logger_unlock(void) {
+	Semaphore_post(semLog);
+}
 
 LOG_INTERNAL void _log_flash_write(uint32_t addr, void *data, size_t len);
 
@@ -47,9 +55,10 @@ LOG_INTERNAL uint32_t logger_timestamp_sec(void)
 {
     return Seconds_get();
 }
-#endif // LOG_TEST
 
 LOG_INTERNAL struct logger logger;
+LOG_INTERNAL bool log_initialized = false;
+LOG_INTERNAL bool log_init_calls = 0;
 
 LOG_INTERNAL cmp_ctx_t *_log_entry_create(struct logger *l, const char *name)
 {
@@ -83,6 +92,7 @@ LOG_INTERNAL void _log_mav_write_to_flash(struct logger *l)
     l->buffer[2] = crc;
     len += LOG_ENTRY_HEADER_LEN;
     _log_flash_write(l->mav_write_pos, l->buffer, len);
+
     if(l->mav_write_pos == FLASH_BLOCK_SIZE)
     	l->mav_write_pos = 2*FLASH_BLOCK_SIZE;
     else
@@ -122,7 +132,7 @@ bool log_read_entry(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entr
         return false;
     }
     *entry_len = len;
-    *next_entry = addr + len + 2;
+    *next_entry = addr + len + 2; //<- TODO: why not +3?
     return true;
 }
 
@@ -162,7 +172,6 @@ LOG_INTERNAL void _log_flash_write(uint32_t addr, void *data, size_t len)
 LOG_INTERNAL bool _log_backup_table_get_last(uint32_t *backup_addr)
 {
     uint32_t addr = 0;
-    uint8_t i = 0;
     while(addr < FLASH_BLOCK_SIZE) {
         uint32_t val;
         logger_lock();
@@ -173,11 +182,6 @@ LOG_INTERNAL bool _log_backup_table_get_last(uint32_t *backup_addr)
             return true;
         }
         addr += 4;
-        //if page_size - usable_lengt >= 4 the following code doesn't work
-        for (i=0; i<4; i++){
-//        	if ((addr+=i)%FLASH_PAGE_SIZE > FLASH_USABLE_LENGTH)
-//        		addr+=4;
-        }
     }
     return false;
 }
@@ -308,6 +312,23 @@ bool log_read_last_mav_entry (uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len
 // returns false on error
 bool log_init(void)
 {
+	//avoid multiple instances running
+	bool can_continue = false;
+	while(!can_continue) {
+		logger_lock();
+		if(log_init_calls == 0) {
+			can_continue = true;
+			log_init_calls++;
+		}
+		logger_unlock();
+		Task_sleep(50);
+	}
+
+	//avoid reinitialisation of log
+	if(log_initialized) {
+		log_init_calls--;
+		return true;
+	}
 
     logger.flash_write_pos = 3*FLASH_BLOCK_SIZE; // fourth block
     logger.backup_pos = 0;
@@ -319,6 +340,8 @@ bool log_init(void)
         flash_block_erase(0x00000000);
         _log_position_backup(&logger);
         _log_seek_last_mav_entry();
+        log_initialized = true;
+        log_init_calls--;
         return true;
     }
 
@@ -333,9 +356,12 @@ bool log_init(void)
         if (_log_seek_end(pos, &pos, &logger.buffer[0], sizeof(logger.buffer))) {
             logger.flash_write_pos = pos;
             logger.backup_pos = bkup_pos;
+            log_initialized = true;
+            log_init_calls--;
             return true;
         }
     }
+    log_init_calls--;
     return false;
 }
 
@@ -343,6 +369,7 @@ bool log_init(void)
 void log_reset(void)
 {
     flash_block_erase(0x00000000);
+    log_initialized = false;
     log_init();
 }
 

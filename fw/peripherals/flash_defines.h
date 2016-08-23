@@ -1,9 +1,10 @@
 #ifndef FLASH_DEFINES_H
 #define FLASH_DEFINES_H
 
-#define FLASH_PAGE_SIZE (256) // may depend on flash chip, can be increased to 512
-#define FLASH_MAX_MESSAGE (255)
-#define FLASH_BLOCK_SIZE (65536) // can be increased to 256kB
+#define FLASH_PAGE_SIZE   (0x100) //256 may depend on flash chip, can be increased to 512
+#define FLASH_MAX_MESSAGE (0xFF) //255
+#define FLASH_BLOCK_SIZE  (0x10000)  // 64K
+#define FLASH_SIZE        (0x1000000) // 16M
 
 #define STATUS_BUSY     (1<<0)
 #define STATUS_WEL      (1<<1) // Write-Enable Latch status

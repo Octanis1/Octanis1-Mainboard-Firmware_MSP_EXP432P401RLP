@@ -1,7 +1,11 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
 #include "flash_defines.h"
 #include "flash.h"
+#include "hal/spi_helper.h"
+
+#include "../../Board.h"
 
 /* Timing (max values): from Spansion S25FL127S (Datasheet Rev06, Chapter 10.10)
     - Page Programming: 1480us (512 bytes)
@@ -25,6 +29,8 @@ void flash_spi_unselect(void);
 int flash_spi_send(const void *txbuf, size_t len);
 int flash_spi_receive(void *rxbuf, size_t len);
 void flash_os_sleep_ms(uint32_t ms);
+
+static int flash_initialized = 0;
 
 static int flash_cmd(uint8_t cmd)
 {
@@ -155,6 +161,7 @@ int flash_read_registers(uint8_t *buf)
 	if (ret == 0) {
 		ret = flash_read_status2(&(buf[2]));
 	}
+	return ret;
 }
 
 //TODO: works with mavlink_log, should test it for standards log.
@@ -187,6 +194,7 @@ int flash_page_program(uint32_t addr, const void *buf, size_t len);
 static int flash_page_program(uint32_t addr, const void *buf, size_t len)
 {
     int ret;
+    uint8_t *_buf = (uint8_t*)buf;
 
     if (addr % FLASH_PAGE_SIZE + len > FLASH_PAGE_SIZE) {
         return -1;
@@ -203,7 +211,7 @@ static int flash_page_program(uint32_t addr, const void *buf, size_t len)
 			ret = flash_spi_send(buf, FLASH_MAX_MESSAGE);
 		}
 		if (ret == 0) {
-			ret = flash_spi_send(&(buf[FLASH_MAX_MESSAGE]), len - FLASH_MAX_MESSAGE);
+			ret = flash_spi_send(&(_buf[FLASH_MAX_MESSAGE]), len - FLASH_MAX_MESSAGE);
 		}
 	} else {
 		if (ret == 0) {
@@ -302,4 +310,55 @@ int flash_chip_erase(void)
     }
     flash_write_disable();
     return ret;
+}
+
+int flash_init()
+{
+	int ret;
+	uint8_t buf[10];
+
+	//return if flash already initialized
+	if (flash_initialized == 1) {
+		return 0;
+	}
+
+	spi_helper_init_handle();
+
+	//workaround to give flash enough time to power up and get ready
+	Task_sleep(50);
+
+	//verify flash chip ID
+	ret = flash_id_read(buf);
+	if (ret != 0) {
+		return ret;
+	}
+	const uint8_t flash_id[] = {0x01,0x20,0x18}; // S25FL127S ID
+	if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
+		// flash answers with correct ID
+		//serial_printf(cli_stdout, "Flash ID OK\n");
+	} else {
+		//serial_printf(cli_stdout, "Flash ID ERROR\n");
+		return -2;
+	}
+
+	//verify if registers are set correctly. Should always be the case except for new flash chip
+	ret = flash_read_registers(buf);
+	if (ret != 0) {
+		return ret;
+	}
+	if (buf[0] != 0x00 || buf[1] != 0xC0 || buf[2] != 0x00)
+	{
+		uint8_t sr1 = 0x00;
+		uint8_t cr = 0xC0;
+		uint8_t sr2 = 0x00;
+
+		if (flash_write_registers(&sr1, &cr, &sr2) != 0) {
+			//serial_printf(cli_stdout, "Writing flash register ERROR\n");
+			return -3;
+		} else {
+			//serial_printf(cli_stdout, "Writing flash register OK\n");
+		}
+	}
+	flash_initialized = 1;
+	return 0;
 }

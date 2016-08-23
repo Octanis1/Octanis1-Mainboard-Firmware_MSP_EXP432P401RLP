@@ -158,13 +158,14 @@ void weather_task(){
 
 //TODO : the exact same code is copy-pasted in navigation_task(), we should figure out what goes where
 /*
-	#ifdef FLASH_ENABLED
+
+#ifdef FLASH_ENABLED
 	uint32_t log_counter = 0;
-	spi_helper_init_handle();
+	bool logging_enabled = false;
 
-    // force enable logging
-    bool logging_enabled = true;
-
+	if (flash_init() == 0) {
+		logging_enabled = true;
+	}
 
 	static uint8_t buf[250];
 	flash_id_read(buf);

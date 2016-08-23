@@ -7,12 +7,8 @@
 
 #if defined(LOG_TEST)
 #define LOG_INTERNAL
-#define FLASH_BLOCK_SIZE    32
-#define FLASH_SIZE          (16*FLASH_BLOCK_SIZE)
 #else
 #define LOG_INTERNAL static
-#define FLASH_BLOCK_SIZE    0x10000  // 64K
-#define FLASH_SIZE          0x1000000 // 16M
 #endif
 
 
