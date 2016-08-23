@@ -132,6 +132,8 @@ void log_weather(struct _weather_data *d)
 
 
 void weather_task(){
+	bool logging_enabled = false;
+
 	time_since_boot_init();
 	cli_init();
 
@@ -156,36 +158,20 @@ void weather_task(){
 	// Initialize on-board sensors
 	bme280_init();
 
-//TODO : the exact same code is copy-pasted in navigation_task(), we should figure out what goes where
-/*
-
-#ifdef FLASH_ENABLED
-	uint32_t log_counter = 0;
-	bool logging_enabled = false;
-
+/*//Uncomment if flash logging required
+	// Initialize flash
 	if (flash_init() == 0) {
 		logging_enabled = true;
 	}
 
-	static uint8_t buf[250];
-	flash_id_read(buf);
-	const uint8_t flash_id[] = {0x01,0x20,0x18}; // S25FL127S ID
-	if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
-		// flash answers with correct ID
-		serial_printf(cli_stdout, "Flash ID OK\n");
-	} else {
-		serial_printf(cli_stdout, "Flash ID ERROR\n");
+	if (logging_enabled) {
+		if (!log_init()) {
+			serial_printf(cli_stdout, "log_init failed\n");
+			log_reset();
+		}
 	}
-
-    if (logging_enabled) {
-        if (!log_init()) {
-            serial_printf(cli_stdout, "log_init failed\n");
-            log_reset();
-        }
-    }
-    //serial_printf(cli_stdout, "log position 0x%x\n", log_write_pos());
-#endif
 */
+    //serial_printf(cli_stdout, "log position 0x%x\n", log_write_pos());
 
     while(1){
 /*
