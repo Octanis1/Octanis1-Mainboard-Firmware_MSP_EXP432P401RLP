@@ -39,6 +39,17 @@ static int rn2483_initialised = 0;
 		static const char rn_set_devaddr[] ="mac set devaddr 020312A1\r\n";
 		static const char rn_set_deveui[] =	"mac set deveui F03D291000000046\r\n";
 		static const char rn_set_appeui[] =	"mac set appeui 70b3d57ed0000172\r\n"; // Octanis 1 App on the Field Station
+		static const char rn_get_dr[] =	"mac get dr\r\n"; //
+		static char rn_get_duty1[] =	"mac get ch dcycle 0\r\n"; //
+		static char rn_set_duty10[] =	"mac set ch dcycle 10 9\r\n"; //
+		static char rn_set_duty1[] =	"mac set ch dcycle 0 9\r\n"; //
+
+		static char rn_get_duty10[] =	"mac get ch dcycle 10\r\n"; //
+		static char rn_get_freq1[] =	"mac get ch freq 1\r\n"; //
+		static char rn_get_drrange1[] =	"mac get ch drrange 1\r\n"; //
+
+
+
 		static const char rn_save[] ="mac save\r\n";
 	#endif
 #endif
@@ -153,7 +164,7 @@ int rn2483_config()
 	//	reset the rn2483
     GPIO_write(Board_LORA_RESET_N, 0);
     GPIO_write(Board_LORA_RESET_N, 1);
-    	char rn2483_rxBuffer[RN2483_RXBUFFER_SIZE];
+    	uint8_t rn2483_rxBuffer[RN2483_RXBUFFER_SIZE];
 
 	rn2483_uart_open(&lora_uart_dev);
 
@@ -195,6 +206,75 @@ int rn2483_config()
 	comm_result += !(rn2483_rxBuffer[0] == 'o' && rn2483_rxBuffer[1] == 'k');
 	rn2483_rxBuffer[0] = 0;
 
+	UART_write(rn2483_uart, rn_get_dr, sizeof(rn_get_dr));
+	Task_sleep(500);
+	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+	Task_sleep(500);
+	serial_printf(cli_stdout, "bitrate %s \r\n", rn2483_rxBuffer);
+
+#ifdef CONFIG_HIGH_DUTY
+	int ch_id;
+	for(ch_id = 0;ch_id<10;ch_id++)
+	{
+		UART_write(rn2483_uart, rn_set_duty1, sizeof(rn_set_duty1));
+		Task_sleep(100);
+		UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+		Task_sleep(100);
+		serial_printf(cli_stdout, "duty %u %s \r\n",ch_id, rn2483_rxBuffer);
+		rn_set_duty1[18]++;
+	}
+
+	for(ch_id = 10;ch_id<16;ch_id++)
+	{
+		UART_write(rn2483_uart, rn_set_duty10, sizeof(rn_set_duty10));
+		Task_sleep(100);
+		UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+		Task_sleep(100);
+		serial_printf(cli_stdout, "duty %u %s \r\n",ch_id, rn2483_rxBuffer);
+		rn_set_duty10[19]++;
+	}
+
+	for(ch_id = 0;ch_id<10;ch_id++)
+	{
+		UART_write(rn2483_uart, rn_get_duty1, sizeof(rn_get_duty1));
+		Task_sleep(100);
+		UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+		Task_sleep(100);
+		serial_printf(cli_stdout, "duty %u %s \r\n",ch_id, rn2483_rxBuffer);
+		rn_get_duty1[18]++;
+	}
+
+	for(ch_id = 10;ch_id<16;ch_id++)
+	{
+		UART_write(rn2483_uart, rn_get_duty10, sizeof(rn_get_duty10));
+		Task_sleep(100);
+		UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+		Task_sleep(100);
+		serial_printf(cli_stdout, "duty %u %s \r\n",ch_id, rn2483_rxBuffer);
+		rn_get_duty10[19]++;
+	}
+
+	for(ch_id = 0;ch_id<10;ch_id++)
+	{
+		UART_write(rn2483_uart, rn_get_drrange1, sizeof(rn_get_drrange1));
+		Task_sleep(100);
+		UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+		Task_sleep(100);
+		serial_printf(cli_stdout, "drrange %u %s \r\n",ch_id, rn2483_rxBuffer);
+		rn_get_drrange1[19]++;
+	}
+
+	for(ch_id = 0;ch_id<10;ch_id++)
+	{
+		UART_write(rn2483_uart, rn_get_freq1, sizeof(rn_get_freq1));
+		Task_sleep(100);
+		UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+		Task_sleep(100);
+		serial_printf(cli_stdout, "freq %u %s \r\n",ch_id, rn2483_rxBuffer);
+		rn_get_freq1[19]++;
+	}
+
+#endif
 	UART_write(rn2483_uart, rn_save, sizeof(rn_save));
 	Task_sleep(500);
 	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
@@ -226,7 +306,7 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 
 	int tx_ret = UART_write(rn2483_uart, txBuffer, strlen(txBuffer));
 	int rx_ret = UART_read(rn2483_uart, rn2483_rxBuffer, 4); // 4 to read "ok\r\n"
-	Task_sleep(1000);
+	Task_sleep(500); //TODO: check this delay value!
 
 	if(!strcmp("ok\r\n", rn2483_rxBuffer))
 	{
@@ -260,23 +340,32 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 			frame.direction = CHANNEL_IN;
 			frame.channel = CHANNEL_LORA;
 			mavlink_status_t status;
+			i=0;
 
 			while((c = serial_getc(lora_serialdev)) >= 0) {
-				serial_printf(cli_stdout, "%d", c);
+//				serial_printf(cli_stdout, "%c,", c);
+//				serial_printf(cli_stdout, "%d,", c);
 				mav_byte = ((uint8_t)a2d(c))<<4;
+				i++;
 				if((c = serial_getc(lora_serialdev)) >= 0)
 				{
-					serial_printf(cli_stdout, "%d", c);
+					i++;
+//					serial_printf(cli_stdout, "%c,", c);
+//					serial_printf(cli_stdout, "%d,", c);
 					mav_byte += ((uint8_t)a2d(c));}
 				else
 					break;
+//
+//				serial_printf(cli_stdout, "%x\n", mav_byte);
 
 				if(mavlink_parse_char(CHANNEL_LORA, mav_byte, &(frame.mavlink_message), &status)){
 					serial_printf(cli_stdout, "mavlink msg received over lora: ID=%d\r\n", frame.mavlink_message.msgid);
 					Mailbox_post(comm_mailbox, &frame, BIOS_NO_WAIT);
 				}
 			}
-			i++;
+			serial_printf(cli_stdout, "# hex string char=%d\r\n", i);
+
+
 		}
 		else if(!strcmp("mac_tx_ok", rn2483_rxBuffer))
 		{

@@ -239,7 +239,9 @@ MAV_RESULT navigation_halt_resume(COMM_MAV_MSG_TARGET *target, mavlink_message_t
  */
 void navigation_arm_disarm()
 {
+#ifndef ARM_IMMEDIATELY
 	if(navigation_status.position_valid)
+#endif
 	{
 		// condition to arm mainboard: know a valid position. TODO: add more conditions (EPS motor on state, etc...)
 		if(navigation_status.cmd_armed_disarmed == 1)
@@ -259,12 +261,14 @@ void navigation_arm_disarm()
 			comm_disarm_mainboard();
 		}
 	}
+#ifndef ARM_IMMEDIATELY
 	else
 	{
 		if(comm_sbc_armed())
 			comm_arm_disarm_subsystems(0);
 		comm_disarm_mainboard();
 	}
+#endif
 }
 
 
