@@ -42,8 +42,8 @@
 #include <stdint.h>
 
 //Definitions for GPS / odometry cycle
-#define MAX_RECENT_VALUES		 15
-#define VALUES_AFTER_GPS_RESET   5
+#define MAX_RECENT_VALUES		 150
+#define VALUES_AFTER_GPS_RESET   50
 
 int motors_init();
 int motors_pwm_init();

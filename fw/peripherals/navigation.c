@@ -559,10 +559,9 @@ void navigation_update_position()
 	gps_heading = 0;
 	//delta_heading = gps_heading - navigation_status.old_gps_heading;
 	//navigation_status.old_gps_heading = gps_heading;
-	//odo_heading = motors_get_odo_heading;
 
-	navigation_status.motor_values[0] = 0.0; //manually changing voltages
-	navigation_status.motor_values[1] = 0.1;
+	navigation_status.motor_values[0] = 100; //manually changing voltages
+	navigation_status.motor_values[1] = 99;
 
 	float delta_lon, delta_lat = 0;
 
@@ -640,8 +639,7 @@ void navigation_update_position()
 #endif
 #ifndef IMU_AVALABLE
 	gps_heading = 0;
-	//odo_heading = motors_get_odo_heading();
-	odo_heading = 0;
+	odo_heading = motors_get_odo_heading();
 	navigation_status.heading_rover = gps_heading + odo_heading;
 #endif
 	navigation_status.angle_to_target = navigation_angle_for_rover(navigation_status.lat_rover,navigation_status.lon_rover,

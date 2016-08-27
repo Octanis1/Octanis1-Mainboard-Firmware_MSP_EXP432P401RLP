@@ -18,9 +18,10 @@
 #define INITIAL_TURNING_CONSTANT 1
 #define INITIAL_DISTANCE_CONST	 1
 #define INITIAL_ANGLE_CONSTANT   1
+#define TRUE					 1
 
-#define BLOCKED_THRESHOLD		 1  //defined by user
-#define AIR_THRESHOLD			 1
+#define BLOCKED_THRESHOLD		 10000000000000  //defined by user //useless values for testing
+#define AIR_THRESHOLD			 0
 #define MISSION_LATITUDE		 0
 
 #define Y_TO_LATITUDE			 110946.257352 //true constants
@@ -45,10 +46,11 @@ struct odo{
 	float longitude; 			//in degreess
 	float checked_lat; 			//in degrees
 	float checked_lon; 			//in degrees
-	int first_time; 			//true/false
 	int odo_time; 				//in msec
 	float velocity; 			//in meters/s
 	float heading; 				//in rad
+	int straight;
+	float heading_rover;
 } odo;
 
 static float friction_factor = INITIAL_FRICTION_FACTOR;
@@ -182,7 +184,7 @@ int motors_run_odometer(int32_t voltage[N_SIDES], int position_i)
 	sensor_values[2] = 0;
 	sensor_values[3] = 0;
 
-	//adc_read_motor_sensors(sensor_values);
+	adc_read_motor_sensors(sensor_values);
 
 	//check to see if a wheel is blocked or off the ground
 	if(motors_navigation_error(sensor_values, voltage)) {
@@ -235,8 +237,8 @@ void motors_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t voltage[
 	}
 #endif
 
-	velocity = velocity / (N_WHEELS*KILO);
-	odo.velocity = velocity * KILO;
+	velocity = velocity / N_WHEELS;
+	odo.velocity = velocity;
 	msec = ms_since_boot();
 	delta_time = msec - odo.odo_time;
 	odo.odo_time = msec;
@@ -248,29 +250,19 @@ void motors_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t voltage[
 	odo.latitude = (odo.first_third_y + odo.second_third_y + odo.third_third_y) / Y_TO_LATITUDE;
 }
 
-void motors_update_xy(int position_i)
-{
-	if (position_i < VALUES_AFTER_GPS_RESET){
-		odo.first_third_x += odo.radius - odo.radius * cos(odo.angle);
-		odo.first_third_y += odo.radius * sin(odo.angle);
-	}
-	else if (position_i < (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET)){
-		odo.second_third_x += odo.radius - odo.radius * cos(odo.angle);
-		odo.second_third_y += odo.radius * sin(odo.angle);
-	}
-	else {
-		odo.third_third_x += odo.radius - odo.radius * cos(odo.angle);
-		odo.third_third_y += odo.radius * sin(odo.angle);
-	}
-	odo.heading += odo.angle;
-}
-
 void motors_get_radius_and_angle(float speed[N_WHEELS], float delta_time, int position_i)
 {
 	float radius, angle;
 
-	radius = (WHEEL_DISTANCE / 2) * (speed[0] + speed[1])/(speed[0] - speed[1]);
-	angle = speed[0] * delta_time * M_PI / (radius + WHEEL_DISTANCE / 2);
+	if (speed[0] != speed[1]){
+		radius = (WHEEL_DISTANCE / 2) * (speed[0] + speed[1])/(speed[0] - speed[1]);
+		angle = speed[0] * delta_time * M_PI / (radius + WHEEL_DISTANCE / 2);
+	}
+	else {
+		angle = 0;
+		radius = speed[0] * delta_time;
+		odo.straight = TRUE;
+	}
 
 	odo.radius = radius;
 	odo.angle = angle * angle_constant;
@@ -283,6 +275,39 @@ void motors_get_radius_and_angle(float speed[N_WHEELS], float delta_time, int po
 	else {
 		odo.third_third_angle += angle;
 	}
+}
+
+void motors_update_xy(int position_i)
+{
+	odo.heading_rover = navigation_get_heading_rover();
+	if (position_i < VALUES_AFTER_GPS_RESET){
+		if (odo.straight){
+			odo.first_third_y += odo.radius;
+		}
+		else{
+			odo.first_third_x += odo.radius - odo.radius * cos(odo.heading_rover);
+			odo.first_third_y += odo.radius * sin(odo.heading_rover);
+		}
+	}
+	else if (position_i < (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET)){
+		if (odo.straight){
+			odo.second_third_y += odo.radius;
+		}
+		else{
+			odo.second_third_x += odo.radius - odo.radius * cos(odo.heading_rover);
+			odo.second_third_y += odo.radius * sin(odo.heading_rover);
+		}
+	}
+	else {
+		if (odo.straight){
+			odo.third_third_y += odo.radius;
+		}
+		else{
+			odo.third_third_x += odo.radius - odo.radius * cos(odo.heading_rover);
+			odo.third_third_y += odo.radius * sin(odo.heading_rover);
+		}
+	}
+	odo.heading += odo.angle;
 }
 
 void motors_recalibrate_odometer(float delta_lat, float delta_lon, float delta_heading)
@@ -303,7 +328,6 @@ void motors_recalibrate_odometer(float delta_lat, float delta_lon, float delta_h
 
 void motors_reinitialize_odometer(float gps_heading)
 {
-	odo.first_time = 1;
 	odo.first_third_x = odo.third_third_x;
 	odo.first_third_y = odo.third_third_y;
 	odo.second_third_x = 0;

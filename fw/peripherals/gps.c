@@ -186,7 +186,7 @@ void gps_receive_lon_rover(float lon_rover)
 {
 	gps.lon_rover = lon_rover;
 }
-/*
+
 COMM_FRAME* gps_pack_mavlink_global_position_int()
 {
 	int position_i;
@@ -217,7 +217,7 @@ COMM_FRAME* gps_pack_mavlink_global_position_int()
 			usec = 1000000 * (uint64_t)Seconds_get();
 		else
 			usec = 1000000 * usec;
-	}*//*
+	}*/
 
 	uint32_t msec = ms_since_boot(); //1000 * (uint32_t)Seconds_get();
 
@@ -228,23 +228,19 @@ COMM_FRAME* gps_pack_mavlink_global_position_int()
 
 	return &frame;
 }
-*/
+
 
 COMM_FRAME* gps_pack_mavlink_raw_int()
 {
 	int position_i;
 	float latitude, longitude = 0;
 	position_i = navigation_get_position_i();
-	//latitude = navigation_get_lati();
-	//longitude = navigation_get_longi();
 	// Mavlink heartbeat
 	// Define the system type, in this case an airplane
-	int32_t lat = (int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
-	int32_t lon = (int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
-	//int32_t lon = (int32_t)(10000000.0 * gps.lon_rover);
-	//int32_t lat = (int32_t)(10000000.0 * gps.lat_rover);
-	//int32_t lon = (int32_t) (100000);
-	//int32_t lat = (int32_t) (100000);
+	//int32_t lat = (int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
+	//int32_t lon = (int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
+	int32_t lon = (int32_t)(10000000.0 * gps.lon_rover);
+	int32_t lat = (int32_t)(10000000.0 * gps.lat_rover);
 	int32_t alt = (int32_t)(1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
 	//uint16_t cog = (uint16_t)(100.0 * gps_get_cog());// Course over ground (NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. If unknown, set to: UINT16_MAX
 	uint16_t cog = (uint16_t)(position_i);
@@ -324,11 +320,11 @@ void gps_task(){
 			comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
 	#endif
 			comm_mavlink_broadcast(gps_pack_mavlink_raw_int());
-/*
+
 	#ifdef MAVLINK_ON_UART0_ENABLED
 			comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
 	#endif
-			comm_mavlink_broadcast(gps_pack_mavlink_global_position_int());*/
+			comm_mavlink_broadcast(gps_pack_mavlink_global_position_int());
 		}
 		Task_sleep(10);
 	}
