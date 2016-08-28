@@ -256,7 +256,7 @@ void motors_get_radius_and_angle(float speed[N_WHEELS], float delta_time, int po
 
 	if (speed[0] != speed[1]){
 		radius = (WHEEL_DISTANCE / 2) * (speed[0] + speed[1])/(speed[0] - speed[1]);
-		angle = speed[0] * delta_time * M_PI / (radius + WHEEL_DISTANCE / 2);
+		angle = (odo.velocity / 4) * delta_time / (radius + WHEEL_DISTANCE / 2);
 	}
 	else {
 		angle = 0;
@@ -275,39 +275,46 @@ void motors_get_radius_and_angle(float speed[N_WHEELS], float delta_time, int po
 	else {
 		odo.third_third_angle += angle;
 	}
+	odo.heading = odo.first_third_angle + odo.second_third_angle + odo.third_third_angle;
 }
 
 void motors_update_xy(int position_i)
 {
-	odo.heading_rover = navigation_get_heading_rover();
+	float alpha, beta, heading_rover;
+	//odo.heading_rover = navigation_get_heading_rover();
+	heading_rover = navigation_get_heading_rover();
+	alpha = heading_rover - odo.angle;
+	beta = odo.angle;
 	if (position_i < VALUES_AFTER_GPS_RESET){
 		if (odo.straight){
-			odo.first_third_y += odo.radius;
+			odo.first_third_x += sin(alpha) * odo.radius;
+			odo.first_third_y += cos(alpha) * odo.radius;
 		}
 		else{
-			odo.first_third_x += odo.radius - odo.radius * cos(odo.heading_rover);
-			odo.first_third_y += odo.radius * sin(odo.heading_rover);
+			odo.first_third_x += (odo.radius - odo.radius * cos(odo.angle)) * cos(alpha) + odo.radius * sin(odo.angle) * sin(alpha);
+			odo.first_third_y += (odo.radius * cos(odo.angle) - odo.radius) * sin(alpha) + odo.radius * sin(odo.angle) * cos(alpha);
 		}
 	}
 	else if (position_i < (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET)){
 		if (odo.straight){
-			odo.second_third_y += odo.radius;
+			odo.second_third_x += sin(alpha) * odo.radius;
+			odo.second_third_y += cos(alpha) * odo.radius;
 		}
 		else{
-			odo.second_third_x += odo.radius - odo.radius * cos(odo.heading_rover);
-			odo.second_third_y += odo.radius * sin(odo.heading_rover);
+			odo.second_third_x += (odo.radius - odo.radius * cos(odo.angle)) * cos(alpha) + odo.radius * sin(odo.angle) * sin(alpha);
+			odo.second_third_y += (odo.radius * cos(odo.angle) - odo.radius) * sin(alpha) + odo.radius * sin(odo.angle) * cos(alpha);
 		}
 	}
 	else {
 		if (odo.straight){
-			odo.third_third_y += odo.radius;
+			odo.third_third_x += sin(alpha) * odo.radius;
+			odo.third_third_y += cos(alpha) * odo.radius;
 		}
 		else{
-			odo.third_third_x += odo.radius - odo.radius * cos(odo.heading_rover);
-			odo.third_third_y += odo.radius * sin(odo.heading_rover);
+			odo.third_third_x += (odo.radius - odo.radius * cos(odo.angle)) * cos(alpha) + odo.radius * sin(odo.angle) * sin(alpha);
+			odo.third_third_y += (odo.radius * cos(odo.angle) - odo.radius) * sin(alpha) + odo.radius * sin(odo.angle) * cos(alpha);
 		}
 	}
-	odo.heading += odo.angle;
 }
 
 void motors_recalibrate_odometer(float delta_lat, float delta_lon, float delta_heading)
@@ -335,7 +342,7 @@ void motors_reinitialize_odometer(float gps_heading)
 	odo.third_third_x = 0;
 	odo.third_third_y = 0;
 	odo.radius = 0;
-	odo.angle = odo.third_third_angle;
+	odo.angle = 0;
 	odo.first_third_angle = odo.third_third_angle;
 	odo.second_third_angle = 0;
 	odo.third_third_angle = 0;
