@@ -14,6 +14,8 @@
 #define N_TARGETS_MAX	20
 #define OBSTACLE_MAX_DIST 300
 
+#define N_SIDES	2
+
 
 /******** NEW types and functions to handle mavlink mission items **********/
 
@@ -22,35 +24,7 @@ typedef struct _mission_item_list_t{
 	uint16_t current_index; //if higher than count-1, it means we are done with all mission items
 	uint16_t count; //total number of mission items stored
 } mission_item_list_t;
-/*
-typedef struct _navigation_status{
-	float lat_rover;
-	float lon_rover;
-	float old_lat;  		 //used for recalibrating factors
-	float old_lon;			 //used for recalibrating factors
-	int position_i; 		 //variable for timing of gps / odometry data
-	float heading_rover;
-	float lat_target;
-	float lon_target;
-	float distance_to_target;
-	float angle_to_target; // [-180, 180]. Positive means target is located to the right
-	float max_dist_obs;
-	int32_t motor_values[2]; // current voltage to controll motor speed
-	bool position_valid; // defines if GPS and heading angle are valid. if false, the rover shall not drive to target
-	enum _current_state{
-		STOP=0,
-		BYPASS,
-		GO_TO_TARGET,
-		AVOID_OBSTACLE,
-		AVOID_WALL,
-		SPACE_NEEDED,
-	} current_state;
-	char halt;
-	char cmd_armed_disarmed; // received command to arm (1) or disarm (0)
-} navigation_status_t;
 
-static navigation_status_t navigation_status;
-*/
 MAV_RESULT navigation_halt_resume(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg);
 void navigation_rxcmd_arm_disarm(float arm_disarm);
 
@@ -106,6 +80,12 @@ void navigation_change_gain(char pid, char type, float gain);
 void navigation_restore_mission_items(mission_item_list_t item_list);
 
 int navigation_get_position_i();
+
+//odometry functions
+int navigation_run_odometer(int32_t voltage[N_SIDES], int position_i);
+void navigation_recalibrate_odometer(float delta_lat, float delta_lon, float delta_heading);
+void navigation_reinitialize_odometer(float gps_heading);
+void navigation_initialize_odometer();
 
 //"Main" task of the file
 void navigation_task();

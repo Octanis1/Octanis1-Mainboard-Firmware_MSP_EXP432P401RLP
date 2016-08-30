@@ -237,10 +237,10 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 	position_i = navigation_get_position_i();
 	// Mavlink heartbeat
 	// Define the system type, in this case an airplane
-	//int32_t lat = (int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
-	//int32_t lon = (int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
-	int32_t lon = (int32_t)(10000000.0 * gps.lon_rover);
-	int32_t lat = (int32_t)(10000000.0 * gps.lat_rover);
+	int32_t lat = (int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
+	int32_t lon = (int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
+	//int32_t lon = (int32_t)(10000000.0 * gps.lon_rover);
+	//int32_t lat = (int32_t)(10000000.0 * gps.lat_rover);
 	int32_t alt = (int32_t)(1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
 	//uint16_t cog = (uint16_t)(100.0 * gps_get_cog());// Course over ground (NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. If unknown, set to: UINT16_MAX
 	uint16_t cog = (uint16_t)(position_i);

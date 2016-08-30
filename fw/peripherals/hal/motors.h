@@ -10,7 +10,6 @@
 
 /* Definitions for wheels */
 #define N_WHEELS			4
-#define N_SIDES				2
 #define WHEEL_RADIUS		0.1 //[m]
 #define SPEED_FACTOR		0.00001875 //[rps/pwm value]
 
@@ -61,17 +60,8 @@ void motors_struts_stop();
 
 /*Take care of odometry.
  */
-int motors_run_odometer(int32_t voltage[N_SIDES], int position_i);
-void motors_recalibrate_odometer(float delta_lat, float delta_lon, float delta_heading);
-void motors_reinitialize_odometer(float gps_heading);
-float motors_get_latitude();
-float motors_get_longitude();
-
-float motors_get_groundspeed();
-float motors_get_odo_heading();
+uint16_t motors_get_sensor_values(int i);
 
 void motors_struts_get_position();
-
-void motors_initialize();
 
 #endif /* FW_PERIPHERALS_HAL_MOTORS_H_ */

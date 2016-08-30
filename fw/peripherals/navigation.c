@@ -57,6 +57,54 @@ void Task_sleep(int a);
 
 #define MIN_IMU_CALIB_STATUS	6 //to have angle valid = true
 
+//odometry definitions
+#define INITIAL_FRICTION_FACTOR  1  //initialization constants revised by system after each GPS update
+#define INITIAL_TURNING_CONSTANT 1
+#define INITIAL_DISTANCE_CONST	 1
+#define INITIAL_ANGLE_CONSTANT   1
+#define TRUE					 1
+
+#define BLOCKED_THRESHOLD		 10000000000000  //defined by user //useless values for testing
+#define AIR_THRESHOLD			 0
+#define MISSION_LATITUDE		 0
+
+#define Y_TO_LATITUDE			 110946.257352 //true constants
+#define KILO					 1000
+#define WHEEL_DISTANCE			 0.44
+
+#define SENSOR_VALUES_UNAVAILABLE
+
+struct odo{
+	float first_third_x;		//in m
+	float second_third_x;		//in m
+	float third_third_x;		//in m
+	float first_third_y;		//in m
+	float second_third_y;		//in m
+	float third_third_y;		//in m
+	float radius;
+	float angle;
+	float first_third_angle;
+	float second_third_angle;
+	float third_third_angle;
+	float latitude;				//in degrees
+	float longitude; 			//in degreess
+	float checked_lat; 			//in degrees
+	float checked_lon; 			//in degrees
+	int odo_time; 				//in msec
+	float velocity; 			//in meters/s
+	float heading; 				//in rad
+	int straight;
+} odo;
+
+static float friction_factor = INITIAL_FRICTION_FACTOR;
+static float angle_constant = INITIAL_ANGLE_CONSTANT;
+float x_to_longitude = Y_TO_LATITUDE * cos(MISSION_LATITUDE);
+
+void navigation_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_WHEELS], int position_i);
+void navigation_update_xy(int position_i);
+void navigation_get_radius_and_angle(float speed[N_WHEELS], float delta_time, int position_i);
+int navigation_navigation_error(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_WHEELS]);
+
 typedef struct _navigation_status{
 	float lat_rover;
 	float lon_rover;
@@ -89,8 +137,6 @@ static navigation_status_t navigation_status;
 static pid_controler_t pid_a;
 
 static mission_item_list_t mission_items;
-
-static int first_time = 1;
 
 void navigation_update_current_target();
 
@@ -473,7 +519,7 @@ COMM_FRAME* navigation_pack_mavlink_hud()
 	// Mavlink heartbeat
 	// Define the system type, in this case an airplane
 	float airspeed = 0.; //TODO
-	float groundspeed = motors_get_groundspeed();
+	float groundspeed = odo.velocity;
 	int16_t heading = imu_get_heading();
 	uint16_t throttle = (navigation_status.motor_values[0] + navigation_status.motor_values[1]);
 	float alt = (1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
@@ -555,11 +601,6 @@ void navigation_update_position()
 {
 	float gps_latitude, gps_longitude, odo_latitude, odo_longitude, delta_heading, gps_heading, odo_heading;
 
-	//gps_heading = (gps_get_cog()/360) * PERIOD;
-	gps_heading = 0;
-	//delta_heading = gps_heading - navigation_status.old_gps_heading;
-	//navigation_status.old_gps_heading = gps_heading;
-
 	navigation_status.motor_values[0] = 100; //manually changing voltages
 	navigation_status.motor_values[1] = 99;
 
@@ -570,7 +611,7 @@ void navigation_update_position()
 	if(first_time)
 	{
 		navigation_initialize();
-		motors_initialize();
+		navigation_initialize_odometer();
 		gps_initialize();
 		first_time = 0;
 	}
@@ -586,8 +627,8 @@ void navigation_update_position()
 
 	if (navigation_status.position_i == (MAX_RECENT_VALUES-1))
 	{
-		//motors_recalibrate_odometer(delta_lat, delta_lon, delta_heading);
-		motors_reinitialize_odometer(gps_heading);
+		//navigation_recalibrate_odometer(delta_lat, delta_lon, delta_heading);
+		navigation_reinitialize_odometer(gps_heading);
 		gps_calculate_position();	//calculates a gps position from a number of gps points
 		gps_reset_gps();
 		navigation_status.position_i = VALUES_AFTER_GPS_RESET;
@@ -597,10 +638,10 @@ void navigation_update_position()
 		navigation_status.position_i++;
 	}
 
-	motors_run_odometer(navigation_status.motor_values, navigation_status.position_i);     //saves an odometer position
+	navigation_run_odometer(navigation_status.motor_values, navigation_status.position_i);     //saves an odometer position
 
-	odo_latitude = motors_get_latitude();
-	odo_longitude = motors_get_longitude();
+	odo_latitude = odo.latitude;
+	odo_longitude = odo.longitude;
 
 	navigation_status.lat_rover = gps_latitude + odo_latitude;
 	navigation_status.lon_rover = gps_longitude + odo_longitude;
@@ -608,28 +649,8 @@ void navigation_update_position()
 	gps_receive_lat_rover(navigation_status.lat_rover);
 	gps_receive_lon_rover(navigation_status.lon_rover);
 
-	/*
-	if(gps_update_position())
-	{
-		//We get a new gps position. The distance measured by odometer is deleted for the distance from the old point to the new point. The part thereafter is kept.
-		float delta_lon, delta_lat = 0;
-		delta_lon = odo.gps_longitude - navigation_status.old_lon;
-		delta_lat = odo.gps_latitude - navigation_status.old_lat;
+	/*motors_struts_get_position();*/
 
-		navigation_status.old_lat = odo.gps_latitude;
-		navigation_status.old_lon = odo.gps_longitude;
-
-		motors_recalibrate(delta_lat, delta_lon, delta_heading);
-		motors_reinitialize_odometer(gps_heading);
-
-		motors_wheels_update_distance(navigation_status.motor_values);
-	}
-	else
-	{
-		motors_wheels_update_distance(navigation_status.motor_values);
-		motors_struts_get_position();
-	}
-	*/
 	//checks if position is valid
 	navigation_status.position_valid = imu_valid() && gps_valid();
 
@@ -638,8 +659,11 @@ void navigation_update_position()
 	navigation_status.heading_rover = imu_get_fheading();
 #endif
 #ifndef IMU_AVALABLE
+	//gps_heading = (gps_get_cog()/360) * PERIOD;
+	//delta_heading = gps_heading - navigation_status.old_gps_heading;
+	//navigation_status.old_gps_heading = gps_heading;
 	gps_heading = 0;
-	odo_heading = motors_get_odo_heading();
+	odo_heading = odo.heading;
 	navigation_status.heading_rover = gps_heading + odo_heading;
 #endif
 	navigation_status.angle_to_target = navigation_angle_for_rover(navigation_status.lat_rover,navigation_status.lon_rover,
@@ -658,6 +682,209 @@ void navigation_initialize()
 	navigation_status.old_lat = 0;
 	navigation_status.old_lon = 0;
 	navigation_status.heading_rover = 0;
+}
+
+
+int navigation_run_odometer(int32_t voltage[N_SIDES], int position_i)
+{
+	static uint16_t sensor_values[N_WHEELS];
+
+	/* initialize to 0 to reset the running average inside the adc readout function */
+	sensor_values[0] = 0;
+	sensor_values[1] = 0;
+	sensor_values[2] = 0;
+	sensor_values[3] = 0;
+
+	int i;
+
+	for (i = 0; i < N_WHEELS; i++){
+		sensor_values[i] = motors_get_sensor_values(i);
+	}
+
+	//check to see if a wheel is blocked or off the ground
+	if(navigation_navigation_error(sensor_values, voltage)) {
+		return 0;
+	}
+	else {
+		//function to estimate the distance needs curvature.
+		navigation_distance_odometer(sensor_values, voltage, position_i);
+		return 1;
+	}
+}
+
+int navigation_navigation_error(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_SIDES])
+{
+	int error = 0;
+	int ratio[N_WHEELS];
+	int i = 0;
+	for (i=0; i<N_WHEELS; i++) {
+		ratio[i] = sensor_values[i] / voltage[i%N_SIDES];
+		if (ratio[i]>BLOCKED_THRESHOLD || ratio[i]<AIR_THRESHOLD) {
+			error++;
+			return 1;
+		}
+	}
+	if (!error)
+		return 0;
+}
+
+void navigation_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_SIDES], int position_i)
+{
+	float circumference, velocity, delta_time = 0;
+	float speed[N_WHEELS], rps[N_WHEELS];
+	int i = 0;
+	uint32_t msec;
+
+	circumference = WHEEL_RADIUS * 2 * M_PI;
+
+#ifdef SENSOR_VALUES_AVAILABLE
+	for (i=0; i<N_WHEELS; i++) {
+		rps[i] = friction_factor * voltage[i%N_SIDES] / sensor_values[i];
+		speed[i] = rps[i] * circumference;
+		velocity += speed[i];
+	}
+#endif
+#ifndef SENSOR_VALUES_AVAILABLE
+	for (i=0; i<N_WHEELS; i++) {
+		rps[i] = friction_factor * voltage[i%N_SIDES];
+		speed[i] = rps[i] * circumference;
+		velocity += speed[i];
+	}
+#endif
+
+	velocity = velocity / N_WHEELS;
+	odo.velocity = velocity;
+	msec = ms_since_boot();
+	delta_time = msec - odo.odo_time;
+	odo.odo_time = msec;
+	navigation_get_radius_and_angle(speed, delta_time, position_i);
+	navigation_update_xy(position_i);
+
+	//convert distance to polar coordinates
+	odo.longitude = (odo.first_third_x + odo.second_third_x + odo.third_third_x) / x_to_longitude;
+	odo.latitude = (odo.first_third_y + odo.second_third_y + odo.third_third_y) / Y_TO_LATITUDE;
+}
+
+void navigation_get_radius_and_angle(float speed[N_WHEELS], float delta_time, int position_i)
+{
+	float radius, angle, ratio;
+
+	ratio = speed[0] / speed[1];
+
+	if (speed[0] != speed[1]){
+		radius = (WHEEL_DISTANCE / 2) * (ratio + 1)/(ratio - 1);
+		angle = (odo.velocity / 4) * delta_time / (radius);
+	}
+	else {
+		angle = 0;
+		radius = speed[0] * delta_time;
+		odo.straight = TRUE;
+	}
+
+	odo.radius = radius;
+	odo.angle = angle * angle_constant;
+	if (position_i < VALUES_AFTER_GPS_RESET){
+		odo.first_third_angle += angle;
+	}
+	else if (position_i < (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET)){
+		odo.second_third_angle += angle;
+	}
+	else {
+		odo.third_third_angle += angle;
+	}
+	odo.heading = odo.first_third_angle + odo.second_third_angle + odo.third_third_angle;
+}
+
+void navigation_update_xy(int position_i)
+{
+	float alpha, heading_rover;
+	heading_rover = navigation_status.heading_rover;
+	alpha = heading_rover - odo.angle;
+	if (position_i < VALUES_AFTER_GPS_RESET){
+		if (odo.straight){
+			odo.first_third_x += sin(alpha) * odo.radius;
+			odo.first_third_y += cos(alpha) * odo.radius;
+		}
+		else{
+			odo.first_third_x += (odo.radius - odo.radius * cos(odo.angle)) * cos(alpha) + odo.radius * sin(odo.angle) * sin(alpha);
+			odo.first_third_y += (odo.radius * cos(odo.angle) - odo.radius) * sin(alpha) + odo.radius * sin(odo.angle) * cos(alpha);
+		}
+	}
+	else if (position_i < (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET)){
+		if (odo.straight){
+			odo.second_third_x += sin(alpha) * odo.radius;
+			odo.second_third_y += cos(alpha) * odo.radius;
+		}
+		else{
+			odo.second_third_x += (odo.radius - odo.radius * cos(odo.angle)) * cos(alpha) + odo.radius * sin(odo.angle) * sin(alpha);
+			odo.second_third_y += (odo.radius * cos(odo.angle) - odo.radius) * sin(alpha) + odo.radius * sin(odo.angle) * cos(alpha);
+		}
+	}
+	else {
+		if (odo.straight){
+			odo.third_third_x += sin(alpha) * odo.radius;
+			odo.third_third_y += cos(alpha) * odo.radius;
+		}
+		else{
+			odo.third_third_x += (odo.radius - odo.radius * cos(odo.angle)) * cos(alpha) + odo.radius * sin(odo.angle) * sin(alpha);
+			odo.third_third_y += (odo.radius * cos(odo.angle) - odo.radius) * sin(alpha) + odo.radius * sin(odo.angle) * cos(alpha);
+		}
+	}
+}
+
+void navigation_recalibrate_odometer(float delta_lat, float delta_lon, float delta_heading)
+{
+	//recalibrate friction_factor
+	float update_friction, x_sum, y_sum, angle_sum = 0;
+	x_sum = odo.first_third_x + odo.second_third_x;
+	y_sum = odo.first_third_y + odo.second_third_y;
+	odo.checked_lat = x_sum / x_to_longitude;
+	odo.checked_lon = y_sum / Y_TO_LATITUDE;
+	update_friction = sqrt(odo.checked_lat * odo.checked_lat + odo.checked_lon * odo.checked_lon)/sqrt(delta_lat * delta_lat + delta_lon * delta_lon); //look at units of delta_lat and delta_lon!!!
+	friction_factor = friction_factor / update_friction;
+
+	//recalibrate angle_constant
+	angle_sum = odo.first_third_angle + odo.second_third_angle;
+	angle_constant = delta_heading / angle_sum;
+}
+
+void navigation_reinitialize_odometer(float gps_heading)
+{
+	odo.first_third_x = odo.third_third_x;
+	odo.first_third_y = odo.third_third_y;
+	odo.second_third_x = 0;
+	odo.second_third_y = 0;
+	odo.third_third_x = 0;
+	odo.third_third_y = 0;
+	odo.radius = 0;
+	odo.angle = 0;
+	odo.first_third_angle = odo.third_third_angle;
+	odo.second_third_angle = 0;
+	odo.third_third_angle = 0;
+	odo.heading = odo.third_third_angle;
+	odo.longitude = (odo.first_third_x + odo.second_third_x + odo.third_third_x) / x_to_longitude;
+	odo.latitude = (odo.first_third_y + odo.second_third_y + odo.third_third_y) / Y_TO_LATITUDE;
+	odo.heading = odo.heading + gps_heading;
+}
+
+void navigation_initialize_odometer()
+{
+	odo.latitude = 0;
+	odo.longitude = 0;
+	odo.checked_lat = 0;
+	odo.checked_lon = 0;
+	odo.odo_time = 0;
+	odo.velocity = 0;
+	odo.first_third_angle = 0;
+	odo.second_third_angle = 0;
+	odo.third_third_angle = 0;
+	odo.first_third_x = 0;
+	odo.first_third_y = 0;
+	odo.second_third_x = 0;
+	odo.second_third_y = 0;
+	odo.third_third_x = 0;
+	odo.third_third_y = 0;
+	odo.radius = 0;
 }
 
 void navigation_update_current_target()
