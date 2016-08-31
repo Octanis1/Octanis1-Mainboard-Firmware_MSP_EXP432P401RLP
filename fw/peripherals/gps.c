@@ -191,8 +191,7 @@ COMM_FRAME* gps_pack_mavlink_global_position_int()
 {
 	uint8_t position_i;
 	int32_t heading;
-	int32_t relative_alt = 0;
-	int16_t vx = 0;
+
 	int16_t vy = 0;
 	int16_t vz = 0;
 
@@ -204,6 +203,9 @@ COMM_FRAME* gps_pack_mavlink_global_position_int()
 	int32_t lat = (int32_t)(10000000.0 * gps.lat_rover);
 
 	int32_t alt = (int32_t)(position_i);
+
+	int32_t relative_alt = navigation_get_angle();
+	int16_t vx = navigation_get_radius();
 
 	uint16_t hdg = (uint16_t)(heading);
 

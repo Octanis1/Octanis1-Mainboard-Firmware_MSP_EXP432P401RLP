@@ -80,6 +80,8 @@ void navigation_change_gain(char pid, char type, float gain);
 void navigation_restore_mission_items(mission_item_list_t item_list);
 
 uint8_t navigation_get_position_i();
+int32_t navigation_get_angle();
+int16_t navigation_get_radius();
 
 //odometry functions
 int navigation_run_odometer(int32_t voltage[N_SIDES], uint8_t position_i);
