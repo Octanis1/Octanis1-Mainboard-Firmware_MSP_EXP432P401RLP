@@ -37,7 +37,7 @@ uint16_t gps_get_vdop();
 
 int gps_get_last_update_time();
 
-void gps_run_gps(int position_i);
+void gps_run_gps(uint8_t position_i);
 void gps_calculate_position();
 void gps_reset_gps();
 float gps_get_latitude();

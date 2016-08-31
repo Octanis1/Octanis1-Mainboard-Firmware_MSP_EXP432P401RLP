@@ -79,10 +79,10 @@ void navigation_change_gain(char pid, char type, float gain);
 
 void navigation_restore_mission_items(mission_item_list_t item_list);
 
-int navigation_get_position_i();
+uint8_t navigation_get_position_i();
 
 //odometry functions
-int navigation_run_odometer(int32_t voltage[N_SIDES], int position_i);
+int navigation_run_odometer(int32_t voltage[N_SIDES], uint8_t position_i);
 void navigation_recalibrate_odometer(float delta_lat, float delta_lon, float delta_heading);
 void navigation_reinitialize_odometer(float gps_heading);
 void navigation_initialize_odometer();

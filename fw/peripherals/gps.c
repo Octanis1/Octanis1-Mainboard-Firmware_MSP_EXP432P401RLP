@@ -131,7 +131,7 @@ uint64_t gps_get_last_update_usec()
 	return gps_rmc_frame.time.microseconds;
 }
 
-void gps_run_gps(int position_i)
+void gps_run_gps(uint8_t position_i)
 {
 	if (position_i < VALUES_AFTER_GPS_RESET){
 		gps.first_third_latitude += gps_get_lat();
@@ -189,8 +189,8 @@ void gps_receive_lon_rover(float lon_rover)
 
 COMM_FRAME* gps_pack_mavlink_global_position_int()
 {
-	int position_i;
-	float heading;
+	uint8_t position_i;
+	int32_t heading;
 	int32_t relative_alt = 0;
 	int16_t vx = 0;
 	int16_t vy = 0;
@@ -198,6 +198,7 @@ COMM_FRAME* gps_pack_mavlink_global_position_int()
 
 	position_i = navigation_get_position_i();
 	heading = navigation_get_heading_rover();
+	heading = heading / 100; //heading in tenths of degrees
 
 	int32_t lon = (int32_t)(10000000.0 * gps.lon_rover);
 	int32_t lat = (int32_t)(10000000.0 * gps.lat_rover);
@@ -232,18 +233,16 @@ COMM_FRAME* gps_pack_mavlink_global_position_int()
 
 COMM_FRAME* gps_pack_mavlink_raw_int()
 {
-	int position_i;
+	uint8_t position_i;
 	float latitude, longitude = 0;
 	position_i = navigation_get_position_i();
 	// Mavlink heartbeat
 	// Define the system type, in this case an airplane
 	int32_t lat = (int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
 	int32_t lon = (int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
-	//int32_t lon = (int32_t)(10000000.0 * gps.lon_rover);
-	//int32_t lat = (int32_t)(10000000.0 * gps.lat_rover);
 	int32_t alt = (int32_t)(1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
 	//uint16_t cog = (uint16_t)(100.0 * gps_get_cog());// Course over ground (NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. If unknown, set to: UINT16_MAX
-	uint16_t cog = (uint16_t)(position_i);
+	uint16_t cog = (uint16_t)(0);
 	uint64_t usec = gps_get_last_update_usec();
 	if(usec == 0)
 	{ //no time information in usec is available
@@ -315,12 +314,12 @@ void gps_task(){
 		{
 	#ifdef MAVLINK_ON_LORA_ENABLED
 			comm_set_tx_flag(CHANNEL_LORA, MAV_COMP_ID_GPS);
-	#endif
+	#endif/*
 	#ifdef MAVLINK_ON_UART0_ENABLED
 			comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
 	#endif
 			comm_mavlink_broadcast(gps_pack_mavlink_raw_int());
-
+*/
 	#ifdef MAVLINK_ON_UART0_ENABLED
 			comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
 	#endif
