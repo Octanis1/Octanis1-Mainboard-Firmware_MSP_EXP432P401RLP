@@ -13,6 +13,7 @@
 #include "../lib/printf.h"
 
 #define LORA_FRAME_SIZE 		2*MAVLINK_MAX_PACKET_LEN
+#define LORA_RETRY_INIT_AFTER_N_CYCLES	20
 
 void lora_send_mavlink(uint8_t* txdata, uint16_t stringlength)
 {
@@ -34,7 +35,7 @@ void lora_send_mavlink(uint8_t* txdata, uint16_t stringlength)
 
 
 
-void lora_init(){
+int lora_init(){
 	cli_init();
 
 #ifdef LORA_ENABLED
@@ -44,15 +45,17 @@ void lora_init(){
 			serial_printf(cli_stdout,"LoRa config failed: %d", comm_result);
 		else
 			serial_printf(cli_stdout,"LoRa config success: %d", comm_result);
+		return 0;
 	#else
-		rn2483_begin();
+		return rn2483_begin();
 	#endif
 #endif
 
 }
 
 void lora_task(){
-	lora_init();
+	int is_initialized = lora_init();
+	int init_counter = 0;
 
 	static uint8_t buf[MAVLINK_MAX_PACKET_LEN + 5]; //todo: +5 is to test if we need some more space. remove if not helpful.
 	static uint16_t mavlink_msg_len;
@@ -61,24 +64,40 @@ void lora_task(){
 
 	while(1){
 		if(Mailbox_pend(lora_mailbox, &mail, BIOS_WAIT_FOREVER)){
-			if((mail.direction) == CHANNEL_OUT)
+
+			if(is_initialized)
 			{
-				if(mail.channel == CHANNEL_LORA)
+				if((mail.direction) == CHANNEL_OUT)
 				{
-					mavlink_msg_len = mavlink_msg_to_send_buffer(buf, &mail.mavlink_message);
-					lora_send_mavlink(buf, mavlink_msg_len);
+					if(mail.channel == CHANNEL_LORA)
+					{
+						mavlink_msg_len = mavlink_msg_to_send_buffer(buf, &mail.mavlink_message);
+						lora_send_mavlink(buf, mavlink_msg_len);
+					}
+					else
+					{
+						serial_printf(cli_stdout,"ERROR: outgoing msg for channel %d in lora_mailbox. id=%d \n", mail.channel, mail.mavlink_message.msgid);
+					}
 				}
 				else
 				{
-					serial_printf(cli_stdout,"ERROR: outgoing msg for channel %d in lora_mailbox. id=%d \n", mail.channel, mail.mavlink_message.msgid);
+					serial_printf(cli_stdout,"ERROR: incoming msg in lora_mailbox. id=%d \n", mail.mavlink_message.msgid);
+					// should never happen, but just in case: redirect message!
+					Mailbox_post(comm_mailbox, &mail, BIOS_NO_WAIT);
 				}
 			}
 			else
 			{
-				serial_printf(cli_stdout,"ERROR: incoming msg in lora_mailbox. id=%d \n", mail.mavlink_message.msgid);
-				// should never happen, but just in case: redirect message!
-				Mailbox_post(comm_mailbox, &mail, BIOS_NO_WAIT);
+				init_counter++;
+				if(init_counter > LORA_RETRY_INIT_AFTER_N_CYCLES)
+				{
+					init_counter = 0;
+					is_initialized = rn2483_begin();
+				}
 			}
+
+
+
 		}
  	}
 

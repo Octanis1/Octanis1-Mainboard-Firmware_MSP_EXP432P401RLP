@@ -12,8 +12,8 @@
 #include "../../lib/printf.h"
 #include "../../lib/mavlink/mavlink_helpers.h"
 
-#define RN2483_RXBUFFER_SIZE 20
-#define RN2483_READ_TIMEOUT 1000
+#define RN2483_RXBUFFER_SIZE 40
+#define RN2483_READ_TIMEOUT 15000
 #define RN2483_BAUD_RATE 57600
 
 static UART_Handle rn2483_uart;
@@ -69,14 +69,18 @@ static const char rn_join_abp[] = "mac join abp\r\n";
 static const char rn_join_otaa[] = "mac join otaa\r\n";
 static const char rn_reset[] = "sys reset\r\n";
 
-static void rn2483_uart_open(UART_SerialDevice *dev) {
+//buffer for command responses
+char rn2483_rxBuffer[RN2483_RXBUFFER_SIZE];
+
+
+static void rn2483_uart_open(UART_SerialDevice *dev, unsigned int read_timeout_mode) {
 	static UART_Params uartParams;
 
 	UART_Params_init(&uartParams);
 	uartParams.writeDataMode = UART_DATA_BINARY;
-	uartParams.readDataMode = UART_DATA_BINARY;
-	uartParams.readReturnMode = UART_RETURN_FULL;
-	uartParams.readTimeout = RN2483_READ_TIMEOUT;
+	uartParams.readDataMode = UART_DATA_TEXT;
+	uartParams.readReturnMode = UART_RETURN_NEWLINE;
+	uartParams.readTimeout = read_timeout_mode;
     uartParams.writeMode = UART_MODE_BLOCKING;
 	uartParams.readEcho = UART_ECHO_OFF;
 	uartParams.baudRate = 57600;
@@ -90,8 +94,34 @@ static void rn2483_uart_open(UART_SerialDevice *dev) {
 	dev->uart = rn2483_uart;
 }
 
+/*this function is intended to use with commands that expect an "ok\r\n" as first reply.
+*	If it is the case, the second answer will be stored in the global rxBuffer. fx returns its length (excluding the \r).
+*	If not, the first answer will remain and the function returns 0.
+*/
+int rn2483_read_command_response(int read_length2)
+{
+	memset(&rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
+	int length=0;
+	length=UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+	if(length<RN2483_RXBUFFER_SIZE)
+		UART_read(rn2483_uart, &rn2483_rxBuffer[length], sizeof(rn2483_rxBuffer)-length-1);
+	if(!strcmp("ok\n\n", rn2483_rxBuffer))
+	{
+		length = UART_read(rn2483_uart, rn2483_rxBuffer, read_length2);
+		char dummy;
+		UART_read(rn2483_uart, &dummy, 1); //read the \n character
+
+		return length - 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
 //must be called from within a task - this function will block!
 int rn2483_begin(){
+	unsigned int n_rx;
 
 	//	reset the rn2483
     GPIO_write(Board_LORA_RESET_N, 0);
@@ -99,20 +129,25 @@ int rn2483_begin(){
 	Task_sleep(500);
 
 #ifndef CONFIG_MODE
-	rn2483_uart_open(&lora_uart_dev);
+	rn2483_uart_open(&lora_uart_dev, 1000);
 	lora_serialdev = (SerialDevice *)&lora_uart_dev;
 #endif
 
 	GPIO_write(Board_LORA_RESET_N, 1);
-	char rn2483_rxBuffer[RN2483_RXBUFFER_SIZE];
 
 //	UART_write(rn2483_uart, rn_reset, sizeof(rn_reset));
 //	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
 
 	Task_sleep(500);
 	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer)); //clean the reset message
-	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
 	memset(&rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
+
+#ifndef CONFIG_MODE
+	//the reset message does not contain a newline character. all other command responses do.
+	// therefore we reinitialize the uart with a wait-forever readMode.
+	rn2483_end();
+	rn2483_uart_open(&lora_uart_dev, UART_WAIT_FOREVER);
+#endif
 
 
 //	/*check parameters*/
@@ -123,22 +158,22 @@ int rn2483_begin(){
 
 	UART_write(rn2483_uart, rn_get_deveui, sizeof(rn_get_deveui));
 	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
 	Task_sleep(500);
 
 	serial_printf(cli_stdout, "rn2483 deveui: %s.\r\n", rn2483_rxBuffer);
 
 	UART_write(rn2483_uart, rn_join_otaa, sizeof(rn_join_otaa));
-	Task_sleep(10000); // Time needed to complete OTAA.
-	memset(&rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
-	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+//	Task_sleep(10000); // Time needed to complete OTAA.
 
-	if(!strcmp("ok\r\naccepted\r\n", rn2483_rxBuffer)){
+	if((rn2483_read_command_response(RN2483_RXBUFFER_SIZE)>0) && (strcmp("accepted\n", rn2483_rxBuffer)==0)){
 		serial_printf(cli_stdout, "rn2483 OTAA success: %s\r\n", rn2483_rxBuffer);
 		rn2483_initialised = 1;
 		GPIO_write(Board_LED_RED,1);
 		return 1; //modem can now communicate with us
 	}else{
 		serial_printf(cli_stdout, "rn2483 error: OTAA failed. Message: %s\r\n", rn2483_rxBuffer);
+		rn2483_end();
 		return 0;
 	}
 
@@ -166,7 +201,7 @@ int rn2483_config()
     GPIO_write(Board_LORA_RESET_N, 1);
     	uint8_t rn2483_rxBuffer[RN2483_RXBUFFER_SIZE];
 
-	rn2483_uart_open(&lora_uart_dev);
+	rn2483_uart_open(&lora_uart_dev, 1000);
 
 	Task_sleep(500);
 	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer)); //clean the reset message
@@ -289,8 +324,7 @@ int rn2483_config()
 
 int rn2483_send_receive(char * tx_buffer, int tx_size)
 {
-	char rn2483_rxBuffer[RN2483_RXBUFFER_SIZE];
-	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer)); //clear the buffer: after 1st "ok", it receives a \n before "ok".
+//	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer)); //clear the buffer: after 1st "ok", it receives a \n before "ok".
 												// this is a pretty bad hack and we should look where the character comes from .
 
 	memset(&rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
@@ -305,13 +339,9 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 	strcat(txBuffer, rn_txstop);
 
 	int tx_ret = UART_write(rn2483_uart, txBuffer, strlen(txBuffer));
-	int rx_ret = UART_read(rn2483_uart, rn2483_rxBuffer, 4); // 4 to read "ok\r\n"
-	Task_sleep(500); //TODO: check this delay value!
 
-	if(!strcmp("ok\r\n", rn2483_rxBuffer))
+	if(rn2483_read_command_response(9)) //9 to read "mac rx 1 "
 	{
-		int rx_ret = UART_read(rn2483_uart, rn2483_rxBuffer, 9); //7 to read "mac rx "
-
 		serial_printf(cli_stdout, "LoRa TX: %d \n", tx_ret);
 		GPIO_toggle(Board_LED_GREEN);
 
@@ -340,19 +370,22 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 			frame.direction = CHANNEL_IN;
 			frame.channel = CHANNEL_LORA;
 			mavlink_status_t status;
-			i=0;
 
-			while((c = serial_getc(lora_serialdev)) >= 0) {
+			int rxlength = 0;
+			rxlength=UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+
+
+			for(i=0;i<rxlength;i++)
+			{
 //				serial_printf(cli_stdout, "%c,", c);
 //				serial_printf(cli_stdout, "%d,", c);
-				mav_byte = ((uint8_t)a2d(c))<<4;
+				mav_byte = ((uint8_t)a2d(rn2483_rxBuffer[i]))<<4;
 				i++;
-				if((c = serial_getc(lora_serialdev)) >= 0)
+				if(rn2483_rxBuffer[i] >= 0)
 				{
-					i++;
 //					serial_printf(cli_stdout, "%c,", c);
 //					serial_printf(cli_stdout, "%d,", c);
-					mav_byte += ((uint8_t)a2d(c));}
+					mav_byte += ((uint8_t)a2d(rn2483_rxBuffer[i]));}
 				else
 					break;
 //

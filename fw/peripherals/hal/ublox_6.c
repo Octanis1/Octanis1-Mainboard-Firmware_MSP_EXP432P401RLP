@@ -20,7 +20,7 @@ void ublox_6_open(){
 	uartParams.dataLength = UART_LEN_8;
 
 #ifdef LORA_ENABLED
-	Task_sleep(30000); //To avoid crosstalk between LoRa and GPS UART (FIXME: this is an ugly workaround...)
+	Task_sleep(40000); //To avoid crosstalk between LoRa and GPS UART (FIXME: this is an ugly workaround...)
 #endif
 
 	//Correct port for the mainboard
