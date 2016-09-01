@@ -29,6 +29,8 @@
 #include "../core/cli.h"
 #include "../lib/mavlink/common/mavlink.h"
 
+#define E_SEVEN 10000000
+
 static struct minmea_sentence_gga gps_gga_frame;
 static struct minmea_sentence_rmc gps_rmc_frame;
 static struct minmea_sentence_gsa gps_gsa_frame; //needed for MAVLINK infos
@@ -42,10 +44,10 @@ static struct gps{
 	float first_third_longitude;
 	float second_third_longitude;
 	float third_third_longitude;
-	float position_latitude;
-	float position_longitude;
-	float lat_rover;				//not only from gps
-	float lon_rover;				//not only form gps
+	int32_t position_latitude;		//in degrees e7
+	int32_t position_longitude;		//in degrees e7
+	int32_t lat_rover;				//not only from gps
+	int32_t lon_rover;				//not only form gps
 }gps;
 
 bool gps_valid()
@@ -149,8 +151,8 @@ void gps_run_gps(uint8_t position_i)
 
 void gps_calculate_position()
 {
-	gps.position_longitude = (gps.first_third_longitude + gps.second_third_longitude) / (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET);
-	gps.position_latitude = (gps.first_third_latitude + gps.second_third_latitude) / (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET);
+	gps.position_longitude = (gps.first_third_longitude + gps.second_third_longitude) * E_SEVEN / (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET); //in degrees e7
+	gps.position_latitude = (gps.first_third_latitude + gps.second_third_latitude) * E_SEVEN / (MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET);	//in degrees e7
 }
 
 void gps_reset_gps()
@@ -163,26 +165,24 @@ void gps_reset_gps()
 	gps.third_third_longitude = 0;
 }
 
-float gps_get_latitude()
+//returns latitude as measured by gps in degrees e7
+int32_t gps_get_latitude()
 {
-	float latitude;
-	latitude = gps.position_latitude;
-	return latitude;
+	return gps.position_latitude;
 }
 
-float gps_get_longitude()
+//returns longitude as measured by gps in degrees e7
+int32_t gps_get_longitude()
 {
-	float longitude;
-	longitude = gps.position_longitude;
-	return longitude;
+	return gps.position_longitude;
 }
 
-void gps_receive_lat_rover(float lat_rover)
+void gps_receive_lat_rover(int32_t lat_rover)
 {
 	gps.lat_rover = lat_rover;
 }
 
-void gps_receive_lon_rover(float lon_rover)
+void gps_receive_lon_rover(int32_t lon_rover)
 {
 	gps.lon_rover = lon_rover;
 }
@@ -199,8 +199,11 @@ COMM_FRAME* gps_pack_mavlink_global_position_int()
 	heading = navigation_get_heading_rover();
 	heading = heading / 100; //heading in tenths of degrees
 
-	int32_t lon = (int32_t)(10000000.0 * gps.lon_rover);
-	int32_t lat = (int32_t)(10000000.0 * gps.lat_rover);
+	//int32_t lon = (int32_t)(10000000.0 * gps.lon_rover);
+	//int32_t lat = (int32_t)(10000000.0 * gps.lat_rover);
+	int32_t lon = (int32_t)(gps.lon_rover);
+	int32_t lat = (int32_t)(gps.lat_rover);
+
 
 	int32_t alt = (int32_t)(position_i);
 
@@ -235,16 +238,13 @@ COMM_FRAME* gps_pack_mavlink_global_position_int()
 
 COMM_FRAME* gps_pack_mavlink_raw_int()
 {
-	uint8_t position_i;
-	float latitude, longitude = 0;
-	position_i = navigation_get_position_i();
 	// Mavlink heartbeat
 	// Define the system type, in this case an airplane
 	int32_t lat = (int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
 	int32_t lon = (int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
 	int32_t alt = (int32_t)(1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
-	//uint16_t cog = (uint16_t)(100.0 * gps_get_cog());// Course over ground (NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. If unknown, set to: UINT16_MAX
-	uint16_t cog = (uint16_t)(0);
+	uint16_t cog = (uint16_t)(100.0 * gps_get_cog());// Course over ground (NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. If unknown, set to: UINT16_MAX
+	//uint16_t cog = (uint16_t)(0);
 	uint64_t usec = gps_get_last_update_usec();
 	if(usec == 0)
 	{ //no time information in usec is available

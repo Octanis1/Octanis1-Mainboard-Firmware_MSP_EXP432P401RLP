@@ -50,7 +50,7 @@ void motors_pwm_close();
 
 /*
  * arguments are integers scaled to the speed 0 = 0% and 65535 = 100% and the sign of the number
- * determines the direction of travel (negative: backwards, positive: forward).
+ * determines the direction of travel (negative: backwards, pos0itive: forward).
  */
 void motors_wheels_move(int32_t front_left, int32_t front_right, int32_t rear_left, int32_t rear_right);
 void motors_struts_move(int8_t front_left, int8_t front_right, int8_t rear_left, int8_t rear_right);

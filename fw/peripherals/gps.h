@@ -40,11 +40,11 @@ int gps_get_last_update_time();
 void gps_run_gps(uint8_t position_i);
 void gps_calculate_position();
 void gps_reset_gps();
-float gps_get_latitude();
-float gps_get_longitude();
+int32_t gps_get_latitude();
+int32_t gps_get_longitude();
 
-void gps_receive_lat_rover(float lat_rover);
-void gps_receive_lon_rover(float lon_rover);
+void gps_receive_lat_rover(int32_t lat_rover);
+void gps_receive_lon_rover(int32_t lon_rover);
 
 void gps_initialize();
 

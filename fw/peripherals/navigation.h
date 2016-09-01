@@ -86,7 +86,7 @@ int16_t navigation_get_radius();
 //odometry functions
 int navigation_run_odometer(int32_t voltage[N_SIDES], uint8_t position_i);
 void navigation_recalibrate_odometer(float delta_lat, float delta_lon, float delta_heading);
-void navigation_reinitialize_odometer(float gps_heading);
+void navigation_reinitialize_odometer(int32_t gps_heading);
 void navigation_initialize_odometer();
 
 //"Main" task of the file

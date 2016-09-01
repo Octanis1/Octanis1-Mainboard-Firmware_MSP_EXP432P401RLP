@@ -71,7 +71,9 @@ void Task_sleep(int a);
 
 #define Y_TO_LATITUDE			 110946.257352 //true constants
 #define KILO					 1000
+#define E_FOUR					 10000
 #define MEGA					 1000000
+#define E_SEVEN					 10000000
 #define PERIOD_DEGREES			 360		   //degrees in full period
 #define WHEEL_DISTANCE			 440 		   //in mm
 
@@ -89,8 +91,8 @@ struct odo{
 	int32_t first_third_heading;	//in m°
 	int32_t second_third_heading;	//in m°
 	int32_t third_third_heading;	//in m°
-	float latitude;					//in degrees
-	float longitude; 				//in degrees
+	int32_t latitude;					//in degrees
+	int32_t longitude; 				//in degrees
 	float checked_lat; 				//in degrees
 	float checked_lon; 				//in degrees
 	uint32_t odo_time;				//in msec
@@ -108,8 +110,8 @@ void navigation_get_radius_and_angle(float speed[N_WHEELS], uint32_t delta_time,
 int navigation_navigation_error(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_WHEELS]);
 
 typedef struct _navigation_status{
-	float lat_rover;
-	float lon_rover;
+	int32_t lat_rover;
+	int32_t lon_rover;
 	float old_lat;  		 //used for recalibrating factors
 	float old_lon;			 //used for recalibrating factors
 	uint8_t position_i; 	 //variable for timing of gps / odometry data
@@ -609,6 +611,10 @@ void navigation_update_position()
 
 	float delta_lon, delta_lat = 0;
 
+	gps_heading = (gps_get_cog()/360) * PERIOD * E_SEVEN;
+	//delta_heading = gps_heading - navigation_status.old_gps_heading;
+	//navigation_status.old_gps_heading = gps_heading;
+
 	//if first_time, initialize all structures
 	/*
 	if(first_time)
@@ -631,7 +637,6 @@ void navigation_update_position()
 	if (navigation_status.position_i == (MAX_RECENT_VALUES-1))
 	{
 		//navigation_recalibrate_odometer(delta_lat, delta_lon, delta_heading);
-		gps_heading = 0;
 		navigation_reinitialize_odometer(gps_heading);
 		gps_calculate_position();	//calculates a gps position from a number of gps points
 		gps_reset_gps();
@@ -644,11 +649,8 @@ void navigation_update_position()
 
 	navigation_run_odometer(navigation_status.motor_values, navigation_status.position_i);     //saves an odometer position
 
-	odo_latitude = odo.latitude;
-	odo_longitude = odo.longitude;
-
-	navigation_status.lat_rover = gps_latitude + odo_latitude;
-	navigation_status.lon_rover = gps_longitude + odo_longitude;
+	navigation_status.lat_rover = gps_latitude + odo.latitude;
+	navigation_status.lon_rover = gps_longitude + odo.longitude;
 
 	gps_receive_lat_rover(navigation_status.lat_rover);
 	gps_receive_lon_rover(navigation_status.lon_rover);
@@ -663,9 +665,6 @@ void navigation_update_position()
 	navigation_status.heading_rover = imu_get_fheading();
 #endif
 #ifndef IMU_AVALABLE
-	//gps_heading = (gps_get_cog()/360) * PERIOD;
-	//delta_heading = gps_heading - navigation_status.old_gps_heading;
-	//navigation_status.old_gps_heading = gps_heading;
 	gps_heading = 0;
 	heading_rover = gps_heading + odo.heading;
 	while (heading_rover > (PERIOD_DEGREES * KILO)){
@@ -757,6 +756,7 @@ void navigation_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t volt
 #endif
 #ifndef SENSOR_VALUES_AVAILABLE
 	for (i=0; i<N_WHEELS; i++) {
+		friction_factor = 0.005;
 		rps[i] = friction_factor * voltage[i%N_SIDES]; 		//rounds per second
 		speed[i] = rps[i] * circumference;					//makes mm / s
 		velocity += speed[i];
@@ -773,8 +773,8 @@ void navigation_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t volt
 
 	//convert distance to polar coordinates
 	x_to_longitude = Y_TO_LATITUDE * cos(MISSION_LATITUDE);
-	odo.longitude = (odo.first_third_x + odo.second_third_x + odo.third_third_x) / (x_to_longitude * KILO);
-	odo.latitude = (odo.first_third_y + odo.second_third_y + odo.third_third_y) / (Y_TO_LATITUDE * KILO);
+	odo.longitude = (odo.first_third_x + odo.second_third_x + odo.third_third_x) * 10000 / (x_to_longitude);
+	odo.latitude = (odo.first_third_y + odo.second_third_y + odo.third_third_y) * 10000 / (Y_TO_LATITUDE); //10^7 degrees for gps message and precision
 }
 
 void navigation_get_radius_and_angle(float speed[N_WHEELS], uint32_t delta_time, uint8_t position_i)
@@ -863,7 +863,7 @@ void navigation_recalibrate_odometer(float delta_lat, float delta_lon, float del
 	angle_constant = delta_heading / angle_sum;
 }
 
-void navigation_reinitialize_odometer(float gps_heading)
+void navigation_reinitialize_odometer(int32_t gps_heading)
 {
 	odo.first_third_x = odo.third_third_x;
 	odo.first_third_y = odo.third_third_y;
@@ -876,9 +876,9 @@ void navigation_reinitialize_odometer(float gps_heading)
 	odo.first_third_heading = odo.third_third_heading;
 	odo.second_third_heading = 0;
 	odo.third_third_heading = 0;
-	odo.heading = odo.third_third_heading;
-	odo.longitude = (odo.first_third_x + odo.second_third_x + odo.third_third_x) / (Y_TO_LATITUDE * cos(MISSION_LATITUDE));
-	odo.latitude = (odo.first_third_y + odo.second_third_y + odo.third_third_y) / Y_TO_LATITUDE;
+	odo.heading = odo.third_third_heading * E_FOUR;
+	odo.longitude = (odo.first_third_x + odo.second_third_x + odo.third_third_x) * E_FOUR / (Y_TO_LATITUDE * cos(MISSION_LATITUDE));
+	odo.latitude = (odo.first_third_y + odo.second_third_y + odo.third_third_y) * E_FOUR / Y_TO_LATITUDE;
 	odo.heading = odo.heading + gps_heading;
 }
 
