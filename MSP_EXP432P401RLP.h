@@ -49,7 +49,7 @@
 //#define VERSION_0_6
 #define VERSION_1
 
-//#define FLASH_ENABLED 1
+#define FLASH_ENABLED 1
 //#define SBC_ENABLED	// if defined, it will wait for SBC to boot before sending mavlink messages and continue after waypoint 0.
 //#define LORA_ENABLED 1
 //#define EPS_ENABLED 1

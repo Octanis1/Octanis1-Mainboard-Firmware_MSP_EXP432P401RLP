@@ -325,7 +325,7 @@ int flash_init()
 	spi_helper_init_handle();
 
 	//workaround to give flash enough time to power up and get ready
-	Task_sleep(50);
+	Task_sleep(250);
 
 	//verify flash chip ID
 	ret = flash_id_read(buf);
