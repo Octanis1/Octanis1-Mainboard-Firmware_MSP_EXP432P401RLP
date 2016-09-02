@@ -731,7 +731,10 @@ void MSP_EXP432P401RLP_initSPI(void)
 
 /* UART objects */
 UARTMSP432_Object uartMSP432Objects[MSP_EXP432P401RLP_UARTCOUNT];
-unsigned char uartMSP432RingBuffer[32];
+unsigned char uartMSP432RingBuffer0[32];
+unsigned char uartMSP432RingBuffer1[32];
+unsigned char uartMSP432RingBuffer2[32];
+unsigned char uartMSP432RingBuffer3[32];
 
 /*
  * The baudrate dividers were determined by using the MSP430 baudrate
@@ -776,8 +779,8 @@ const UARTMSP432_HWAttrs uartMSP432HWAttrs[MSP_EXP432P401RLP_UARTCOUNT] = {
         .numBaudrateEntries = sizeof(uartMSP432Baudrates) /
             sizeof(UARTMSP432_BaudrateConfig),
         .baudrateLUT = uartMSP432Baudrates,
-        .ringBufPtr  = uartMSP432RingBuffer,
-        .ringBufSize = sizeof(uartMSP432RingBuffer)
+        .ringBufPtr  = uartMSP432RingBuffer0,
+        .ringBufSize = sizeof(uartMSP432RingBuffer0)
     },
 	{
             .baseAddr = EUSCI_A1_BASE,
@@ -788,8 +791,8 @@ const UARTMSP432_HWAttrs uartMSP432HWAttrs[MSP_EXP432P401RLP_UARTCOUNT] = {
             .numBaudrateEntries = sizeof(uartMSP432Baudrates) /
                 sizeof(UARTMSP432_BaudrateConfig),
             .baudrateLUT = uartMSP432Baudrates,
-            .ringBufPtr  = uartMSP432RingBuffer,
-            .ringBufSize = sizeof(uartMSP432RingBuffer)
+            .ringBufPtr  = uartMSP432RingBuffer1,
+            .ringBufSize = sizeof(uartMSP432RingBuffer1)
     },
     {
         .baseAddr = EUSCI_A2_BASE,
@@ -800,8 +803,8 @@ const UARTMSP432_HWAttrs uartMSP432HWAttrs[MSP_EXP432P401RLP_UARTCOUNT] = {
         .numBaudrateEntries = sizeof(uartMSP432Baudrates) /
             sizeof(UARTMSP432_BaudrateConfig),
         .baudrateLUT = uartMSP432Baudrates,
-        .ringBufPtr  = uartMSP432RingBuffer,
-        .ringBufSize = sizeof(uartMSP432RingBuffer)
+        .ringBufPtr  = uartMSP432RingBuffer2,
+        .ringBufSize = sizeof(uartMSP432RingBuffer2)
     },
     {
         .baseAddr = EUSCI_A3_BASE,
@@ -812,8 +815,8 @@ const UARTMSP432_HWAttrs uartMSP432HWAttrs[MSP_EXP432P401RLP_UARTCOUNT] = {
         .numBaudrateEntries = sizeof(uartMSP432Baudrates) /
             sizeof(UARTMSP432_BaudrateConfig),
         .baudrateLUT = uartMSP432Baudrates,
-        .ringBufPtr  = uartMSP432RingBuffer,
-        .ringBufSize = sizeof(uartMSP432RingBuffer)
+        .ringBufPtr  = uartMSP432RingBuffer3,
+        .ringBufSize = sizeof(uartMSP432RingBuffer3)
     }
 };
 
