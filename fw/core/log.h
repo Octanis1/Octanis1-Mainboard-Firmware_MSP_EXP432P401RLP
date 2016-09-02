@@ -36,6 +36,7 @@ struct logger {
 cmp_ctx_t *log_entry_create(const char *name);
 void log_entry_write_to_flash(void);
 void log_mav_write_to_flash(void);
+void log_mav_overwrite_flash(void);
 bool log_read_entry(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry);
 bool log_read_last_mav_entry (uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry);
 void log_position_backup(void);

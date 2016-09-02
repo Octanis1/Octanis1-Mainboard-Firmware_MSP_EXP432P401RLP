@@ -49,6 +49,7 @@ LOG_INTERNAL void logger_unlock(void) {
 }
 
 LOG_INTERNAL void _log_flash_write(uint32_t addr, void *data, size_t len);
+LOG_INTERNAL void _log_flash_overwrite(uint32_t addr, void *data, size_t len);
 
 #include <ti/sysbios/hal/Seconds.h>
 LOG_INTERNAL uint32_t logger_timestamp_sec(void)
@@ -101,6 +102,26 @@ LOG_INTERNAL void _log_mav_write_to_flash(struct logger *l)
     logger_unlock();
 }
 
+LOG_INTERNAL void _log_mav_overwrite_flash(struct logger *l)
+{
+	uint32_t temp_write_pos;
+    size_t len = cmp_mem_access_get_pos(&l->cma);
+    uint8_t crc = crc8(0, (unsigned char *)&l->buffer[LOG_ENTRY_HEADER_LEN], len);
+    l->buffer[0] = (uint8_t)len; //LSB
+    l->buffer[1] = (uint8_t)(len>>8); //MSB
+    l->buffer[2] = 0xff;
+    len += LOG_ENTRY_HEADER_LEN;
+
+    if(l->mav_write_pos == FLASH_BLOCK_SIZE)
+    	temp_write_pos = 2*FLASH_BLOCK_SIZE;
+    else
+    	temp_write_pos = FLASH_BLOCK_SIZE;
+
+    _log_flash_overwrite(temp_write_pos, l->buffer, len);
+
+    logger_unlock();
+}
+
 cmp_ctx_t *log_entry_create(const char *name)
 {
     return _log_entry_create(&logger, name);
@@ -114,6 +135,11 @@ void log_entry_write_to_flash(void)
 void log_mav_write_to_flash(void)
 {
     _log_mav_write_to_flash(&logger);
+}
+
+void log_mav_overwrite_flash(void)
+{
+    _log_mav_overwrite_flash(&logger);
 }
 
 bool log_read_entry(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry)
@@ -162,6 +188,11 @@ LOG_INTERNAL void _log_flash_write(uint32_t addr, void *data, size_t len)
     if (_log_flash_erase_addr(addr, len, &erase_addr)) {
         flash_block_erase(erase_addr);
     }
+    flash_write(addr, data, len);
+}
+
+LOG_INTERNAL void _log_flash_overwrite(uint32_t addr, void *data, size_t len)
+{
     flash_write(addr, data, len);
 }
 

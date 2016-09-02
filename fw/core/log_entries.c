@@ -60,6 +60,8 @@ bool log_read_mavlink_item_list(mission_item_list_t * item_list, uint32_t * time
 	uint32_t array_l = 0;
 	uint32_t name_sz = sizeof(name);
 
+	bool found_current = false;
+
 	ret = log_read_last_mav_entry(buf, &entry_len, &next_entry);
 	if (ret == false)
 		return ret;
@@ -86,6 +88,15 @@ bool log_read_mavlink_item_list(mission_item_list_t * item_list, uint32_t * time
 
 	for (i=0; i<item_list->count && i < (N_TARGETS_MAX +1); i++){
 		ret = log_read_mavlink_item(&ctx, &(item_list->item[i]));
+		if(!found_current && item_list->item[i].current == 0x00)
+		{
+			found_current = true;
+			item_list->item[i].current = 1;
+		}
+		else
+		{
+			item_list->item[i].current = 0;
+		}
 		if (ret == false)
 			return false;
 	}
@@ -113,9 +124,10 @@ void log_serialize_mavlink_item(cmp_ctx_t *ctx, mavlink_mission_item_t item)
 
 }
 
-void log_write_mavlink_item_list(void)
+void log_write_mavlink_item_list(bool overwrite)
 {
     int i = 0;
+    uint8_t temp;
     mavlink_mission_item_t * mav_list = navigation_mavlink_get_item_list();
     uint16_t current_index = navigation_mavlink_get_current_index();
     uint16_t count = navigation_mavlink_get_count();
@@ -127,9 +139,24 @@ void log_write_mavlink_item_list(void)
     cmp_write_uinteger(ctx, count);
     cmp_write_array(ctx, count);
     for(i=0; i<count; i++)
+    {
+    	if(i > current_index)
+    	{
+    		mav_list[i].current = 0xff;
+    	}
         log_serialize_mavlink_item(ctx, mav_list[i]);
+        mav_list[i].current = 0x00;
+    }
+    mav_list[current_index].current = 1;
 
-    log_mav_write_to_flash();
+    if(overwrite)
+    {
+        log_mav_overwrite_flash();
+    }
+    else
+    {
+    	log_mav_write_to_flash();
+    }
 }
 
 void log_write_navigation_status(void)

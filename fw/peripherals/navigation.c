@@ -308,7 +308,7 @@ COMM_MAV_RESULT navigation_rx_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_
 				mission_item_rx_count = 0;
 			}
 #ifdef FLASH_ENABLED
-			log_write_mavlink_item_list();
+			log_write_mavlink_item_list(false);
 #endif
 		}
 		return REPLY_TO_SENDER;
@@ -369,6 +369,7 @@ COMM_MAV_RESULT navigation_next_mission_item(COMM_MAV_MSG_TARGET *target, mavlin
 		if(mission_items.current_index<mission_items.count) //activate next target if available
 		{
 			mission_items.item[mission_items.current_index].current = 1;
+			log_write_mavlink_item_list(true);
 		}
 		else
 		{
@@ -386,10 +387,13 @@ COMM_MAV_RESULT navigation_next_mission_item(COMM_MAV_MSG_TARGET *target, mavlin
 		mission_items.item[mission_items.current_index].current = 0;
 
 		mission_items.current_index = mavlink_msg_mission_set_current_get_seq(msg);
+
 		if(mission_items.current_index < mission_items.count)
 			mission_items.item[mission_items.current_index].current = 1;
 		else
 			return NO_ANSWER; //TODO: reply NACK
+
+		log_write_mavlink_item_list(false);
 
 	}
 
