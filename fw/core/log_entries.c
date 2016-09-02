@@ -88,10 +88,11 @@ bool log_read_mavlink_item_list(mission_item_list_t * item_list, uint32_t * time
 
 	for (i=0; i<item_list->count && i < (N_TARGETS_MAX +1); i++){
 		ret = log_read_mavlink_item(&ctx, &(item_list->item[i]));
-		if(!found_current && item_list->item[i].current == 0x00)
+		if(!found_current && item_list->item[i].current == 0xff && i > 0)
 		{
 			found_current = true;
-			item_list->item[i].current = 1;
+			item_list->item[i - 1].current = 1;
+			item_list->item[i].current = 0;
 		}
 		else
 		{
