@@ -13,7 +13,8 @@
 #include "../../lib/mavlink/mavlink_helpers.h"
 
 #define RN2483_RXBUFFER_SIZE 40
-#define RN2483_READ_TIMEOUT 15000
+#define RN2483_READ_TIMEOUT_OPEN 1000 //during opening phase, should be shorter since we rely on it.
+#define RN2483_READ_TIMEOUT 15000 //to avoid getting trapped waiting for ever.
 #define RN2483_BAUD_RATE 57600
 
 static UART_Handle rn2483_uart;
@@ -70,8 +71,14 @@ static const char rn_join_otaa[] = "mac join otaa\r\n";
 static const char rn_reset[] = "sys reset\r\n";
 
 //buffer for command responses
-char rn2483_rxBuffer[RN2483_RXBUFFER_SIZE];
+static char rn2483_rxBuffer[RN2483_RXBUFFER_SIZE];
 
+/************ from the RN2483 Command Reference User's Guide: ****************
+ * "All commands need to be terminated with <CR><LF> and any replies they
+ * generate will also be terminated by the same sequence.
+ * The default settings for the UART interface are 57600 bps,
+ * 8 bits, no parity, 1 Stop bit, no flow control
+*/
 
 static void rn2483_uart_open(UART_SerialDevice *dev, unsigned int read_timeout_mode) {
 	static UART_Params uartParams;
@@ -100,7 +107,6 @@ static void rn2483_uart_open(UART_SerialDevice *dev, unsigned int read_timeout_m
 */
 int rn2483_read_command_response(int read_length2)
 {
-	memset(&rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
 	int length=0;
 	length=UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
 	if(length<RN2483_RXBUFFER_SIZE)
@@ -129,7 +135,7 @@ int rn2483_begin(){
 	Task_sleep(500);
 
 #ifndef CONFIG_MODE
-	rn2483_uart_open(&lora_uart_dev, 1000);
+	rn2483_uart_open(&lora_uart_dev, RN2483_READ_TIMEOUT_OPEN);
 	lora_serialdev = (SerialDevice *)&lora_uart_dev;
 #endif
 
@@ -146,7 +152,7 @@ int rn2483_begin(){
 	//the reset message does not contain a newline character. all other command responses do.
 	// therefore we reinitialize the uart with a wait-forever readMode.
 	rn2483_end();
-	rn2483_uart_open(&lora_uart_dev, UART_WAIT_FOREVER);
+	rn2483_uart_open(&lora_uart_dev, RN2483_READ_TIMEOUT);
 #endif
 
 
@@ -163,6 +169,7 @@ int rn2483_begin(){
 
 	serial_printf(cli_stdout, "rn2483 deveui: %s.\r\n", rn2483_rxBuffer);
 
+	memset(&rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
 	UART_write(rn2483_uart, rn_join_otaa, sizeof(rn_join_otaa));
 //	Task_sleep(10000); // Time needed to complete OTAA.
 
@@ -327,7 +334,6 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 //	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer)); //clear the buffer: after 1st "ok", it receives a \n before "ok".
 												// this is a pretty bad hack and we should look where the character comes from .
 
-	memset(&rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
 	char txBuffer[tx_size+18]; //18 for the aditionnal lora commands
 	memset(&txBuffer, 0, sizeof(txBuffer)); //important! always clean buffer before tx
 
@@ -338,6 +344,7 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 	strcat(txBuffer, tx_buffer);
 	strcat(txBuffer, rn_txstop);
 
+	memset(&rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
 	int tx_ret = UART_write(rn2483_uart, txBuffer, strlen(txBuffer));
 
 	if(rn2483_read_command_response(9)) //9 to read "mac rx 1 "
