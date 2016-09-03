@@ -23,13 +23,21 @@
 //mavlink includes
 #include "imu.h"
 #include "../peripherals/comm.h"
+#include "../core/cli.h"
 #include "../lib/mavlink/common/mavlink.h"
 
 
 static struct minmea_sentence_gga gps_gga_frame;
 static struct minmea_sentence_rmc gps_rmc_frame;
 static struct minmea_sentence_gsa gps_gsa_frame; //needed for MAVLINK infos
+static struct minmea_sentence_vtg gps_vtg_frame;
 static struct timespec gps_last_update;
+
+bool gps_valid()
+{
+	//TODO: wait to get a certain precision
+	return gps_get_lat() != 0;
+}
 
 uint8_t gps_get_fix_quality(){
 	return gps_gga_frame.fix_quality;
@@ -52,15 +60,19 @@ float gps_get_lon(){
 }
 
 float gps_get_speed(){
-	return minmea_tocoord(&gps_rmc_frame.speed);
+	return minmea_tofloat(&gps_rmc_frame.speed);
 }
 
 int32_t gps_get_int_speed(){
-	return (int32_t)(100*minmea_tocoord(&gps_rmc_frame.speed));
+	return (int32_t)(100*minmea_tofloat(&gps_rmc_frame.speed));
 }
 
 float gps_get_course(){
-	return minmea_tocoord(&gps_rmc_frame.course);
+	return minmea_tofloat(&gps_rmc_frame.course);
+}
+
+float gps_get_cog(){
+	return minmea_tofloat(&gps_vtg_frame.true_track_degrees);
 }
 
 float gps_get_altitude(){
@@ -84,10 +96,10 @@ int gps_get_validity(){
 }
 
 uint16_t gps_get_hdop(){
-	return gps_gsa_frame.hdop.value;
+	return minmea_tofloat(&gps_gsa_frame.hdop)*100;
 }
 uint16_t gps_get_vdop(){
-	return gps_gsa_frame.vdop.value;
+	return minmea_tofloat(&gps_gsa_frame.vdop)*100;
 }
 
 int gps_get_dgps_age(){
@@ -126,7 +138,7 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 	int32_t lat = (int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
 	int32_t lon = (int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
 	int32_t alt = (int32_t)(1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
-	uint16_t cog = (uint16_t)(100.0 * gps_get_course());// Course over ground (NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. If unknown, set to: UINT16_MAX
+	uint16_t cog = (uint16_t)(100.0 * gps_get_cog());// Course over ground (NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. If unknown, set to: UINT16_MAX
 	uint64_t usec = gps_get_last_update_usec();
 	if(usec == 0)
 	{ //no time information in usec is available
@@ -143,33 +155,28 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 
 	// Pack the message
 	mavlink_msg_gps_raw_int_pack(mavlink_system.sysid, MAV_COMP_ID_GPS, &(frame.mavlink_message),
-		usec, gps_get_fix_quality(), lat, lon, alt, gps_get_hdop(), gps_get_vdop(), //TODO: change back 2nd argument to gps_get_fix_type() or make it conform to mavlink standard
+		usec, gps_get_fix_type(), lat, lon, alt, gps_get_hdop(), gps_get_vdop(), //TODO: change back 2nd argument to gps_get_fix_type() or make it conform to mavlink standard
 		(uint16_t)gps_get_int_speed(), cog, (uint8_t)gps_get_satellites_tracked());
 	return &frame;
 }
 
-
- void gps_task(){
-
-	char *saveptr1 = NULL; 
-
+void gps_task(){
     cli_init();
+
+    ublox_6_open();
 
 	while (1) {
 
 		//initialise GPS device, open UART
-		if(!ublox_6_open()){
-//			serial_printf(cli_stdout, "%d GPS UART error", 0);
-		}
+
 
 		//get data from device (blocking call)
-		char * nmeabuffer = ublox_6_read();
-		char * nmeaframes = strtok_r(nmeabuffer, "\n", &saveptr1);
+		static char * nmeaframes;
 
 		//parse gps data, this is non-deterministic as data just flys in on the serial line.
 		// this then looks for a valid nmea frame
 
-		while (nmeaframes != NULL){
+		while ((nmeaframes = ublox_6_read())){
 			int minmea_sentence = minmea_sentence_id(nmeaframes, false);
 
 			switch (minmea_sentence) {
@@ -183,31 +190,34 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 					if(minmea_parse_rmc(&gps_rmc_frame, nmeaframes)){
 						//update system time when valid RMC frame arrives
 						Seconds_set(gps_get_last_update_time());
-						}
+					}
 					break;
 				}
 				case MINMEA_SENTENCE_GSA:
 				{
 					minmea_parse_gsa(&gps_gsa_frame, nmeaframes);
 				}
+				case MINMEA_SENTENCE_VTG:
+					minmea_parse_vtg(&gps_vtg_frame, nmeaframes);
 			}
 
-			nmeaframes = strtok_r(NULL, "\n", &saveptr1);
+			if(minmea_sentence == MINMEA_SENTENCE_RMC)
+				break;
+
 		}
 
-//		serial_printf(cli_stdout, "dgps_age:%d\n\r", gps_get_hdop());
+		if((gps_rmc_frame.longitude.value != 0) && (gps_rmc_frame.latitude.value != 0) && (gps_rmc_frame.longitude.scale != 0) && (gps_rmc_frame.latitude.scale != 0))
+		{
+	#ifdef MAVLINK_ON_LORA_ENABLED
+			comm_set_tx_flag(CHANNEL_LORA, MAV_COMP_ID_GPS);
+	#endif
+	#ifdef MAVLINK_ON_UART0_ENABLED
+			comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
+	#endif
+			comm_mavlink_broadcast(gps_pack_mavlink_raw_int());
+		}
 
-		ublox_6_close();
-		Task_sleep(1000);
-
-#ifdef MAVLINK_ON_UART0_ENABLED
-	comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
-	comm_mavlink_broadcast(gps_pack_mavlink_raw_int());
-#endif
-
-
+		Task_sleep(10);
 	}
-
-
 }
 

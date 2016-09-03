@@ -12,9 +12,11 @@
 #include "../peripherals/hal/i2c_helper.h"
 #include "eps.h"
 #include "cli.h"
+#include "../peripherals/comm.h"
+#include <ti/sysbios/utils/Load.h>
+#include <math.h>
 
-
-
+#define HEARTBEAT_TO_MEASUREMENT_RATIO	20 // Heartbeats to EPS are sent every 500ms. Battery status is asked every *ratio* times
 
 // define module states
 #define OFF	0
@@ -31,9 +33,8 @@ static struct _rover_status_eps {
 	uint16_t v_solar;
 	uint16_t i_in;
 	uint16_t i_out;
+	int16_t t_bat; // in 0.01 degrees celsius
 } rover_status_eps;
-
-static uint8_t give_life_sign;
 
 void eps_init()
 {
@@ -47,8 +48,56 @@ void eps_init()
 	rover_status_eps.i_out = 0;
 
 	i2c_helper_init_handle();
-	GPIO_enableInt(Board_EPS_ALIVE_REQ);
 }
+
+const static uint32_t onboard_control_sensors_present = 	MAV_SYS_STATUS_SENSOR_3D_GYRO +
+														MAV_SYS_STATUS_SENSOR_3D_ACCEL+
+														MAV_SYS_STATUS_SENSOR_3D_MAG +
+														MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE +
+														MAV_SYS_STATUS_SENSOR_GPS +
+														MAV_SYS_STATUS_SENSOR_YAW_POSITION +
+														MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS;
+
+COMM_FRAME* eps_pack_mavlink_sys_status()
+{
+	// Initialize the message buffer
+	static COMM_FRAME frame;
+
+	uint32_t onboard_control_sensors_enabled = onboard_control_sensors_present; //TODO
+	uint32_t onboard_control_sensors_health = onboard_control_sensors_present; //TODO
+	uint16_t load = (uint16_t)10*Load_getCPULoad(); //Maximum usage in percent of the mainloop time, (0%: 0, 100%: 1000) should be always below 1000
+	int8_t battery_remaining = (rover_status_eps.v_bat - 3000)/11;	// Remaining battery energy: (0%: 0, 100%: 100), -1: autopilot does not estimate the remaining battery
+	uint16_t drop_rate_comm = cli_mavlink_dropcount(); //Communication drops in percent, (0%: 0, 100%: 10'000), (UART, I2C, SPI, CAN), dropped packets on all links (packets that were corrupted on reception on the MAV)
+	uint16_t errors_comm=0; //Communication errors (UART, I2C, SPI, CAN), dropped packets on all links (packets that were corrupted on reception on the MAV)
+
+	mavlink_msg_sys_status_pack(mavlink_system.sysid, MAV_COMP_ID_SYSTEM_CONTROL, &(frame.mavlink_message),
+		   onboard_control_sensors_present, onboard_control_sensors_enabled, onboard_control_sensors_health, load,
+		   rover_status_eps.v_bat, rover_status_eps.i_out, battery_remaining, drop_rate_comm, errors_comm, 0,0,0,0);
+
+	return &frame;
+}
+
+COMM_FRAME* eps_pack_mavlink_battery_status()
+{
+	// Initialize the message buffer
+	static COMM_FRAME frame;
+
+	static uint16_t vbat[10] = {UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX};
+	vbat[0] = rover_status_eps.v_bat;
+	int32_t current_consumed = -1; //Consumed charge, in milliampere hours (1 = 1 mAh), -1: autopilot does not provide mAh consumption estimate
+	int16_t current_battery = rover_status_eps.i_out; //Battery current, in 10*milliamperes (1 = 10 milliampere), -1: autopilot does not measure the current
+	int32_t energy_consumed = -1;  //Consumed energy, in 100*Joules (intergrated U*I*dt) (1 = 100 Joule), -1: autopilot does not provide energy consumption estimate
+	int8_t battery_remaining = (rover_status_eps.v_bat - 3000)/11;	// Remaining battery energy: (0%: 0, 100%: 100), -1: autopilot does not estimate the remaining battery
+
+	mavlink_msg_battery_status_pack(mavlink_system.sysid, MAV_COMP_ID_SYSTEM_CONTROL, &(frame.mavlink_message),
+		0, MAV_BATTERY_FUNCTION_ALL, MAV_BATTERY_TYPE_LION, rover_status_eps.t_bat, vbat, current_battery, current_consumed, energy_consumed, battery_remaining);
+
+	//todo: correct battery temperature!
+
+	return &frame;
+}
+
+
 
 uint8_t sendEpsCommand(uint8_t command)
 {
@@ -69,6 +118,7 @@ uint8_t sendEpsCommand(uint8_t command)
 
 	if (!ret) {
 		iError = -1;
+
 	}else{
 		iError = 0;
 	}
@@ -81,7 +131,7 @@ uint16_t readEpsReg(uint8_t reg)
 	I2C_Transaction i2cTransaction;
 
 	int8_t iError = 0;
-	uint16_t readBuffer;
+	int16_t readBuffer;
 
 	i2cTransaction.writeBuf = &reg;
 	i2cTransaction.writeCount = sizeof(reg);
@@ -95,12 +145,13 @@ uint16_t readEpsReg(uint8_t reg)
 
 	if (!ret) {
 		iError = -1;
-		serial_printf(cli_stdout, "transaction failed %d \r\n",ret);
+		return UINT16_MAX;
+//		serial_printf(cli_stdout, "EPS transaction failed %d \r\n",ret);
 
 	}else{
 		iError = 0;
 
-		serial_printf(cli_stdout, "read: %u \r\n",readBuffer);
+//		serial_printf(cli_stdout, "read: %u \r\n",readBuffer);
 
 	}
 
@@ -124,7 +175,6 @@ uint8_t eps_switch_module(uint8_t command) //use commands defined in eps.h
 				return OFF;};
 			//else try again or abandon after 3 times
 		}
-		serial_printf(cli_stdout, "EPS comm err \r\n",0);
 		return OFF; // = error = 0
 	}
 	else //turn off a module
@@ -164,46 +214,54 @@ void eps_task(){
 #endif
 
 #ifdef EPS_ENABLED
+
 	eps_init();
-	give_life_sign = 1;
+	sendEpsCommand(ALIVE);
+
+
 #endif
 	while(1)
 	{
 #ifdef EPS_ENABLED
 
-		// check if we need to confirm that we are alive.
-		if(give_life_sign)
+		// get status data (TODO: do correct conversion)
+		rover_status_eps.v_bat = readEpsReg(V_BAT);
+		rover_status_eps.v_solar = readEpsReg(V_SC);
+		rover_status_eps.i_in = readEpsReg(I_IN);
+		rover_status_eps.i_out = readEpsReg(I_OUT);
+
+		uint16_t R_th = readEpsReg(T_BAT);
+
+		if(R_th != UINT16_MAX)
 		{
-			sendEpsCommand(ALIVE);
-			give_life_sign = 0;
+			const static double A = 1.129148e-3;
+			const static double B = 2.34125e-4;
+			const static double C = 8.76741e-8;
+
+			double logR  = log((double)R_th);
+			double logR3 = logR * logR * logR;
+
+			rover_status_eps.t_bat = (int16_t)(100/(A + B * logR + C * logR3 ) - 273.15);
 		}
 
-		// get status data (TODO: do correct conversion)
-		rover_status_eps.v_bat = (uint16_t)((float)readEpsReg(V_BAT)*7.026+2582); //<-- flight version Payload1 calibrated value;  was set to: (float)sendEpsCommand(V_BAT)*6.67+2500)
-		rover_status_eps.v_solar = (uint16_t)((float)readEpsReg(V_SC)*29.23); //flight version was wrongly *27.5, should have been 29.23 for 1.2M
-		rover_status_eps.i_in = (uint16_t)((float)readEpsReg(I_IN)*1.19); //
-		rover_status_eps.i_out = (uint16_t)((float)readEpsReg(I_OUT)*4.76);// depends on current sense resistor on eps!
+#ifdef MAVLINK_ON_UART0_ENABLED
+		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_SYSTEM_CONTROL);
+#endif
+		comm_mavlink_broadcast(eps_pack_mavlink_battery_status());
 
+#ifdef MAVLINK_ON_UART0_ENABLED
+		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_SYSTEM_CONTROL);
+#endif
+		comm_mavlink_broadcast(eps_pack_mavlink_sys_status());
 
-
-		Task_sleep(500);
-
-		// check if we need to confirm that we are alive. (do it twice per second)
-		if(give_life_sign)
+		int i;
+		for(i= 0; i< HEARTBEAT_TO_MEASUREMENT_RATIO; i++)
 		{
+			Task_sleep(500);
+			// heartbeat to EPS
 			sendEpsCommand(ALIVE);
-			give_life_sign = 0;
 		}
 #endif
-		Task_sleep(500);
-
-
+		Task_sleep(200);
 	}
-}
-
-
-void eps_ISR()
-{
- //TODO
-	give_life_sign = 1;
 }

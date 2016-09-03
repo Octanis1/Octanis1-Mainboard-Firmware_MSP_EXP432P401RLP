@@ -6,7 +6,7 @@
 
 /*
 Logging format:
-- 1byte: length = n
+- 2byte: length = n
 - 1byte: crc8
 - nbytes: log data
 
@@ -33,11 +33,14 @@ todo:
 #include "../lib/cmp_mem_access/cmp_mem_access.h"
 #include "../lib/crc8.h"
 #include "../peripherals/flash.h"
+#include "../peripherals/flash_defines.h"
 
 #if !defined(LOG_TEST) // Production code
 // todo: add mutex if logger needs to be threadsafe
 LOG_INTERNAL void logger_lock(void){}
 LOG_INTERNAL void logger_unlock(void){}
+
+LOG_INTERNAL void _log_flash_write(uint32_t addr, void *data, size_t len);
 
 #include <ti/sysbios/hal/Seconds.h>
 LOG_INTERNAL uint32_t logger_timestamp_sec(void)
@@ -62,11 +65,29 @@ LOG_INTERNAL void _log_entry_write_to_flash(struct logger *l)
 {
     size_t len = cmp_mem_access_get_pos(&l->cma);
     uint8_t crc = crc8(0, (unsigned char *)&l->buffer[LOG_ENTRY_HEADER_LEN], len);
-    l->buffer[0] = len;
-    l->buffer[1] = crc;
+    l->buffer[0] = (uint8_t)len; //LSB
+    l->buffer[1] = (uint8_t)(len>>8); //MSB
+    l->buffer[2] = crc;
     len += LOG_ENTRY_HEADER_LEN;
     _log_flash_write(l->flash_write_pos, l->buffer, len);
     l->flash_write_pos += len;
+    logger_unlock();
+}
+
+LOG_INTERNAL void _log_mav_write_to_flash(struct logger *l)
+{
+    size_t len = cmp_mem_access_get_pos(&l->cma);
+    uint8_t crc = crc8(0, (unsigned char *)&l->buffer[LOG_ENTRY_HEADER_LEN], len);
+    l->buffer[0] = (uint8_t)len; //LSB
+    l->buffer[1] = (uint8_t)(len>>8); //MSB
+    l->buffer[2] = crc;
+    len += LOG_ENTRY_HEADER_LEN;
+    _log_flash_write(l->mav_write_pos, l->buffer, len);
+    if(l->mav_write_pos == FLASH_BLOCK_SIZE)
+    	l->mav_write_pos = 2*FLASH_BLOCK_SIZE;
+    else
+    	l->mav_write_pos = FLASH_BLOCK_SIZE;
+
     logger_unlock();
 }
 
@@ -80,14 +101,19 @@ void log_entry_write_to_flash(void)
     _log_entry_write_to_flash(&logger);
 }
 
+void log_mav_write_to_flash(void)
+{
+    _log_mav_write_to_flash(&logger);
+}
+
 bool log_read_entry(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry)
 {
     int ret;
-    uint8_t header[2];
+    uint8_t header[LOG_ENTRY_HEADER_LEN];
     logger_lock();
-    ret = flash_read(addr, header, 2);
-    size_t len = header[0];
-    uint8_t crc = header[1];
+    ret = flash_read(addr, header, LOG_ENTRY_HEADER_LEN);
+    size_t len = ((uint16_t)header[1]<<8) | header[0];
+    uint8_t crc = header[2];
     if (ret == 0 && len > 0) {
         ret = flash_read(addr + LOG_ENTRY_HEADER_LEN, buf, len);
     }
@@ -110,7 +136,8 @@ LOG_INTERNAL bool _log_flash_erase_addr(uint32_t addr, size_t len, uint32_t *era
         *erase_addr = addr;
         return true;
     }
-    uint32_t end = (addr + len - 1);
+    uint32_t offset = (FLASH_BLOCK_SIZE/FLASH_PAGE_SIZE) - (uint32_t)addr/FLASH_PAGE_SIZE;
+    uint32_t end = (addr + len + offset - 1);
     if (addr - addr % FLASH_BLOCK_SIZE != end - end % FLASH_BLOCK_SIZE) {
         // write length passes into a new flash block
         *erase_addr = end - end % FLASH_BLOCK_SIZE;
@@ -133,6 +160,7 @@ LOG_INTERNAL void _log_flash_write(uint32_t addr, void *data, size_t len)
 LOG_INTERNAL bool _log_backup_table_get_last(uint32_t *backup_addr)
 {
     uint32_t addr = 0;
+    uint8_t i = 0;
     while(addr < FLASH_BLOCK_SIZE) {
         uint32_t val;
         logger_lock();
@@ -143,6 +171,11 @@ LOG_INTERNAL bool _log_backup_table_get_last(uint32_t *backup_addr)
             return true;
         }
         addr += 4;
+        //if page_size - usable_lengt >= 4 the following code doesn't work
+        for (i=0; i<4; i++){
+        	if ((addr+=i)%FLASH_PAGE_SIZE > FLASH_USABLE_LENGTH)
+        		addr+=4;
+        }
     }
     return false;
 }
@@ -198,19 +231,96 @@ void log_position_backup(void)
     _log_position_backup(&logger);
 }
 
+LOG_INTERNAL uint32_t _log_get_timestamp(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry)
+{
+	cmp_mem_access_t cma;
+	cmp_ctx_t ctx;
+
+	bool ret = 0;
+	uint32_t array_l = 0;
+	uint32_t time = 0;
+
+	if (!log_read_entry(addr, buf, entry_len, next_entry))
+		return false;
+
+	cmp_mem_access_ro_init(&ctx, &cma, buf, LOG_ENTRY_DATA_LEN);
+
+	ret = cmp_read_array(&ctx, &array_l);
+	if (ret == false || array_l != 3)
+		return false;
+
+	ret = cmp_read_uint(&ctx, &time);
+
+	return time;
+}
+
+LOG_INTERNAL void _log_seek_last_mav_entry()
+{
+	uint32_t timestamp[2];
+	size_t len = 0;
+	uint32_t next_entry = 0;
+	uint32_t val [2];
+
+	flash_read(FLASH_BLOCK_SIZE, (uint8_t*)&val[0], 4);
+	flash_read(2*FLASH_BLOCK_SIZE, (uint8_t*)&val[1], 4);
+
+	if (val[0] == 0xffffffff && val[1] == 0xffffffff)
+		logger.mav_write_pos = FLASH_BLOCK_SIZE;
+	else if (val[0] == 0xffffffff)
+		logger.mav_write_pos = FLASH_BLOCK_SIZE;
+	else if (val[1] == 0xffffffff)
+		logger.mav_write_pos = 2*FLASH_BLOCK_SIZE;
+	else{
+		// we have to find the oldest entry
+		timestamp[0] = _log_get_timestamp(FLASH_BLOCK_SIZE, logger.buffer, &len, &next_entry);
+		timestamp[1] = _log_get_timestamp(2*FLASH_BLOCK_SIZE, logger.buffer, &len, &next_entry);
+
+		if (timestamp[0] > timestamp[1])
+			logger.mav_write_pos = 2*FLASH_BLOCK_SIZE;
+		else
+			logger.mav_write_pos = FLASH_BLOCK_SIZE;
+	}
+}
+
+//return false if reading log fail or if there's nothing to read
+bool log_read_last_mav_entry (uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry)
+{
+	uint32_t val = 0;
+
+	if(logger.mav_write_pos == FLASH_BLOCK_SIZE){
+		flash_read(2*FLASH_BLOCK_SIZE, (uint8_t*)&val, 4);
+		if (val == 0xffffffff)
+			return false;
+		else
+			return log_read_entry(2*FLASH_BLOCK_SIZE, buf, entry_len, next_entry);
+	}
+	else{
+		flash_read(FLASH_BLOCK_SIZE, (uint8_t*)&val, 4);
+		if (val == 0xffffffff)
+			return false;
+		else
+			return log_read_entry(FLASH_BLOCK_SIZE, buf, entry_len, next_entry);
+	}
+}
+
 // returns false on error
 bool log_init(void)
 {
-    logger.flash_write_pos = FLASH_BLOCK_SIZE; // second block
+
+    logger.flash_write_pos = 3*FLASH_BLOCK_SIZE; // fourth block
     logger.backup_pos = 0;
+    logger.mav_write_pos = FLASH_BLOCK_SIZE; // second block
     uint32_t bkup_pos = 0;
     if (!_log_backup_table_get_last(&bkup_pos) || bkup_pos == 0) {
         // either empty flash or backup table full (very unlikely)
         // erase & restart logging at beginning of flash
         flash_block_erase(0x00000000);
         _log_position_backup(&logger);
+        _log_seek_last_mav_entry();
         return true;
     }
+
+    _log_seek_last_mav_entry();
 
     uint32_t pos = 0;
     logger_lock();

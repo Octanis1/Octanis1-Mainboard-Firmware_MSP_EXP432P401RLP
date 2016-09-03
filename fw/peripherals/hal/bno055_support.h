@@ -91,7 +91,7 @@ s8 BNO055_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt);
 /*
  * \Brief: I2C init routine
 */
-s8 I2C_routine(void);
+s8 BNO055_I2C_routine(void);
 /********************End of I2C function declarations***********************/
 /*	Brief : The delay routine
  *	\param : delay in ms

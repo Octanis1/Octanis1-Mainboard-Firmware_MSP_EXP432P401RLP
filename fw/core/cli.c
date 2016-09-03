@@ -42,22 +42,25 @@ static UART_Handle uart = NULL;
 static void cli_uart_init(UART_SerialDevice *dev) {
 	static UART_Params uartParams;
 
-    /* Create a UART with data processing off. */
-    UART_Params_init(&uartParams);
-    uartParams.writeDataMode = UART_DATA_BINARY;
-    uartParams.readDataMode = UART_DATA_BINARY;
-    uartParams.readReturnMode = UART_RETURN_FULL;
-    uartParams.writeMode = UART_MODE_BLOCKING;
-    uartParams.readEcho = UART_ECHO_OFF;
-    uartParams.baudRate = 9600;
-    uart = UART_open(CLI_UART, &uartParams);
+	if(uart == NULL)
+	{
+		/* Create a UART with data processing off. */
+		UART_Params_init(&uartParams);
+		uartParams.writeDataMode = UART_DATA_BINARY;
+		uartParams.readDataMode = UART_DATA_BINARY;
+		uartParams.readReturnMode = UART_RETURN_FULL;
+		uartParams.writeMode = UART_MODE_BLOCKING;
+		uartParams.readEcho = UART_ECHO_OFF;
+		uartParams.baudRate = 57600;
+		uart = UART_open(CLI_UART, &uartParams);
 
-    if (uart == NULL) {
-        System_abort("Error opening the UART");
-    }
+		if (uart == NULL) {
+			System_abort("Error opening the UART");
+		}
 
-    dev->fntab = &UART_SerialDevice_fntab;
-    dev->uart = uart;
+		dev->fntab = &UART_SerialDevice_fntab;
+		dev->uart = uart;
+	}
 }
 
 
@@ -359,6 +362,11 @@ const struct shell_commands commands[] = {
     {NULL, NULL}
 };
 
+static mavlink_status_t mavlink_status;
+uint16_t cli_mavlink_dropcount()
+{
+	return mavlink_status.packet_rx_drop_count;
+}
 
 void mavlink_rx(SerialDevice *dev){
 
@@ -366,11 +374,10 @@ void mavlink_rx(SerialDevice *dev){
 	frame.direction = CHANNEL_IN;
 	frame.channel = CHANNEL_APP_UART;
 
-	mavlink_status_t status;
 	int c;
 
 	while((c = serial_getc(dev)) >= 0) {
-		if(mavlink_parse_char(CHANNEL_APP_UART, (uint8_t)c, &(frame.mavlink_message), &status)){
+		if(mavlink_parse_char(CHANNEL_APP_UART, (uint8_t)c, &(frame.mavlink_message), &mavlink_status)){
 			// --> deal with received message...
 			Mailbox_post(comm_mailbox, &frame, BIOS_NO_WAIT);
 		}

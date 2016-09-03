@@ -8,6 +8,10 @@
 #include "adc.h"
 #include "driverlib.h"
 #include "motors.h"
+#include "../../Board.h"
+
+#define VOFFSET_VAL_12BIT			2021 // offset value from Vref (1.25V in 12 bits); empirically determined. (TODO: verify!)
+#define CURRENT_SCALING_FACTOR_uA	(float)125000/2048	//divide by this factor to get from ADC counts to mA (full scale = ±125mA)
 
 static uint64_t adc_int_status;
 
@@ -75,8 +79,8 @@ void adc_isr()
 
 }
 
-
-uint8_t adc_read_motor_sensors(uint16_t wheel_sensor_values[N_WHEELS])
+// function returns motor current values in uA
+uint8_t adc_read_motor_sensors(int32_t wheel_sensor_values[N_WHEELS])
 {
 	static int i,j; //counter variables
 
@@ -105,9 +109,16 @@ uint8_t adc_read_motor_sensors(uint16_t wheel_sensor_values[N_WHEELS])
 				wheel_sensor_values[1] += ADC14->MEM[22];
 				while(wheel_conversion_done == 0);
 				wheel_sensor_values[0] += ADC14->MEM[23];
+
+				Task_sleep(1);
 			}
 
 			ADC14_disableConversion();
+			for(j = 0; j<N_WHEELS;j++)
+			{
+				wheel_sensor_values[j] -= VOFFSET_VAL_12BIT*N_ADC_AVG_WHEEL;
+				wheel_sensor_values[j] = (float)wheel_sensor_values[j] * (float)((float)CURRENT_SCALING_FACTOR_uA/(float)N_ADC_AVG_WHEEL );
+			}
 			return ADC_SUCCESS;
 		}
 	}
@@ -115,7 +126,7 @@ uint8_t adc_read_motor_sensors(uint16_t wheel_sensor_values[N_WHEELS])
 }
 
 
-uint8_t adc_read_strut_sensor_values(uint16_t strut_sensor_values[N_STRUTS])
+uint8_t adc_read_strut_sensor_values(int32_t strut_sensor_values[N_STRUTS])
 {
 	static int i,j; //counter variables
 
@@ -164,6 +175,10 @@ void adc_init(void)
 	//ADC14_setPowerMode(ADC_EXTREME_LOW_POWER_MODE);
 	ADC14_setResolution(ADC_12BIT);
 
+	/******** enable reference voltage and set to 2.5V ********/
+	REF_A_enableReferenceVoltage();
+	REF_A_setReferenceVoltage(REF_A_VREF2_5V);
+
 	/******** Motor (wheel current sensor) ADC inputs *********/
 	/* Configuring GPIOs (8.5 A20) */
 	GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P8, GPIO_PIN5, GPIO_TERTIARY_MODULE_FUNCTION);
@@ -175,13 +190,13 @@ void adc_init(void)
 	GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P8, GPIO_PIN2, GPIO_TERTIARY_MODULE_FUNCTION);
 	/* Configuring ADC Memory */
 	ADC14_configureMultiSequenceMode(ADC_MEM20,ADC_MEM23, false); //Last argument is "repeat mode". only has effect in AUTOMATIC_ITERATION. Silicon Bug present too!
-	ADC14_configureConversionMemory(ADC_MEM20, ADC_VREFPOS_AVCC_VREFNEG_VSS,
+	ADC14_configureConversionMemory(ADC_MEM20, ADC_VREFPOS_INTBUF_VREFNEG_VSS,
 	ADC_INPUT_A20, ADC_NONDIFFERENTIAL_INPUTS);
-	ADC14_configureConversionMemory(ADC_MEM21, ADC_VREFPOS_AVCC_VREFNEG_VSS,
+	ADC14_configureConversionMemory(ADC_MEM21, ADC_VREFPOS_INTBUF_VREFNEG_VSS,
 	ADC_INPUT_A21, ADC_NONDIFFERENTIAL_INPUTS);
-	ADC14_configureConversionMemory(ADC_MEM22, ADC_VREFPOS_AVCC_VREFNEG_VSS,
+	ADC14_configureConversionMemory(ADC_MEM22, ADC_VREFPOS_INTBUF_VREFNEG_VSS,
 	ADC_INPUT_A22, ADC_NONDIFFERENTIAL_INPUTS);
-	ADC14_configureConversionMemory(ADC_MEM23, ADC_VREFPOS_AVCC_VREFNEG_VSS,
+	ADC14_configureConversionMemory(ADC_MEM23, ADC_VREFPOS_INTBUF_VREFNEG_VSS,
 	ADC_INPUT_A23, ADC_NONDIFFERENTIAL_INPUTS);
 
 	/******** Strut position sensor ADC inputs *********/

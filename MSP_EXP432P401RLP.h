@@ -48,18 +48,20 @@
 //#define VERSION_0_5 // define to use board v0.5 pin definitions, else undefine
 //#define VERSION_0_6
 #define VERSION_1
+
 //#define FLASH_ENABLED 1
-
-
+//#define ARM_IMMEDIATELY	1 //if defined, armed state will not wait for GPS and IMU valid.
+//#define SBC_ENABLED	// if defined, it will wait for SBC to boot before sending mavlink messages and continue after waypoint 0.
 #define LORA_ENABLED 1
-#define ROCKBLOCK_ENABLED
+//#define ROCKBLOCK_ENABLED 1
 //#define EPS_ENABLED 1
 //#define BLE_ENABLED 1
-//#define MAVLINK_ON_UART0_ENABLED 1
+#define MAVLINK_ON_UART0_ENABLED 1
+//#define MAVLINK_ON_LORA_ENABLED 1 //for verbose lora outputs
 //#define ROCKBLOCK_ENABLED 1
 //#define UARTCAM_ENABLED 1
 //#define GSM_ENABLED 1
-
+//#define USE_ONBOARD_BNO055 1 //in contrast to just decoding incoming mavlink attitude messages.
 //#define USE_ULTRASONIC 1
 
 #ifdef VERSION_0_5
@@ -87,8 +89,10 @@ extern "C" {
  */
 typedef enum MSP_EXP432P401RLP_GPIOName {
 	Octanis_LIGHTNING_INT,
-	Octanis_EPS_ALIVE_REQ,
+	Octanis_ROCKBLOCK_NET,
 	Octanis_GEIGER_COUNTER,
+	Octanis_EPS_INT,
+	Octanis_UV_INT,
 	Octanis_LED0, //octanis led1
 	Octanis_LED1, //octanis led2
 	Octanis_ROCKBLOCK_SLEEP,
@@ -109,14 +113,13 @@ typedef enum MSP_EXP432P401RLP_GPIOName {
 	Octanis_M3_EN,
 	Octanis_M4_EN,
 	Octanis_M5678_ON,
-	Octanis_M5_IN2,
-	Octanis_M6_IN2,
-	Octanis_M7_IN2,
-	Octanis_M8_IN2,
+	Octanis_M5_PH,
+	Octanis_M6_PH,
+	Octanis_M7_PH,
+	Octanis_M8_PH,
 
 	Octanis_M5678_CURR_SENS_EN,
 	Octanis_M1_ANGLE_ENCODER_CS,
-	Octanis_UV_EN,
 	Octanis_GEIGER_EN,
 	Octanis_Flash_CS,
 #ifndef VERSION_0_5

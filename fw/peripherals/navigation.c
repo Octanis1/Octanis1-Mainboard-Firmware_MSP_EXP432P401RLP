@@ -25,6 +25,16 @@ void Task_sleep(int a);
 #include <math.h>
 #include "../lib/printf.h"
 #include "pid.h"
+#include "../lib/serial_printf.h"
+#include <string.h>
+
+//Logging includes:
+#include "../core/log.h"
+#include "../core/log_entries.h"
+#include "../lib/cmp/cmp.h"
+#include "../lib/cmp_mem_access/cmp_mem_access.h"
+#include "flash.h"
+#include "hal/spi_helper.h"
 
 #endif
 #define M_PI 3.14159265358979323846
@@ -54,7 +64,7 @@ typedef struct _navigation_status{
 	float angle_to_target; // [-180, 180]. Positive means target is located to the right
 	float max_dist_obs;
 	int32_t motor_values[2]; // current motor speed
-	uint8_t angle_valid;
+	bool position_valid; // defines if GPS and heading angle are valid. if false, the rover shall not drive to target
 	enum _current_state{
 		STOP=0,
 		BYPASS,
@@ -63,6 +73,8 @@ typedef struct _navigation_status{
 		AVOID_WALL,
 		SPACE_NEEDED,
 	} current_state;
+	char halt;
+	char cmd_armed_disarmed; // received command to arm (1) or disarm (0)
 } navigation_status_t;
 
 static navigation_status_t navigation_status;
@@ -72,10 +84,65 @@ static mission_item_list_t mission_items;
 
 void navigation_update_current_target();
 
+mavlink_mission_item_t * navigation_mavlink_get_item_list()
+{
+	return mission_items.item;
+}
+
+uint16_t navigation_mavlink_get_current_index()
+{
+	return mission_items.current_index;
+}
+
+uint16_t navigation_mavlink_get_count()
+{
+	return mission_items.count;
+}
+
+float navigation_get_lat_rover()
+{
+	return navigation_status.lat_rover;
+}
+
+float navigation_get_lon_rover()
+{
+	return navigation_status.lon_rover;
+}
+
+float navigation_get_heading_rover()
+{
+	return navigation_status.heading_rover;
+}
+
+float navigation_get_lat_target()
+{
+	return navigation_status.lat_target;
+}
+
+float navigation_get_lon_target()
+{
+	return navigation_status.lon_target;
+}
+
+float navigation_get_distance_to_target()
+{
+	return navigation_status.distance_to_target;
+}
 
 float navigation_get_angle_to_target()
 {
 	return navigation_status.angle_to_target;
+}
+
+float navigation_get_max_dist_obs()
+{
+	return navigation_status.max_dist_obs;
+}
+
+
+enum _current_state navigation_get_current_state()
+{
+	return navigation_status.current_state;
 }
 
 float navigation_degree_to_rad(float degree)
@@ -147,9 +214,72 @@ float navigation_angle_for_rover(float lat1, float lon1, float lat2, float lon2,
     return bearing;
 }
 
+/******** functions to control driving/armed state via MAVLINK **********/
+
+MAV_RESULT navigation_halt_resume(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg)
+{
+	float hold_resume = mavlink_msg_command_long_get_param1(msg);
+	if(hold_resume == MAV_GOTO_DO_HOLD)
+	{
+		navigation_status.halt = 1;
+	}
+	else if(hold_resume == MAV_GOTO_DO_CONTINUE)
+	{
+		navigation_status.halt = 0;
+	}
+	else
+	{
+		return MAV_RESULT_DENIED;
+	}
+	return MAV_RESULT_ACCEPTED;
+}
+
+/* This function decides if the SBC should be armed or disarmed, depending on the current waypoint and state of this system.
+ * Shall be in the navigation task
+ */
+void navigation_arm_disarm()
+{
+#ifndef ARM_IMMEDIATELY
+	if(navigation_status.position_valid)
+#endif
+	{
+		// condition to arm mainboard: know a valid position. TODO: add more conditions (EPS motor on state, etc...)
+		if(navigation_status.cmd_armed_disarmed == 1)
+		{
+			comm_arm_mainboard();
+			//condition to arm SBC:
+			if(comm_sbc_running()==1 && mission_items.current_index > 0)
+			{
+				if(comm_sbc_armed() == 0)
+					comm_arm_disarm_subsystems(1);
+			}
+		}
+		else
+		{
+			if(comm_sbc_armed())
+				comm_arm_disarm_subsystems(0);
+			comm_disarm_mainboard();
+		}
+	}
+#ifndef ARM_IMMEDIATELY
+	else
+	{
+		if(comm_sbc_armed())
+			comm_arm_disarm_subsystems(0);
+		comm_disarm_mainboard();
+	}
+#endif
+}
+
+
+// This function stores the information that "ARM/DISARM" has been received.
+void navigation_rxcmd_arm_disarm(float arm_disarm)
+{
+	navigation_status.cmd_armed_disarmed = (arm_disarm==1);
+}
+
 
 /******** functions to handle mavlink mission items **********/
-
 static uint16_t mission_item_rx_count;
 
 COMM_MAV_RESULT navigation_rx_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg)
@@ -182,6 +312,10 @@ COMM_MAV_RESULT navigation_rx_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_
 				mission_items.count = next_index + 1;
 				mission_item_rx_count = 0;
 			}
+#ifdef FLASH_ENABLED
+			log_write_mavlink_item_list();
+			serial_printf(cli_stdout,"waypoint list stored on flash done \n");
+#endif
 		}
 		return REPLY_TO_SENDER;
 	}
@@ -248,7 +382,8 @@ COMM_MAV_RESULT navigation_next_mission_item(COMM_MAV_MSG_TARGET *target, mavlin
 			mavlink_msg_mission_current_pack(mavlink_system.sysid, MAV_COMP_ID_MISSIONPLANNER, answer_msg,
 						0);
 			navigation_status.current_state = STOP;
-			//TODO: shut down SBPC and disarm!
+			// SPC gets disarmed automatically as long as it is sending heartbeats,
+			//    because current target is 0 (HOME) again
 			return REPLY_TO_SENDER;
 		}
 	}
@@ -295,6 +430,29 @@ void navigation_mission_item_reached()
 	}
 }
 
+// message that is continuously at each task call
+COMM_FRAME* navigation_pack_mavlink_hud()
+{
+	// Mavlink heartbeat
+	// Define the system type, in this case an airplane
+	float airspeed = 0.; //TODO
+	float groundspeed = 0.; //TODO
+	int16_t heading = imu_get_heading();
+	uint16_t throttle = (navigation_status.motor_values[0] + navigation_status.motor_values[1]);
+	float alt = (1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
+	float climb = 0.; //TODO
+
+	// Initialize the message buffer
+	static COMM_FRAME frame;
+
+	// Pack the message
+
+	mavlink_msg_vfr_hud_pack(mavlink_system.sysid, MAV_COMP_ID_PATHPLANNER, &(frame.mavlink_message),
+			airspeed, groundspeed, heading, throttle, alt, climb);
+
+	return &frame;
+}
+
 
 #if defined (NAVIGATION_TEST)
 uint8_t navigation_bypass(char command, uint8_t index);
@@ -336,15 +494,22 @@ uint8_t navigation_bypass(char command, uint8_t index)
 	}
 	else
 	{
+		if(command == 'x')
+		{
+			motors_wheels_stop();
+			navigation_status.current_state = STOP;
+			return 1;
+		}
 		switch(command)
 		{
-		case 'f': motors_wheels_move(PWM_SPEED_100, PWM_SPEED_100, PWM_SPEED_100, PWM_SPEED_100);break;
-		case 'b': motors_wheels_move(-PWM_SPEED_100, -PWM_SPEED_100, -PWM_SPEED_100, -PWM_SPEED_100);break;
-		case 'l': motors_wheels_move(PWM_SPEED_80, PWM_SPEED_100, PWM_SPEED_80, PWM_SPEED_100);break;
-		case 'r': motors_wheels_move(PWM_SPEED_100, PWM_SPEED_80, PWM_SPEED_100, PWM_SPEED_80);break;
-		case 'x': motors_wheels_stop();break;
+		case 'f': navigation_status.motor_values[0] = PWM_SPEED_100; navigation_status.motor_values[1] = PWM_SPEED_100; break;
+		case 'b': navigation_status.motor_values[0] = -PWM_SPEED_100; navigation_status.motor_values[1] = -PWM_SPEED_100; break;
+		case 'l': navigation_status.motor_values[0] = PWM_SPEED_80; navigation_status.motor_values[1] = PWM_SPEED_100; break;
+		case 'r': navigation_status.motor_values[0] = PWM_SPEED_100; navigation_status.motor_values[1] = PWM_SPEED_80; break;
 		default: return 0;
 		}
+		motors_wheels_move(navigation_status.motor_values[0], navigation_status.motor_values[1],
+				navigation_status.motor_values[0], navigation_status.motor_values[1]);
 	}
 
 	navigation_status.current_state = BYPASS;
@@ -371,7 +536,7 @@ void navigation_update_position()
 		motors_struts_get_position();
 	}
 
-	navigation_status.angle_valid = (imu_get_calib_status() >= MIN_IMU_CALIB_STATUS);
+	navigation_status.position_valid = imu_valid() && gps_valid();
 
 	// recalculate heading angle
 	navigation_status.heading_rover = imu_get_fheading();
@@ -404,7 +569,6 @@ void navigation_update_state()
     int32_t right_s = 0;
     int32_t front1_s = 0;
     int32_t front2_s = 0;
-    int i = 0;
 
     ultrasonic_get_distance(distance_values);
     smallest = ultrasonic_get_smallest(distance_values, N_ULTRASONIC_SENSORS);
@@ -464,21 +628,13 @@ void navigation_update_state()
         //normal operation: continue on mission items
 		if(mission_items.item[mission_items.current_index].current)
 		{
-			mavlink_heartbeat_t hb = comm_get_mavlink_heartbeat();
-
-			if((navigation_status.angle_valid == 1) && ((hb.system_status == MAV_STATE_ACTIVE) || (mission_items.current_index == 0))){
+			// Only go to target if mb is armed and rover must go to home OR sbc is armed and ready to record
+			if(comm_mainboard_armed() == 1 && (mission_items.current_index == 0 || comm_sbc_armed() == 1)){
 				navigation_status.current_state = GO_TO_TARGET;
 			}
-			else if(navigation_status.angle_valid == 0){
-				//serial_printf(cli_stdout, "Calibrate IMU (status: %d/9)\n",imu_get_calib_status());
-				for (i = 0; i<(7-imu_get_calib_status());i++) //blink shorter for better calibration
-				{
-					GPIO_toggle(Board_LED_RED);
-					Task_sleep(50);
-					GPIO_toggle(Board_LED_RED);
-					Task_sleep(50);
-				}
-				GPIO_write(Board_LED_RED,0);
+			else
+			{
+				navigation_status.current_state = STOP;
 			}
 		}
 
@@ -520,54 +676,64 @@ void navigation_move()
 	static int32_t lspeed, rspeed;
 	float angular = 0;
 
-	if(navigation_status.current_state == GO_TO_TARGET)
+	//only move if not on halt AND state = go_to_target
+	if(navigation_status.halt == 0)
 	{
-		angular = pid_update(&pid_a, navigation_status.angle_to_target) * PID_SCALING_FACTOR;
+		if(navigation_status.current_state == GO_TO_TARGET)
+		{
+			angular = pid_update(&pid_a, navigation_status.angle_to_target) * PID_SCALING_FACTOR;
 
-		if (angular > 0){
-			lspeed = PWM_SPEED_100;
-			rspeed = PWM_SPEED_100 - (int32_t)(angular);
-			if (rspeed < PWM_SPEED_80)
-				rspeed = PWM_SPEED_80;
-		}else if (angular <= 0){
-			rspeed = PWM_SPEED_100;
-			lspeed = PWM_SPEED_100 + (int32_t)(angular);
-			if (lspeed < PWM_SPEED_80)
-				lspeed = PWM_SPEED_80;
+			if (angular > 0){
+				lspeed = PWM_SPEED_100;
+				rspeed = PWM_SPEED_100 - (int32_t)(angular);
+				if (rspeed < PWM_SPEED_80)
+					rspeed = PWM_SPEED_80;
+			}else if (angular <= 0){
+				rspeed = PWM_SPEED_100;
+				lspeed = PWM_SPEED_100 + (int32_t)(angular);
+				if (lspeed < PWM_SPEED_80)
+					lspeed = PWM_SPEED_80;
 
+			}
+			motors_wheels_move((int32_t)lspeed, (int32_t)rspeed, (int32_t)lspeed, (int32_t)rspeed);
+			navigation_status.motor_values[0] = lspeed; //backup
+			navigation_status.motor_values[1] = rspeed;
 		}
-		motors_wheels_move((int32_t)lspeed, (int32_t)rspeed, (int32_t)lspeed, (int32_t)rspeed);
-		navigation_status.motor_values[0] = lspeed; //backup
-		navigation_status.motor_values[1] = rspeed;
+		else if(navigation_status.current_state == STOP)
+		{
+			motors_wheels_stop();
+			navigation_status.motor_values[0] = 0;
+			navigation_status.motor_values[1] = 0;
+		}
+		else if(navigation_status.current_state == AVOID_OBSTACLE)
+		{
+			int32_t distance_values[N_ULTRASONIC_SENSORS];
+			ultrasonic_get_distance(distance_values);
+			ultrasonic_check_distance(distance_values, navigation_status.motor_values, PWM_SPEED_80); //80% of speed to move slower than in normal mode
+
+			motors_wheels_move(navigation_status.motor_values[0], navigation_status.motor_values[1],
+					navigation_status.motor_values[0], navigation_status.motor_values[1]);
+
+		}else if (navigation_status.current_state == AVOID_WALL){
+			// move backwards in opposite curving direction (TODO: to be tested)
+			lspeed = -navigation_status.motor_values[1];
+			rspeed = -navigation_status.motor_values[0];
+			motors_wheels_move((int32_t)lspeed, (int32_t)rspeed, (int32_t)lspeed, (int32_t)rspeed);
+		}else if (navigation_status.current_state == SPACE_NEEDED){
+			navigation_status.motor_values[0] = -PWM_SPEED_100;
+			navigation_status.motor_values[1] = -PWM_SPEED_100;
+			motors_wheels_move(navigation_status.motor_values[0], navigation_status.motor_values[1],
+					navigation_status.motor_values[0], navigation_status.motor_values[1]);
+		}
 	}
-	else if(navigation_status.current_state == STOP)
+	else
 	{
-		motors_wheels_stop();
 		navigation_status.motor_values[0] = 0;
 		navigation_status.motor_values[1] = 0;
-	}
-	else if(navigation_status.current_state == AVOID_OBSTACLE)
-	{
-		int32_t distance_values[N_ULTRASONIC_SENSORS];
-		ultrasonic_get_distance(distance_values);
-		ultrasonic_check_distance(distance_values, navigation_status.motor_values, PWM_SPEED_80); //80% of speed to move slower than in normal mode
-
-		motors_wheels_move(navigation_status.motor_values[0], navigation_status.motor_values[1],
-				navigation_status.motor_values[0], navigation_status.motor_values[1]);
-
-	}else if (navigation_status.current_state == AVOID_WALL){
-		// move backwards in opposite curving direction (TODO: to be tested)
-		lspeed = -navigation_status.motor_values[1];
-		rspeed = -navigation_status.motor_values[0];
-		motors_wheels_move((int32_t)lspeed, (int32_t)rspeed, (int32_t)lspeed, (int32_t)rspeed);
-	}else if (navigation_status.current_state == SPACE_NEEDED){
-		navigation_status.motor_values[0] = -PWM_SPEED_100;
-		navigation_status.motor_values[1] = -PWM_SPEED_100;
-		motors_wheels_move(navigation_status.motor_values[0], navigation_status.motor_values[1],
-				navigation_status.motor_values[0], navigation_status.motor_values[1]);
+		motors_wheels_stop();
 	}
 
-	//		serial_printf(cli_stdout, "speed l=%d, r=%d \n", motor_values[0], motor_values[1]);
+		//		serial_printf(cli_stdout, "speed l=%d, r=%d \n", motor_values[0], motor_values[1]);
 
 }
 #endif
@@ -602,15 +768,77 @@ void navigation_init()
 	navigation_status.angle_to_target = 0.0;
 	navigation_status.current_state = STOP;
 	navigation_status.max_dist_obs = OBSTACLE_MAX_DIST;
+	navigation_status.halt = 0;
+	navigation_status.position_valid = false;
 	GPIO_write(Board_OBS_A_EN, 1);
 
 	mission_items.count = 0;
 }
 #endif
 
+void navigation_restore_mission_items(mission_item_list_t item_list)
+{
+	int i = 0;
+	mission_items.count = item_list.count;
+	mission_items.current_index = item_list.current_index;
+	for(i=0;i<item_list.count;i++){
+		mission_items.item[i].param1 = item_list.item[i].param1;
+		mission_items.item[i].param2 = item_list.item[i].param2;
+		mission_items.item[i].param3 = item_list.item[i].param3;
+		mission_items.item[i].param4 = item_list.item[i].param4;
+		mission_items.item[i].x = item_list.item[i].x;
+		mission_items.item[i].y = item_list.item[i].y;
+		mission_items.item[i].z = item_list.item[i].z;
+		mission_items.item[i].seq = item_list.item[i].seq;
+		mission_items.item[i].command = item_list.item[i].command;
+		mission_items.item[i].target_system = item_list.item[i].target_system;
+		mission_items.item[i].target_component = item_list.item[i].target_component;
+		mission_items.item[i].frame = item_list.item[i].frame;
+		mission_items.item[i].current = item_list.item[i].current;
+		mission_items.item[i].autocontinue = item_list.item[i].autocontinue;
+
+	}
+}
+
 void navigation_task()
 {
 	navigation_init();
+#ifdef FLASH_ENABLED
+	/************* flash test START ****************/
+	spi_helper_init_handle();
+
+    // force enable logging
+    bool logging_enabled = true;
+
+
+	static uint8_t buf[250];
+	flash_id_read(buf);
+	const uint8_t flash_id[] = {0x01,0x20,0x18}; // S25FL127S ID
+	if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
+		// flash answers with correct ID
+		serial_printf(cli_stdout, "Flash ID OK\n");
+	} else {
+		serial_printf(cli_stdout, "Flash ID ERROR\n");
+	}
+
+    if (logging_enabled) {
+        if (!log_init()) {
+            serial_printf(cli_stdout, "log_init failed\n");
+            log_reset();
+        }
+    }
+    //serial_printf(cli_stdout, "log position 0x%x\n", log_write_pos());
+	/************* flash test END ****************/
+
+    //We look if we have mavlink mission item logged, in case we just suffered a crash
+
+    uint32_t time = 0;
+    char name[4]; //Name is a 3 characters long string
+    mission_item_list_t item_list;
+    if(log_read_mavlink_item_list(&item_list, &time, &name))
+    	navigation_restore_mission_items(item_list);
+
+#endif
 
 	while(1){
 
@@ -618,7 +846,18 @@ void navigation_task()
 		navigation_update_current_target();
 		navigation_update_position();
 		navigation_update_state();
+		navigation_arm_disarm();
 		navigation_move();
+
+
+#ifdef MAVLINK_ON_LORA_ENABLED
+		comm_set_tx_flag(CHANNEL_LORA, MAV_COMP_ID_PATHPLANNER);
+#endif
+
+#ifdef MAVLINK_ON_UART0_ENABLED
+		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_PATHPLANNER);
+#endif
+		comm_mavlink_broadcast(navigation_pack_mavlink_hud());
 
 
 		Task_sleep(500);

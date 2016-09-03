@@ -23,6 +23,9 @@ typedef struct _mission_item_list_t{
 	uint16_t count; //total number of mission items stored
 } mission_item_list_t;
 
+MAV_RESULT navigation_halt_resume(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg);
+void navigation_rxcmd_arm_disarm(float arm_disarm);
+
 COMM_MAV_RESULT navigation_rx_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg);
 COMM_MAV_RESULT navigation_rx_mission_items_start(COMM_MAV_MSG_TARGET *target, mavlink_message_t *msg, mavlink_message_t *answer_msg);
 
@@ -42,7 +45,24 @@ COMM_MAV_RESULT navigation_next_mission_item(COMM_MAV_MSG_TARGET *target, mavlin
  */
 uint8_t navigation_bypass(char command, uint8_t index);
 
+//testing functions
+mavlink_mission_item_t item_init(uint8_t preset);
+uint8_t item_compare (mavlink_mission_item_t item1, mavlink_mission_item_t item2);
+
+mavlink_mission_item_t * navigation_mavlink_get_item_list();
+uint16_t navigation_mavlink_get_current_index();
+uint16_t navigation_mavlink_get_count();
+
+float navigation_get_lat_rover();
+float navigation_get_lon_rover();
+float navigation_get_heading_rover();
+float navigation_get_lat_target();
+float navigation_get_lon_target();
+float navigation_get_distance_to_target();
 float navigation_get_angle_to_target();
+float navigation_get_max_dist_obs();
+enum _current_state navigation_get_current_state();
+
 void navigation_set_max_dist(float max_dist);
 
 //Compute angle and distance from the rover to the target
@@ -53,6 +73,8 @@ float navigation_angle_for_rover(float lat1, float lon1, float lat2, float lon2,
 float navigation_degree_to_rad(float degree);
 
 void navigation_change_gain(char pid, char type, float gain);
+
+void navigation_restore_mission_items(mission_item_list_t item_list);
 
 //"Main" task of the file
 void navigation_task();

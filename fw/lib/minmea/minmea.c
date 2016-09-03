@@ -12,6 +12,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdarg.h>
+#include <time.h>
 
 #define boolstr(s) ((s) ? "true" : "false")
 
@@ -61,29 +62,25 @@ bool minmea_check(const char *sentence, bool strict)
     if (*sentence == '*') {
         // Extract checksum.
         sentence++;
-        uint8_t upper = hex2int(*sentence++);
+        int upper = hex2int(*sentence++);
         if (upper == -1)
             return false;
-        uint8_t lower = hex2int(*sentence++);
+        int lower = hex2int(*sentence++);
         if (lower == -1)
             return false;
-        uint8_t expected = upper << 4 | lower;
-
-        uint8_t diff = checksum-expected;
+        int expected = upper << 4 | lower;
 
         // Check for checksum mismatch.
-        if (expected != checksum){
+        if (checksum != expected)
             return false;
-        }
-    }
-    else if (strict) {
+    } else if (strict) {
         // Discard non-checksummed frames in strict mode.
         return false;
     }
 
-    // The only stuff allowed at this point is a newline.
-    if (*sentence && strcmp(sentence, "\n") && strcmp(sentence, "\r\n") && strcmp(sentence, "\n\r") && strcmp(sentence, "\r"))
-        return false;
+//    // The only stuff allowed at this point is a newline.
+//    if (*sentence && strcmp(sentence, "\n") && strcmp(sentence, "\r\n"))
+//        return false;
 
     return true;
 }
@@ -269,9 +266,12 @@ bool minmea_scan(const char *sentence, const char *format, ...)
                         if (!isdigit((unsigned char) field[f]))
                             goto parse_error;
 
-                    d = strtol((char[]) {field[0], field[1], '\0'}, NULL, 10);
-                    m = strtol((char[]) {field[2], field[3], '\0'}, NULL, 10);
-                    y = strtol((char[]) {field[4], field[5], '\0'}, NULL, 10);
+                    char dArr[] = {field[0], field[1], '\0'};
+                    char mArr[] = {field[2], field[3], '\0'};
+                    char yArr[] = {field[4], field[5], '\0'};
+                    d = strtol(dArr, NULL, 10);
+                    m = strtol(mArr, NULL, 10);
+                    y = strtol(yArr, NULL, 10);
                 }
 
                 date->day = d;
@@ -290,9 +290,12 @@ bool minmea_scan(const char *sentence, const char *format, ...)
                         if (!isdigit((unsigned char) field[f]))
                             goto parse_error;
 
-                    h = strtol((char[]) {field[0], field[1], '\0'}, NULL, 10);
-                    i = strtol((char[]) {field[2], field[3], '\0'}, NULL, 10);
-                    s = strtol((char[]) {field[4], field[5], '\0'}, NULL, 10);
+                    char hArr[] = {field[0], field[1], '\0'};
+                    char iArr[] = {field[2], field[3], '\0'};
+                    char sArr[] = {field[4], field[5], '\0'};
+                    h = strtol(hArr, NULL, 10);
+                    i = strtol(iArr, NULL, 10);
+                    s = strtol(sArr, NULL, 10);
                     field += 6;
 
                     // Extra: fractional time. Saved as microseconds.
@@ -367,6 +370,8 @@ enum minmea_sentence_id minmea_sentence_id(const char *sentence, bool strict)
         return MINMEA_SENTENCE_GST;
     if (!strcmp(type+2, "GSV"))
         return MINMEA_SENTENCE_GSV;
+    if (!strcmp(type+2, "VTG"))
+        return MINMEA_SENTENCE_VTG;
 
     return MINMEA_UNKNOWN;
 }
@@ -413,8 +418,8 @@ bool minmea_parse_gga(struct minmea_sentence_gga *frame, const char *sentence)
             &frame->time,
             &frame->latitude, &latitude_direction,
             &frame->longitude, &longitude_direction,
-            &frame->satellites_tracked,
             &frame->fix_quality,
+            &frame->satellites_tracked,
             &frame->hdop,
             &frame->altitude, &frame->altitude_units,
             &frame->height, &frame->height_units,
@@ -541,6 +546,40 @@ bool minmea_parse_gsv(struct minmea_sentence_gsv *frame, const char *sentence)
     }
     if (strcmp(type+2, "GSV"))
         return false;
+
+    return true;
+}
+
+bool minmea_parse_vtg(struct minmea_sentence_vtg *frame, const char *sentence)
+{
+    // $GPVTG,054.7,T,034.4,M,005.5,N,010.2,K*48
+    // $GPVTG,156.1,T,140.9,M,0.0,N,0.0,K*41
+    // $GPVTG,096.5,T,083.5,M,0.0,N,0.0,K,D*22
+    // $GPVTG,188.36,T,,M,0.820,N,1.519,K,A*3F
+    char type[6];
+    char c_true, c_magnetic, c_knots, c_kph, c_faa_mode;
+
+    if (!minmea_scan(sentence, "tfcfcfcfc;c",
+            type,
+            &frame->true_track_degrees,
+            &c_true,
+            &frame->magnetic_track_degrees,
+            &c_magnetic,
+            &frame->speed_knots,
+            &c_knots,
+            &frame->speed_kph,
+            &c_kph,
+            &c_faa_mode))
+        return false;
+    if (strcmp(type+2, "VTG"))
+        return false;
+    // check chars
+    if (c_true != 'T' ||
+        c_magnetic != 'M' ||
+        c_knots != 'N' ||
+        c_kph != 'K')
+        return false;
+    frame->faa_mode = c_faa_mode;
 
     return true;
 }

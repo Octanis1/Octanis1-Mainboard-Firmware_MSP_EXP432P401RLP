@@ -1,4 +1,4 @@
-/*
+	/*
  * Copyright (c) 2015, Texas Instruments Incorporated
  * All rights reserved.
  *
@@ -152,12 +152,19 @@ GPIO_PinConfig gpioPinConfigs[] = {
 #else
 	GPIOMSP432_P1_4 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
 #endif
-	/* Octanis_EPS_ALIVE_REQ */
+	/* Octanis_ROCKBLOCK_NET */
 	GPIOMSP432_P2_1 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
 
 	/*Octanis_GEIGER_COUNTER*/
 	GPIOMSP432_P1_0 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_FALLING,
 
+	/* Octanis_EPS_INT */
+	GPIOMSP432_P2_5 | GPIO_CFG_IN_PU | GPIO_CFG_IN_INT_RISING,
+
+	/*Octanis_UV_INT Bidirectional Interrupt Output. Open-drain interrupt output pin.
+	 * Must be at logic level high during power-up sequence to enable low power operation.
+	 * --> Pulled down to detect if external board is not connected.*/
+	GPIOMSP432_P1_5 | GPIO_CFG_IN_PD | GPIO_CFG_IN_INT_RISING,
 
 	/********** Output pins **********/
     /* Octanis_LED1 (green) */
@@ -167,7 +174,7 @@ GPIO_PinConfig gpioPinConfigs[] = {
     GPIOMSP432_P10_1 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
     /* Octanis_ROCKBLOCK_SLEEP */
-    GPIOMSP432_P4_6 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+    GPIOMSP432_P4_7 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
     /* Octanis_LORA_RESET_N */
     GPIOMSP432_P9_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
@@ -259,11 +266,11 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	/* Octanis_M5678_ON */
 	GPIOMSP432_P3_1 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 #ifdef VERSION_1
-	/* Octanis_M5_IN2 */
-	GPIOMSP432_P7_6 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+	/* Octanis_M5_PH */
+	GPIOMSP432_P7_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
-	/* Octanis_M6_IN2 */
-	GPIOMSP432_P3_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+	/* Octanis_M6_PH */
+	GPIOMSP432_P7_7 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 #else
 	/* Octanis_M5_IN2 */
 	GPIOMSP432_P8_0 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
@@ -271,11 +278,11 @@ GPIO_PinConfig gpioPinConfigs[] = {
 	/* Octanis_M6_IN2 */
 	GPIOMSP432_P8_1 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 #endif
-	/* Octanis_M7_IN2 */
-	GPIOMSP432_P3_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+	/* Octanis_M7_PH */
+	GPIOMSP432_P3_4 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
-	/* Octanis_M8_IN2 */
-	GPIOMSP432_P3_7 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
+	/* Octanis_M8_PH */
+	GPIOMSP432_P3_6 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
 #endif
 
@@ -284,9 +291,6 @@ GPIO_PinConfig gpioPinConfigs[] = {
 
 	/* Octanis_M1_ANGLE_ENCODER_CS */
 	GPIOMSP432_P6_2 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_HIGH,
-
-	/*UV_EN*/
-	GPIOMSP432_P1_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
 
 	/*GEIGER_EN*/
 	GPIOMSP432_P9_5 | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_HIGH | GPIO_CFG_OUT_LOW,
@@ -511,12 +515,12 @@ void MSP_EXP432P401RLP_initPWM(void)
     const uint8_t port7Map [] = {
     			PM_TA0CCR2A, PM_TA0CCR3A, PM_NONE, PM_TA0CCR1A, //note: P7.3 was defined as windsensor input
 															// P7.0 and P7.1 as ultrasonic input.
-            PM_NONE, PM_TA1CCR1A, PM_NONE, PM_TA1CCR2A
+            PM_NONE, PM_NONE, PM_TA1CCR1A, PM_NONE
         };
 
         const uint8_t port3Map [] = {
-        		PM_NONE, PM_NONE, PM_UCA2RXD, PM_UCA2TXD,
-    		PM_TA1CCR3A, PM_NONE, PM_TA1CCR4A, PM_NONE
+        		PM_TA1CCR2A, PM_NONE, PM_UCA2RXD, PM_UCA2TXD,
+			PM_NONE,PM_TA1CCR3A, PM_NONE, PM_TA1CCR4A
         };
 #endif
     /* Mapping capture compare registers to Port 7 */
@@ -543,16 +547,16 @@ void MSP_EXP432P401RLP_initPWM(void)
 #endif
 #ifdef VERSION_1
     MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P7,
-    	GPIO_PIN7, GPIO_PRIMARY_MODULE_FUNCTION);
+    	GPIO_PIN6, GPIO_PRIMARY_MODULE_FUNCTION);
 
-    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P7,
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P3,
+    	GPIO_PIN0, GPIO_PRIMARY_MODULE_FUNCTION);
+
+    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P3,
     	GPIO_PIN5, GPIO_PRIMARY_MODULE_FUNCTION);
 
     MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P3,
-    	GPIO_PIN4, GPIO_PRIMARY_MODULE_FUNCTION);
-
-    MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P3,
-        GPIO_PIN6, GPIO_PRIMARY_MODULE_FUNCTION);
+	GPIO_PIN7, GPIO_PRIMARY_MODULE_FUNCTION);
 #else
     MAP_GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P7,
     		GPIO_PIN7, GPIO_PRIMARY_MODULE_FUNCTION);
@@ -727,7 +731,10 @@ void MSP_EXP432P401RLP_initSPI(void)
 
 /* UART objects */
 UARTMSP432_Object uartMSP432Objects[MSP_EXP432P401RLP_UARTCOUNT];
-unsigned char uartMSP432RingBuffer[32];
+unsigned char uartMSP432RingBuffer0[32];
+unsigned char uartMSP432RingBuffer1[32];
+unsigned char uartMSP432RingBuffer2[32];
+unsigned char uartMSP432RingBuffer3[32];
 
 /*
  * The baudrate dividers were determined by using the MSP430 baudrate
@@ -772,8 +779,8 @@ const UARTMSP432_HWAttrs uartMSP432HWAttrs[MSP_EXP432P401RLP_UARTCOUNT] = {
         .numBaudrateEntries = sizeof(uartMSP432Baudrates) /
             sizeof(UARTMSP432_BaudrateConfig),
         .baudrateLUT = uartMSP432Baudrates,
-        .ringBufPtr  = uartMSP432RingBuffer,
-        .ringBufSize = sizeof(uartMSP432RingBuffer)
+        .ringBufPtr  = uartMSP432RingBuffer0,
+        .ringBufSize = sizeof(uartMSP432RingBuffer0)
     },
 	{
             .baseAddr = EUSCI_A1_BASE,
@@ -784,8 +791,8 @@ const UARTMSP432_HWAttrs uartMSP432HWAttrs[MSP_EXP432P401RLP_UARTCOUNT] = {
             .numBaudrateEntries = sizeof(uartMSP432Baudrates) /
                 sizeof(UARTMSP432_BaudrateConfig),
             .baudrateLUT = uartMSP432Baudrates,
-            .ringBufPtr  = uartMSP432RingBuffer,
-            .ringBufSize = sizeof(uartMSP432RingBuffer)
+            .ringBufPtr  = uartMSP432RingBuffer1,
+            .ringBufSize = sizeof(uartMSP432RingBuffer1)
     },
     {
         .baseAddr = EUSCI_A2_BASE,
@@ -796,8 +803,8 @@ const UARTMSP432_HWAttrs uartMSP432HWAttrs[MSP_EXP432P401RLP_UARTCOUNT] = {
         .numBaudrateEntries = sizeof(uartMSP432Baudrates) /
             sizeof(UARTMSP432_BaudrateConfig),
         .baudrateLUT = uartMSP432Baudrates,
-        .ringBufPtr  = uartMSP432RingBuffer,
-        .ringBufSize = sizeof(uartMSP432RingBuffer)
+        .ringBufPtr  = uartMSP432RingBuffer2,
+        .ringBufSize = sizeof(uartMSP432RingBuffer2)
     },
     {
         .baseAddr = EUSCI_A3_BASE,
@@ -808,8 +815,8 @@ const UARTMSP432_HWAttrs uartMSP432HWAttrs[MSP_EXP432P401RLP_UARTCOUNT] = {
         .numBaudrateEntries = sizeof(uartMSP432Baudrates) /
             sizeof(UARTMSP432_BaudrateConfig),
         .baudrateLUT = uartMSP432Baudrates,
-        .ringBufPtr  = uartMSP432RingBuffer,
-        .ringBufSize = sizeof(uartMSP432RingBuffer)
+        .ringBufPtr  = uartMSP432RingBuffer3,
+        .ringBufSize = sizeof(uartMSP432RingBuffer3)
     }
 };
 

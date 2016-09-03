@@ -25,4 +25,15 @@ unsigned int weather_get_ext_press();
 unsigned int weather_get_ext_humid();
 
 
+uint32_t weather_get_uv_light();
+
+
+uint32_t weather_get_ir_light();
+
+
+float weather_get_vis_lux();
+
+
+float weather_get_irradiance();
+
 void weather_task();
