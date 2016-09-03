@@ -82,6 +82,10 @@ void navigation_restore_mission_items(mission_item_list_t item_list);
 uint8_t navigation_get_position_i();
 int32_t navigation_get_angle();
 int16_t navigation_get_radius();
+int16_t navigation_get_vmot2rps_factor();
+int16_t navigation_get_angle_constant();
+uint8_t navigation_get_checked_gps_threshold();
+uint8_t navigation_get_crossed_gps_threshold();
 
 //odometry functions
 int navigation_run_odometer(int32_t voltage[N_SIDES], uint8_t position_i);

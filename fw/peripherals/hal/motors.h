@@ -10,7 +10,7 @@
 
 /* Definitions for wheels */
 #define N_WHEELS			4
-#define WHEEL_RADIUS		100 		//[mm]
+#define WHEEL_RADIUS		80 		//[mm]
 #define SPEED_FACTOR		0.00001875 	//[rps/pwm value]
 
 //PWM speed scale (time in us) :
@@ -41,8 +41,8 @@
 #include <stdint.h>
 
 //Definitions for GPS / odometry cycle
-#define MAX_RECENT_VALUES		 150
-#define VALUES_AFTER_GPS_RESET   50
+#define MAX_RECENT_VALUES		 30
+#define VALUES_AFTER_GPS_RESET   10
 
 int motors_init();
 int motors_pwm_init();
