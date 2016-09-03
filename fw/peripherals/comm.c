@@ -372,17 +372,9 @@ void comm_task(){
 
 	COMM_FRAME mail;
 
-
-	static const char test_msg[] = "This is a short and stupid message\n";
-	size_t test_msg_length = sizeof(test_msg);
-
-
 	comm_init();
 
 	while(1){
-		test_msg_length = sizeof(test_msg);
-		rockblock_add_SBD_binary(test_msg, &test_msg_length);
-		/*
 		if(Mailbox_pend(comm_mailbox, &mail, BIOS_WAIT_FOREVER)){
 			if((mail.direction) == CHANNEL_OUT)
 			{
@@ -392,7 +384,7 @@ void comm_task(){
 			{
 				comm_mavlink_handler(mail.channel, &(mail.mavlink_message));
 			}
-		}*/
+		}
  	}
 
 }
