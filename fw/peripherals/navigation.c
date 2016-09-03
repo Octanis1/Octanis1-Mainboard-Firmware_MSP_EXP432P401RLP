@@ -121,6 +121,7 @@ typedef struct _navigation_status{
 	uint8_t crossed_gps_threshold;
 	uint8_t checked_gps_threshold;
 	uint8_t not_first_time;
+	uint8_t send_signal;
 	float lat_target;
 	float lon_target;
 	float distance_to_target;
@@ -622,28 +623,26 @@ void navigation_update_position()
 	delta_heading = gps_heading - navigation_status.old_gps_heading;
 	navigation_status.old_gps_heading = gps_heading;
 
-	//if first_time, initialize all structures
-	/*
-	if(first_time)
-	{
-		navigation_initialize();
-		navigation_initialize_odometer();
-		gps_initialize();
-		first_time = 0;
-	}
-	*/
-
 	gps_latitude = gps_get_latitude();
 	gps_longitude = gps_get_longitude();
 
 	delta_lon = gps_longitude - navigation_status.old_lon;
 	delta_lat = gps_latitude - navigation_status.old_lat;
 
+	if(!(gps_latitude == 0 && gps_longitude == 0)){
+		navigation_status.send_signal = TRUE;
+	}
+	else{
+		navigation_status.send_signal = FALSE;
+	}
+
 	gps_run_gps(navigation_status.position_i);  //saves a gps point
 
 	if (navigation_status.position_i == (MAX_RECENT_VALUES-1))
 	{
-		navigation_recalibrate_odometer(delta_lat, delta_lon, delta_heading);
+		if(navigation_status.send_signal){
+			navigation_recalibrate_odometer(delta_lat, delta_lon, delta_heading);
+		}
 		navigation_reinitialize_odometer(gps_heading);
 		gps_calculate_position();	//calculates a gps position from a number of gps points
 		gps_reset_gps();
@@ -656,9 +655,10 @@ void navigation_update_position()
 
 	navigation_run_odometer(navigation_status.motor_values, navigation_status.position_i);     //saves an odometer position
 
-	navigation_status.lat_rover = gps_latitude + odo.latitude;
-	navigation_status.lon_rover = gps_longitude + odo.longitude;
-
+	if(navigation_status.send_signal){
+		navigation_status.lat_rover = gps_latitude + odo.latitude;
+		navigation_status.lon_rover = gps_longitude + odo.longitude;
+	}
 	gps_receive_lat_rover(navigation_status.lat_rover);
 	gps_receive_lon_rover(navigation_status.lon_rover);
 
@@ -891,26 +891,6 @@ void navigation_reinitialize_odometer(int32_t gps_heading)
 	odo.heading = odo.heading + gps_heading;
 }
 
-void navigation_initialize_odometer()
-{
-	odo.latitude = 0;
-	odo.longitude = 0;
-	odo.checked_lat = 0;
-	odo.checked_lon = 0;
-	odo.odo_time = 0;
-	odo.velocity = 0;
-	odo.first_third_heading = 0;
-	odo.second_third_heading = 0;
-	odo.third_third_heading = 0;
-	odo.first_third_x = 0;
-	odo.first_third_y = 0;
-	odo.second_third_x = 0;
-	odo.second_third_y = 0;
-	odo.third_third_x = 0;
-	odo.third_third_y = 0;
-	odo.radius = 0;
-}
-
 int32_t navigation_get_angle()
 {
 	return odo.angle;
@@ -947,6 +927,11 @@ uint8_t navigation_get_checked_gps_threshold()
 uint8_t navigation_get_crossed_gps_threshold()
 {
 	return navigation_status.crossed_gps_threshold;
+}
+
+uint8_t navigation_send_signal()
+{
+	return navigation_status.send_signal;
 }
 
 void navigation_update_current_target()

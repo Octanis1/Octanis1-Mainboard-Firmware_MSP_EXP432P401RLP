@@ -300,31 +300,20 @@ void gps_task(){
 		{
 	#ifdef MAVLINK_ON_LORA_ENABLED
 			comm_set_tx_flag(CHANNEL_LORA, MAV_COMP_ID_GPS);
-	#endif/*
+	#endif
+/*
 	#ifdef MAVLINK_ON_UART0_ENABLED
 			comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
 	#endif
 			comm_mavlink_broadcast(gps_pack_mavlink_raw_int());
 */
+			if(navigation_send_signal()){
 	#ifdef MAVLINK_ON_UART0_ENABLED
-			comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
+				comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
 	#endif
-			comm_mavlink_broadcast(gps_pack_mavlink_global_position_int());
+				comm_mavlink_broadcast(gps_pack_mavlink_global_position_int());
+			}
 		}
 		Task_sleep(10);
 	}
 }
-
-/*
-void gps_initialize()
-{
-	int i;
-	gps.position_latitude = 0;
-	gps.position_longitude = 0;
-	for (i = 0; i < MAX_RECENT_VALUES; i++)
-	{
-		gps.lat[i] = 0;
-		gps.lon[i] = 0;
-	}
-}
-*/

@@ -46,6 +46,4 @@ int32_t gps_get_longitude();
 void gps_receive_lat_rover(int32_t lat_rover);
 void gps_receive_lon_rover(int32_t lon_rover);
 
-void gps_initialize();
-
 #endif
