@@ -12,14 +12,13 @@
 #include "hal/rn2483.h"
 #include "../lib/printf.h"
 
-#define LORA_FRAME_SIZE 		2*MAVLINK_MAX_PACKET_LEN
 #define LORA_RETRY_INIT_AFTER_N_CYCLES	20
 
 void lora_send_mavlink(uint8_t* txdata, uint16_t stringlength)
 {
 	/** Prepare hex string for LoRa **/
 	char hex_string_byte[2];
-	char hex_string[LORA_FRAME_SIZE]; //TODO: ATTENTION: this is too small! need to change this
+	char hex_string[LORA_FRAME_SIZE];
 	memset(&hex_string, 0, sizeof(hex_string));
 
 	int i;

@@ -71,7 +71,7 @@ static const char rn_join_otaa[] = "mac join otaa\r\n";
 static const char rn_reset[] = "sys reset\r\n";
 
 //buffer for command responses
-static char rn2483_rxBuffer[RN2483_RXBUFFER_SIZE];
+static char rn2483_rxBuffer[LORA_FRAME_SIZE + 20]; //plus some margin for "mac_rx 1 .... \r\n". it's too much but...
 
 /************ from the RN2483 Command Reference User's Guide: ****************
  * "All commands need to be terminated with <CR><LF> and any replies they
@@ -111,7 +111,8 @@ int rn2483_read_command_response(int read_length2)
 	length=UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
 	if(length<RN2483_RXBUFFER_SIZE)
 		UART_read(rn2483_uart, &rn2483_rxBuffer[length], sizeof(rn2483_rxBuffer)-length-1);
-	if(!strcmp("ok\n\n", rn2483_rxBuffer))
+
+	if(!strncmp("ok", rn2483_rxBuffer, 2))
 	{
 		length = UART_read(rn2483_uart, rn2483_rxBuffer, read_length2);
 		char dummy;
@@ -165,15 +166,13 @@ int rn2483_begin(){
 	UART_write(rn2483_uart, rn_get_deveui, sizeof(rn_get_deveui));
 	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
 	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
-	Task_sleep(500);
 
 	serial_printf(cli_stdout, "rn2483 deveui: %s.\r\n", rn2483_rxBuffer);
-
 	memset(&rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
-	UART_write(rn2483_uart, rn_join_otaa, sizeof(rn_join_otaa));
-//	Task_sleep(10000); // Time needed to complete OTAA.
 
-	if((rn2483_read_command_response(RN2483_RXBUFFER_SIZE)>0) && (strcmp("accepted\n", rn2483_rxBuffer)==0)){
+	UART_write(rn2483_uart, rn_join_otaa, sizeof(rn_join_otaa));
+
+	if((rn2483_read_command_response(RN2483_RXBUFFER_SIZE)>0) && (strncmp("accepted", rn2483_rxBuffer,8)==0)){
 		serial_printf(cli_stdout, "rn2483 OTAA success: %s\r\n", rn2483_rxBuffer);
 		rn2483_initialised = 1;
 		GPIO_write(Board_LED_RED,1);
@@ -337,58 +336,44 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 	char txBuffer[tx_size+18]; //18 for the aditionnal lora commands
 	memset(&txBuffer, 0, sizeof(txBuffer)); //important! always clean buffer before tx
 
-
 	if(!rn2483_initialised) return 0;
 
 	strcat(txBuffer, rn_txstart);
 	strcat(txBuffer, tx_buffer);
 	strcat(txBuffer, rn_txstop);
 
-	memset(&rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
 	int tx_ret = UART_write(rn2483_uart, txBuffer, strlen(txBuffer));
 
-	if(rn2483_read_command_response(9)) //9 to read "mac rx 1 "
+	int rx_ret = rn2483_read_command_response(sizeof(rn2483_rxBuffer));  //read the whole line
+
+	if(rx_ret)
 	{
 		serial_printf(cli_stdout, "LoRa TX: %d \n", tx_ret);
 		GPIO_toggle(Board_LED_GREEN);
 
-		int comp=strcmp("mac_rx", rn2483_rxBuffer);
-
-//		if(!strcmp("mac_rx", rn2483_rxBuffer))
-		if(1)
+		if(!strncmp("mac_rx", rn2483_rxBuffer, 6))
 		{
 			// we received downlink message
-			serial_printf(cli_stdout, "TX successful. RX: %s\r\n", rn2483_rxBuffer);
+			serial_printf(cli_stdout, "RX successful. RX: %s\r\n", rn2483_rxBuffer);
 
-			int i, port, digit;
-			int c;
+			int i;
+
 			uint8_t mav_byte;
-			port = 0;
-			// read port number:
-//			while((UART_read(rn2483_uart, &c, 1) == 1)){
-//				digit = a2d(c);
-//				if(digit < 0)
-//					break;
-//				else
-//					port = port*10 + digit;
-//			}
+
+			// TODO: read port number, if relevant
 
 			COMM_FRAME frame;
 			frame.direction = CHANNEL_IN;
 			frame.channel = CHANNEL_LORA;
 			mavlink_status_t status;
 
-			int rxlength = 0;
-			rxlength=UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
-
-
-			for(i=0;i<rxlength;i++)
+			for(i=9;i<rx_ret;i++)
 			{
 //				serial_printf(cli_stdout, "%c,", c);
 //				serial_printf(cli_stdout, "%d,", c);
 				mav_byte = ((uint8_t)a2d(rn2483_rxBuffer[i]))<<4;
 				i++;
-				if(rn2483_rxBuffer[i] >= 0)
+				if(rn2483_rxBuffer[i] > '\r')
 				{
 //					serial_printf(cli_stdout, "%c,", c);
 //					serial_printf(cli_stdout, "%d,", c);
@@ -407,7 +392,7 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 
 
 		}
-		else if(!strcmp("mac_tx_ok", rn2483_rxBuffer))
+		else if(!strncmp("mac_tx_ok", rn2483_rxBuffer,9))
 		{
 			// no downlink message
 			serial_printf(cli_stdout, "TX successful \r\n");
