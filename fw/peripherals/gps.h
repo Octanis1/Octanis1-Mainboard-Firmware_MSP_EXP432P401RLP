@@ -40,6 +40,8 @@ int gps_get_last_update_time();
 void gps_run_gps(uint8_t position_i);
 void gps_calculate_position();
 void gps_reset_gps();
+void gps_shift_gps();
+
 int32_t gps_get_latitude();
 int32_t gps_get_longitude();
 

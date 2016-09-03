@@ -164,6 +164,15 @@ void gps_reset_gps()
 	gps.third_third_latitude = 0;
 	gps.third_third_longitude = 0;
 }
+void gps_shift_gps()
+{
+	gps.first_third_latitude = gps.second_third_latitude;
+	gps.first_third_longitude = gps.second_third_longitude;
+	gps.second_third_latitude = gps.third_third_latitude;
+	gps.second_third_longitude = gps.third_third_longitude;
+	gps.third_third_latitude = 0;
+	gps.third_third_longitude = 0;
+}
 
 //returns latitude as measured by gps in degrees e7
 int32_t gps_get_latitude()

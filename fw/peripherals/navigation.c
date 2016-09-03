@@ -108,7 +108,8 @@ static float angle_constant;
 void navigation_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_WHEELS], uint8_t position_i);
 void navigation_update_xy(uint8_t position_i);
 void navigation_get_radius_and_angle(float speed[N_WHEELS], uint32_t delta_time, uint8_t position_i);
-int navigation_navigation_error(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_WHEELS]);
+uint8_t navigation_navigation_error(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_WHEELS]);
+void navigation_shift_odo();
 
 typedef struct _navigation_status{
 	int32_t lat_rover;
@@ -608,7 +609,7 @@ void navigation_update_position();
 #else
 void navigation_update_position()
 {
-	float gps_latitude, gps_longitude, delta_heading, delta_lon, delta_lat;
+	float gps_latitude, gps_longitude, delta_heading, delta_lon, delta_lat, odo_distance, x, y;
 	int32_t gps_heading, heading_rover;
 
 	if (navigation_status.not_first_time != TRUE){
@@ -623,8 +624,14 @@ void navigation_update_position()
 	delta_heading = gps_heading - navigation_status.old_gps_heading;
 	navigation_status.old_gps_heading = gps_heading;
 
-	gps_latitude = gps_get_latitude();
-	gps_longitude = gps_get_longitude();
+	x = (float)odo.first_third_x + (float)odo.second_third_x + (float)odo.third_third_x;
+	y = (float)odo.first_third_y + (float)odo.second_third_y + (float)odo.third_third_y;
+	odo_distance = sqrt(x * x + y * y);
+
+	if (odo_distance > GPS_THRESHOLD){
+		gps_latitude = gps_get_latitude();
+		gps_longitude = gps_get_longitude();
+	}
 
 	delta_lon = gps_longitude - navigation_status.old_lon;
 	delta_lat = gps_latitude - navigation_status.old_lat;
@@ -638,7 +645,7 @@ void navigation_update_position()
 
 	gps_run_gps(navigation_status.position_i);  //saves a gps point
 
-	if (navigation_status.position_i == (MAX_RECENT_VALUES-1))
+	if ((navigation_status.position_i == (MAX_RECENT_VALUES-1)) && (odo_distance > GPS_THRESHOLD))
 	{
 		if(navigation_status.send_signal){
 			navigation_recalibrate_odometer(delta_lat, delta_lon, delta_heading);
@@ -647,6 +654,12 @@ void navigation_update_position()
 		gps_calculate_position();	//calculates a gps position from a number of gps points
 		gps_reset_gps();
 		navigation_status.position_i = VALUES_AFTER_GPS_RESET;
+	}
+	else if ((navigation_status.position_i == (MAX_RECENT_VALUES-1)) && !(odo_distance > GPS_THRESHOLD))
+	{
+		gps_shift_gps();
+		navigation_shift_odo();
+		navigation_status.position_i = MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET;
 	}
 	else
 	{
@@ -728,7 +741,7 @@ int navigation_run_odometer(int32_t voltage[N_SIDES], uint8_t position_i)
 	}
 }
 
-int navigation_navigation_error(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_SIDES])
+uint8_t navigation_navigation_error(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_SIDES])
 {
 	int error = 0;
 	int ratio[N_WHEELS];
@@ -891,6 +904,14 @@ void navigation_reinitialize_odometer(int32_t gps_heading)
 	odo.heading = odo.heading + gps_heading;
 }
 
+void navigation_shift_odo()
+{
+	odo.first_third_x += odo.third_third_x;
+	odo.first_third_y += odo.third_third_y;
+	odo.third_third_x = 0;
+	odo.third_third_y = 0;
+}
+
 int32_t navigation_get_angle()
 {
 	return odo.angle;
@@ -917,16 +938,6 @@ int16_t navigation_get_angle_constant()
 	int16_t angle;
 	angle = angle_constant * E_FOUR;
 	return angle;
-}
-
-uint8_t navigation_get_checked_gps_threshold()
-{
-	return navigation_status.checked_gps_threshold;
-}
-
-uint8_t navigation_get_crossed_gps_threshold()
-{
-	return navigation_status.crossed_gps_threshold;
 }
 
 uint8_t navigation_send_signal()
