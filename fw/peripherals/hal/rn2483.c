@@ -108,9 +108,11 @@ static void rn2483_uart_open(UART_SerialDevice *dev, unsigned int read_timeout_m
 int rn2483_read_command_response(int read_length2)
 {
 	int length=0;
+	char dummy;
 	length=UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+
 	if(length<RN2483_RXBUFFER_SIZE)
-		UART_read(rn2483_uart, &rn2483_rxBuffer[length], sizeof(rn2483_rxBuffer)-length-1);
+		UART_read(rn2483_uart, &dummy, 1); //read the \n character
 
 	if(!strncmp("ok", rn2483_rxBuffer, 2))
 	{
@@ -191,9 +193,6 @@ void rn2483_end(){
 	rn2483_initialised = 0;
 	UART_close(rn2483_uart);
 	rn2483_uart = NULL;
-
-	//put module to sleep
-	//GPIO_write(Board_ROCKBLOCK_SLEEP, ROCKBLOCK_SLEEP);
 }
 
 #ifdef CONFIG_MODE
