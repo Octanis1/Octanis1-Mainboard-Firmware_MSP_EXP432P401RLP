@@ -9,6 +9,7 @@
 #include "comm.h"
 #include <string.h>
 #include "hal/rn2483.h"
+#include "hal/rockblock.h"
 
 #include "navigation.h"
 
@@ -130,6 +131,10 @@ void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 #endif
 			break;
 		case CHANNEL_ROCKBLOCK:
+#ifdef ROCKBLOCK_ENABLED
+			rockblock_add_SBD_binary(buf, &mavlink_msg_len);
+#endif
+			break;
 		case CHANNEL_GSM:
 			   //sim800_send_http(msg)
 		default:
@@ -368,9 +373,16 @@ void comm_task(){
 	COMM_FRAME mail;
 
 
+	static const char test_msg[] = "This is a short and stupid message\n";
+	size_t test_msg_length = sizeof(test_msg);
+
+
 	comm_init();
 
 	while(1){
+		test_msg_length = sizeof(test_msg);
+		rockblock_add_SBD_binary(test_msg, &test_msg_length);
+		/*
 		if(Mailbox_pend(comm_mailbox, &mail, BIOS_WAIT_FOREVER)){
 			if((mail.direction) == CHANNEL_OUT)
 			{
@@ -380,7 +392,7 @@ void comm_task(){
 			{
 				comm_mavlink_handler(mail.channel, &(mail.mavlink_message));
 			}
-		}
+		}*/
  	}
 
 }
