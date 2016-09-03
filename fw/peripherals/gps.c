@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 //mavlink includes
 #include "imu.h"
@@ -27,6 +28,14 @@
 #include "../lib/mavlink/common/mavlink.h"
 #include "hal/time_since_boot.h"
 
+#define POINTS_FOR_HEADING 10
+#define MEGA			   1000000
+
+static struct gps {
+	float lat_points[POINTS_FOR_HEADING];
+	float lon_points[POINTS_FOR_HEADING];
+	int32_t gps_heading;
+} gps;
 
 static struct minmea_sentence_gga gps_gga_frame;
 static struct minmea_sentence_rmc gps_rmc_frame;
@@ -139,6 +148,40 @@ uint8_t gps_update_new_position(float* lat_, float* lon_)
 	return 0;
 }
 
+void gps_run_gps_heading()
+{
+	uint8_t i;
+	for (i = 0; i < (POINTS_FOR_HEADING - 1); i++) {
+		gps.lat_points[i+1] = gps.lat_points[i];
+		gps.lon_points[i+1] = gps.lon_points[i];
+	}
+	gps.lat_points[0] = gps_get_lat();
+	gps.lon_points[0] = gps_get_lon();
+}
+
+//heading calculated as clockwise angle (in udegrees) with north equal zero.
+int32_t gps_get_gps_heading()
+{
+	int8_t i, j;
+	int32_t gps_heading;
+	float old_average_lon, old_average_lat, new_average_lon, new_average_lat, delta_lon, delta_lat, alpha;
+	for (i = 0; i < (POINTS_FOR_HEADING/2); i++) {
+		new_average_lon += gps.lon_points[i];
+		new_average_lat += gps.lat_points[i];
+	}
+	for (j = (POINTS_FOR_HEADING/2); j < POINTS_FOR_HEADING; j++) {
+		old_average_lon += gps.lon_points[j];
+		old_average_lat += gps.lat_points[j];
+	}
+	delta_lon = (new_average_lon - old_average_lon) / (POINTS_FOR_HEADING/2);
+	delta_lat = (new_average_lat - old_average_lat) / (POINTS_FOR_HEADING/2);
+	alpha = arctan(delta_lat / delta_lon);
+	alpha = arctan / (2 * M_PI) * 360;
+	alpha = 90 - alpha;
+	gps_heading = (int32_t)(MEGA * alpha)
+	return gps_heading;
+}
+
 COMM_FRAME* gps_pack_mavlink_global_position_int()
 {
 	// Mavlink heartbeat
@@ -198,6 +241,8 @@ void gps_task(){
     ublox_6_open();
 
 	while (1) {
+
+		gps_run_gps_heading();
 
 		//initialise GPS device, open UART
 

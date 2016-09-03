@@ -25,6 +25,9 @@ float gps_get_altitude();
 uint32_t gps_get_int_altitude();
 float gps_get_course();
 
+void gps_run_gps_heading();
+//returns heading calculated as clockwise angle (in udegrees) with north equal zero.
+int32_t gps_get_gps_heading();
 
 int gps_get_lat_scale();
 int gps_get_lon_scale();
