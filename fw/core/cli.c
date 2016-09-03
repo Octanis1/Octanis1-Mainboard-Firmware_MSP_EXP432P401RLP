@@ -12,8 +12,6 @@
 #include "log.h"
 #include "../peripherals/gps.h"
 #include "../peripherals/navigation.h"
-#include "../peripherals/hal/rockblock.h"
-
 #include "../peripherals/comm.h"
 //#include "system.h"
 //#include "log.h"
@@ -30,6 +28,7 @@
 #include "log_message.h"
 //mavlink wire protocol
 #include "../lib/mavlink/common/mavlink.h"
+#include "../peripherals/rockblock.h"
 
 //which uart index to use for the CLI
 #define CLI_UART Board_UART0_DEBUG

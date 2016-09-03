@@ -8,11 +8,11 @@
 #include "../../Board.h"
 #include "comm.h"
 #include <string.h>
-#include "hal/rockblock.h"
 #include "hal/time_since_boot.h"
 
 #include "navigation.h"
 #include "imu.h"
+#include "rockblock.h"
 
 #define MSG_ID_FIELD				N_COMM_CHANNELS
 
@@ -180,9 +180,9 @@ void comm_mavlink_post_outbox(COMM_CHANNEL channel, COMM_FRAME* frame) //post to
 	#endif
 			break;
 		case CHANNEL_ROCKBLOCK:
-#ifdef ROCKBLOCK_ENABLED
-			rockblock_add_SBD_binary(buf, &mavlink_msg_len);
-#endif
+	#ifdef ROCKBLOCK_ENABLED
+			Mailbox_post(rockblock_mailbox, frame, BIOS_NO_WAIT);
+	#endif
 			break;
 		case CHANNEL_GSM:
 			   //sim800_send_http(msg)

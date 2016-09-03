@@ -14,15 +14,17 @@
 	 *	The latest version of this library is available at http://arduiniana.org.
  *  }
  */
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "../../../Board.h"
+#include "../../Board.h"
+#include "../lib/mavlink/common/mavlink.h"
+#include "comm.h"
+
 #include "rockblock.h"
 
-#include "../lib/mavlink/common/mavlink.h"
-#include "../../peripherals/comm.h"
 
 #define ROCKBLOCK_WAKE 1
 #define ROCKBLOCK_WAKE_WAIT 600
@@ -178,7 +180,7 @@ int rockblock_get_signal_quality(){
 
 int rockblock_internal_MSSTM_workaround(){
 	/*Before attempting any of the following commands: +SBDDET, +SBDREG, +SBDI, +SBDIX, +SBDIXA the field application
-   should issue the AT command –MSSTM to the transceiver and evaluate the response to determine if it is valid or not:
+   should issue the AT command MSSTM to the transceiver and evaluate the response to determine if it is valid or not:
 
    Valid Response: "---MSSTM: XXXXXXXX" where XXXXXXXX is an eight---digit hexadecimal number.
 
@@ -514,4 +516,48 @@ int rockblock_get_net_availability(){
 int rockblock_get_tx_buffer_fill(){
 	return rockblock_tx_buffer_offset;
 }
+
+void rockblock_task(){
+	int is_initialized = 0;
+	static uint8_t buf[MAVLINK_MAX_PACKET_LEN + 5]; //todo: +5 is to test if we need some more space. remove if not helpful.
+	static uint16_t mavlink_msg_len;
+	static COMM_FRAME mail;
+
+#ifdef ROCKBLOCK_ENABLED
+	// init here:
+	int is_initialized = 1; //TODO: replace '1' by init function which shall return 1 if init successful
+
+
+#endif
+
+	while(1){
+
+		if(Mailbox_pend(rockblock_mailbox, &mail, BIOS_WAIT_FOREVER)){
+
+			if(is_initialized)
+			{
+				if((mail.direction) == CHANNEL_OUT)
+				{
+					if(mail.channel == CHANNEL_ROCKBLOCK)
+					{
+						mavlink_msg_len = mavlink_msg_to_send_buffer(buf, &mail.mavlink_message);
+						rockblock_add_SBD_binary(buf, &mavlink_msg_len);
+					}
+					else
+					{
+						serial_printf(cli_stdout,"ERROR: outgoing msg for channel %d in rockblock_mailbox. id=%d \n", mail.channel, mail.mavlink_message.msgid);
+					}
+				}
+				else
+				{
+					serial_printf(cli_stdout,"ERROR: incoming msg in rockblock_mailbox. id=%d \n", mail.mavlink_message.msgid);
+					// should never happen, but just in case: redirect message!
+					Mailbox_post(comm_mailbox, &mail, BIOS_NO_WAIT);
+				}
+			}
+		}
+ 	}
+}
+
+
 
