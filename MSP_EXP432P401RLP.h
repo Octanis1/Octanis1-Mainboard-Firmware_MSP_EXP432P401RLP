@@ -60,7 +60,7 @@
 //#define ROCKBLOCK_ENABLED 1
 //#define UARTCAM_ENABLED 1
 //#define GSM_ENABLED 1
-#define USE_ONBOARD_BNO055 1 //in contrast to just decoding incoming mavlink attitude messages.
+//#define USE_ONBOARD_BNO055 1 //in contrast to just decoding incoming mavlink attitude messages.
 //#define USE_ULTRASONIC 1
 
 #ifdef VERSION_0_5
