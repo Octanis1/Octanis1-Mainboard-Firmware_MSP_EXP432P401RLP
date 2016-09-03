@@ -628,7 +628,7 @@ void navigation_update_position()
 	y = (float)odo.first_third_y + (float)odo.second_third_y + (float)odo.third_third_y;
 	odo_distance = sqrt(x * x + y * y);
 
-	if (odo_distance > GPS_THRESHOLD){
+	if ((odo_distance > GPS_THRESHOLD) || !navigation_status.send_signal){
 		gps_latitude = gps_get_latitude();
 		gps_longitude = gps_get_longitude();
 	}
@@ -636,7 +636,7 @@ void navigation_update_position()
 	delta_lon = gps_longitude - navigation_status.old_lon;
 	delta_lat = gps_latitude - navigation_status.old_lat;
 
-	if(!(gps_latitude == 0 && gps_longitude == 0)){
+	if(!(gps_latitude == 0 && gps_longitude == 0) && navigation_status.not_first_time){
 		navigation_status.send_signal = TRUE;
 	}
 	else{
@@ -645,7 +645,7 @@ void navigation_update_position()
 
 	gps_run_gps(navigation_status.position_i);  //saves a gps point
 
-	if ((navigation_status.position_i == (MAX_RECENT_VALUES-1)) && (odo_distance > GPS_THRESHOLD))
+	if ((navigation_status.position_i == (MAX_RECENT_VALUES-1)) && ((odo_distance > GPS_THRESHOLD) || !navigation_status.not_first_time))
 	{
 		if(navigation_status.send_signal){
 			navigation_recalibrate_odometer(delta_lat, delta_lon, delta_heading);
@@ -654,6 +654,7 @@ void navigation_update_position()
 		gps_calculate_position();	//calculates a gps position from a number of gps points
 		gps_reset_gps();
 		navigation_status.position_i = VALUES_AFTER_GPS_RESET;
+		navigation_status.not_first_time = TRUE;
 	}
 	else if ((navigation_status.position_i == (MAX_RECENT_VALUES-1)) && !(odo_distance > GPS_THRESHOLD))
 	{
@@ -882,7 +883,6 @@ void navigation_recalibrate_odometer(float delta_lat, float delta_lon, float del
 	//recalibrate angle_constant
 	angle_sum = odo.first_third_heading + odo.second_third_heading;
 	angle_constant = delta_heading / angle_sum;
-	navigation_status.not_first_time = TRUE;
 }
 
 void navigation_reinitialize_odometer(int32_t gps_heading)
