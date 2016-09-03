@@ -628,10 +628,9 @@ void navigation_update_position()
 	y = (float)odo.first_third_y + (float)odo.second_third_y + (float)odo.third_third_y;
 	odo_distance = sqrt(x * x + y * y);
 
-	if ((odo_distance > GPS_THRESHOLD) || !navigation_status.send_signal){
-		gps_latitude = gps_get_latitude();
-		gps_longitude = gps_get_longitude();
-	}
+
+	gps_latitude = gps_get_latitude();
+	gps_longitude = gps_get_longitude();
 
 	delta_lon = gps_longitude - navigation_status.old_lon;
 	delta_lat = gps_latitude - navigation_status.old_lat;
