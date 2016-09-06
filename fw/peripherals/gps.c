@@ -159,12 +159,20 @@ void gps_run_gps_heading()
 	gps.lon_points[0] = gps_get_lon();
 }
 
-//heading calculated as clockwise angle (in udegrees) with north equal zero.
+//heading calculated as clockwise angle (in mrad) with north equal zero.
 int32_t gps_get_gps_heading()
 {
 	int8_t i, j;
 	int32_t gps_heading;
-	float old_average_lon, old_average_lat, new_average_lon, new_average_lat, delta_lon, delta_lat, alpha;
+	float old_average_lon = 0;
+	float old_average_lat = 0;
+	float new_average_lon = 0;
+	float new_average_lat = 0;
+	float delta_lon=0;
+	float delta_lat = 0;
+	float alpha = 0;
+
+
 	for (i = 0; i < (POINTS_FOR_HEADING/2); i++) {
 		new_average_lon += gps.lon_points[i];
 		new_average_lat += gps.lat_points[i];
@@ -175,10 +183,12 @@ int32_t gps_get_gps_heading()
 	}
 	delta_lon = (new_average_lon - old_average_lon) / (POINTS_FOR_HEADING/2);
 	delta_lat = (new_average_lat - old_average_lat) / (POINTS_FOR_HEADING/2);
-	alpha = arctan(delta_lat / delta_lon);
-	alpha = arctan / (2 * M_PI) * 360;
-	alpha = 90 - alpha;
-	gps_heading = (int32_t)(MEGA * alpha)
+	alpha = atan2f(delta_lon, delta_lat)*57.2957795+90; // *180/pi
+
+	if(alpha>360)
+		alpha = alpha - 360;
+
+	gps_heading = (int32_t)(1000 * alpha);
 	return gps_heading;
 }
 
@@ -193,7 +203,7 @@ COMM_FRAME* gps_pack_mavlink_global_position_int()
 	int16_t vx = 0;
 	int16_t vy = 0;
 	int16_t vz = 0;
-	uint16_t hdg = imu_get_heading();
+	uint16_t hdg = gps_get_gps_heading();
 	uint32_t msec = ms_since_boot();
 
 	// Initialize the message buffer
@@ -242,7 +252,6 @@ void gps_task(){
 
 	while (1) {
 
-		gps_run_gps_heading();
 
 		//initialise GPS device, open UART
 
@@ -282,6 +291,9 @@ void gps_task(){
 				break;
 
 		}
+
+		gps_run_gps_heading();
+
 
 		if((gps_rmc_frame.longitude.value != 0) && (gps_rmc_frame.latitude.value != 0) && (gps_rmc_frame.longitude.scale != 0) && (gps_rmc_frame.latitude.scale != 0))
 		{
