@@ -8,13 +8,10 @@
 #include "../../Board.h"
 #include "comm.h"
 #include <string.h>
-#include "hal/rn2483.h"
 #include "hal/time_since_boot.h"
 
 #include "navigation.h"
 #include "imu.h"
-
-#define LORA_FRAME_SIZE 		2*MAVLINK_MAX_PACKET_LEN
 
 #define MSG_ID_FIELD				N_COMM_CHANNELS
 
@@ -25,9 +22,9 @@ static const uint32_t mavlink_message_periods[N_PERIODIC_MAVLINK_MSG][N_COMM_CHA
  * --> only applies to periodically sent messages (i.e. measurements, status updates, etc.)
  *
  *	UART			LORA			ROCKBLOCK	GSM		| MESSAGE_ID */
-	{5000,		5000,		600000,		P_INF,	MAVLINK_MSG_ID_HEARTBEAT},
+	{5000,		10000,		600000,		P_INF,	MAVLINK_MSG_ID_HEARTBEAT},
 	{10000,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_SYS_STATUS},
-	{200,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_GPS_RAW_INT},
+	{0,			30000,		600000,		P_INF,	MAVLINK_MSG_ID_GPS_RAW_INT},
 	{200,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_GLOBAL_POSITION_INT},
 	{1000,		30000,		P_INF,		P_INF,	MAVLINK_MSG_ID_SCALED_IMU},
 	{500,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_SCALED_PRESSURE},
@@ -62,7 +59,7 @@ static const uint8_t mavlink_message_allow_tx[N_IRREGULAR_MAVLINK_MSG][N_COMM_CH
 	{1,		1,		0,		0,		MAVLINK_MSG_ID_COMMAND_LONG},
 	{1,		1,		0,		0,		MAVLINK_MSG_ID_COMMAND_ACK},
 	{1,		0,		0,		0,		MAVLINK_MSG_ID_ENCAPSULATED_DATA},
-	{1,		1,		0,		0,		MAVLINK_MSG_ID_STATUSTEXT},
+	{1,		0,		0,		0,		MAVLINK_MSG_ID_STATUSTEXT},
 };
 
 
@@ -164,30 +161,33 @@ void comm_mavlink_post_outbox(COMM_CHANNEL channel, COMM_FRAME* frame) //post to
 {
 	frame->channel = channel;
 	frame->direction = CHANNEL_OUT;
-	Mailbox_post(comm_mailbox, frame, BIOS_NO_WAIT);
-}
 
-
-#include "../lib/printf.h"
-void comm_send_mavlink_over_lora(uint8_t* txdata, uint16_t stringlength)
-{
-	/** Prepare hex string for LoRa **/
-	char hex_string_byte[2];
-	char hex_string[LORA_FRAME_SIZE]; //TODO: ATTENTION: this is too small! need to change this
-	memset(&hex_string, 0, sizeof(hex_string));
-
-	int i;
-	for(i=0; i<stringlength; i++){
-		memset(&hex_string_byte, 0, sizeof(hex_string_byte));
-		tfp_sprintf(hex_string_byte, "%02x", txdata[i]);
-		strcat(hex_string, hex_string_byte);
+	switch(channel)
+	{
+		case CHANNEL_APP_UART:
+	#ifdef MAVLINK_ON_UART0_ENABLED
+	#ifdef SBC_ENABLED
+			if(sbc_heartbeat.system_status == MAV_STATE_STANDBY || sbc_heartbeat.system_status == MAV_STATE_ACTIVE)
+	#endif
+			{
+				Mailbox_post(comm_mailbox, frame, BIOS_NO_WAIT);
+			}
+	#endif
+			break;
+		case CHANNEL_LORA:
+	#ifdef LORA_ENABLED
+			Mailbox_post(lora_mailbox, frame, BIOS_NO_WAIT);
+	#endif
+			break;
+		case CHANNEL_ROCKBLOCK:
+		case CHANNEL_GSM:
+			   //sim800_send_http(msg)
+		default:
+			break;
 	}
-	/** end hex string **/
-
-	rn2483_send_receive(hex_string, 2*stringlength);
 }
 
-void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
+void comm_uart_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 
 	static uint8_t buf[MAVLINK_MAX_PACKET_LEN + 5]; //todo: +5 is to test if we need some more space. remove if not helpful.
 	static uint16_t mavlink_msg_len;
@@ -195,9 +195,8 @@ void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 	// Copy the message to the send buffer and send
 	mavlink_msg_len = mavlink_msg_to_send_buffer(buf, msg);
 
-	switch(channel)
+	if(channel==CHANNEL_APP_UART)
 	{
-		case CHANNEL_APP_UART:
 #ifdef MAVLINK_ON_UART0_ENABLED
 #ifdef SBC_ENABLED
 			if(sbc_heartbeat.system_status == MAV_STATE_STANDBY || sbc_heartbeat.system_status == MAV_STATE_ACTIVE)
@@ -206,17 +205,11 @@ void comm_send(COMM_CHANNEL channel, mavlink_message_t *msg){
 				serial_write(cli_stdout, buf, mavlink_msg_len);
 			}
 #endif
-			break;
-		case CHANNEL_LORA:
-#ifdef LORA_ENABLED
-			comm_send_mavlink_over_lora(buf, mavlink_msg_len);
-#endif
-			break;
-		case CHANNEL_ROCKBLOCK:
-		case CHANNEL_GSM:
-			   //sim800_send_http(msg)
-		default:
-			break;
+
+	}
+	else
+	{
+		serial_printf(cli_stdout,"ERROR: outgoing msg for channel %d in uart_mailbox.id=%d \n", channel, msg->msgid);
 	}
 }
 
@@ -513,24 +506,11 @@ void comm_init(){
 //	sbc_heartbeat.system_status = MAV_STATE_STANDBY; //TODO: remove, is just for testing purposes!!
 	sbc_last_command_arm = -1;
 
-#ifdef LORA_ENABLED
-	#ifdef CONFIG_MODE
-		int comm_result=rn2483_config();
-		if(comm_result)
-			serial_printf(cli_stdout,"LoRa config failed: %d", comm_result);
-		else
-			serial_printf(cli_stdout,"LoRa config success: %d", comm_result);
-	#else
-		rn2483_begin();
-	#endif
-#endif
-
 }
 
 void comm_task(){
 
 	COMM_FRAME mail;
-
 
 	comm_init();
 
@@ -538,7 +518,7 @@ void comm_task(){
 		if(Mailbox_pend(comm_mailbox, &mail, BIOS_WAIT_FOREVER)){
 			if((mail.direction) == CHANNEL_OUT)
 			{
-				comm_send(mail.channel, &(mail.mavlink_message));
+				comm_uart_send(mail.channel, &(mail.mavlink_message));
 			}
 			else
 			{

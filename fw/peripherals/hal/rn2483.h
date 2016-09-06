@@ -7,7 +7,12 @@
 #ifndef __RN2483_H
 #define __RN2483_H
 
+#include "../../lib/mavlink/mavlink_types.h"
+#define LORA_FRAME_SIZE 		2*MAVLINK_MAX_PACKET_LEN
+
+
 //#define CONFIG_MODE 1 //undefine for normal operation!
+//#define CONFIG_HIGH_DUTY 1
 //#define CONFIG_SWISSCOM 1
 //TODO: program crashes after a while in config_mode.
 //note: apply a reset (lora reset pin to gnd) before running this mode!
