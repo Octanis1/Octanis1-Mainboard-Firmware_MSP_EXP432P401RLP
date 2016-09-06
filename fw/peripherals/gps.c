@@ -25,6 +25,7 @@
 #include "../peripherals/comm.h"
 #include "../core/cli.h"
 #include "../lib/mavlink/common/mavlink.h"
+#include "hal/time_since_boot.h"
 
 
 static struct minmea_sentence_gga gps_gga_frame;
@@ -57,6 +58,14 @@ float gps_get_lat(){
 
 float gps_get_lon(){
 	return minmea_tocoord(&gps_rmc_frame.longitude);
+}
+
+int32_t gps_get_lat_int(){// 	Latitude, expressed as degrees * 1E7
+	return 0;//minmea_rescale(&gps_rmc_frame.latitude, 100000); //TODO: MAKE CORRECT CONVERSION (NMEA message is in minutes, etc)
+}
+
+int32_t gps_get_lon_int(){ //  Longitude, expressed as degrees * 1E7
+	return 0;//minmea_rescale(&gps_rmc_frame.longitude, 100000);
 }
 
 float gps_get_speed(){
@@ -130,6 +139,29 @@ uint8_t gps_update_new_position(float* lat_, float* lon_)
 	return 0;
 }
 
+COMM_FRAME* gps_pack_mavlink_global_position_int()
+{
+	// Mavlink heartbeat
+	// Define the system type, in this case an airplane
+	int32_t lat = (int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
+	int32_t lon = (int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
+	int32_t alt = (int32_t)(1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
+	int32_t relative_alt = 0;
+	int16_t vx = 0;
+	int16_t vy = 0;
+	int16_t vz = 0;
+	uint16_t hdg = imu_get_heading();
+	uint32_t msec = ms_since_boot();
+
+	// Initialize the message buffer
+	static COMM_FRAME frame;
+
+	// Pack the message
+	mavlink_msg_global_position_int_pack(mavlink_system.sysid, MAV_COMP_ID_GPS, &(frame.mavlink_message),
+				msec, lat, lon, alt, relative_alt,  vx, vy, vz, hdg);
+	return &frame;
+}
+
 
 COMM_FRAME* gps_pack_mavlink_raw_int()
 {
@@ -145,7 +177,7 @@ COMM_FRAME* gps_pack_mavlink_raw_int()
 		usec = (uint64_t)gps_get_last_update_time();
 		if(usec == 0)
 			//no time information from GPS is available --> use system time (since boot)
-			usec = 1000000 * (uint64_t)Seconds_get();
+			usec = us_since_boot();
 		else
 			usec = 1000000 * usec;
 	}
@@ -208,16 +240,15 @@ void gps_task(){
 
 		if((gps_rmc_frame.longitude.value != 0) && (gps_rmc_frame.latitude.value != 0) && (gps_rmc_frame.longitude.scale != 0) && (gps_rmc_frame.latitude.scale != 0))
 		{
-	#ifdef MAVLINK_ON_LORA_ENABLED
-			comm_set_tx_flag(CHANNEL_LORA, MAV_COMP_ID_GPS);
-	#endif
-	#ifdef MAVLINK_ON_UART0_ENABLED
-			comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
-	#endif
 			comm_mavlink_broadcast(gps_pack_mavlink_raw_int());
+
+			Task_sleep(10);
+
+			comm_mavlink_broadcast(gps_pack_mavlink_global_position_int());
 		}
 
 		Task_sleep(10);
+
 	}
 }
 
