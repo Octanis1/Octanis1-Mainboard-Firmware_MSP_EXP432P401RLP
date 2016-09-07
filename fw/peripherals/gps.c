@@ -28,14 +28,13 @@
 #include "../lib/mavlink/common/mavlink.h"
 #include "hal/time_since_boot.h"
 
-#define POINTS_FOR_HEADING 10
+#define POINTS_FOR_HEADING 10 //must be even number!!
 #define MEGA			   1000000
+#define PI 3.14159265
 
-static struct gps {
-	float lat_points[POINTS_FOR_HEADING];
-	float lon_points[POINTS_FOR_HEADING];
-	int32_t gps_heading;
-} gps;
+// store the last 10 numbers
+int32_t lat_points[POINTS_FOR_HEADING];
+int32_t lon_points[POINTS_FOR_HEADING];
 
 static struct minmea_sentence_gga gps_gga_frame;
 static struct minmea_sentence_rmc gps_rmc_frame;
@@ -70,11 +69,11 @@ float gps_get_lon(){
 }
 
 int32_t gps_get_lat_int(){// 	Latitude, expressed as degrees * 1E7
-	return 0;//minmea_rescale(&gps_rmc_frame.latitude, 100000); //TODO: MAKE CORRECT CONVERSION (NMEA message is in minutes, etc)
+	return minmea_tocoord_int(&gps_rmc_frame.latitude); //TODO: MAKE CORRECT CONVERSION (NMEA message is in minutes, etc)
 }
 
 int32_t gps_get_lon_int(){ //  Longitude, expressed as degrees * 1E7
-	return 0;//minmea_rescale(&gps_rmc_frame.longitude, 100000);
+	return minmea_tocoord_int(&gps_rmc_frame.longitude);
 }
 
 float gps_get_speed(){
@@ -151,44 +150,60 @@ uint8_t gps_update_new_position(float* lat_, float* lon_)
 void gps_run_gps_heading()
 {
 	uint8_t i;
-	for (i = 0; i < (POINTS_FOR_HEADING - 1); i++) {
-		gps.lat_points[i+1] = gps.lat_points[i];
-		gps.lon_points[i+1] = gps.lon_points[i];
+	for (i = POINTS_FOR_HEADING-1; i > 0 ; i--) {
+		lat_points[i] = lat_points[i-1];
+		lon_points[i] = lon_points[i-1];
 	}
-	gps.lat_points[0] = gps_get_lat();
-	gps.lon_points[0] = gps_get_lon();
+	lat_points[0] = gps_get_lat_int();
+	lon_points[0] = gps_get_lon_int();
 }
 
-//heading calculated as clockwise angle (in mrad) with north equal zero.
+//heading calculated as clockwise angle (in centidegrees) with north equal zero.
 int32_t gps_get_gps_heading()
 {
 	int8_t i, j;
 	int32_t gps_heading;
-	float old_average_lon = 0;
-	float old_average_lat = 0;
-	float new_average_lon = 0;
-	float new_average_lat = 0;
-	float delta_lon=0;
-	float delta_lat = 0;
-	float alpha = 0;
+	int64_t old_average_lon = 0;
+	int64_t old_average_lat = 0;
+	int64_t new_average_lon = 0;
+	int64_t new_average_lat = 0;
+	double new_average_lon_d=0;
+	double new_average_lat_d = 0;
+	double old_average_lon_d=0;
+	double old_average_lat_d = 0;
+	double delta_lon=0;
+	double delta_lat = 0;
+	double alpha = 0;
 
 
 	for (i = 0; i < (POINTS_FOR_HEADING/2); i++) {
-		new_average_lon += gps.lon_points[i];
-		new_average_lat += gps.lat_points[i];
+		new_average_lon += lon_points[i];
+		new_average_lat += lat_points[i];
 	}
 	for (j = (POINTS_FOR_HEADING/2); j < POINTS_FOR_HEADING; j++) {
-		old_average_lon += gps.lon_points[j];
-		old_average_lat += gps.lat_points[j];
+		old_average_lon += lon_points[j];
+		old_average_lat += lat_points[j];
 	}
-	delta_lon = (new_average_lon - old_average_lon) / (POINTS_FOR_HEADING/2);
-	delta_lat = (new_average_lat - old_average_lat) / (POINTS_FOR_HEADING/2);
-	alpha = atan2f(delta_lon, delta_lat)*57.2957795+90; // *180/pi
 
-	if(alpha>360)
-		alpha = alpha - 360;
+	new_average_lon_d = (double)new_average_lon / (double)(10000000*POINTS_FOR_HEADING/2);
+	new_average_lat_d = (double)new_average_lat / (double)(10000000*POINTS_FOR_HEADING/2);
+	old_average_lon_d = (double)old_average_lon / (double)(10000000*POINTS_FOR_HEADING/2);
+	old_average_lat_d = (double)old_average_lat / (double)(10000000*POINTS_FOR_HEADING/2);
 
-	gps_heading = (int32_t)(1000 * alpha);
+
+	delta_lon = (new_average_lon_d - old_average_lon_d);
+	delta_lat = (new_average_lat_d - old_average_lat_d);
+
+
+	double d_x = cos(new_average_lat_d * PI / 180.0 ) * sin(delta_lon* PI / 180.0 );
+	double d_y = cos(old_average_lat_d*PI/180.0)*sin(new_average_lat_d*PI/180.0)-sin(old_average_lat_d*PI/180.0)*cos(new_average_lat_d*PI/180.0)*cos(delta_lat*PI/180.0);
+
+	alpha = atan2(d_x, d_y)*57.2957795 ; // *180/pi
+
+	if(alpha<0.0)
+		alpha = alpha + 360.0;
+
+	gps_heading = (int32_t)(100 * alpha);
 	return gps_heading;
 }
 
@@ -196,8 +211,8 @@ COMM_FRAME* gps_pack_mavlink_global_position_int()
 {
 	// Mavlink heartbeat
 	// Define the system type, in this case an airplane
-	int32_t lat = (int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
-	int32_t lon = (int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
+	int32_t lat = gps_get_lat_int();//(int32_t)(10000000.0 * gps_get_lat()); //Latitude (WGS84), in degrees * 1E7
+	int32_t lon = gps_get_lon_int();//(int32_t)(10000000.0 * gps_get_lon()); //Longitude (WGS84), in degrees * 1E7
 	int32_t alt = (int32_t)(1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
 	int32_t relative_alt = 0;
 	int16_t vx = 0;

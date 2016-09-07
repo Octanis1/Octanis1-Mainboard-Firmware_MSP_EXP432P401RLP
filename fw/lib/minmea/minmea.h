@@ -240,6 +240,19 @@ static inline float minmea_tocoord(struct minmea_float *f)
     return (float) degrees + (float) minutes / (60 * f->scale);
 }
 
+
+//returns coordinate in degrees * 1E7
+static inline int32_t minmea_tocoord_int(struct minmea_float *f)
+{
+    if (f->scale == 0)
+        return 0;
+    int64_t degrees = f->value / (f->scale * 100);
+    int64_t minutes = f->value % (f->scale * 100);
+    minutes = minutes * 10000000 / (60 * f->scale);
+
+    return (int32_t)(degrees * 10000000 + minutes);
+}
+
 #ifdef __cplusplus
 }
 #endif
