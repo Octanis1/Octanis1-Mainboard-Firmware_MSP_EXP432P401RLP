@@ -525,7 +525,7 @@ void rockblock_task(){
 
 #ifdef ROCKBLOCK_ENABLED
 	// init here:
-	int is_initialized = 1; //TODO: replace '1' by init function which shall return 1 if init successful
+	is_initialized = 1; //TODO: replace '1' by init function which shall return 1 if init successful
 
 
 #endif
