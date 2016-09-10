@@ -21,6 +21,8 @@ void Task_sleep(int a);
 #include "imu.h"
 #include "navigation.h"
 #include "hal/motors.h" //also contains all sorts of geometries (wheel radius etc)
+#include "hal/adc.h"
+#include "hal/time_since_boot.h"
 #include "hal/ultrasonic.h"
 #include <math.h>
 #include "../lib/printf.h"
@@ -112,7 +114,7 @@ double navigation_dist_to_target(double lat_current, double lon_current, double 
 
     double a = sin(delta_lat/2)*sin(delta_lat/2) + cos(lat_current)*cos(lat_target) * sin(delta_lon/2)*sin(delta_lon/2);
     
-    double distance = 2*EARTH_RADIUS*asin(sqrtf(a));
+    double distance = 2*EARTH_RADIUS*asin(sqrt(a));
     return distance;
 }
 
@@ -121,21 +123,25 @@ double navigation_dist_to_target(double lat_current, double lon_current, double 
  *         lat2, long2 => Latitude and Longitude of target  point
  *
  * Returns the degree of a direction from current point to target point (between -180, 180).
- * Negative value are toward East, positive West
+ * Negative value are toward West, positive East
  */
 double navigation_angle_to_target(double lat1, double lon1, double lat2, double lon2) {
-	double dLon = navigation_degree_to_rad(lon2-lon1);
-
     lat1 = navigation_degree_to_rad(lat1);
     lat2 = navigation_degree_to_rad(lat2);
+    lon1 = navigation_degree_to_rad(lon1);
+    lon2 = navigation_degree_to_rad(lon2);
     
+    double dLon = lon2-lon1;
+    double dLat = lat2-lat1;
+
     double y = sin(dLon) * cos(lat2);
-    double x = cos(lat1) * sin(lat2) - sin(lat1)*cos(lat2)*cos(dLon);
-    double brng = 180/M_PI*(atan2f(y, x));
+    double x = cos(lat1) * sin(lat2) - sin(lat1)*cos(lat2)*cos(dLat);
+    double brng = 180/M_PI*(atan2(y, x));
 
     return brng;
 }
 
+// returns a negative value if target is to the left of the rover, a positive value if target is to the right
 double navigation_angle_for_rover(double lat1, double lon1, double lat2, double lon2, double headX) {
     double bearing = navigation_angle_to_target(lat1, lon1, lat2, lon2);
     bearing = bearing - headX;
@@ -149,9 +155,9 @@ double navigation_angle_for_rover(double lat1, double lon1, double lat2, double 
     		bearing = bearing - 360.0;
     }
     // if value is close to ±180°, we keep the same sign as previously to turn in just one direction:
-    if(fabsf(bearing) > 170.0)
+    if(fabs(bearing) > 170.0)
     {
-    		bearing=copysignf(bearing, navigation_status.angle_to_target);
+    		bearing=copysign(bearing, navigation_status.angle_to_target);
     }
 
     return bearing;
@@ -373,6 +379,38 @@ void navigation_mission_item_reached()
 	}
 }
 
+COMM_FRAME* navigation_pack_rc_channels_scaled()
+{
+	static COMM_FRAME frame;
+
+	uint8_t port             = 0;
+	int16_t chan7_scaled = 0;
+	int16_t chan8_scaled = 0;
+	uint8_t rssi             = 0;
+
+	int16_t left_side = navigation_status.motor_values[0];
+	int16_t right_side = navigation_status.motor_values[1];
+
+	//get currents
+	static uint16_t sensor_values[N_WHEELS];
+
+	/* initialize to 0 to reset the running average inside the adc readout function */
+	sensor_values[0] = 0;
+	sensor_values[1] = 0;
+	sensor_values[2] = 0;
+	sensor_values[3] = 0;
+
+	adc_read_motor_sensors(sensor_values);
+
+	uint32_t msec = ms_since_boot();
+
+	mavlink_msg_rc_channels_scaled_pack(mavlink_system.sysid, MAV_COMP_ID_PATHPLANNER, &(frame.mavlink_message),
+				   msec, port, sensor_values[0],sensor_values[1], sensor_values[2], sensor_values[3],
+				   chan7_scaled, chan8_scaled, left_side, right_side,  rssi);
+
+	return &frame;
+}
+
 // message that is continuously at each task call
 COMM_FRAME* navigation_pack_mavlink_hud()
 {
@@ -380,7 +418,10 @@ COMM_FRAME* navigation_pack_mavlink_hud()
 	// Define the system type, in this case an airplane
 	float airspeed = 0.; //TODO
 	float groundspeed = 0.; //TODO
-	int16_t heading = 100*gps_get_gps_fheading(); //from 0 to 360 deg in centidegrees
+	int32_t heading = gps_get_gps_heading();
+	if(heading < 0)
+		heading = heading + 36000;
+	heading = heading / 100; //from 0 to 360 deg
 	uint16_t throttle = (navigation_status.motor_values[0] + navigation_status.motor_values[1]);
 	float alt = (1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
 	float climb = 0.; //TODO
@@ -391,7 +432,7 @@ COMM_FRAME* navigation_pack_mavlink_hud()
 	// Pack the message
 
 	mavlink_msg_vfr_hud_pack(mavlink_system.sysid, MAV_COMP_ID_PATHPLANNER, &(frame.mavlink_message),
-			airspeed, groundspeed, heading, throttle, alt, climb);
+			airspeed, groundspeed, (int16_t)heading, throttle, alt, climb);
 
 	return &frame;
 }
@@ -467,23 +508,30 @@ void navigation_update_position();
 #else
 void navigation_update_position()
 {
-	if(gps_update_new_position(&(navigation_status.lat_rover), &(navigation_status.lon_rover)))
-	{
-		//we get a new gps position
-	}
-	else
-	{
-		//we didn't get a new gps position --> update position using odometry.
-		//TODO
-		motors_wheels_update_distance();
+//	if(gps_update_new_position(&(navigation_status.lat_rover), &(navigation_status.lon_rover)))
+//	{
+//		//we get a new gps position
+//	}
+//	else
+//	{
+//		//we didn't get a new gps position --> update position using odometry.
+//		//TODO
+//		motors_wheels_update_distance();
+//
+//		motors_struts_get_position();
+//	}
 
-		motors_struts_get_position();
-	}
-
-	navigation_status.position_valid = imu_valid() && gps_valid();
+	navigation_status.position_valid = gps_valid();
 
 	// recalculate heading angle
-	navigation_status.heading_rover = imu_get_fheading(); //TODO: change to GPS heading/cog
+#ifndef USE_GPS_HEADING
+	float hdg = imu_get_fheading();
+	if(hdg > 180.0)
+		hdg = hdg - 360.0;
+	navigation_status.heading_rover = hdg;
+#else
+	navigation_status.heading_rover = gps_get_gps_fheading(); 
+#endif
 	navigation_status.angle_to_target = navigation_angle_for_rover(navigation_status.lat_rover,navigation_status.lon_rover,
 			navigation_status.lat_target, navigation_status.lon_target, navigation_status.heading_rover);
 	// recalculate distance to target
@@ -793,16 +841,11 @@ void navigation_task()
 		navigation_arm_disarm();
 		navigation_move();
 
-
-#ifdef MAVLINK_ON_LORA_ENABLED
-		comm_set_tx_flag(CHANNEL_LORA, MAV_COMP_ID_PATHPLANNER);
-#endif
-
-#ifdef MAVLINK_ON_UART0_ENABLED
-		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_PATHPLANNER);
-#endif
-		comm_mavlink_broadcast(navigation_pack_mavlink_hud());
-
+		if(navigation_rover_moving())
+		{
+			comm_mavlink_broadcast(navigation_pack_mavlink_hud());
+			comm_mavlink_broadcast(navigation_pack_rc_channels_scaled());
+		}
 
 		Task_sleep(500);
 

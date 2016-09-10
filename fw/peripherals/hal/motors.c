@@ -133,12 +133,7 @@ void motors_wheels_update_distance()
 	sensor_values[2] = 0;
 	sensor_values[3] = 0;
 
-	if(GPIO_read(Board_M5678_CURR_SENS_EN)){ //only measure if sensors are on.
-		adc_read_motor_sensors(sensor_values);
-	}
-
-
-//	serial_printf(cli_stdout, "current: %d \n\r",sensor_values[0]);
+	adc_read_motor_sensors(sensor_values);
 }
 
 

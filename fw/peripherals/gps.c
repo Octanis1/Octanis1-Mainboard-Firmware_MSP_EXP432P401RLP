@@ -165,7 +165,7 @@ void gps_run_gps_heading()
 	}
 }
 
-//heading calculated as clockwise angle (in centidegrees) with north equal zero.
+//heading calculated as clockwise angle (in centidegrees) with north equal zero and +/-180degrees range.
 int32_t gps_get_gps_heading()
 {
 	int8_t i, j;
@@ -208,13 +208,14 @@ int32_t gps_get_gps_heading()
 			return gps_heading;
 		}
 
-		double d_x = cos(new_average_lat_d * PI / 180.0 ) * sin(delta_lon* PI / 180.0 );
-		double d_y = cos(old_average_lat_d*PI/180.0)*sin(new_average_lat_d*PI/180.0)-sin(old_average_lat_d*PI/180.0)*cos(new_average_lat_d*PI/180.0)*cos(delta_lat*PI/180.0);
+		static double d_x = 0;
+		static double d_y = 0;
+
+		// perform moving average with 80% weight on history
+		d_x = cos(new_average_lat_d * PI / 180.0 ) * sin(delta_lon* PI / 180.0 );
+		d_y = (cos(old_average_lat_d*PI/180.0)*sin(new_average_lat_d*PI/180.0)-sin(old_average_lat_d*PI/180.0)*cos(new_average_lat_d*PI/180.0)*cos(delta_lat*PI/180.0));
 
 		alpha = atan2(d_x, d_y)*57.2957795 ; // *180/pi
-
-		if(alpha<0.0)
-			alpha = alpha + 360.0;
 
 		gps_heading = (int32_t)(100 * alpha);
 
@@ -225,7 +226,7 @@ int32_t gps_get_gps_heading()
 }
 
 //heading calculated as clockwise angle
-float gps_get_gps_fheading()
+float gps_get_gps_fheading() //from -180 to 180 degrees
 {
 	return (float)gps_get_gps_heading() / 100.0;
 }
@@ -241,7 +242,9 @@ COMM_FRAME* gps_pack_mavlink_global_position_int()
 	int16_t vx = 0;
 	int16_t vy = 0;
 	int16_t vz = 0;
-	uint16_t hdg = gps_get_gps_heading();
+	int32_t hdg = gps_get_gps_heading();
+	if(hdg < 0)
+		hdg = hdg + 36000;
 	uint32_t msec = ms_since_boot();
 
 	// Initialize the message buffer
@@ -249,7 +252,7 @@ COMM_FRAME* gps_pack_mavlink_global_position_int()
 
 	// Pack the message
 	mavlink_msg_global_position_int_pack(mavlink_system.sysid, MAV_COMP_ID_GPS, &(frame.mavlink_message),
-				msec, lat, lon, alt, relative_alt,  vx, vy, vz, hdg);
+				msec, lat, lon, alt, relative_alt,  vx, vy, vz, (uint16_t)hdg);
 	return &frame;
 }
 

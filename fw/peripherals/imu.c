@@ -27,7 +27,7 @@ static struct _imu_data {
 	int16_t accel_y;
 	int16_t accel_z;
 	double d_euler_data_p;
-	double d_euler_data_h;
+	double d_euler_data_h; // from 0 to 360deg
 	double d_euler_data_r;
 	unsigned char calib_status;
 	uint32_t t_since_last_imu_update_ms; // is the rover already/still receiving valid IMU information?
@@ -50,7 +50,7 @@ int16_t imu_get_pitch(){
 	return (int16_t)(100*imu_data.d_euler_data_p);
 }
 
-// heading Euler data in 100 degrees
+// heading Euler data in centi degrees
 int16_t imu_get_heading(){
 	return (int16_t)(100*imu_data.d_euler_data_h);
 }
@@ -113,14 +113,14 @@ COMM_FRAME* imu_pack_mavlink_attitude()
 	float pitch = (float) imu_get_pitch()/100;
 	float pitch_deg = pitch*M_PI/180;
 	float yaw = imu_get_fheading();
-	float yaw_deg = deg2rad(yaw);
+	float yaw_rad = deg2rad(yaw);
 	float rollspeed = 0.; //TODO
 	float pitchspeed = 0.; //TODO
 	float yawspeed = 0.; //TODO
 
 	// Pack the message
 	mavlink_msg_attitude_pack(mavlink_system.sysid, MAV_COMP_ID_IMU, &(frame.mavlink_message), // ROLL AND PITCH DO NOT UPDATE ON AMP PLANNER
-			ms_since_boot(), roll_deg, pitch_deg, yaw_deg, rollspeed, pitchspeed, yawspeed);
+			ms_since_boot(), roll_deg, pitch_deg, yaw_rad, rollspeed, pitchspeed, yawspeed);
 #else
 	if(imu_attitude.time_boot_ms == 0) // no attitude information received yet
 		return NULL;
@@ -163,13 +163,7 @@ void imu_task(){
 //		bno055_get_accel(&(imu_data.accel_x), &(imu_data.accel_y), &(imu_data.accel_z)); //commenting out this line alone still lets the i2c bus be blocked
 #endif
 
-#ifdef MAVLINK_ON_LORA_ENABLED
-		comm_set_tx_flag(CHANNEL_LORA, MAV_COMP_ID_IMU);
-#endif
 
-#ifdef MAVLINK_ON_UART0_ENABLED
-		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_IMU);
-#endif
 		COMM_FRAME* imu_frame = imu_pack_mavlink_attitude();
 		if(imu_frame!=NULL)
 			comm_mavlink_broadcast(imu_frame);

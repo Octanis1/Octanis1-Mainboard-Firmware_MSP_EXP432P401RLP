@@ -80,7 +80,7 @@ void adc_isr()
 }
 
 // function returns motor current values in uA
-uint8_t adc_read_motor_sensors(int32_t wheel_sensor_values[N_WHEELS])
+uint8_t adc_read_motor_sensors(int32_t* wheel_sensor_values)
 {
 	static int i,j; //counter variables
 
