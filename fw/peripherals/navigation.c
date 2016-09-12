@@ -45,7 +45,7 @@ void Task_sleep(int a);
 #define INIT_LON 0
 #define TARGET_LAT 1
 #define TARGET_LON 1
-#define TARGET_REACHED_DISTANCE 2 //meters
+#define TARGET_REACHED_DISTANCE 1 //meters
 
 #define PGAIN_A 1
 #define IGAIN_A 0
@@ -508,7 +508,9 @@ void navigation_update_position();
 #else
 void navigation_update_position()
 {
-//	if(gps_update_new_position(&(navigation_status.lat_rover), &(navigation_status.lon_rover)))
+	gps_update_new_position(&(navigation_status.lat_rover), &(navigation_status.lon_rover));
+
+//	if())
 //	{
 //		//we get a new gps position
 //	}
@@ -621,7 +623,11 @@ void navigation_update_state()
 		if(mission_items.item[mission_items.current_index].current)
 		{
 			// Only go to target if mb is armed and rover must go to home OR sbc is armed and ready to record
+#ifdef CONTINUE_WAYPOINTS_IMMEDIATELY
+			if(comm_mainboard_armed() == 1){
+#else
 			if(comm_mainboard_armed() == 1 && (mission_items.current_index == 0 || comm_sbc_armed() == 1)){
+#endif
 				navigation_status.current_state = GO_TO_TARGET;
 			}
 			else
