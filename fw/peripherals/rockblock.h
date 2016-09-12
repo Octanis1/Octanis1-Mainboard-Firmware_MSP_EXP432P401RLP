@@ -7,7 +7,7 @@
 #ifndef __ROCKBLOCK_H
 #define __ROCKBLOCK_H
 
-#define ROCKBLOCK_MESSAGE_SIZE (50)
+#define ROCKBLOCK_MESSAGE_SIZE (100)
 
 
 int rockblock_open();

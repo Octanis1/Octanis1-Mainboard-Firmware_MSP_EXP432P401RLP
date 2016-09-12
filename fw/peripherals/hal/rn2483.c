@@ -85,8 +85,13 @@ static void rn2483_uart_open(UART_SerialDevice *dev, unsigned int read_timeout_m
 
 	UART_Params_init(&uartParams);
 	uartParams.writeDataMode = UART_DATA_BINARY;
+#ifdef CONFIG_MODE
+	uartParams.readDataMode = UART_DATA_BINARY;
+	uartParams.readReturnMode = UART_RETURN_FULL;
+#else
 	uartParams.readDataMode = UART_DATA_TEXT;
 	uartParams.readReturnMode = UART_RETURN_NEWLINE;
+#endif
 	uartParams.readTimeout = read_timeout_mode;
     uartParams.writeMode = UART_MODE_BLOCKING;
 	uartParams.readEcho = UART_ECHO_OFF;
@@ -220,12 +225,12 @@ int rn2483_config()
 	comm_result += !(rn2483_rxBuffer[0] == 'o' && rn2483_rxBuffer[1] == 'k');
 	rn2483_rxBuffer[0] = 0;
 
-	// NOT needed for OTAA:
-//	UART_write(rn2483_uart, rn_set_deveui, sizeof(rn_set_deveui));
-//	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
-//	Task_sleep(500);
-//	comm_result += !(rn2483_rxBuffer[0] == 'o' && rn2483_rxBuffer[1] == 'k');
-//	rn2483_rxBuffer[0] = 0;
+	// needed for OTAA:
+	UART_write(rn2483_uart, rn_set_deveui, sizeof(rn_set_deveui));
+	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
+	Task_sleep(500);
+	comm_result += !(rn2483_rxBuffer[0] == 'o' && rn2483_rxBuffer[1] == 'k');
+	rn2483_rxBuffer[0] = 0;
 
 	UART_write(rn2483_uart, rn_set_appeui, sizeof(rn_set_appeui));
 	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
