@@ -82,7 +82,7 @@ s32 imu_init() //function to be called before starting the imu task.
 	 *--------------------------------------------------------------------------*/
 	/*	Based on the user need configure I2C interface.
 	 *	It is example code to explain how to use the bno055 API*/
-	  	I2C_routine();
+		BNO055_I2C_routine();
 	/*--------------------------------------------------------------------------*
 	 *  This function used to assign the value/reference of
 	 *	the following parameters
@@ -541,7 +541,7 @@ unsigned char bno055_check_calibration_status()
  *	Delay function pointer: delay_msec
  *	I2C address: dev_addr
  *--------------------------------------------------------------------------*/
- s8 I2C_routine(void) {
+ s8 BNO055_I2C_routine(void) {
 
 	my_bno055.bus_write = BNO055_I2C_bus_write;
 	my_bno055.bus_read = BNO055_I2C_bus_read;

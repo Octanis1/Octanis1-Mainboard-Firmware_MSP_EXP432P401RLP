@@ -7,7 +7,7 @@
 
 void gps_task();
 
-uint8_t gps_update_new_position(float* lat_, float* lon_);
+uint8_t gps_update_new_position(double* lat_, double* lon_);
 
 bool gps_valid();
 
@@ -15,8 +15,8 @@ uint8_t gps_get_fix_quality();
 int gps_get_satellites_tracked();
 
 //unscaled lat and lon integers
-float gps_get_lat();
-float gps_get_lon();
+double gps_get_lat();
+double gps_get_lon();
 
 float gps_get_speed();
 int32_t gps_get_int_speed();
@@ -25,6 +25,11 @@ float gps_get_altitude();
 uint32_t gps_get_int_altitude();
 float gps_get_course();
 
+//returns heading calculated as clockwise angle (in centidegrees) with north equal zero.
+int32_t gps_get_gps_heading();
+
+// heading angle in degrees (direction of movement)
+float gps_get_gps_fheading();
 
 int gps_get_lat_scale();
 int gps_get_lon_scale();

@@ -84,6 +84,7 @@ extern "C" {
 /* Board specific I2C addresses */
 #define Board_EPS_I2CADDR					(0x48)
 #define Board_BMP180_I2CADDR					(0x77) //temp/pres
+#define Board_BMP280_I2CADDR					(0x77) //temp/pres
 #define Board_BNO055_MAINBOARD_I2CADDR			(0x28) //IMU 1
 #define Board_BNO055_WEATHERSTRIP_I2CADDR		(0x29) //IMU 2
 #define Board_MCP3425AD_I2CADDR					(0x68) //ADC for UV
@@ -199,10 +200,12 @@ extern "C" {
 #define Board_ULTRASONIC_IN_7_CCTL		TIMER_A0->CCTL[3]
 #define Board_ULTRASONIC_IN_7_IV			0x06
 
-/* UV captor pins */
-#define Board_UV_PIN		Octanis_UV_EN
-#define Board_UV_ON 		1
-#define Board_UV_OFF		0
+/* UV sensor pins */
+#define Board_UV_INT			Octanis_UV_INT
+#define 	Board_UV_INT_PORT	GPIO_PORT_P1
+#define 	Board_UV_INT_PIN		GPIO_PIN5
+#define Board_UV_ON 			1
+#define Board_UV_OFF			0
 
 /* Windsensor pins */
 #define Board_WINDSENSOR_SLEEP			Octanis_WINDSENSOR_SLEEP
@@ -247,10 +250,10 @@ extern "C" {
 #define Board_M1_ANGLE_ENCODER_CS	Octanis_M1_ANGLE_ENCODER_CS
 
 #define Board_M5678_ON	 			Octanis_M5678_ON
-#define Board_M5_IN2					Octanis_M5_IN2
-#define Board_M6_IN2					Octanis_M6_IN2
-#define Board_M7_IN2					Octanis_M7_IN2
-#define Board_M8_IN2					Octanis_M8_IN2
+#define Board_M5_PH					Octanis_M5_PH
+#define Board_M6_PH					Octanis_M6_PH
+#define Board_M7_PH					Octanis_M7_PH
+#define Board_M8_PH					Octanis_M8_PH
 
 #ifdef VERSION_0_5
 	#define Board_M5_EN_PWM           	Octanis_PWM_TA1_2

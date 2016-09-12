@@ -21,6 +21,8 @@ void Task_sleep(int a);
 #include "imu.h"
 #include "navigation.h"
 #include "hal/motors.h" //also contains all sorts of geometries (wheel radius etc)
+#include "hal/adc.h"
+#include "hal/time_since_boot.h"
 #include "hal/ultrasonic.h"
 #include <math.h>
 #include "../lib/printf.h"
@@ -42,7 +44,7 @@ void Task_sleep(int a);
 #define INIT_LON 0
 #define TARGET_LAT 1
 #define TARGET_LON 1
-#define TARGET_REACHED_DISTANCE 2 //meters
+#define TARGET_REACHED_DISTANCE 1 //meters
 
 #define PGAIN_A 1
 #define IGAIN_A 0
@@ -54,14 +56,14 @@ void Task_sleep(int a);
 #define MIN_IMU_CALIB_STATUS	6 //to have angle valid = true
 
 typedef struct _navigation_status{
-	float lat_rover;
-	float lon_rover;
-	float heading_rover;
-	float lat_target;
-	float lon_target;
-	float distance_to_target;
-	float angle_to_target; // [-180, 180]. Positive means target is located to the right
-	float max_dist_obs;
+	double lat_rover;
+	double lon_rover;
+	double heading_rover;
+	double lat_target;
+	double lon_target;
+	double distance_to_target;
+	double angle_to_target; // [-180, 180]. Positive means target is located to the right
+	double max_dist_obs;
 	int32_t motor_values[2]; // current motor speed
 	bool position_valid; // defines if GPS and heading angle are valid. if false, the rover shall not drive to target
 	enum _current_state{
@@ -81,6 +83,12 @@ static pid_controler_t pid_a;
 
 static mission_item_list_t mission_items;
 
+/** public functions **/
+int navigation_rover_moving()
+{
+	return ((navigation_status.motor_values[0]!=0) || (navigation_status.motor_values[1] != 0));
+}
+
 void navigation_update_current_target();
 
 mavlink_mission_item_t * navigation_mavlink_get_item_list()
@@ -98,64 +106,18 @@ uint16_t navigation_mavlink_get_count()
 	return mission_items.count;
 }
 
-float navigation_get_lat_rover()
-{
-	return navigation_status.lat_rover;
-}
 
-float navigation_get_lon_rover()
-{
-	return navigation_status.lon_rover;
-}
+/** helper functions **/
 
-float navigation_get_heading_rover()
-{
-	return navigation_status.heading_rover;
-}
+void navigation_update_current_target();
 
-float navigation_get_lat_target()
+double navigation_degree_to_rad(double degree)
 {
-	return navigation_status.lat_target;
-}
-
-float navigation_get_lon_target()
-{
-	return navigation_status.lon_target;
-}
-
-float navigation_get_distance_to_target()
-{
-	return navigation_status.distance_to_target;
-}
-
-float navigation_get_angle_to_target()
-{
-	return navigation_status.angle_to_target;
-}
-
-float navigation_get_max_dist_obs()
-{
-	return navigation_status.max_dist_obs;
-}
-
-
-enum _current_state navigation_get_current_state()
-{
-	return navigation_status.current_state;
-}
-
-float navigation_degree_to_rad(float degree)
-{
-    float rad = degree/180*M_PI;
+    double rad = degree/180*M_PI;
     return rad;
 }
 
-void navigation_set_max_dist(float max_dist)
-{
-	navigation_status.max_dist_obs = max_dist;
-}
-
-float navigation_dist_to_target(float lat_current, float lon_current, float lat_target, float lon_target){
+double navigation_dist_to_target(double lat_current, double lon_current, double lat_target, double lon_target){
 
 	//The gps gives the coordinate in degree
     lat_current = navigation_degree_to_rad(lat_current);
@@ -163,12 +125,12 @@ float navigation_dist_to_target(float lat_current, float lon_current, float lat_
     lon_current = navigation_degree_to_rad(lon_current);
     lon_target = navigation_degree_to_rad(lon_target);
 
-    float delta_lat = lat_target - lat_current;
-    float delta_lon = lon_target - lon_current;
+    double delta_lat = lat_target - lat_current;
+    double delta_lon = lon_target - lon_current;
 
-    float a = sinf(delta_lat/2)*sinf(delta_lat/2) + cosf(lat_current)*cosf(lat_target) * sinf(delta_lon/2)*sinf(delta_lon/2);
+    double a = sin(delta_lat/2)*sin(delta_lat/2) + cos(lat_current)*cos(lat_target) * sin(delta_lon/2)*sin(delta_lon/2);
     
-    float distance = 2*EARTH_RADIUS*asinf(sqrtf(a));
+    double distance = 2*EARTH_RADIUS*asin(sqrt(a));
     return distance;
 }
 
@@ -177,23 +139,27 @@ float navigation_dist_to_target(float lat_current, float lon_current, float lat_
  *         lat2, long2 => Latitude and Longitude of target  point
  *
  * Returns the degree of a direction from current point to target point (between -180, 180).
- * Negative value are toward East, positive West
+ * Negative value are toward West, positive East
  */
-float navigation_angle_to_target(float lat1, float lon1, float lat2, float lon2) {
-    float dLon = navigation_degree_to_rad(lon2-lon1);
-
+double navigation_angle_to_target(double lat1, double lon1, double lat2, double lon2) {
     lat1 = navigation_degree_to_rad(lat1);
     lat2 = navigation_degree_to_rad(lat2);
+    lon1 = navigation_degree_to_rad(lon1);
+    lon2 = navigation_degree_to_rad(lon2);
     
-    float y = sinf(dLon) * cosf(lat2);
-    float x = cosf(lat1) * sinf(lat2) - sinf(lat1)*cosf(lat2)*cosf(dLon);
-    float brng = 180/M_PI*(atan2f(y, x));
+    double dLon = lon2-lon1;
+    double dLat = lat2-lat1;
+
+    double y = sin(dLon) * cos(lat2);
+    double x = cos(lat1) * sin(lat2) - sin(lat1)*cos(lat2)*cos(dLat);
+    double brng = 180/M_PI*(atan2(y, x));
 
     return brng;
 }
 
-float navigation_angle_for_rover(float lat1, float lon1, float lat2, float lon2, float headX) {
-    float bearing = navigation_angle_to_target(lat1, lon1, lat2, lon2);
+// returns a negative value if target is to the left of the rover, a positive value if target is to the right
+double navigation_angle_for_rover(double lat1, double lon1, double lat2, double lon2, double headX) {
+    double bearing = navigation_angle_to_target(lat1, lon1, lat2, lon2);
     bearing = bearing - headX;
     // bound value between -180 and 180°
     while(bearing < -180.0)
@@ -205,9 +171,9 @@ float navigation_angle_for_rover(float lat1, float lon1, float lat2, float lon2,
     		bearing = bearing - 360.0;
     }
     // if value is close to ±180°, we keep the same sign as previously to turn in just one direction:
-    if(fabsf(bearing) > 170.0)
+    if(fabs(bearing) > 170.0)
     {
-    		bearing=copysignf(bearing, navigation_status.angle_to_target);
+    		bearing=copysign(bearing, navigation_status.angle_to_target);
     }
 
     return bearing;
@@ -238,7 +204,9 @@ MAV_RESULT navigation_halt_resume(COMM_MAV_MSG_TARGET *target, mavlink_message_t
  */
 void navigation_arm_disarm()
 {
+#ifndef ARM_IMMEDIATELY
 	if(navigation_status.position_valid)
+#endif
 	{
 		// condition to arm mainboard: know a valid position. TODO: add more conditions (EPS motor on state, etc...)
 		if(navigation_status.cmd_armed_disarmed == 1)
@@ -258,12 +226,14 @@ void navigation_arm_disarm()
 			comm_disarm_mainboard();
 		}
 	}
+#ifndef ARM_IMMEDIATELY
 	else
 	{
 		if(comm_sbc_armed())
 			comm_arm_disarm_subsystems(0);
 		comm_disarm_mainboard();
 	}
+#endif
 }
 
 
@@ -428,6 +398,38 @@ void navigation_mission_item_reached()
 	}
 }
 
+COMM_FRAME* navigation_pack_rc_channels_scaled()
+{
+	static COMM_FRAME frame;
+
+	uint8_t port             = 0;
+	int16_t chan7_scaled = 0;
+	int16_t chan8_scaled = 0;
+	uint8_t rssi             = 0;
+
+	int16_t left_side = navigation_status.motor_values[0];
+	int16_t right_side = navigation_status.motor_values[1];
+
+	//get currents
+	static uint16_t sensor_values[N_WHEELS];
+
+	/* initialize to 0 to reset the running average inside the adc readout function */
+	sensor_values[0] = 0;
+	sensor_values[1] = 0;
+	sensor_values[2] = 0;
+	sensor_values[3] = 0;
+
+	adc_read_motor_sensors(sensor_values);
+
+	uint32_t msec = ms_since_boot();
+
+	mavlink_msg_rc_channels_scaled_pack(mavlink_system.sysid, MAV_COMP_ID_PATHPLANNER, &(frame.mavlink_message),
+				   msec, port, sensor_values[0],sensor_values[1], sensor_values[2], sensor_values[3],
+				   chan7_scaled, chan8_scaled, left_side, right_side,  rssi);
+
+	return &frame;
+}
+
 // message that is continuously at each task call
 COMM_FRAME* navigation_pack_mavlink_hud()
 {
@@ -435,7 +437,10 @@ COMM_FRAME* navigation_pack_mavlink_hud()
 	// Define the system type, in this case an airplane
 	float airspeed = 0.; //TODO
 	float groundspeed = 0.; //TODO
-	int16_t heading = imu_get_heading();
+	int32_t heading = gps_get_gps_heading();
+	if(heading < 0)
+		heading = heading + 36000;
+	heading = heading / 100; //from 0 to 360 deg
 	uint16_t throttle = (navigation_status.motor_values[0] + navigation_status.motor_values[1]);
 	float alt = (1000.0 * gps_get_int_altitude());//Altitude (AMSL, NOT WGS84), in meters * 1000 (positive for up). Note that virtually all GPS modules provide the AMSL altitude in addition to the WGS84 altitude.
 	float climb = 0.; //TODO
@@ -446,7 +451,7 @@ COMM_FRAME* navigation_pack_mavlink_hud()
 	// Pack the message
 
 	mavlink_msg_vfr_hud_pack(mavlink_system.sysid, MAV_COMP_ID_PATHPLANNER, &(frame.mavlink_message),
-			airspeed, groundspeed, heading, throttle, alt, climb);
+			airspeed, groundspeed, (int16_t)heading, throttle, alt, climb);
 
 	return &frame;
 }
@@ -492,15 +497,23 @@ uint8_t navigation_bypass(char command, uint8_t index)
 	}
 	else
 	{
+		if(command == 'x')
+		{
+			motors_wheels_stop();
+			navigation_status.current_state = STOP;
+			navigation_status.motor_values[0] = 0; navigation_status.motor_values[1] = 0;
+			return 1;
+		}
 		switch(command)
 		{
-		case 'f': motors_wheels_move(PWM_SPEED_100, PWM_SPEED_100, PWM_SPEED_100, PWM_SPEED_100);break;
-		case 'b': motors_wheels_move(-PWM_SPEED_100, -PWM_SPEED_100, -PWM_SPEED_100, -PWM_SPEED_100);break;
-		case 'l': motors_wheels_move(PWM_SPEED_80, PWM_SPEED_100, PWM_SPEED_80, PWM_SPEED_100);break;
-		case 'r': motors_wheels_move(PWM_SPEED_100, PWM_SPEED_80, PWM_SPEED_100, PWM_SPEED_80);break;
-		case 'x': motors_wheels_stop();break;
+		case 'f': navigation_status.motor_values[0] = PWM_SPEED_100; navigation_status.motor_values[1] = PWM_SPEED_100; break;
+		case 'b': navigation_status.motor_values[0] = -PWM_SPEED_100; navigation_status.motor_values[1] = -PWM_SPEED_100; break;
+		case 'l': navigation_status.motor_values[0] = PWM_SPEED_80; navigation_status.motor_values[1] = PWM_SPEED_100; break;
+		case 'r': navigation_status.motor_values[0] = PWM_SPEED_100; navigation_status.motor_values[1] = PWM_SPEED_80; break;
 		default: return 0;
 		}
+		motors_wheels_move(navigation_status.motor_values[0], navigation_status.motor_values[1],
+				navigation_status.motor_values[0], navigation_status.motor_values[1]);
 	}
 
 	navigation_status.current_state = BYPASS;
@@ -514,23 +527,32 @@ void navigation_update_position();
 #else
 void navigation_update_position()
 {
-	if(gps_update_new_position(&(navigation_status.lat_rover), &(navigation_status.lon_rover)))
-	{
-		//we get a new gps position
-	}
-	else
-	{
-		//we didn't get a new gps position --> update position using odometry.
-		//TODO
-		motors_wheels_update_distance();
+	gps_update_new_position(&(navigation_status.lat_rover), &(navigation_status.lon_rover));
 
-		motors_struts_get_position();
-	}
+//	if())
+//	{
+//		//we get a new gps position
+//	}
+//	else
+//	{
+//		//we didn't get a new gps position --> update position using odometry.
+//		//TODO
+//		motors_wheels_update_distance();
+//
+//		motors_struts_get_position();
+//	}
 
-	navigation_status.position_valid = imu_valid() && gps_valid();
+	navigation_status.position_valid = gps_valid();
 
 	// recalculate heading angle
-	navigation_status.heading_rover = imu_get_fheading();
+#ifndef USE_GPS_HEADING
+	float hdg = imu_get_fheading();
+	if(hdg > 180.0)
+		hdg = hdg - 360.0;
+	navigation_status.heading_rover = hdg;
+#else
+	navigation_status.heading_rover = gps_get_gps_fheading(); 
+#endif
 	navigation_status.angle_to_target = navigation_angle_for_rover(navigation_status.lat_rover,navigation_status.lon_rover,
 			navigation_status.lat_target, navigation_status.lon_target, navigation_status.heading_rover);
 	// recalculate distance to target
@@ -620,7 +642,11 @@ void navigation_update_state()
 		if(mission_items.item[mission_items.current_index].current)
 		{
 			// Only go to target if mb is armed and rover must go to home OR sbc is armed and ready to record
+#ifdef CONTINUE_WAYPOINTS_IMMEDIATELY
+			if(comm_mainboard_armed() == 1){
+#else
 			if(comm_mainboard_armed() == 1 && (mission_items.current_index == 0 || comm_sbc_armed() == 1)){
+#endif
 				navigation_status.current_state = GO_TO_TARGET;
 			}
 			else
@@ -665,7 +691,7 @@ void navigation_move();
 void navigation_move()
 {
 	static int32_t lspeed, rspeed;
-	float angular = 0;
+	double angular = 0;
 
 	//only move if not on halt AND state = go_to_target
 	if(navigation_status.halt == 0)
@@ -696,26 +722,26 @@ void navigation_move()
 			navigation_status.motor_values[0] = 0;
 			navigation_status.motor_values[1] = 0;
 		}
-		else if(navigation_status.current_state == AVOID_OBSTACLE)
-		{
-			int32_t distance_values[N_ULTRASONIC_SENSORS];
-			ultrasonic_get_distance(distance_values);
-			ultrasonic_check_distance(distance_values, navigation_status.motor_values, PWM_SPEED_80); //80% of speed to move slower than in normal mode
+//		else if(navigation_status.current_state == AVOID_OBSTACLE)
+//		{
+//			int32_t distance_values[N_ULTRASONIC_SENSORS];
+//			ultrasonic_get_distance(distance_values);
+//			ultrasonic_check_distance(distance_values, navigation_status.motor_values, PWM_SPEED_80); //80% of speed to move slower than in normal mode
+//
+//			motors_wheels_move(navigation_status.motor_values[0], navigation_status.motor_values[1],
+//					navigation_status.motor_values[0], navigation_status.motor_values[1]);
 
-			motors_wheels_move(navigation_status.motor_values[0], navigation_status.motor_values[1],
-					navigation_status.motor_values[0], navigation_status.motor_values[1]);
-
-		}else if (navigation_status.current_state == AVOID_WALL){
-			// move backwards in opposite curving direction (TODO: to be tested)
-			lspeed = -navigation_status.motor_values[1];
-			rspeed = -navigation_status.motor_values[0];
-			motors_wheels_move((int32_t)lspeed, (int32_t)rspeed, (int32_t)lspeed, (int32_t)rspeed);
-		}else if (navigation_status.current_state == SPACE_NEEDED){
-			navigation_status.motor_values[0] = -PWM_SPEED_100;
-			navigation_status.motor_values[1] = -PWM_SPEED_100;
-			motors_wheels_move(navigation_status.motor_values[0], navigation_status.motor_values[1],
-					navigation_status.motor_values[0], navigation_status.motor_values[1]);
-		}
+//		}else if (navigation_status.current_state == AVOID_WALL){
+//			// move backwards in opposite curving direction (TODO: to be tested)
+//			lspeed = -navigation_status.motor_values[1];
+//			rspeed = -navigation_status.motor_values[0];
+//			motors_wheels_move((int32_t)lspeed, (int32_t)rspeed, (int32_t)lspeed, (int32_t)rspeed);
+//		}else if (navigation_status.current_state == SPACE_NEEDED){
+//			navigation_status.motor_values[0] = -PWM_SPEED_100;
+//			navigation_status.motor_values[1] = -PWM_SPEED_100;
+//			motors_wheels_move(navigation_status.motor_values[0], navigation_status.motor_values[1],
+//					navigation_status.motor_values[0], navigation_status.motor_values[1]);
+//		}
 	}
 	else
 	{
@@ -827,16 +853,11 @@ void navigation_task()
 		navigation_arm_disarm();
 		navigation_move();
 
-
-#ifdef MAVLINK_ON_LORA_ENABLED
-		comm_set_tx_flag(CHANNEL_LORA, MAV_COMP_ID_PATHPLANNER);
-#endif
-
-#ifdef MAVLINK_ON_UART0_ENABLED
-		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_PATHPLANNER);
-#endif
-		comm_mavlink_broadcast(navigation_pack_mavlink_hud());
-
+		if(navigation_rover_moving())
+		{
+			comm_mavlink_broadcast(navigation_pack_mavlink_hud());
+			comm_mavlink_broadcast(navigation_pack_rc_channels_scaled());
+		}
 
 		Task_sleep(500);
 
