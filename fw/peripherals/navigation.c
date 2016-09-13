@@ -339,7 +339,9 @@ COMM_MAV_RESULT navigation_next_mission_item(COMM_MAV_MSG_TARGET *target, mavlin
 		if(mission_items.current_index<mission_items.count) //activate next target if available
 		{
 			mission_items.item[mission_items.current_index].current = 1;
+#ifdef FLASH_ENABLED
 			log_write_mavlink_item_list(true);
+#endif
 		}
 		else
 		{
@@ -362,8 +364,9 @@ COMM_MAV_RESULT navigation_next_mission_item(COMM_MAV_MSG_TARGET *target, mavlin
 			mission_items.item[mission_items.current_index].current = 1;
 		else
 			return NO_ANSWER; //TODO: reply NACK
-
+#ifdef FLASH_ENABLED
 		log_write_mavlink_item_list(false);
+#endif
 
 	}
 
@@ -821,8 +824,8 @@ void navigation_task()
 {
 	bool logging_enabled = false;
 	navigation_init();
-//#ifdef FLASH_ENABLED
 
+#ifdef FLASH_ENABLED
 	if (flash_init() == 0) {
 		logging_enabled = true;
 	}
@@ -842,7 +845,7 @@ void navigation_task()
     if(log_read_mavlink_item_list(&item_list, &time, &name))
     	navigation_restore_mission_items(item_list);
 
-//#endif
+#endif
 
 	while(1){
 
