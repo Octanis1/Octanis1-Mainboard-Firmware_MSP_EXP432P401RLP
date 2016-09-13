@@ -1,7 +1,11 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
 #include "flash_defines.h"
 #include "flash.h"
+#include "hal/spi_helper.h"
+
+#include "../../Board.h"
 
 /* Timing (max values): from Spansion S25FL127S (Datasheet Rev06, Chapter 10.10)
     - Page Programming: 1480us (512 bytes)
@@ -13,8 +17,10 @@
 */
 
 #define FLASH_PAGE_PROGRAM_TIMEOUT_MS   (2)
-#define FLASH_SECTOR_ERASE_TIMEOUT_MS   (780)
-#define FLASH_BLOCK_ERASE_TIMEOUT_MS    (12600)
+#define FLASH_REGISTER_PROGRAM_TIMEOUT_MS   (200)
+#define FLASH_BLOCK_64KB_ERASE_TIMEOUT_MS   (780)
+#define FLASH_BLOCK1_64KB_ERASE_TIMEOUT_MS  (12600)
+#define FLASH_BLOCK_256KB_ERASE_TIMEOUT_MS  (3120)
 #define FLASH_CHIP_ERASE_TIMEOUT_MS     (210000)
 
 // defined in hal/flash_spi.c
@@ -24,33 +30,7 @@ int flash_spi_send(const void *txbuf, size_t len);
 int flash_spi_receive(void *rxbuf, size_t len);
 void flash_os_sleep_ms(uint32_t ms);
 
-static int flash_read_status(uint8_t *sr)
-{
-    int ret;
-    uint8_t cmd = FLASH_RDSR;
-    flash_spi_select();
-    ret = flash_spi_send(&cmd, 1);
-    if (ret == 0) {
-        ret = flash_spi_receive(sr, 1);
-    }
-    flash_spi_unselect();
-    return ret;
-}
-
-// wait until the flash program/erase operation is finished
-static int flash_wait_until_done(uint32_t timeout_ms)
-{
-    int ret;
-    while (timeout_ms-- > 0) {
-        uint8_t status;
-        ret = flash_read_status(&status);
-        if (ret != 0 || (status & STATUS_BUSY) == 0) {
-            return ret;
-        }
-        flash_os_sleep_ms(1);
-    }
-    return -1;
-}
+static int flash_initialized = 0;
 
 static int flash_cmd(uint8_t cmd)
 {
@@ -80,11 +60,90 @@ static void flash_write_disable(void)
     flash_spi_unselect();
 }
 
+int flash_read_status(uint8_t *sr)
+{
+    int ret;
+    uint8_t cmd = FLASH_RDSR1;
+    flash_spi_select();
+    ret = flash_spi_send(&cmd, 1);
+    if (ret == 0) {
+        ret = flash_spi_receive(sr, 1);
+    }
+    flash_spi_unselect();
+    return ret;
+}
+
+static int flash_read_status2(uint8_t *sr)
+{
+    int ret;
+    uint8_t cmd = FLASH_RDSR2;
+    flash_spi_select();
+    ret = flash_spi_send(&cmd, 1);
+    if (ret == 0) {
+        ret = flash_spi_receive(sr, 1);
+    }
+    flash_spi_unselect();
+    return ret;
+}
+
+static int flash_read_config(uint8_t *cr)
+{
+    int ret;
+    uint8_t cmd = FLASH_RDCR;
+    flash_spi_select();
+    ret = flash_spi_send(&cmd, 1);
+    if (ret == 0) {
+        ret = flash_spi_receive(cr, 1);
+    }
+    flash_spi_unselect();
+    return ret;
+}
+
+// wait until the flash program/erase operation is finished
+static int flash_wait_until_done(uint32_t timeout_ms)
+{
+    int ret;
+    while (timeout_ms-- > 0) {
+        uint8_t status;
+        ret = flash_read_status(&status);
+        if (ret != 0 || (status & STATUS_BUSY) == 0) {
+            return ret;
+        }
+        flash_os_sleep_ms(1);
+    }
+    return -1;
+}
+
+int flash_write_registers(uint8_t *sr1, uint8_t *cr, uint8_t *sr2)
+{
+	int ret;
+	int ret2;
+	uint8_t cmd = FLASH_WRR;
+	flash_write_enable();
+	flash_spi_select();
+	ret = flash_spi_send(&cmd, 1);
+	//write one config register after the other, null pointer stops process
+	if (ret == 0 && sr1) {
+		ret = flash_spi_send(sr1, 1);
+		if (ret == 0 && cr) {
+			ret = flash_spi_send(cr, 1);
+			if (ret == 0 && sr2) {
+				ret = flash_spi_send(sr2, 1);
+			}
+		}
+	}
+	//this is required to start the procedure to write the registers.
+	flash_spi_unselect();
+	ret2 = flash_wait_until_done(FLASH_REGISTER_PROGRAM_TIMEOUT_MS);
+	flash_write_disable();
+	return ret == 0 ? ret2 : ret;
+}
+
 int flash_id_read(uint8_t *id)
 {
     int ret;
     flash_spi_select();
-    ret = flash_cmd(FLASH_JEDEC_ID);
+    ret = flash_cmd(FLASH_RDID);
     if (ret == 0) {
         ret = flash_spi_receive(id, 3);
     }
@@ -92,49 +151,36 @@ int flash_id_read(uint8_t *id)
     return ret;
 }
 
-/* NOTICE : in flash_write and flash_read you'll notice that we add a 3*i offset when
- * reading multiple page. This is a magic number to avoid loss of data, flash_write
- * apparently not succeeding in writing the 3*i first entries of its buffer to the
- * begining of the 1+ith page.
- * The reason for the bug is unknow and the programmer choosed to go the easy
- * way after failing at fixing it for more time that he would admit.
- */
+int flash_read_registers(uint8_t *buf)
+{
+	int ret = 0;
+	ret = flash_read_status(buf);
+	if (ret == 0) {
+		ret = flash_read_config(&(buf[1]));
+	}
+	if (ret == 0) {
+		ret = flash_read_status2(&(buf[2]));
+	}
+	return ret;
+}
 
 //TODO: works with mavlink_log, should test it for standards log.
 int flash_read(uint32_t addr, void *buf, size_t len)
 {
-    int ret;
-    uint32_t delta = FLASH_PAGE_SIZE - FLASH_USABLE_LENGTH;
-    uint32_t i = 0;
-    //We check if the addr isn't one of the forbidden byte(s) of the block
-    for (i=1; i<= delta; i++){
-    	if ((addr+i)%FLASH_PAGE_SIZE == 0)
-    		addr+=i;
-    }
-    //False result can be obtained if usable_lenght < addr < page_size
-    //However we prevent this with the for-loop used just before
-    size_t align = FLASH_USABLE_LENGTH - addr % FLASH_PAGE_SIZE;
-    align = align < len ? align : len;
+    int ret = 0;
+    size_t pos = 0;
+    uint8_t *p_buf = (uint8_t*)buf;
+
+    //read is consecutive and independent of page
+    size_t align = len < FLASH_MAX_MESSAGE ? len : FLASH_MAX_MESSAGE;
 
     flash_spi_select();
-    ret = flash_cmd_w_addr(FLASH_READ, addr);
-    if (ret == 0) {
-        ret = flash_spi_receive(buf, align);
-        if (ret == 0) {
-        	size_t pos = align;
-        	i = 1;
-        	/*We never write the 256th byte so we have to
-        	 * jump over it*/
-        	while(pos < len) {
-                size_t n = len - pos < FLASH_USABLE_LENGTH - (3*i) ? len - pos : FLASH_USABLE_LENGTH - (3*i);
-        		ret = flash_cmd_w_addr(FLASH_READ, addr + pos + (i*delta));
-        		if (ret == 0) {
-        			ret = flash_spi_receive(&buf[pos], n);
-        		}
-        		i++;
-        		pos += n;
-        	}
-        }
+	ret = flash_cmd_w_addr(FLASH_READ, addr);
+
+    while (pos < len && ret == 0) {
+		ret = flash_spi_receive(&p_buf[pos], align);
+    	pos += align;
+    	align = len - pos < FLASH_MAX_MESSAGE ? len - pos : FLASH_MAX_MESSAGE;
     }
     flash_spi_unselect();
     return ret;
@@ -147,21 +193,37 @@ int flash_page_program(uint32_t addr, const void *buf, size_t len);
 
 static int flash_page_program(uint32_t addr, const void *buf, size_t len)
 {
-    if (addr % FLASH_PAGE_SIZE + len > FLASH_USABLE_LENGTH) {
+    int ret;
+    uint8_t *_buf = (uint8_t*)buf;
+
+    if (addr % FLASH_PAGE_SIZE + len > FLASH_PAGE_SIZE) {
         return -1;
     }
-    int ret;
-    flash_write_enable();
-    flash_spi_select();
-    ret = flash_cmd_w_addr(FLASH_PP, addr);
-    if (ret == 0) {
-        ret = flash_spi_send(buf, len);
-    }
-    flash_spi_unselect();
-    if (ret == 0) {
-        ret = flash_wait_until_done(FLASH_PAGE_PROGRAM_TIMEOUT_MS);
-    }
-    flash_write_disable();
+
+    //workaround as library does not allow to flash single page in one go.
+    //if more than possible bytes to write, split in two.
+
+	flash_write_enable();
+	flash_spi_select();
+	ret = flash_cmd_w_addr(FLASH_PP, addr);
+	if (len > FLASH_MAX_MESSAGE) {
+		if (ret == 0) {
+			ret = flash_spi_send(buf, FLASH_MAX_MESSAGE);
+		}
+		if (ret == 0) {
+			ret = flash_spi_send(&(_buf[FLASH_MAX_MESSAGE]), len - FLASH_MAX_MESSAGE);
+		}
+	} else {
+		if (ret == 0) {
+			ret = flash_spi_send(buf, len);
+		}
+	}
+	flash_spi_unselect();
+	if (ret == 0) {
+		ret = flash_wait_until_done(FLASH_PAGE_PROGRAM_TIMEOUT_MS);
+	}
+	flash_write_disable();
+
     return ret;
 }
 
@@ -178,37 +240,47 @@ static int flash_page_program(uint32_t addr, const void *buf, size_t len)
 //TODO: works with mavlink_log, should test it for standards log.
 int flash_write(uint32_t addr, const void *buf, size_t len)
 {
-    uint32_t delta = FLASH_PAGE_SIZE - FLASH_USABLE_LENGTH;
-    int ret;
-    uint32_t i = 0;
-    //We check if the addr isn't one of the forbidden byte(s) of the block
-    for (i=1; i<= delta; i++){
-    	if ((addr+i)%FLASH_PAGE_SIZE == 0)
-    		addr+=i;
-    }
+    int ret = 0;
 
-    size_t align = FLASH_USABLE_LENGTH - addr % FLASH_PAGE_SIZE;
+    const uint8_t *p_data = (const uint8_t *) buf;
+
+    size_t pos = 0;
+    size_t align = FLASH_PAGE_SIZE - (addr % FLASH_PAGE_SIZE);
     align = align < len ? align : len;
-    const uint8_t *p = (const uint8_t *) buf;
-    ret = flash_page_program(addr, p, align);
-    if (ret == 0) {
-        size_t pos = align;
-        i = 1;
-        /* We can't write on the 256th byte due to uint8_t max number*/
-        while (pos < len) {
-            size_t n = len - pos < FLASH_USABLE_LENGTH - (3*i) ? len - pos : FLASH_USABLE_LENGTH - (3*i);
-            ret = flash_page_program(addr + pos + (i*delta) + 3*i, &p[pos], n);
-            if (ret != 0) {
-                break;
-            }
-            i++;
-            pos += n;
-        }
+
+    while (pos < len && ret == 0) {
+    	//write new data
+    	if (ret == 0) {
+    		ret = flash_page_program(addr + pos, &(p_data[pos]), align);
+    	}
+
+    	//update pointers and counters
+    	pos += align;
+		align = len - pos < FLASH_PAGE_SIZE ? len - pos : FLASH_PAGE_SIZE;
     }
     return ret;
 }
 
+//sector erase (4kB) only works for first 64kB
 int flash_sector_erase(uint32_t addr)
+{
+    int ret;
+    if (addr < FLASH_BLOCK_SIZE) {
+		flash_write_enable();
+		flash_spi_select();
+		ret = flash_cmd_w_addr(FLASH_P4E, addr);
+		flash_spi_unselect();
+		if (ret == 0) {
+			ret = flash_wait_until_done(FLASH_BLOCK_64KB_ERASE_TIMEOUT_MS);
+		}
+		flash_write_disable();
+		return ret;
+    }
+    return -1;
+}
+
+//Only valid if using 64kB block size
+int flash_block_erase(uint32_t addr)
 {
     int ret;
     flash_write_enable();
@@ -216,21 +288,11 @@ int flash_sector_erase(uint32_t addr)
     ret = flash_cmd_w_addr(FLASH_SE, addr);
     flash_spi_unselect();
     if (ret == 0) {
-        ret = flash_wait_until_done(FLASH_SECTOR_ERASE_TIMEOUT_MS);
-    }
-    flash_write_disable();
-    return ret;
-}
-
-int flash_block_erase(uint32_t addr)
-{
-    int ret;
-    flash_write_enable();
-    flash_spi_select();
-    ret = flash_cmd_w_addr(FLASH_BE, addr);
-    flash_spi_unselect();
-    if (ret == 0) {
-        ret = flash_wait_until_done(FLASH_BLOCK_ERASE_TIMEOUT_MS);
+    	if (addr < FLASH_BLOCK_SIZE) {
+    		ret = flash_wait_until_done(FLASH_BLOCK1_64KB_ERASE_TIMEOUT_MS);
+    	} else {
+    		ret = flash_wait_until_done(FLASH_BLOCK_64KB_ERASE_TIMEOUT_MS);
+    	}
     }
     flash_write_disable();
     return ret;
@@ -241,11 +303,62 @@ int flash_chip_erase(void)
     int ret;
     flash_write_enable();
     flash_spi_select();
-    ret = flash_cmd(FLASH_CE);
+    ret = flash_cmd(FLASH_BE);
     flash_spi_unselect();
     if (ret == 0) {
         ret = flash_wait_until_done(FLASH_CHIP_ERASE_TIMEOUT_MS);
     }
     flash_write_disable();
     return ret;
+}
+
+int flash_init()
+{
+	int ret;
+	uint8_t buf[10];
+
+	//return if flash already initialized
+	if (flash_initialized == 1) {
+		return 0;
+	}
+
+	spi_helper_init_handle();
+
+	//workaround to give flash enough time to power up and get ready
+	//Task_sleep(10);
+
+	//verify flash chip ID
+	ret = flash_id_read(buf);
+	if (ret != 0) {
+		return ret;
+	}
+	const uint8_t flash_id[] = {0x01,0x20,0x18}; // S25FL127S ID
+	if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
+		// flash answers with correct ID
+		//serial_printf(cli_stdout, "Flash ID OK\n");
+	} else {
+		//serial_printf(cli_stdout, "Flash ID ERROR\n");
+		return -2;
+	}
+
+	//verify if registers are set correctly. Should always be the case except for new flash chip
+	ret = flash_read_registers(buf);
+	if (ret != 0) {
+		return ret;
+	}
+	if (buf[0] != 0x00 || buf[1] != 0xC0 || buf[2] != 0x00)
+	{
+		uint8_t sr1 = 0x00;
+		uint8_t cr = 0xC0;
+		uint8_t sr2 = 0x00;
+
+		if (flash_write_registers(&sr1, &cr, &sr2) != 0) {
+			//serial_printf(cli_stdout, "Writing flash register ERROR\n");
+			return -3;
+		} else {
+			//serial_printf(cli_stdout, "Writing flash register OK\n");
+		}
+	}
+	flash_initialized = 1;
+	return 0;
 }

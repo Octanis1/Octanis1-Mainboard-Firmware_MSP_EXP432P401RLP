@@ -11,6 +11,10 @@ extern "C" {
 // read the 3-byte flash JEDEC-ID, id[0] = manufacturer, id[1-2] = device type
 int flash_id_read(uint8_t *id);
 
+int flash_read_registers(uint8_t *buf);
+int flash_write_registers(uint8_t *sr1, uint8_t *cr, uint8_t *sr2);
+int flash_read_status(uint8_t *buf);
+
 // reads data from flash
 int flash_read(uint32_t addr, void *buf, size_t len);
 
@@ -27,6 +31,9 @@ int flash_block_erase(uint32_t addr);
 
 // erase the chip
 int flash_chip_erase(void);
+
+// init flash chip
+int flash_init();
 
 #ifdef __cplusplus
 }

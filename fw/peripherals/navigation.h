@@ -47,6 +47,12 @@ uint8_t navigation_bypass(char command, uint8_t index);
 
 int navigation_rover_moving();
 
+void navigation_update_current_target();
+mavlink_mission_item_t * navigation_mavlink_get_item_list();
+uint16_t navigation_mavlink_get_current_index();
+uint16_t navigation_mavlink_get_count();
+
+
 //Compute angle and distance from the rover to the target
 double navigation_dist_to_target(double lat_current, double lon_current, double lat_target, double lon_target);
 double navigation_angle_to_target(double lat_current, double lon_current, double lat_target, double lon_target);

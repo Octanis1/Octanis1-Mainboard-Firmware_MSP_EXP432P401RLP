@@ -36,7 +36,6 @@ void Task_sleep(int a);
 #include "../lib/cmp/cmp.h"
 #include "../lib/cmp_mem_access/cmp_mem_access.h"
 #include "flash.h"
-#include "hal/spi_helper.h"
 
 #endif
 #define M_PI 3.14159265358979323846
@@ -84,10 +83,29 @@ static pid_controler_t pid_a;
 
 static mission_item_list_t mission_items;
 
+static uint8_t pos_counter;
+
 /** public functions **/
 int navigation_rover_moving()
 {
 	return ((navigation_status.motor_values[0]!=0) || (navigation_status.motor_values[1] != 0));
+}
+
+void navigation_update_current_target();
+
+mavlink_mission_item_t * navigation_mavlink_get_item_list()
+{
+	return mission_items.item;
+}
+
+uint16_t navigation_mavlink_get_current_index()
+{
+	return mission_items.current_index;
+}
+
+uint16_t navigation_mavlink_get_count()
+{
+	return mission_items.count;
 }
 
 
@@ -175,6 +193,7 @@ MAV_RESULT navigation_halt_resume(COMM_MAV_MSG_TARGET *target, mavlink_message_t
 	else if(hold_resume == MAV_GOTO_DO_CONTINUE)
 	{
 		navigation_status.halt = 0;
+		navigation_status.current_state = STOP;
 	}
 	else
 	{
@@ -262,8 +281,7 @@ COMM_MAV_RESULT navigation_rx_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_
 				mission_item_rx_count = 0;
 			}
 #ifdef FLASH_ENABLED
-			log_write_mavlink_item_list();
-			serial_printf(cli_stdout,"waypoint list stored on flash done \n");
+			log_write_mavlink_item_list(false, &pos_counter);
 #endif
 		}
 		return REPLY_TO_SENDER;
@@ -324,6 +342,9 @@ COMM_MAV_RESULT navigation_next_mission_item(COMM_MAV_MSG_TARGET *target, mavlin
 		if(mission_items.current_index<mission_items.count) //activate next target if available
 		{
 			mission_items.item[mission_items.current_index].current = 1;
+#ifdef FLASH_ENABLED
+			log_write_mavlink_item_list(true, &pos_counter);
+#endif
 		}
 		else
 		{
@@ -341,10 +362,14 @@ COMM_MAV_RESULT navigation_next_mission_item(COMM_MAV_MSG_TARGET *target, mavlin
 		mission_items.item[mission_items.current_index].current = 0;
 
 		mission_items.current_index = mavlink_msg_mission_set_current_get_seq(msg);
+
 		if(mission_items.current_index < mission_items.count)
 			mission_items.item[mission_items.current_index].current = 1;
 		else
 			return NO_ANSWER; //TODO: reply NACK
+#ifdef FLASH_ENABLED
+		log_write_mavlink_item_list(false, &pos_counter);
+#endif
 
 	}
 
@@ -545,7 +570,7 @@ void navigation_update_position()
 
 void navigation_update_current_target()
 {
-	if(mission_items.current_index < mission_items.count)
+	if(mission_items.current_index < mission_items.count && navigation_status.current_state != BYPASS)
 	{
 		//TODO: check for frame and command variable of the mission_item.
 		navigation_status.lat_target = mission_items.item[mission_items.current_index].x;
@@ -800,23 +825,12 @@ void navigation_restore_mission_items(mission_item_list_t item_list)
 
 void navigation_task()
 {
+	bool logging_enabled = false;
 	navigation_init();
+
 #ifdef FLASH_ENABLED
-	/************* flash test START ****************/
-	spi_helper_init_handle();
-
-    // force enable logging
-    bool logging_enabled = true;
-
-
-	static uint8_t buf[250];
-	flash_id_read(buf);
-	const uint8_t flash_id[] = {0x01,0x20,0x18}; // S25FL127S ID
-	if (memcmp(buf, flash_id, sizeof(flash_id)) == 0) {
-		// flash answers with correct ID
-		serial_printf(cli_stdout, "Flash ID OK\n");
-	} else {
-		serial_printf(cli_stdout, "Flash ID ERROR\n");
+	if (flash_init() == 0) {
+		logging_enabled = true;
 	}
 
     if (logging_enabled) {
@@ -825,19 +839,18 @@ void navigation_task()
             log_reset();
         }
     }
-    //serial_printf(cli_stdout, "log position 0x%x\n", log_write_pos());
-	/************* flash test END ****************/
 
     //We look if we have mavlink mission item logged, in case we just suffered a crash
 
     uint32_t time = 0;
     char name[4]; //Name is a 3 characters long string
     mission_item_list_t item_list;
-    if(log_read_mavlink_item_list(&item_list, &time, &name))
+    if(log_read_mavlink_item_list(&item_list, &time, &name, &pos_counter))
     	navigation_restore_mission_items(item_list);
 
 #endif
 
+    unsigned int loops_since_stop = 0;
 	while(1){
 
 //		navigation_update_target();
@@ -847,11 +860,18 @@ void navigation_task()
 		navigation_arm_disarm();
 		navigation_move();
 
-		if(navigation_rover_moving())
+		if(navigation_rover_moving() || loops_since_stop < 62) // trasmit messages after stop for a duration such that
+																//at least one msg with speed zero is tx'd via LoRa
 		{
 			comm_mavlink_broadcast(navigation_pack_mavlink_hud());
 			comm_mavlink_broadcast(navigation_pack_rc_channels_scaled());
 		}
+
+		if(!navigation_rover_moving())
+			loops_since_stop++;
+		else
+			loops_since_stop = 0;
+
 
 		Task_sleep(500);
 

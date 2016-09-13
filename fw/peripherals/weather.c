@@ -185,6 +185,8 @@ uint8_t weather_check_external_connected()
 }
 
 void weather_task(){
+	bool logging_enabled = false;
+
 	time_since_boot_init();
 	cli_init();
 
@@ -205,6 +207,21 @@ void weather_task(){
 	// Initialize on-board sensors
 	bme280_init();
 	geiger_turn_on_off(GEIGER_ON);
+
+/*//Uncomment if flash logging required
+	// Initialize flash
+	if (flash_init() == 0) {
+		logging_enabled = true;
+	}
+
+	if (logging_enabled) {
+		if (!log_init()) {
+			serial_printf(cli_stdout, "log_init failed\n");
+			log_reset();
+		}
+	}
+*/
+    //serial_printf(cli_stdout, "log position 0x%x\n", log_write_pos());
 
 
     while(1){
