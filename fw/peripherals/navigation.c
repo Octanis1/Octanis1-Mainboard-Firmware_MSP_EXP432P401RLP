@@ -193,6 +193,7 @@ MAV_RESULT navigation_halt_resume(COMM_MAV_MSG_TARGET *target, mavlink_message_t
 	else if(hold_resume == MAV_GOTO_DO_CONTINUE)
 	{
 		navigation_status.halt = 0;
+		navigation_status.current_state = STOP;
 	}
 	else
 	{
@@ -569,7 +570,7 @@ void navigation_update_position()
 
 void navigation_update_current_target()
 {
-	if(mission_items.current_index < mission_items.count)
+	if(mission_items.current_index < mission_items.count && navigation_status.current_state != BYPASS)
 	{
 		//TODO: check for frame and command variable of the mission_item.
 		navigation_status.lat_target = mission_items.item[mission_items.current_index].x;
@@ -849,6 +850,7 @@ void navigation_task()
 
 #endif
 
+    unsigned int loops_since_stop = 0;
 	while(1){
 
 //		navigation_update_target();
@@ -858,11 +860,18 @@ void navigation_task()
 		navigation_arm_disarm();
 		navigation_move();
 
-		if(navigation_rover_moving())
+		if(navigation_rover_moving() || loops_since_stop < 62) // trasmit messages after stop for a duration such that
+																//at least one msg with speed zero is tx'd via LoRa
 		{
 			comm_mavlink_broadcast(navigation_pack_mavlink_hud());
 			comm_mavlink_broadcast(navigation_pack_rc_channels_scaled());
 		}
+
+		if(!navigation_rover_moving())
+			loops_since_stop++;
+		else
+			loops_since_stop = 0;
+
 
 		Task_sleep(500);
 
