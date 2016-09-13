@@ -47,7 +47,7 @@ bool log_read_mavlink_item(cmp_ctx_t * ctx, mavlink_mission_item_t * item)
 	return ret;
 }
 
-bool log_read_mavlink_item_list(mission_item_list_t * item_list, uint32_t * time, char *name)
+bool log_read_mavlink_item_list(mission_item_list_t * item_list, uint32_t * time, char *name, uint8_t *pos_counter)
 {
 	cmp_mem_access_t cma;
 	cmp_ctx_t ctx;
@@ -62,7 +62,7 @@ bool log_read_mavlink_item_list(mission_item_list_t * item_list, uint32_t * time
 
 	bool found_current = false;
 
-	ret = log_read_last_mav_entry(buf, &entry_len, &next_entry);
+	ret = log_read_last_mav_entry(buf, &entry_len, &next_entry, pos_counter);
 	if (ret == false)
 		return ret;
 
@@ -102,6 +102,11 @@ bool log_read_mavlink_item_list(mission_item_list_t * item_list, uint32_t * time
 			return false;
 	}
 
+	if(!found_current) //the last waypoint must be the current WP
+	{
+		item_list->item[item_list->count-1].current = 1;
+	}
+
 	return ret;
 }
 
@@ -125,7 +130,7 @@ void log_serialize_mavlink_item(cmp_ctx_t *ctx, mavlink_mission_item_t item)
 
 }
 
-void log_write_mavlink_item_list(bool overwrite)
+void log_write_mavlink_item_list(bool overwrite, uint8_t *pos_counter)
 {
     int i = 0;
     uint8_t temp;
@@ -156,7 +161,7 @@ void log_write_mavlink_item_list(bool overwrite)
     }
     else
     {
-    	log_mav_write_to_flash();
+    	log_mav_write_to_flash(pos_counter);
     }
 }
 

@@ -83,6 +83,8 @@ static pid_controler_t pid_a;
 
 static mission_item_list_t mission_items;
 
+static uint8_t pos_counter;
+
 /** public functions **/
 int navigation_rover_moving()
 {
@@ -278,7 +280,7 @@ COMM_MAV_RESULT navigation_rx_mission_item(COMM_MAV_MSG_TARGET *target, mavlink_
 				mission_item_rx_count = 0;
 			}
 #ifdef FLASH_ENABLED
-			log_write_mavlink_item_list(false);
+			log_write_mavlink_item_list(false, &pos_counter);
 #endif
 		}
 		return REPLY_TO_SENDER;
@@ -340,7 +342,7 @@ COMM_MAV_RESULT navigation_next_mission_item(COMM_MAV_MSG_TARGET *target, mavlin
 		{
 			mission_items.item[mission_items.current_index].current = 1;
 #ifdef FLASH_ENABLED
-			log_write_mavlink_item_list(true);
+			log_write_mavlink_item_list(true, &pos_counter);
 #endif
 		}
 		else
@@ -365,7 +367,7 @@ COMM_MAV_RESULT navigation_next_mission_item(COMM_MAV_MSG_TARGET *target, mavlin
 		else
 			return NO_ANSWER; //TODO: reply NACK
 #ifdef FLASH_ENABLED
-		log_write_mavlink_item_list(false);
+		log_write_mavlink_item_list(false, &pos_counter);
 #endif
 
 	}
@@ -842,7 +844,7 @@ void navigation_task()
     uint32_t time = 0;
     char name[4]; //Name is a 3 characters long string
     mission_item_list_t item_list;
-    if(log_read_mavlink_item_list(&item_list, &time, &name))
+    if(log_read_mavlink_item_list(&item_list, &time, &name, &pos_counter))
     	navigation_restore_mission_items(item_list);
 
 #endif
