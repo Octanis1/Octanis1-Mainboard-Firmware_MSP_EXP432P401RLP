@@ -165,34 +165,34 @@ void log_write_mavlink_item_list(bool overwrite, uint8_t *pos_counter)
     }
 }
 
-void log_write_navigation_status(void)
-{
-    float lat_rover = navigation_get_lat_rover();
-    float lon_rover = navigation_get_lon_rover();
-    float heading_rover = navigation_get_heading_rover();
-    float lat_target = navigation_get_lat_target();
-    float lon_target = navigation_get_lon_target();
-    float distance_to_target = navigation_get_distance_to_target();
-    float angle_to_target = navigation_get_angle_to_target();
-    float max_dist_obs = navigation_get_max_dist_obs();
-    /*Strange enum related bug, not loging it currently*/
-    //int8_t current_state = (int8_t) navigation_get_current_state();
-
-    cmp_ctx_t *ctx = log_entry_create("nav");
-
-    cmp_write_array(ctx, 8);
-    cmp_write_float(ctx, lat_rover);
-    cmp_write_float(ctx, lon_rover);
-    cmp_write_float(ctx, heading_rover);
-    cmp_write_float(ctx, lat_target);
-    cmp_write_float(ctx, lon_target);
-    cmp_write_float(ctx, distance_to_target);
-    cmp_write_float(ctx, angle_to_target);
-    cmp_write_float(ctx, max_dist_obs);
-    //cmp_write_integer(ctx, current_state);
-
-    log_entry_write_to_flash();
-}
+//void log_write_navigation_status(void)
+//{
+//    float lat_rover = navigation_get_lat_rover();
+//    float lon_rover = navigation_get_lon_rover();
+//    float heading_rover = navigation_get_heading_rover();
+//    float lat_target = navigation_get_lat_target();
+//    float lon_target = navigation_get_lon_target();
+//    float distance_to_target = navigation_get_distance_to_target();
+//    float angle_to_target = navigation_get_angle_to_target();
+//    float max_dist_obs = navigation_get_max_dist_obs();
+//    /*Strange enum related bug, not loging it currently*/
+//    //int8_t current_state = (int8_t) navigation_get_current_state();
+//
+//    cmp_ctx_t *ctx = log_entry_create("nav");
+//
+//    cmp_write_array(ctx, 8);
+//    cmp_write_float(ctx, lat_rover);
+//    cmp_write_float(ctx, lon_rover);
+//    cmp_write_float(ctx, heading_rover);
+//    cmp_write_float(ctx, lat_target);
+//    cmp_write_float(ctx, lon_target);
+//    cmp_write_float(ctx, distance_to_target);
+//    cmp_write_float(ctx, angle_to_target);
+//    cmp_write_float(ctx, max_dist_obs);
+//    //cmp_write_integer(ctx, current_state);
+//
+//    log_entry_write_to_flash();
+//}
 
 
 void log_write_gps(void)

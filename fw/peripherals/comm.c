@@ -16,7 +16,7 @@
 
 #define MSG_ID_FIELD				N_COMM_CHANNELS
 
-#define N_PERIODIC_MAVLINK_MSG	14
+#define N_PERIODIC_MAVLINK_MSG	13
 #define P_INF					UINT32_MAX
 static const uint32_t mavlink_message_periods[N_PERIODIC_MAVLINK_MSG][N_COMM_CHANNELS+1] = {
 /* Definitions of the minimal time in ms between two consecutive message transmissions.
@@ -30,8 +30,7 @@ static const uint32_t mavlink_message_periods[N_PERIODIC_MAVLINK_MSG][N_COMM_CHA
 	{1000,		30000,		P_INF,		P_INF,	MAVLINK_MSG_ID_SCALED_IMU},
 	{500,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_SCALED_PRESSURE},
 	{500,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_ATTITUDE},
-	{P_INF,		P_INF,		300000,		P_INF,	MAVLINK_MSG_ID_GLOBAL_POSITION_INT},
-	{1000,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_RC_CHANNELS_SCALED},
+	{1000,		30000,		P_INF,		P_INF,	MAVLINK_MSG_ID_RC_CHANNELS_SCALED},
 	{500,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_VFR_HUD},
 	{30000,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_RADIO_STATUS},
 	{30000,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_BATTERY_STATUS},
@@ -40,6 +39,36 @@ static const uint32_t mavlink_message_periods[N_PERIODIC_MAVLINK_MSG][N_COMM_CHA
 };
 
 static uint32_t mavlink_periodic_msg_tx_times[N_PERIODIC_MAVLINK_MSG][N_COMM_CHANNELS]= {{0,},};
+
+/* this function pre-fills the time stamp array of the mavlink broadcasts.
+ * Goal:
+ * distribute the TX events more evenly in order to prevent mailbox overflow.
+ */
+void comm_add_offset_to_mavlink_tx_times()
+{
+	/*LoRa*/
+	mavlink_periodic_msg_tx_times[MAVLINK_MSG_ID_BATTERY_STATUS][CHANNEL_LORA] = 5000;
+	mavlink_periodic_msg_tx_times[MAVLINK_MSG_ID_SYS_STATUS][CHANNEL_LORA] = 2000;
+	mavlink_periodic_msg_tx_times[MAVLINK_MSG_ID_GPS_RAW_INT][CHANNEL_LORA] = 10000;
+	mavlink_periodic_msg_tx_times[MAVLINK_MSG_ID_GLOBAL_POSITION_INT][CHANNEL_LORA] = 12000;
+	mavlink_periodic_msg_tx_times[MAVLINK_MSG_ID_SCALED_IMU][CHANNEL_LORA] = 15000;
+	mavlink_periodic_msg_tx_times[MAVLINK_MSG_ID_SCALED_PRESSURE][CHANNEL_LORA] = 17000;
+	mavlink_periodic_msg_tx_times[MAVLINK_MSG_ID_ATTITUDE][CHANNEL_LORA] = 19000;
+	mavlink_periodic_msg_tx_times[MAVLINK_MSG_ID_SCALED_PRESSURE][MAVLINK_MSG_ID_VFR_HUD] = 21000;
+	mavlink_periodic_msg_tx_times[MAVLINK_MSG_ID_RC_CHANNELS][CHANNEL_LORA] = 22000;
+	mavlink_periodic_msg_tx_times[MAVLINK_MSG_ID_RC_CHANNELS_SCALED][CHANNEL_LORA] = 24000;
+
+	/*Rockblock*/
+	// SMALLEST PRIORITY: sensor data
+	mavlink_periodic_msg_tx_times[MAVLINK_MSG_ID_SCALED_PRESSURE][CHANNEL_ROCKBLOCK] = 400000;
+	mavlink_periodic_msg_tx_times[MAVLINK_MSG_ID_ATTITUDE][CHANNEL_ROCKBLOCK] = 400000;
+	mavlink_periodic_msg_tx_times[MAVLINK_MSG_ID_RC_CHANNELS][CHANNEL_ROCKBLOCK] = 400000;
+	// second smallest prio: GPS data (may have to wait for survey-in
+	mavlink_periodic_msg_tx_times[MAVLINK_MSG_ID_GPS_RAW_INT][CHANNEL_ROCKBLOCK] = 200000;
+	mavlink_periodic_msg_tx_times[MAVLINK_MSG_ID_GLOBAL_POSITION_INT][CHANNEL_ROCKBLOCK] = 200000;
+
+
+}
 
 #define N_IRREGULAR_MAVLINK_MSG	14
 static const uint8_t mavlink_message_allow_tx[N_IRREGULAR_MAVLINK_MSG][N_COMM_CHANNELS+1] = {
