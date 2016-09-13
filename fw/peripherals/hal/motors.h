@@ -13,6 +13,7 @@
 #define WHEEL_RADIUS		0.1 //[m]
 #define SPEED_FACTOR		0.00001875 //[rps/pwm value]
 
+
 //PWM speed scale (time in us) :
 #define PWM_PERIOD		50
 #define PWM_SPEED_100	1.0*PWM_PERIOD
@@ -27,6 +28,8 @@
 #define PWM_SPEED_0		0*PWM_PERIOD
 
 #define PID_SCALING_FACTOR	PWM_SPEED_100/5/45 //turn with maximum wheel speed difference (100%/80%) for 45° bearing error
+
+#define PWM_MIN_CURVE_SPEED	PWM_SPEED_60
 
 #define PWM_MINIMUM_SPEED	26 //this is the minimum speed we want so the motors are still visibly moving.
 

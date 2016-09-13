@@ -684,13 +684,13 @@ void navigation_move()
 			if (angular > 0){
 				lspeed = PWM_SPEED_100;
 				rspeed = PWM_SPEED_100 - (int32_t)(angular);
-				if (rspeed < PWM_SPEED_80)
-					rspeed = PWM_SPEED_80;
+				if (rspeed < PWM_MIN_CURVE_SPEED)
+					rspeed = PWM_MIN_CURVE_SPEED;
 			}else if (angular <= 0){
 				rspeed = PWM_SPEED_100;
 				lspeed = PWM_SPEED_100 + (int32_t)(angular);
-				if (lspeed < PWM_SPEED_80)
-					lspeed = PWM_SPEED_80;
+				if (lspeed < PWM_MIN_CURVE_SPEED)
+					lspeed = PWM_MIN_CURVE_SPEED;
 
 			}
 			motors_wheels_move((int32_t)lspeed, (int32_t)rspeed, (int32_t)lspeed, (int32_t)rspeed);
