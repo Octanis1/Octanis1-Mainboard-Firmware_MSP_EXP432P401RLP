@@ -13,7 +13,7 @@
 #include "../lib/cmp/cmp.h"
 #include "../lib/cmp_mem_access/cmp_mem_access.h"
 
-#define LOG_ENTRY_HEADER_LEN    3 // length byte + crc8
+#define LOG_ENTRY_HEADER_LEN    4 // counter + length byte + crc8
 #define LOG_ENTRY_DATA_LEN      1124
 
 /* Moved the struct in the .h, not sure if necessary */
@@ -35,10 +35,10 @@ struct logger {
 
 cmp_ctx_t *log_entry_create(const char *name);
 void log_entry_write_to_flash(void);
-void log_mav_write_to_flash(void);
+void log_mav_write_to_flash(uint8_t *pos_counter);
 void log_mav_overwrite_flash(void);
-bool log_read_entry(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry);
-bool log_read_last_mav_entry (uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry);
+bool log_read_entry(uint32_t addr, uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry, uint8_t *pos_counter);
+bool log_read_last_mav_entry (uint8_t buf[LOG_ENTRY_DATA_LEN], size_t *entry_len, uint32_t *next_entry, uint8_t *pos_counter);
 void log_position_backup(void);
 bool log_init(void);
 void log_reset(void);
