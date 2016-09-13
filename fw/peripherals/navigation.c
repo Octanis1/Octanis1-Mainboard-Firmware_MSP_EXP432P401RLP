@@ -189,11 +189,11 @@ MAV_RESULT navigation_halt_resume(COMM_MAV_MSG_TARGET *target, mavlink_message_t
 	if(hold_resume == MAV_GOTO_DO_HOLD)
 	{
 		navigation_status.halt = 1;
+		navigation_status.current_state = STOP;
 	}
 	else if(hold_resume == MAV_GOTO_DO_CONTINUE)
 	{
 		navigation_status.halt = 0;
-		navigation_status.current_state = STOP;
 	}
 	else
 	{
@@ -244,6 +244,8 @@ void navigation_arm_disarm()
 void navigation_rxcmd_arm_disarm(float arm_disarm)
 {
 	navigation_status.cmd_armed_disarmed = (arm_disarm==1);
+	if(arm_disarm==1) // also unhalt rover to start driving immediately.
+		navigation_status.halt = 0;
 }
 
 

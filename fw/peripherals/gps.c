@@ -46,7 +46,7 @@ static struct timespec gps_last_update;
 bool gps_valid()
 {
 	//TODO: wait to get a certain precision
-	return gps_get_lat() != 0;
+	return gps_get_lat_int() != 0;
 }
 
 uint8_t gps_get_fix_quality(){

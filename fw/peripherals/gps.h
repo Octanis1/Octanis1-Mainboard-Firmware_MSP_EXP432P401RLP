@@ -18,6 +18,9 @@ int gps_get_satellites_tracked();
 double gps_get_lat();
 double gps_get_lon();
 
+int32_t gps_get_lat_int();// 	Latitude, expressed as degrees * 1E7
+int32_t gps_get_lon_int();// 	Longitude, expressed as degrees * 1E7
+
 float gps_get_speed();
 int32_t gps_get_int_speed();
 

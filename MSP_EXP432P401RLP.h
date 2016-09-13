@@ -52,7 +52,7 @@
 #define FLASH_ENABLED 1
 #define CONTINUE_WAYPOINTS_IMMEDIATELY 1
 //#define ARM_IMMEDIATELY	1 //if defined, armed state will not wait for GPS and IMU valid.
-#define SBC_ENABLED	// if defined, it will wait for SBC to boot before sending mavlink messages and continue after waypoint 0.
+//#define SBC_ENABLED	// if defined, it will wait for SBC to boot before sending mavlink messages and continue after waypoint 0.
 #define LORA_ENABLED 1
 //#define ROCKBLOCK_ENABLED 1
 #define EPS_ENABLED 1
