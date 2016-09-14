@@ -31,6 +31,8 @@
 //mavlink includes:
 #include "comm.h"
 #include "hal/time_since_boot.h"
+#include "gps.h"
+
 
 #define CPM_CONVERSION_FACTOR 	0.0224 //see wiki for origin of factor
 #define SIGNAL_STRENGTH		  	255
@@ -155,16 +157,16 @@ COMM_FRAME* weather_pack_mavlink_rc_channels()
 
 	mavlink_msg_rc_channels_pack(mavlink_system.sysid, MAV_COMP_ID_PERIPHERAL, &(frame.mavlink_message),msec, n_channels,
 	/*ch1*/		weather_data.int_humid,
-	/*ch2*/		ext_temp_bmp280,
-	/*ch3*/		ext_temp_sht21,
-	/*ch4*/		ext_humidity,
+	/*ch2*/		ext_humidity,
+	/*ch3*/		ext_temp_bmp280,
+	/*ch4*/		ext_temp_sht21,
 	/*ch5*/		weather_data.uv_light,
 	/*ch6*/		weather_data.ir_light,
 	/*ch7*/		weather_data.vis_light,
 	/*ch8*/		weather_data.deep_uv_light,
 	/*ch9*/		weather_data.activity,
 	/*ch10*/		weather_data.health_effect,
-	/*ch11*/		UINT16_MAX,
+	/*ch11*/		gps_get_fix_quality(),
 	/*ch12*/		UINT16_MAX,
 	/*ch13*/		UINT16_MAX,
 	/*ch14*/		UINT16_MAX,
@@ -255,7 +257,7 @@ void weather_task(){
 
 		comm_mavlink_broadcast(weather_pack_mavlink_rc_channels());
 
-		Task_sleep(UPDATE_PERIOD); //note: inside bmp280_init, the standby time of the sensor is set according to this value
+		Task_sleep(4*UPDATE_PERIOD); //note: inside bmp280_init, the standby time of the sensor is set according to this value
 	}
 
 }

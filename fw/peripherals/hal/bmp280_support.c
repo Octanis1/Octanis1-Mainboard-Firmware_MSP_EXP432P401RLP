@@ -296,7 +296,7 @@ s8  BMP280_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 	int ret = I2C_transfer(i2c_helper_handle, &i2cTransaction);
 
 	if (!ret) {
-		serial_printf(cli_stdout, "bno055 read error \n", 0);
+		serial_printf(cli_stdout, "bmp280 read error \n", 0);
 		iError = ERROR;
 	}else{
 		iError = SUCCESS;

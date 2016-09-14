@@ -72,7 +72,7 @@ COMM_FRAME* eps_pack_mavlink_sys_status()
 
 	mavlink_msg_sys_status_pack(mavlink_system.sysid, MAV_COMP_ID_SYSTEM_CONTROL, &(frame.mavlink_message),
 		   onboard_control_sensors_present, onboard_control_sensors_enabled, onboard_control_sensors_health, load,
-		   rover_status_eps.v_bat, (rover_status_eps.i_out/10), battery_remaining, drop_rate_comm, errors_comm, 0,0,0,0); //WARNING: iout in miliamps is not according to standard!
+		   rover_status_eps.v_bat, (rover_status_eps.i_out/10), battery_remaining, drop_rate_comm, errors_comm, 0,0,0,0); //WARNING: iout in miliamps is not according to standard
 
 	return &frame;
 }
