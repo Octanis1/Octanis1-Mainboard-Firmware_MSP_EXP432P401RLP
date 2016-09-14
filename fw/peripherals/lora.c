@@ -1,8 +1,6 @@
 /*
- * comm.c
+ * lora.c
  *
- *  Created on: 10.08.2015
- *      Author: Sam
  */
 
 #include "../../Board.h"

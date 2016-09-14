@@ -72,7 +72,7 @@ COMM_FRAME* eps_pack_mavlink_sys_status()
 
 	mavlink_msg_sys_status_pack(mavlink_system.sysid, MAV_COMP_ID_SYSTEM_CONTROL, &(frame.mavlink_message),
 		   onboard_control_sensors_present, onboard_control_sensors_enabled, onboard_control_sensors_health, load,
-		   rover_status_eps.v_bat, rover_status_eps.i_out, battery_remaining, drop_rate_comm, errors_comm, 0,0,0,0);
+		   rover_status_eps.v_bat, (rover_status_eps.i_out/10), battery_remaining, drop_rate_comm, errors_comm, 0,0,0,0); //WARNING: iout in miliamps is not according to standard!
 
 	return &frame;
 }
@@ -84,13 +84,15 @@ COMM_FRAME* eps_pack_mavlink_battery_status()
 
 	static uint16_t vbat[10] = {UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX};
 	vbat[0] = rover_status_eps.v_bat;
+	vbat[1] = rover_status_eps.v_solar;
+	vbat[2] = rover_status_eps.i_in/10;
 	int32_t current_consumed = -1; //Consumed charge, in milliampere hours (1 = 1 mAh), -1: autopilot does not provide mAh consumption estimate
-	int16_t current_battery = rover_status_eps.i_out; //Battery current, in 10*milliamperes (1 = 10 milliampere), -1: autopilot does not measure the current
+	int32_t current_battery = rover_status_eps.i_out/10; //Battery current, in milliamperes (1 = 1 milliampere), -1: autopilot does not measure the current !!!WARNING: this is not according to mavlink standard
 	int32_t energy_consumed = -1;  //Consumed energy, in 100*Joules (intergrated U*I*dt) (1 = 100 Joule), -1: autopilot does not provide energy consumption estimate
 	int8_t battery_remaining = (rover_status_eps.v_bat - 3000)/11;	// Remaining battery energy: (0%: 0, 100%: 100), -1: autopilot does not estimate the remaining battery
 
 	mavlink_msg_battery_status_pack(mavlink_system.sysid, MAV_COMP_ID_SYSTEM_CONTROL, &(frame.mavlink_message),
-		0, MAV_BATTERY_FUNCTION_ALL, MAV_BATTERY_TYPE_LION, rover_status_eps.t_bat, vbat, current_battery, current_consumed, energy_consumed, battery_remaining);
+		0, MAV_BATTERY_FUNCTION_ALL, MAV_BATTERY_TYPE_LION, rover_status_eps.t_bat, vbat, (int16_t)current_battery, current_consumed, energy_consumed, battery_remaining);
 
 	//todo: correct battery temperature!
 
@@ -244,14 +246,8 @@ void eps_task(){
 			rover_status_eps.t_bat = (int16_t)(100/(A + B * logR + C * logR3 ) - 273.15);
 		}
 
-#ifdef MAVLINK_ON_UART0_ENABLED
-		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_SYSTEM_CONTROL);
-#endif
 		comm_mavlink_broadcast(eps_pack_mavlink_battery_status());
 
-#ifdef MAVLINK_ON_UART0_ENABLED
-		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_SYSTEM_CONTROL);
-#endif
 		comm_mavlink_broadcast(eps_pack_mavlink_sys_status());
 
 		int i;

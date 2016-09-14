@@ -43,7 +43,6 @@ int serial_printf(SerialDevice *dev, const char *fmt, ...)
 	mavlink_msg_statustext_pack(mavlink_system.sysid, MAV_COMP_ID_LOG, &(frame.mavlink_message),
     		MAV_SEVERITY_DEBUG, mav_buffer);
 
-	comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_LOG);
 	comm_mavlink_broadcast(&frame);
 
     return n;

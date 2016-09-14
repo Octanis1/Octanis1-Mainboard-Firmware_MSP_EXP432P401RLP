@@ -246,21 +246,13 @@ void weather_task(){
 		// radioactivity
 		weather_data.activity = get_last_minute_count();
 		weather_data.health_effect = weather_data.activity/CPM_CONVERSION_FACTOR;
-//		serial_printf(cli_stdout, "mSv/a, %f\n", health_effect);
 
 
 		// make conversions and averages from individual sensors.
 		weather_aggregate_data();
 
-
-#ifdef MAVLINK_ON_UART0_ENABLED
-		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_PERIPHERAL);
-#endif
 		comm_mavlink_broadcast(weather_pack_mavlink_pressure());
 
-#ifdef MAVLINK_ON_UART0_ENABLED
-		comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_PERIPHERAL);
-#endif
 		comm_mavlink_broadcast(weather_pack_mavlink_rc_channels());
 
 		Task_sleep(UPDATE_PERIOD); //note: inside bmp280_init, the standby time of the sensor is set according to this value

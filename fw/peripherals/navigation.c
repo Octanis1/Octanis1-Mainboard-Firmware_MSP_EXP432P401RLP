@@ -391,7 +391,6 @@ void navigation_mission_item_reached()
 
 	mavlink_msg_mission_item_reached_pack(mavlink_system.sysid, MAV_COMP_ID_MISSIONPLANNER, &(msg_frame.mavlink_message),
 			mission_items.current_index);
-	comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_MISSIONPLANNER);
 	comm_mavlink_broadcast(&(msg_frame));
 
 
@@ -400,7 +399,6 @@ void navigation_mission_item_reached()
 	{
 		if(navigation_next_mission_item(NULL, NULL, &(msg_frame.mavlink_message)) == REPLY_TO_SENDER)
 		{
-			comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_MISSIONPLANNER);
 			comm_mavlink_broadcast(&(msg_frame));
 		}
 	}

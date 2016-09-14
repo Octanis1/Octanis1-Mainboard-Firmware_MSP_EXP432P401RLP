@@ -26,13 +26,6 @@ Void cron_quick_clock(UArg arg){
 	// Pack the message
 	mavlink_msg_heartbeat_encode(mavlink_system.sysid, mavlink_system.compid, &(frame.mavlink_message), &hb);
 
-#ifdef MAVLINK_ON_UART0_ENABLED
-	comm_set_tx_flag(CHANNEL_APP_UART, mavlink_system.compid);
-#endif
-
-#ifdef LORA_ENABLED
-	comm_set_tx_flag(CHANNEL_LORA, mavlink_system.compid);
-#endif
 	comm_mavlink_broadcast(&frame); //send heartbeat for all available channel slots
 
 }

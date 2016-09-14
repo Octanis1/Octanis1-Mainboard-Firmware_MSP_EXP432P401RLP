@@ -180,11 +180,6 @@ uint8_t comm_mavlink_broadcast(COMM_FRAME* frame) //posts to mailbox for all ava
 
 void comm_mavlink_post_inbox(COMM_CHANNEL channel, mavlink_message_t *message); //post to mailbox for incoming messages
 
-void comm_set_tx_flag(COMM_CHANNEL channel, int component_id)
-{
-//TODO: remove this function
-}
-
 /* PRIVATE */
 
 void comm_mavlink_post_outbox(COMM_CHANNEL channel, COMM_FRAME* frame) //post to mailbox for outgoing messages
