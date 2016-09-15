@@ -470,7 +470,7 @@ int rockblock_flush(){
 
 
 //add to rockblock buffer, send automatically if full
-int rockblock_add_SBD_binary(uint8_t *tx_buffer, size_t *tx_buffersizePtr){
+int rockblock_add_SBD_binary(uint8_t *tx_buffer, uint16_t *tx_buffersizePtr){
 	int i = 0;
 	int sbd_counter = 0;//measure how many SBD were sent
 	if(tx_buffer && tx_buffersizePtr){

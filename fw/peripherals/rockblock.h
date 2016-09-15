@@ -31,7 +31,7 @@ int rockblock_send_receive_SBD(const uint8_t *tx_buffer, size_t tx_buffersize,
 								uint8_t *rx_buffer, size_t *rx_buffersizePtr);*/
 
 //adds an SBD message to the rockblock's buffer. Automatic flush only if buffer full
-int rockblock_add_SBD_binary(uint8_t *tx_buffer, size_t *tx_buffersizePtr);
+int rockblock_add_SBD_binary(uint8_t *tx_buffer, uint16_t *tx_buffersizePtr);
 
 struct rockblock_msg {
 	char *msg;
