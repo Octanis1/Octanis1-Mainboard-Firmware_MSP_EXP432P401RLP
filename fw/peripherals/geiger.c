@@ -7,6 +7,7 @@
 
 #include "../../Board.h"
 #include "geiger.h"
+#include "../core/eps.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "../../fw/core/interrupts.h"
@@ -21,6 +22,8 @@ void geiger_turn_on_off(uint8_t on_off){
 	uint16_t i = 0;
 
 	if (on_off == GEIGER_ON){
+		eps_switch_module(M3V3_2_ON);
+
 		//turn on geiger counter then wait 200 microsec
 		GPIO_write(Board_GEIGER_EN, Board_GEIGER_ON);
 		for (i=0;i<1000;i++)
