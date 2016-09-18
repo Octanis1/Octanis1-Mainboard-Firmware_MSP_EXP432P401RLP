@@ -417,7 +417,7 @@ COMM_FRAME* navigation_pack_rc_channels_scaled()
 	int16_t right_side = navigation_status.motor_values[1];
 
 	//get currents
-	static uint16_t sensor_values[N_WHEELS];
+	static int32_t sensor_values[N_WHEELS];
 
 	/* initialize to 0 to reset the running average inside the adc readout function */
 	sensor_values[0] = 0;
@@ -430,7 +430,7 @@ COMM_FRAME* navigation_pack_rc_channels_scaled()
 	uint32_t msec = ms_since_boot();
 
 	mavlink_msg_rc_channels_scaled_pack(mavlink_system.sysid, MAV_COMP_ID_PATHPLANNER, &(frame.mavlink_message),
-				   msec, port, sensor_values[0],sensor_values[1], sensor_values[2], sensor_values[3],
+				   msec, port, sensor_values[0]/100,sensor_values[1]/100, sensor_values[2]/100, sensor_values[3]/100,
 				   chan7_scaled, chan8_scaled, left_side, right_side,  rssi);
 
 	return &frame;

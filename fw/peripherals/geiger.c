@@ -22,6 +22,8 @@ void geiger_turn_on_off(uint8_t on_off){
 	uint16_t i = 0;
 
 	if (on_off == GEIGER_ON){
+		Task_sleep(2000); //need to give EPS some time to finish boot procedure.
+
 		eps_switch_module(M3V3_2_ON);
 
 		//turn on geiger counter then wait 200 microsec
