@@ -36,6 +36,15 @@ static struct _rover_status_eps {
 	int16_t t_bat; // in 0.01 degrees celsius
 } rover_status_eps;
 
+static struct _rover_status_eps_extrema{
+	uint16_t v_bat_min;
+	uint16_t v_bat_max;
+	uint16_t v_solar_min;
+	uint16_t v_solar_max;
+	uint16_t i_in_max;
+	uint16_t i_out_max;
+} rover_status_eps_extrema;
+
 void eps_init()
 {
 	rover_status_eps.stat3V3_1 = ON;  //GPS is active in the beginning
@@ -46,6 +55,13 @@ void eps_init()
 	rover_status_eps.v_solar = 0;
 	rover_status_eps.i_in = 0;
 	rover_status_eps.i_out = 0;
+
+	rover_status_eps_extrema.v_bat_min = UINT16_MAX;
+	rover_status_eps_extrema.v_bat_max = 0;
+	rover_status_eps_extrema.v_solar_min = UINT16_MAX;
+	rover_status_eps_extrema.v_solar_max = 0;
+	rover_status_eps_extrema.i_in_max = 0;
+	rover_status_eps_extrema.i_out_max = 0;
 
 	i2c_helper_init_handle();
 }
@@ -82,10 +98,17 @@ COMM_FRAME* eps_pack_mavlink_battery_status()
 	// Initialize the message buffer
 	static COMM_FRAME frame;
 
-	static uint16_t vbat[10] = {UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX,UINT16_MAX};
+	static uint16_t vbat[10] = {UINT16_MAX, };
 	vbat[0] = rover_status_eps.v_bat;
 	vbat[1] = rover_status_eps.v_solar;
-	vbat[2] = rover_status_eps.i_in/10;
+	vbat[2] = rover_status_eps.i_in;
+	vbat[3] = rover_status_eps_extrema.v_bat_min;
+	vbat[4] = rover_status_eps_extrema.v_bat_max;
+	vbat[5] = rover_status_eps_extrema.v_solar_min;
+	vbat[6] = rover_status_eps_extrema.v_solar_max;
+	vbat[7] = rover_status_eps_extrema.i_out_max;
+	vbat[8] = rover_status_eps_extrema.i_in_max;
+
 	int32_t current_consumed = -1; //Consumed charge, in milliampere hours (1 = 1 mAh), -1: autopilot does not provide mAh consumption estimate
 	int32_t current_battery = rover_status_eps.i_out/10; //Battery current, in milliamperes (1 = 1 milliampere), -1: autopilot does not measure the current !!!WARNING: this is not according to mavlink standard
 	int32_t energy_consumed = -1;  //Consumed energy, in 100*Joules (intergrated U*I*dt) (1 = 100 Joule), -1: autopilot does not provide energy consumption estimate
@@ -245,6 +268,13 @@ void eps_task(){
 
 			rover_status_eps.t_bat = (int16_t)(100/(A + B * logR + C * logR3 ) - 273.15);
 		}
+
+		rover_status_eps_extrema.v_bat_min = (rover_status_eps_extrema.v_bat_min > rover_status_eps.v_bat) ? rover_status_eps.v_bat : rover_status_eps_extrema.v_bat_min;
+		rover_status_eps_extrema.v_bat_max = (rover_status_eps_extrema.v_bat_max < rover_status_eps.v_bat) ? rover_status_eps.v_bat : rover_status_eps_extrema.v_bat_max;
+		rover_status_eps_extrema.v_solar_min = (rover_status_eps_extrema.v_solar_min > rover_status_eps.v_solar) ? rover_status_eps.v_solar : rover_status_eps_extrema.v_solar_min;
+		rover_status_eps_extrema.v_solar_max = (rover_status_eps_extrema.v_solar_max < rover_status_eps.v_solar) ? rover_status_eps.v_solar : rover_status_eps_extrema.v_solar_max;
+		rover_status_eps_extrema.i_in_max =  (rover_status_eps_extrema.i_in_max < rover_status_eps.i_in) ? rover_status_eps.i_in : rover_status_eps_extrema.i_in_max;
+		rover_status_eps_extrema.i_out_max =  (rover_status_eps_extrema.i_out_max < rover_status_eps.i_out) ? rover_status_eps.i_out : rover_status_eps_extrema.i_out_max;
 
 		comm_mavlink_broadcast(eps_pack_mavlink_battery_status());
 
