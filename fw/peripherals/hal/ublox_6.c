@@ -14,7 +14,7 @@ void ublox_6_open(){
 	uartParams.readDataMode = UART_DATA_TEXT;
 	uartParams.readReturnMode = UART_RETURN_NEWLINE; //one NMEA frame per read
 	uartParams.readEcho = UART_ECHO_OFF;
-	uartParams.baudRate = 9600;
+	uartParams.baudRate = 115200;
 	uartParams.readMode = UART_MODE_BLOCKING;
 	//uartParams.readTimeout = 10;
 	uartParams.dataLength = UART_LEN_8;

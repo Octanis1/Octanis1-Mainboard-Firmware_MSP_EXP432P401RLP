@@ -48,21 +48,22 @@
 //#define VERSION_0_5 // define to use board v0.5 pin definitions, else undefine
 //#define VERSION_0_6
 #define VERSION_1
+#define BALLOON_FIRMWARE 1
 
-#define FLASH_ENABLED 1
-#define CONTINUE_WAYPOINTS_IMMEDIATELY 1
-#define ARM_IMMEDIATELY	1 //if defined, armed state will not wait for GPS and IMU valid.
-#define SBC_ENABLED	// if defined, it will wait for SBC to boot before sending mavlink messages and continue after waypoint 0.
-#define LORA_ENABLED 1
-#define 	ROCKBLOCK_ENABLED 1
+//#define FLASH_ENABLED 1
+//#define CONTINUE_WAYPOINTS_IMMEDIATELY 1
+//#define ARM_IMMEDIATELY	1 //if defined, armed state will not wait for GPS and IMU valid.
+//#define SBC_ENABLED	// if defined, it will wait for SBC to boot before sending mavlink messages and continue after waypoint 0.
+//#define LORA_ENABLED 1
+//#define 	ROCKBLOCK_ENABLED 1
 #define EPS_ENABLED 1
 //#define BLE_ENABLED 1
 #define MAVLINK_ON_UART0_ENABLED 1
 //#define MAVLINK_ON_LORA_ENABLED 1 //for verbose lora outputs
 //#define UARTCAM_ENABLED 1
-//#define GSM_ENABLED 1
-//#define USE_ONBOARD_BNO055 1 //in contrast to just decoding incoming mavlink attitude messages.
-#define USE_GPS_HEADING 1
+#define GSM_ENABLED 1
+#define USE_ONBOARD_BNO055 1 //in contrast to just decoding incoming mavlink attitude messages.
+//#define USE_GPS_HEADING 1
 //#define USE_ULTRASONIC 1
 
 #ifdef VERSION_0_5
@@ -73,6 +74,12 @@
 	#else
 		#warning ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Use board v0.6 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
 	#endif
+#endif
+
+#ifdef LORA_ENABLED
+#ifdef UARTCAM_ENABLED
+	#error "Uartcam and lora cannot be enabled at the same time (same UART port)"
+#endif
 #endif
 
 

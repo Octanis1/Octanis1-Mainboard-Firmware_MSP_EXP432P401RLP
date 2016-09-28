@@ -18,6 +18,28 @@
 
 #define N_PERIODIC_MAVLINK_MSG	13
 #define P_INF					UINT32_MAX
+
+#ifdef BALLOON_FIRMWARE
+static const uint32_t mavlink_message_periods[N_PERIODIC_MAVLINK_MSG][N_COMM_CHANNELS+1] = {
+/* Definitions of the minimal time in ms between two consecutive message transmissions.
+ * --> only applies to periodically sent messages (i.e. measurements, status updates, etc.)
+ *
+ *	UART			LORA			ROCKBLOCK	GSM		| MESSAGE_ID */
+	{5000,		10000,		600000,		P_INF,	MAVLINK_MSG_ID_HEARTBEAT},
+	{10000,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_SYS_STATUS},
+	{0,			30000,		600000,		30000,	MAVLINK_MSG_ID_GPS_RAW_INT},
+	{P_INF,		P_INF,		600000,		P_INF,	MAVLINK_MSG_ID_GLOBAL_POSITION_INT},
+	{1000,		30000,		P_INF,		P_INF,	MAVLINK_MSG_ID_SCALED_IMU},
+	{500,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_SCALED_PRESSURE},
+	{500,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_ATTITUDE},
+	{P_INF,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_RC_CHANNELS_SCALED},
+	{P_INF,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_VFR_HUD},
+	{30000,		P_INF,		P_INF,		30000,	MAVLINK_MSG_ID_RADIO_STATUS},
+	{30000,		30000,		600000,		30000,	MAVLINK_MSG_ID_BATTERY_STATUS},
+	{P_INF,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_WIND_COV},
+	{10000,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_RC_CHANNELS},
+};
+#else
 static const uint32_t mavlink_message_periods[N_PERIODIC_MAVLINK_MSG][N_COMM_CHANNELS+1] = {
 /* Definitions of the minimal time in ms between two consecutive message transmissions.
  * --> only applies to periodically sent messages (i.e. measurements, status updates, etc.)
@@ -37,6 +59,7 @@ static const uint32_t mavlink_message_periods[N_PERIODIC_MAVLINK_MSG][N_COMM_CHA
 	{P_INF,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_WIND_COV},
 	{10000,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_RC_CHANNELS},
 };
+#endif
 
 static uint32_t mavlink_periodic_msg_tx_times[N_PERIODIC_MAVLINK_MSG][N_COMM_CHANNELS]= {{0,},};
 
@@ -210,6 +233,7 @@ void comm_mavlink_post_outbox(COMM_CHANNEL channel, COMM_FRAME* frame) //post to
 	#endif
 			break;
 		case CHANNEL_GSM:
+
 			   //sim800_send_http(msg)
 		default:
 			break;
