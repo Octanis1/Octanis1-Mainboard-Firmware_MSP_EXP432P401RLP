@@ -58,13 +58,12 @@ void Task_sleep(int a);
 #define MIN_IMU_CALIB_STATUS	6 //to have angle valid = true
 
 //odometry definitions
-#define VMOT_TO_RPS  			 0.000683333  //initialization constants revised by system after each GPS update
-#define INITIAL_TURNING_CONSTANT 1
-#define INITIAL_DISTANCE_CONST	 1
-#define INITIAL_ANGLE_CONSTANT   1
-#define GPS_THRESHOLD			 3000 //mm
-#define TRUE					 1
-#define FALSE					 0
+#define VMOT_TO_RPS  			 	0.000683333 //initialization constants revised by system after each GPS update
+#define INITIAL_TURNING_PARAMETER	1			//Relates mathematical angle to real angle (for example due to slippage)
+#define INITIAL_PULL_PARAMETER		0			//Sees if rover pulls to right or left (for example due to rover itself or driving on a slope) in degrees per meter
+#define GPS_THRESHOLD			 	3000 		//mm
+#define TRUE					 	1
+#define FALSE					 	0
 
 #define BLOCKED_THRESHOLD		 10000000000000  //defined by user //useless values for testing
 #define AIR_THRESHOLD			 0
@@ -92,10 +91,8 @@ struct odo{
 	int32_t first_third_heading;	//in m�
 	int32_t second_third_heading;	//in m�
 	int32_t third_third_heading;	//in m�
-	int32_t latitude;					//in degrees
+	int32_t latitude;				//in degrees
 	int32_t longitude; 				//in degrees
-	float checked_lat; 				//in degrees
-	float checked_lon; 				//in degrees
 	uint32_t odo_time;				//in msec
 	int32_t velocity; 				//in mm/s
 	float heading; 					//in rad
@@ -104,7 +101,8 @@ struct odo{
 } odo;
 
 static float vmot2rps_factor;
-static float angle_constant;
+static float turning_parameter;
+static float pull_parameter;
 
 void navigation_when_to_send_signal(float gps_latitude, float gps_longitude);
 void navigation_calculate_odo_distance();
@@ -619,7 +617,8 @@ void navigation_update_position()
 	navigation_status.gps_heading = (gps_get_cog()/360) * PERIOD * E_SEVEN;
 	if (navigation_status.not_first_time != TRUE){									//!!!!!!//initializes parameters for odometry. Add 3rd factor!
 		vmot2rps_factor = VMOT_TO_RPS;
-		angle_constant = INITIAL_ANGLE_CONSTANT;
+		turning_parameter = INITIAL_TURNING_PARAMETER;
+		pull_parameter = INITIAL_PULL_PARAMETER;
 	}
 	navigation_status.motor_values[0] = 50; 												//manually changing voltages
 	navigation_status.motor_values[1] = 40;
@@ -815,7 +814,7 @@ void navigation_get_radius_and_angle(float speed[N_WHEELS], uint32_t delta_time,
 	}
 
 	odo.radius = radius;
-	odo.angle = angle * angle_constant; //check order of magnitude of angle constant to make sure we have m�
+	odo.angle = angle * turning_parameter; //check order of magnitude of angle constant to make sure we have m�
 	if (position_i < VALUES_AFTER_GPS_RESET){
 		odo.first_third_heading += angle;
 	}
@@ -868,22 +867,25 @@ void navigation_update_xy(uint8_t position_i)
 
 void navigation_recalibrate_odometer(float delta_lat, float delta_lon)
 {
-	//recalibrate vmot2rps_factor
-	float latitude, update_vmot2rps, x_sum, y_sum, angle_sum = 0;
+	//recalibrate pull_parameter
+	float alpha, beta, latitude, update_vmot2rps, x_sum, y_sum, angle_sum = 0;
 	latitude = navigation_status.lat_rover / E_SEVEN;
 	x_sum = odo.first_third_x + odo.second_third_x;
 	y_sum = odo.first_third_y + odo.second_third_y;
-	odo.checked_lat = x_sum / (Y_TO_LATITUDE * cos(latitude));
-	odo.checked_lon = y_sum / Y_TO_LATITUDE;
-	update_vmot2rps = sqrt(odo.checked_lat * odo.checked_lat + odo.checked_lon * odo.checked_lon)/sqrt(delta_lat * delta_lat + delta_lon * delta_lon); //look at units of delta_lat and delta_lon!!!
+	alpha = atan(y_sum/x_sum); 							//global angle between two gps points as measured by odometry
+	beta = atan(delta_lat/(delta_lon*cos(latitude)));	//global angle between two gps points as measured by gps
+	pull_parameter = beta - alpha;						//rover pulls to this side
+
+	//recalibrate vmot2rps_factor
+	update_vmot2rps = sqrt(y_sum * y_sum + x_sum * x_sum)/sqrt(delta_lat * delta_lat + (delta_lon * cos(latitude)) * (delta_lon*cos(latitude))); //look at units of delta_lat and delta_lon!!!
 	vmot2rps_factor = vmot2rps_factor / update_vmot2rps;
 
-	//recalibrate angle_constant
+	//recalibrate turning_parameter
 	int32_t delta_heading;
 	delta_heading = navigation_status.gps_heading - navigation_status.old_gps_heading;
 	navigation_status.old_gps_heading = navigation_status.gps_heading;
 	angle_sum = odo.first_third_heading + odo.second_third_heading;
-	angle_constant = (float)delta_heading / (float)angle_sum;
+	turning_parameter = (float)delta_heading / (float)angle_sum;
 }
 
 void navigation_reinitialize_odometer()
@@ -934,10 +936,10 @@ int16_t navigation_get_vmot2rps_factor()
 }
 
 
-int16_t navigation_get_angle_constant()
+int16_t navigation_get_turning_parameter()
 {
 	int16_t angle;
-	angle = angle_constant * E_FOUR;
+	angle = turning_parameter * E_FOUR;
 	return angle;
 }
 

@@ -221,7 +221,7 @@ COMM_FRAME* gps_pack_mavlink_global_position_int()
 	int16_t vx = navigation_get_radius();
 
 	int16_t vy = navigation_get_vmot2rps_factor();
-	int16_t vz = navigation_get_angle_constant();
+	int16_t vz = navigation_get_turning_parameter();
 
 	uint16_t hdg = (uint16_t)(heading);
 

@@ -82,7 +82,7 @@ uint8_t navigation_get_position_i();
 int32_t navigation_get_angle();
 int16_t navigation_get_radius();
 int16_t navigation_get_vmot2rps_factor();
-int16_t navigation_get_angle_constant();
+int16_t navigation_get_turning_parameter();
 uint8_t navigation_send_signal();
 
 //odometry functions
