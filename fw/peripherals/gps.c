@@ -200,14 +200,20 @@ COMM_FRAME* gps_pack_mavlink_global_position_int()
 {
 	uint8_t position_i;
 	int32_t heading;
+	int32_t lon, lat;
 
 	position_i = navigation_get_position_i();
 	heading = navigation_get_heading_rover();
 	heading = heading / 100; //heading in tenths of degrees
 
-	int32_t lon = (int32_t)(gps.lon_rover);
-	int32_t lat = (int32_t)(gps.lat_rover);
-
+	if(navigation_send_signal()) {
+		lon = (int32_t)(gps.lon_rover);
+		lat = (int32_t)(gps.lat_rover);
+	}
+	else {
+		lon = (int32_t)(10000000.0 * gps_get_lon());
+		lat = (int32_t)(10000000.0 * gps_get_lat());
+	}
 
 	int32_t alt = (int32_t)(position_i);
 
@@ -316,12 +322,10 @@ void gps_task(){
 	#endif
 			comm_mavlink_broadcast(gps_pack_mavlink_raw_int());
 */
-			if(navigation_send_signal()){
 	#ifdef MAVLINK_ON_UART0_ENABLED
-				comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
+			comm_set_tx_flag(CHANNEL_APP_UART, MAV_COMP_ID_GPS);
 	#endif
-				comm_mavlink_broadcast(gps_pack_mavlink_global_position_int());
-			}
+			comm_mavlink_broadcast(gps_pack_mavlink_global_position_int());
 		}
 		Task_sleep(10);
 	}

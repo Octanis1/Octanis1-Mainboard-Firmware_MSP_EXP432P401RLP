@@ -100,11 +100,17 @@ struct odo{
 	int32_t velocity; 				//in mm/s
 	float heading; 					//in rad
 	uint8_t straight;				//TRUE or FALSE
+	float odo_distance;
 } odo;
 
 static float vmot2rps_factor;
 static float angle_constant;
 
+void navigation_delta_heading();
+void navigation_when_to_send_signal(float gps_latitude, float gps_longitude);
+void navigation_calculate_odo_distance();
+void navigation_manage_cycle(float delta_lat, float delta_lon);
+void navigation_calculate_heading_rover();
 void navigation_distance_odometer(uint16_t sensor_values[N_WHEELS], int32_t voltage[N_WHEELS], uint8_t position_i);
 void navigation_update_xy(uint8_t position_i);
 void navigation_get_radius_and_angle(float speed[N_WHEELS], uint32_t delta_time, uint8_t position_i);
@@ -118,7 +124,9 @@ typedef struct _navigation_status{
 	float old_lon;			 //used for recalibrating factors
 	uint8_t position_i; 	 //variable for timing of gps / odometry data
 	uint32_t heading_rover;	 //in m�
+	int32_t gps_heading;
 	float old_gps_heading;
+	float delta_heading;     //difference between gps_heading and old_gps_heading
 	uint8_t crossed_gps_threshold;
 	uint8_t checked_gps_threshold;
 	uint8_t not_first_time;
@@ -609,65 +617,23 @@ void navigation_update_position();
 #else
 void navigation_update_position()
 {
-	float gps_latitude, gps_longitude, delta_heading, delta_lon, delta_lat, odo_distance, x, y;
-	int32_t gps_heading, heading_rover;
-
+	float gps_latitude, gps_longitude, delta_lon, delta_lat;
 	if (navigation_status.not_first_time != TRUE){
 		vmot2rps_factor = VMOT_TO_RPS;
 		angle_constant = INITIAL_ANGLE_CONSTANT;
 	}
-
 	navigation_status.motor_values[0] = 50; //manually changing voltages
 	navigation_status.motor_values[1] = 40;
-
-	gps_heading = (gps_get_cog()/360) * PERIOD * E_SEVEN;
-	delta_heading = gps_heading - navigation_status.old_gps_heading;
-	navigation_status.old_gps_heading = gps_heading;
-
-	x = (float)odo.first_third_x + (float)odo.second_third_x + (float)odo.third_third_x;
-	y = (float)odo.first_third_y + (float)odo.second_third_y + (float)odo.third_third_y;
-	odo_distance = sqrt(x * x + y * y);
-
-
+	navigation_delta_heading();
+	navigation_calculate_odo_distance();
 	gps_latitude = gps_get_latitude();
 	gps_longitude = gps_get_longitude();
-
 	delta_lon = gps_longitude - navigation_status.old_lon;
 	delta_lat = gps_latitude - navigation_status.old_lat;
-
-	if(!(gps_latitude == 0 && gps_longitude == 0) && navigation_status.not_first_time){
-		navigation_status.send_signal = TRUE;
-	}
-	else{
-		navigation_status.send_signal = FALSE;
-	}
-
+	navigation_when_to_send_signal(gps_longitude, gps_latitude);
 	gps_run_gps(navigation_status.position_i);  //saves a gps point
-
-	if ((navigation_status.position_i == (MAX_RECENT_VALUES-1)) && ((odo_distance > GPS_THRESHOLD) || !navigation_status.not_first_time))
-	{
-		if(navigation_status.send_signal){
-			navigation_recalibrate_odometer(delta_lat, delta_lon, delta_heading);
-		}
-		navigation_reinitialize_odometer(gps_heading);
-		gps_calculate_position();	//calculates a gps position from a number of gps points
-		gps_reset_gps();
-		navigation_status.position_i = VALUES_AFTER_GPS_RESET;
-		navigation_status.not_first_time = TRUE;
-	}
-	else if ((navigation_status.position_i == (MAX_RECENT_VALUES-1)) && !(odo_distance > GPS_THRESHOLD))
-	{
-		gps_shift_gps();
-		navigation_shift_odo();
-		navigation_status.position_i = MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET;
-	}
-	else
-	{
-		navigation_status.position_i++;
-	}
-
-	navigation_run_odometer(navigation_status.motor_values, navigation_status.position_i);     //saves an odometer position
-
+	navigation_manage_cycle(delta_lat, delta_lon);	//manages cycle for temporal and spacial thresholds
+	navigation_run_odometer(navigation_status.motor_values, navigation_status.position_i);		//saves an odometer position
 	if(navigation_status.send_signal){
 		navigation_status.lat_rover = gps_latitude + odo.latitude;
 		navigation_status.lon_rover = gps_longitude + odo.longitude;
@@ -676,25 +642,12 @@ void navigation_update_position()
 	gps_receive_lon_rover(navigation_status.lon_rover);
 
 	/*motors_struts_get_position();*/
-
 	//checks if position is valid
 	navigation_status.position_valid = imu_valid() && gps_valid();
 
 	// recalculate heading angle
-#ifdef IMU_AVALABLE
-	navigation_status.heading_rover = imu_get_fheading();
-#endif
-#ifndef IMU_AVALABLE
-	gps_heading = 0;
-	heading_rover = gps_heading + odo.heading;
-	while (heading_rover > (PERIOD_DEGREES * KILO)){
-		heading_rover -= (PERIOD_DEGREES * KILO);
-	}
-	while (heading_rover < 0) {
-		heading_rover += (PERIOD_DEGREES * KILO);
-	}
-	navigation_status.heading_rover = heading_rover;
-#endif
+	navigation_calculate_heading_rover();
+
 	navigation_status.angle_to_target = navigation_angle_for_rover(navigation_status.lat_rover,navigation_status.lon_rover,
 			navigation_status.lat_target, navigation_status.lon_target, navigation_status.heading_rover);
 	// recalculate distance to target
@@ -703,16 +656,71 @@ void navigation_update_position()
 }
 #endif
 
-void navigation_initialize()
+void navigation_delta_heading()
 {
-	navigation_status.lon_rover = 0;
-	navigation_status.lat_rover = 0;
-	navigation_status.position_i = 1;
-	navigation_status.old_lat = 0;
-	navigation_status.old_lon = 0;
-	navigation_status.heading_rover = 0;
+	navigation_status.gps_heading = (gps_get_cog()/360) * PERIOD * E_SEVEN; //we have a type problem
+	navigation_status.delta_heading = navigation_status.gps_heading - navigation_status.old_gps_heading;
+	navigation_status.old_gps_heading = navigation_status.gps_heading;
 }
 
+void navigation_when_to_send_signal(float gps_latitude, float gps_longitude)
+{
+	if(!(gps_latitude == 0 && gps_longitude == 0) && navigation_status.not_first_time){
+		navigation_status.send_signal = TRUE;
+	}
+	else{
+		navigation_status.send_signal = FALSE;
+	}
+}
+
+void navigation_calculate_odo_distance()
+{
+	float x, y;
+	x = (float)odo.first_third_x + (float)odo.second_third_x + (float)odo.third_third_x;
+	y = (float)odo.first_third_y + (float)odo.second_third_y + (float)odo.third_third_y;
+	odo.odo_distance = sqrt(x * x + y * y);
+}
+
+void navigation_manage_cycle(float delta_lat, float delta_lon)
+{
+	if ((navigation_status.position_i == (MAX_RECENT_VALUES-1)) && ((odo.odo_distance > GPS_THRESHOLD) || !navigation_status.not_first_time)) {
+		if(navigation_status.send_signal){
+			navigation_recalibrate_odometer(delta_lat, delta_lon);
+		}
+		navigation_reinitialize_odometer(navigation_status.gps_heading);
+		gps_calculate_position();	//calculates a gps position from a number of gps points
+		gps_reset_gps();
+		navigation_status.position_i = VALUES_AFTER_GPS_RESET;
+		navigation_status.not_first_time = TRUE;
+	}
+	else if ((navigation_status.position_i == (MAX_RECENT_VALUES-1)) && !(odo.odo_distance > GPS_THRESHOLD)) {
+		gps_shift_gps();
+		navigation_shift_odo();
+		navigation_status.position_i = MAX_RECENT_VALUES - VALUES_AFTER_GPS_RESET;
+	}
+	else {
+		navigation_status.position_i++;
+	}
+}
+
+void navigation_calculate_heading_rover()
+{
+	int32_t heading_rover;
+#ifdef IMU_AVALABLE
+	navigation_status.heading_rover = imu_get_fheading();
+#endif
+#ifndef IMU_AVALABLE
+	navigation_status.gps_heading = 0;
+	heading_rover = navigation_status.gps_heading + odo.heading;
+	while (heading_rover > (PERIOD_DEGREES * KILO)){
+		heading_rover -= (PERIOD_DEGREES * KILO);
+	}
+	while (heading_rover < 0) {
+		heading_rover += (PERIOD_DEGREES * KILO);
+	}
+	navigation_status.heading_rover = heading_rover;
+#endif
+}
 
 int navigation_run_odometer(int32_t voltage[N_SIDES], uint8_t position_i)
 {
@@ -867,7 +875,7 @@ void navigation_update_xy(uint8_t position_i)
 	}
 }
 
-void navigation_recalibrate_odometer(float delta_lat, float delta_lon, float delta_heading)
+void navigation_recalibrate_odometer(float delta_lat, float delta_lon)
 {
 	//recalibrate vmot2rps_factor
 	float latitude, update_vmot2rps, x_sum, y_sum, angle_sum = 0;
@@ -881,10 +889,10 @@ void navigation_recalibrate_odometer(float delta_lat, float delta_lon, float del
 
 	//recalibrate angle_constant
 	angle_sum = odo.first_third_heading + odo.second_third_heading;
-	angle_constant = delta_heading / angle_sum;
+	angle_constant = navigation_status.delta_heading / angle_sum;
 }
 
-void navigation_reinitialize_odometer(int32_t gps_heading)
+void navigation_reinitialize_odometer()
 {
 	odo.first_third_x = odo.third_third_x;
 	odo.first_third_y = odo.third_third_y;
@@ -900,7 +908,7 @@ void navigation_reinitialize_odometer(int32_t gps_heading)
 	odo.heading = odo.third_third_heading * E_FOUR;
 	odo.longitude = (odo.first_third_x + odo.second_third_x + odo.third_third_x) * E_FOUR / (Y_TO_LATITUDE * cos(MISSION_LATITUDE));
 	odo.latitude = (odo.first_third_y + odo.second_third_y + odo.third_third_y) * E_FOUR / Y_TO_LATITUDE;
-	odo.heading = odo.heading + gps_heading;
+	odo.heading = odo.heading + navigation_status.gps_heading;
 }
 
 void navigation_shift_odo()

@@ -73,7 +73,6 @@ float navigation_angle_to_target(float lat_current, float lon_current, float lat
 //correct angle by taking into acount current heading of the rover (imu)
 float navigation_angle_for_rover(float lat1, float lon1, float lat2, float lon2, float headX);
 float navigation_degree_to_rad(float degree);
-void navigation_initialize(); //initializes structure navigation_status
 
 void navigation_change_gain(char pid, char type, float gain);
 
@@ -88,8 +87,8 @@ uint8_t navigation_send_signal();
 
 //odometry functions
 int navigation_run_odometer(int32_t voltage[N_SIDES], uint8_t position_i);
-void navigation_recalibrate_odometer(float delta_lat, float delta_lon, float delta_heading);
-void navigation_reinitialize_odometer(int32_t gps_heading);
+void navigation_recalibrate_odometer(float delta_lat, float delta_lon);
+void navigation_reinitialize_odometer();
 void navigation_initialize_odometer();
 
 //"Main" task of the file
