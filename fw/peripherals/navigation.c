@@ -60,7 +60,7 @@ void Task_sleep(int a);
 //odometry definitions
 #define VMOT_TO_RPS  			 	0.000683333 //initialization constants revised by system after each GPS update
 #define INITIAL_TURNING_PARAMETER	1			//Relates mathematical angle to real angle (for example due to slippage)
-#define INITIAL_PULL_PARAMETER		0			//Sees if rover pulls to right or left (for example due to rover itself or driving on a slope) in degrees per meter
+#define INITIAL_PULL_PARAMETER		0			//Sees if rover pulls to right or left (for example due to rover itself or driving on a slope) in degrees per cycle
 #define GPS_THRESHOLD			 	3000 		//mm
 #define TRUE					 	1
 #define FALSE					 	0
@@ -809,6 +809,10 @@ void navigation_get_radius_and_angle(float speed[N_WHEELS], uint32_t delta_time,
 	}
 	else {
 		angle = 0;
+	}
+	angle += pull_parameter * KILO / (MAX_RECENT_VALUES-VALUES_AFTER_GPS_RESET);
+	if (angle == 0)
+	{
 		radius = speed[0] * delta_time / KILO;		//[mm] int * uint
 		odo.straight = TRUE;
 	}
