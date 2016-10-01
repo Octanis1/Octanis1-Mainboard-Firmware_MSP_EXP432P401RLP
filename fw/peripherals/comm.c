@@ -13,6 +13,7 @@
 #include "navigation.h"
 #include "imu.h"
 #include "rockblock.h"
+#include "hal/sim800.h"
 
 #define MSG_ID_FIELD				N_COMM_CHANNELS
 
@@ -543,6 +544,8 @@ void comm_mavlink_handler(COMM_CHANNEL src_channel, mavlink_message_t *msg){
 void comm_init(){
 	cli_init();
 
+
+
 	/* MAVLINK GENERIC SETUP */
 
 	mavlink_system.sysid = MAVLINK_SYSTEM_ID;                   ///< ID 25 for this rover
@@ -566,6 +569,11 @@ void comm_task(){
 	COMM_FRAME mail;
 
 	comm_init();
+
+	sim800_begin();
+	char buf[]="test sms";
+	sim800_send_sms(buf, sizeof(buf));
+
 
 	while(1){
 		if(Mailbox_pend(comm_mailbox, &mail, BIOS_WAIT_FOREVER)){

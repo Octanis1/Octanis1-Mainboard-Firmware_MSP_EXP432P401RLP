@@ -40,7 +40,7 @@ static const char sim800_at_httpterm[] = "AT+HTTPTERM\r\n";
 
 //sms
 static const char sim800_at_smgf[] = "AT+CMGF=1\r\n";
-static const char sim800_at_smgs[] = "AT+CMGS=\"+41798690718\"\r";
+static const char sim800_at_smgs[] = "AT+CMGS=\"+41792826160\"\r";
 static const char sim800_ctrl_z[] = "\x1A";
 static const char sim800_testsms[] = "\xD test \xD";
 

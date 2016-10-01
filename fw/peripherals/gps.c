@@ -291,6 +291,11 @@ void gps_task(){
 
     ublox_6_open();
 
+    gps_set_mode();
+
+    gps_check_nav();
+
+
 	while (1) {
 
 
