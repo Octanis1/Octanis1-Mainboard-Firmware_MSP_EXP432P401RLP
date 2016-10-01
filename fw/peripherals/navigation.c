@@ -106,7 +106,6 @@ struct odo{
 static float vmot2rps_factor;
 static float angle_constant;
 
-void navigation_delta_heading();
 void navigation_when_to_send_signal(float gps_latitude, float gps_longitude);
 void navigation_calculate_odo_distance();
 void navigation_manage_cycle(float delta_lat, float delta_lon);
@@ -125,8 +124,7 @@ typedef struct _navigation_status{
 	uint8_t position_i; 	 //variable for timing of gps / odometry data
 	uint32_t heading_rover;	 //in m�
 	int32_t gps_heading;
-	float old_gps_heading;
-	float delta_heading;     //difference between gps_heading and old_gps_heading
+	int32_t old_gps_heading;
 	uint8_t crossed_gps_threshold;
 	uint8_t checked_gps_threshold;
 	uint8_t not_first_time;
@@ -618,27 +616,27 @@ void navigation_update_position();
 void navigation_update_position()
 {
 	float gps_latitude, gps_longitude, delta_lon, delta_lat;
-	if (navigation_status.not_first_time != TRUE){
+	navigation_status.gps_heading = (gps_get_cog()/360) * PERIOD * E_SEVEN;
+	if (navigation_status.not_first_time != TRUE){									//!!!!!!//initializes parameters for odometry. Add 3rd factor!
 		vmot2rps_factor = VMOT_TO_RPS;
 		angle_constant = INITIAL_ANGLE_CONSTANT;
 	}
-	navigation_status.motor_values[0] = 50; //manually changing voltages
+	navigation_status.motor_values[0] = 50; 												//manually changing voltages
 	navigation_status.motor_values[1] = 40;
-	navigation_delta_heading();
-	navigation_calculate_odo_distance();
-	gps_latitude = gps_get_latitude();
+	navigation_calculate_odo_distance();													//calculates the distance between the gps point and the most recent odometry point
+	gps_latitude = gps_get_latitude();														//gets most recent averaged gps data from gps module.
 	gps_longitude = gps_get_longitude();
-	delta_lon = gps_longitude - navigation_status.old_lon;
+	delta_lon = gps_longitude - navigation_status.old_lon;									//delta between two gps points in between which position data is collected through odometry
 	delta_lat = gps_latitude - navigation_status.old_lat;
-	navigation_when_to_send_signal(gps_longitude, gps_latitude);
-	gps_run_gps(navigation_status.position_i);  //saves a gps point
-	navigation_manage_cycle(delta_lat, delta_lon);	//manages cycle for temporal and spacial thresholds
-	navigation_run_odometer(navigation_status.motor_values, navigation_status.position_i);		//saves an odometer position
+	navigation_when_to_send_signal(gps_longitude, gps_latitude);							//differentiates between periods when signal incorporating odometry is sent and periods when raw signal is sent (generally in the beginning)
+	gps_run_gps(navigation_status.position_i);  											//saves a gps point
+	navigation_manage_cycle(delta_lat, delta_lon);											//manages cycle for temporal and spacial thresholds
+	navigation_run_odometer(navigation_status.motor_values, navigation_status.position_i);	//saves an odometer position
 	if(navigation_status.send_signal){
 		navigation_status.lat_rover = gps_latitude + odo.latitude;
 		navigation_status.lon_rover = gps_longitude + odo.longitude;
 	}
-	gps_receive_lat_rover(navigation_status.lat_rover);
+	gps_receive_lat_rover(navigation_status.lat_rover);										//sends momentary latitude and longitude to gps module for sending mavlink data there.
 	gps_receive_lon_rover(navigation_status.lon_rover);
 
 	/*motors_struts_get_position();*/
@@ -646,7 +644,7 @@ void navigation_update_position()
 	navigation_status.position_valid = imu_valid() && gps_valid();
 
 	// recalculate heading angle
-	navigation_calculate_heading_rover();
+	navigation_calculate_heading_rover();											//!!!!!!//gets momentary heading from imu or gps depending on case. different gps heading must be used.
 
 	navigation_status.angle_to_target = navigation_angle_for_rover(navigation_status.lat_rover,navigation_status.lon_rover,
 			navigation_status.lat_target, navigation_status.lon_target, navigation_status.heading_rover);
@@ -655,13 +653,6 @@ void navigation_update_position()
 			navigation_status.lat_target, navigation_status.lon_target);
 }
 #endif
-
-void navigation_delta_heading()
-{
-	navigation_status.gps_heading = (gps_get_cog()/360) * PERIOD * E_SEVEN; //we have a type problem
-	navigation_status.delta_heading = navigation_status.gps_heading - navigation_status.old_gps_heading;
-	navigation_status.old_gps_heading = navigation_status.gps_heading;
-}
 
 void navigation_when_to_send_signal(float gps_latitude, float gps_longitude)
 {
@@ -888,8 +879,11 @@ void navigation_recalibrate_odometer(float delta_lat, float delta_lon)
 	vmot2rps_factor = vmot2rps_factor / update_vmot2rps;
 
 	//recalibrate angle_constant
+	int32_t delta_heading;
+	delta_heading = navigation_status.gps_heading - navigation_status.old_gps_heading;
+	navigation_status.old_gps_heading = navigation_status.gps_heading;
 	angle_sum = odo.first_third_heading + odo.second_third_heading;
-	angle_constant = navigation_status.delta_heading / angle_sum;
+	angle_constant = (float)delta_heading / (float)angle_sum;
 }
 
 void navigation_reinitialize_odometer()
