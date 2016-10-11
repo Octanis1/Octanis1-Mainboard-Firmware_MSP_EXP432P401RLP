@@ -23,7 +23,9 @@
 #include "../lib/mavlink/common/mavlink.h"
 #include "comm.h"
 
-#include "rockblock.h"
+#include "hal/sim800.h"
+
+#include "rockblock_gsm.h"
 
 
 #define ROCKBLOCK_WAKE 1
@@ -519,21 +521,30 @@ int rockblock_get_tx_buffer_fill(){
 
 void rockblock_task(){
 	int is_initialized = 0;
+
+#ifdef ROCKBLOCK_ENABLED
+
 	static uint8_t buf[MAVLINK_MAX_PACKET_LEN + 5]; //todo: +5 is to test if we need some more space. remove if not helpful.
 	static uint16_t mavlink_msg_len;
 	static COMM_FRAME mail;
 
-#ifdef ROCKBLOCK_ENABLED
 	// init here:
 	is_initialized = 1; //TODO: replace '1' by init function which shall return 1 if init successful
-
-
 #endif
+
+#ifdef GSM_ENABLED
+	int iter = 10;
+
+	is_initialized = sim800_begin();
+#endif
+
+
 
 	while(1){
 
-		if(Mailbox_pend(rockblock_mailbox, &mail, BIOS_WAIT_FOREVER)){
 
+#ifdef ROCKBLOCK_ENABLED
+		if(Mailbox_pend(rockblock_gsm_mailbox, &mail, BIOS_WAIT_FOREVER)){
 			if(is_initialized)
 			{
 				if((mail.direction) == CHANNEL_OUT)
@@ -556,6 +567,55 @@ void rockblock_task(){
 				}
 			}
 		}
+#else
+#ifdef GSM_ENABLED
+
+
+		if(is_initialized)
+		{
+			char txdata[COMM_STRING_SIZE] = "";
+			uint16_t stringlength = comm_get_statusstring(txdata);
+
+			/** Prepare hex string for http **/
+			char hex_string_byte[2];
+			char hex_string[2*stringlength];
+			memset(&hex_string, 0, sizeof(hex_string));
+
+			int i;
+			for(i=0; i<stringlength; i++){
+				memset(&hex_string_byte, 0, sizeof(hex_string_byte));
+				tfp_sprintf(hex_string_byte, "%02x", txdata[i]);
+				strcat(hex_string, hex_string_byte);
+			}
+			/** end hex string **/
+
+			sim800_send_http(hex_string, strlen(hex_string), MIME_TEXT_PLAIN);
+
+
+			if(iter > 9)
+			{
+				iter = 0;
+				sim800_send_sms(txdata, stringlength);
+			}
+			iter++;
+		}
+		else
+		{
+			Task_sleep(60000); // try to reconnect
+
+			is_initialized = sim800_begin();
+		}
+
+		Task_sleep(10000);
+
+
+#else
+
+	Task_sleep(10000);
+
+
+#endif
+#endif
  	}
 }
 

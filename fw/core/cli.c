@@ -28,7 +28,7 @@
 #include "log_message.h"
 //mavlink wire protocol
 #include "../lib/mavlink/common/mavlink.h"
-#include "../peripherals/rockblock.h"
+#include "../peripherals/rockblock_gsm.h"
 
 //which uart index to use for the CLI
 #define CLI_UART Board_UART0_DEBUG

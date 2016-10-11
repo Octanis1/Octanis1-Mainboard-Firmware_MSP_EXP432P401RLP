@@ -12,7 +12,7 @@
 
 #include "navigation.h"
 #include "imu.h"
-#include "rockblock.h"
+#include "rockblock_gsm.h"
 #include "hal/sim800.h"
 
 #define MSG_ID_FIELD				N_COMM_CHANNELS
@@ -26,20 +26,132 @@ static const uint32_t mavlink_message_periods[N_PERIODIC_MAVLINK_MSG][N_COMM_CHA
  * --> only applies to periodically sent messages (i.e. measurements, status updates, etc.)
  *
  *	UART			LORA			ROCKBLOCK	GSM		| MESSAGE_ID */
-	{5000,		10000,		600000,		P_INF,	MAVLINK_MSG_ID_HEARTBEAT},
-	{10000,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_SYS_STATUS},
-	{0,			30000,		600000,		30000,	MAVLINK_MSG_ID_GPS_RAW_INT},
-	{P_INF,		P_INF,		600000,		P_INF,	MAVLINK_MSG_ID_GLOBAL_POSITION_INT},
-	{1000,		30000,		P_INF,		P_INF,	MAVLINK_MSG_ID_SCALED_IMU},
-	{500,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_SCALED_PRESSURE},
-	{500,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_ATTITUDE},
+	{5000,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_HEARTBEAT},
+	{10000,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_SYS_STATUS},
+	{0,			P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_GPS_RAW_INT},
+	{P_INF,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_GLOBAL_POSITION_INT},
+	{1000,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_SCALED_IMU},
+	{500,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_SCALED_PRESSURE},
+	{500,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_ATTITUDE},
 	{P_INF,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_RC_CHANNELS_SCALED},
 	{P_INF,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_VFR_HUD},
-	{30000,		P_INF,		P_INF,		30000,	MAVLINK_MSG_ID_RADIO_STATUS},
-	{30000,		30000,		600000,		30000,	MAVLINK_MSG_ID_BATTERY_STATUS},
+	{30000,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_RADIO_STATUS},
+	{30000,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_BATTERY_STATUS},
 	{P_INF,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_WIND_COV},
-	{10000,		30000,		600000,		P_INF,	MAVLINK_MSG_ID_RC_CHANNELS},
+	{10000,		P_INF,		P_INF,		P_INF,	MAVLINK_MSG_ID_RC_CHANNELS},
 };
+
+/* array that is temporarily holding status and sensor data, which is to be sent over GSM or lora while on balloon mission. */
+typedef struct _rover_status_comm {
+	float gps_lat;
+	float gps_long;
+	uint8_t gps_fix_quality;
+	uint32_t system_seconds;
+	uint16_t v_bat;
+	uint16_t v_solar;
+	uint16_t i_in;
+	uint16_t i_out;
+	uint8_t imu_calib_status;
+	int16_t imu_heading; //converted from double
+	int16_t imu_roll; //converted from double
+	int16_t imu_pitch; //converted from double
+	int int_temperature;
+	unsigned int int_pressure;
+	unsigned int int_humidity;
+	int ext_temperature;
+	unsigned int ext_pressure;
+	unsigned int ext_humidity; //converted from float
+	int16_t accel_x;
+	int16_t accel_y;
+	int16_t accel_z;
+	int32_t speed;
+	int32_t altitude;
+} rover_status_comm;
+
+rover_status_comm comm_rover_status;
+
+#include "gps.h"
+#include "../core/eps.h"
+#include "weather.h"
+
+void comm_poll_status(rover_status_comm* stat)
+{
+	/*Fill in struct with status information */
+	stat->gps_lat = gps_get_lat();
+	stat->gps_long = gps_get_lon();
+	stat->gps_fix_quality = gps_get_fix_quality();
+	stat->system_seconds = Seconds_get();
+	stat->v_bat = eps_get_vbat();
+	stat->v_solar = eps_get_vsolar();
+	stat->i_in = eps_get_iin();
+	stat->i_out = eps_get_iout();
+	stat->imu_calib_status = imu_get_calib_status();
+	stat->imu_heading = imu_get_heading();
+	stat->imu_roll = imu_get_roll();
+	stat->imu_pitch = imu_get_pitch();
+	stat->int_temperature = weather_get_int_temp();
+	stat->int_pressure = weather_get_int_press();
+	stat->int_humidity = weather_get_int_humid();
+	stat->ext_temperature = weather_get_ext_temp();
+	stat->ext_pressure = weather_get_ext_press();
+	stat->ext_humidity = weather_get_ext_humid();
+	stat->accel_x = imu_get_accel_x();
+	stat->accel_y = imu_get_accel_y();
+	stat->accel_z = imu_get_accel_z();
+	stat->speed = gps_get_int_speed();
+	stat->altitude = gps_get_int_altitude();
+}
+
+
+uint16_t comm_get_statusstring(char* txdata)
+{
+	comm_poll_status(&comm_rover_status);
+
+	rover_status_comm* stat = &comm_rover_status;
+
+	/* create Hexstring buffer from struct */
+	uint16_t stringlength=0;
+
+	stringlength += ftoa(stat->gps_lat, &txdata[stringlength], 7); //convert gps latitude to string with sign and 7 afterpoint
+	txdata[stringlength++] = ','; 					//plus a comma
+
+	stringlength += ftoa(stat->gps_long, &txdata[stringlength], 7); //convert gps long to string with sign and 7 afterpoint
+	txdata[stringlength++] = ','; 					//plus a comma
+
+	stringlength += tfp_sprintf(&(txdata[stringlength]), "%d,%u,%u,%u,%u,%u,%u,%d,%d,%d,%d,%u,%u,%d,%d,%d,%d,%d",
+											stat->gps_fix_quality,
+											stat->system_seconds,
+											stat->v_bat,
+											stat->v_solar,
+											stat->i_in,
+											stat->i_out,
+											stat->imu_calib_status,
+											stat->imu_heading,
+											stat->imu_roll,
+											stat->imu_pitch,
+											stat->int_temperature,
+											stat->int_pressure,
+											stat->int_humidity,
+											stat->ext_temperature,
+											stat->ext_pressure,
+											stat->ext_humidity,
+											stat->accel_x,
+											stat->accel_y,
+											stat->accel_z,
+											stat->speed,
+											stat->altitude);
+
+	if(stringlength > COMM_STRING_SIZE) //should never happen! corrupt memory will be the result!
+	{
+		serial_printf(cli_stdout,"status string overflow! %u",stringlength);
+		stringlength = COMM_STRING_SIZE;
+	}
+
+	return stringlength;
+}
+
+
+
 #else
 static const uint32_t mavlink_message_periods[N_PERIODIC_MAVLINK_MSG][N_COMM_CHANNELS+1] = {
 /* Definitions of the minimal time in ms between two consecutive message transmissions.
@@ -569,11 +681,6 @@ void comm_task(){
 	COMM_FRAME mail;
 
 	comm_init();
-
-	sim800_begin();
-	char buf[]="test sms";
-	sim800_send_sms(buf, sizeof(buf));
-
 
 	while(1){
 		if(Mailbox_pend(comm_mailbox, &mail, BIOS_WAIT_FOREVER)){

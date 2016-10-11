@@ -12,7 +12,7 @@
 
 #define LORA_RETRY_INIT_AFTER_N_CYCLES	20
 
-void lora_send_mavlink(uint8_t* txdata, uint16_t stringlength)
+void lora_send(uint8_t* txdata, uint16_t stringlength)
 {
 	/** Prepare hex string for LoRa **/
 	char hex_string_byte[2];
@@ -60,6 +60,8 @@ void lora_task(){
 
 
 	while(1){
+
+#ifndef BALLOON_FIRMWARE
 		if(Mailbox_pend(lora_mailbox, &mail, BIOS_WAIT_FOREVER)){
 
 			if(is_initialized)
@@ -69,7 +71,7 @@ void lora_task(){
 					if(mail.channel == CHANNEL_LORA)
 					{
 						mavlink_msg_len = mavlink_msg_to_send_buffer(buf, &mail.mavlink_message);
-						lora_send_mavlink(buf, mavlink_msg_len);
+						lora_send(buf, mavlink_msg_len);
 					}
 					else
 					{
@@ -96,6 +98,16 @@ void lora_task(){
 
 
 		}
+
+#else
+
+		char txdata[COMM_STRING_SIZE] = "";
+		uint16_t stringlength = comm_get_statusstring(txdata);
+
+		lora_send(txdata, stringlength);
+
+		Task_sleep(20000);
+#endif
  	}
 
 }

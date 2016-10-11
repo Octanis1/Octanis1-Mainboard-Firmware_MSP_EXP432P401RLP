@@ -13,6 +13,16 @@
 #include "../lib/mavlink/common/mavlink.h"
 #include "../lib/mavlink/mavlink_types.h"
 
+#ifdef BALLOON_FIRMWARE
+	#include "../lib/printf.h"
+
+	//max size of status string
+	#define COMM_STRING_SIZE 175
+	uint16_t comm_get_statusstring(char* txdata); //return value: stringlength
+
+#endif
+
+
 // Mavlink system ID's for all subsystem currently in the rover.
 #define SBC_SYSTEM_ID			13 // Single board computer: Olimex
 #define FBS_SYSTEM_ID			24 // Field base station
