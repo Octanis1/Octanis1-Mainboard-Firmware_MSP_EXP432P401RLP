@@ -23,6 +23,6 @@ void sim800_send_http(char * tx_buffer, int tx_size, SIM800_MIME mime_type);
 const char* sim800_get_battery_voltage();
 void sim800_send_sms(char * tx_buffer, int tx_size);
 
-
+int sim800_check_rx_sms(char** tx_buffer);
 
 #endif

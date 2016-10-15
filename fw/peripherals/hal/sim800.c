@@ -9,7 +9,7 @@
 #include "sim800.h"
 
 #define SIM800_BAUD_RATE 9600
-#define SIM800_READ_TIMEOUT 3000
+#define SIM800_READ_TIMEOUT 5000
 #define SIM800_RXBUFFER_SIZE 100
 
 static const char sim800_at[] = "AT\r\n";
@@ -44,16 +44,20 @@ static const char sim800_at_smgs[] = "AT+CMGS=\"+41792826160\"\r";
 static const char sim800_ctrl_z[] = "\x1A";
 static const char sim800_testsms[] = "\xD test \xD";
 
+//sms rx
+static const char sim800_at_cmgr1[] = "AT+CMGR=1\r\n"; //read first sms
+static const char sim800_at_cmgd1[] = "AT+CMGD=1\r\n"; //delete first sms
+
 
 static UART_Handle uart;
 static UART_Params uartParams;
 static int sim800_initialised = 0;
 static int sim800_locked = 0;
 
+static char sim800_rxBuffer[SIM800_RXBUFFER_SIZE];
 
 
 void sim800_send_sms(char * tx_buffer, int tx_size){
-	char rxBuffer[SIM800_RXBUFFER_SIZE];
 
 	 if(sim800_initialised  && !sim800_locked){
 		sim800_locked = 1;
@@ -67,10 +71,10 @@ void sim800_send_sms(char * tx_buffer, int tx_size){
 		UART_write(uart, tx_buffer, tx_size);
 		Task_sleep(5000);
 
-		memset(&rxBuffer, 0, sizeof(rxBuffer));
+		memset(&sim800_rxBuffer, 0, sizeof(sim800_rxBuffer));
 		UART_write(uart, sim800_ctrl_z, sizeof(sim800_ctrl_z));
-		UART_read(uart, rxBuffer, sizeof(rxBuffer));
-		serial_printf(cli_stdout, "sms:%s", rxBuffer);
+		UART_read(uart, sim800_rxBuffer, sizeof(sim800_rxBuffer));
+		serial_printf(cli_stdout, "sms:%s", sim800_rxBuffer);
 
 		sim800_locked = 0;
 	 }else{
@@ -80,14 +84,13 @@ void sim800_send_sms(char * tx_buffer, int tx_size){
 }
 
 const char* sim800_get_battery_voltage(){
-	static char rxBuffer[SIM800_RXBUFFER_SIZE];
-	memset(&rxBuffer, 0, sizeof(rxBuffer));
+	memset(&sim800_rxBuffer, 0, sizeof(sim800_rxBuffer));
 
 	if(sim800_initialised && !sim800_locked){
 		UART_write(uart, sim800_at_cbc, sizeof(sim800_at_cbc));
-		UART_read(uart, rxBuffer, sizeof(rxBuffer));
+		UART_read(uart, sim800_rxBuffer, sizeof(sim800_rxBuffer));
 		Task_sleep(500);
-		return rxBuffer;
+		return sim800_rxBuffer;
 	}else{
 		serial_printf(cli_stdout, "sim800 not initialised",0);
 		return 0;
@@ -126,22 +129,21 @@ int sim800_open(){
 //must be called from within a task - this function will block!
 //returns 1 if modem responds with OK
 int sim800_begin(){
-	char rxBuffer[SIM800_RXBUFFER_SIZE];
-	memset(&rxBuffer, 0, sizeof(rxBuffer));
+	memset(&sim800_rxBuffer, 0, sizeof(sim800_rxBuffer));
 
 	if(sim800_open()){
 		UART_write(uart, sim800_at_echo_off, sizeof(sim800_at_echo_off));
-		UART_read(uart, rxBuffer, sizeof(rxBuffer));
+		UART_read(uart, sim800_rxBuffer, sizeof(sim800_rxBuffer));
 		Task_sleep(500);
 
-		memset(&rxBuffer, 0, sizeof(rxBuffer));
+		memset(&sim800_rxBuffer, 0, sizeof(sim800_rxBuffer));
 		UART_write(uart, sim800_at_echo_off, sizeof(sim800_at_echo_off));
-		UART_read(uart, rxBuffer, sizeof(rxBuffer));
+		UART_read(uart, sim800_rxBuffer, sizeof(sim800_rxBuffer));
 
-		serial_printf(cli_stdout, "%s", rxBuffer);
+		serial_printf(cli_stdout, "%s", sim800_rxBuffer);
 		Task_sleep(500);
 
-		if(!strcmp("\r\nOK\r\n", rxBuffer)){
+		if(!strcmp("\r\nOK\r\n", sim800_rxBuffer)){
 			sim800_initialised = 1;
 			return 1; //modem can now communicate with us
 		}else{
@@ -162,7 +164,6 @@ void sim800_init_http(SIM800_MIME mime_type){
 	if(!sim800_initialised){
 		serial_printf(cli_stdout, "sim800 not initialised",0);
 	}else{
-		char rxBuffer[SIM800_RXBUFFER_SIZE];
 		int i;
 
 		const char *init_http_cmdseq[] = {
@@ -183,9 +184,9 @@ void sim800_init_http(SIM800_MIME mime_type){
 
 
 		for(i=0; i<6; i++){
-			memset(&rxBuffer, 0, sizeof(rxBuffer));
+			memset(&sim800_rxBuffer, 0, sizeof(sim800_rxBuffer));
 			UART_write(uart, init_http_cmdseq[i], strlen(init_http_cmdseq[i]));
-			UART_read(uart, rxBuffer, sizeof(rxBuffer));
+			UART_read(uart, sim800_rxBuffer, sizeof(sim800_rxBuffer));
 			Task_sleep(200);
 		}
 
@@ -197,14 +198,13 @@ void sim800_buffermessage_http(char * tx_buffer, int tx_size){
 	if(!sim800_initialised){
 		serial_printf(cli_stdout, "sim800 not initialised",0);
 	}else{
-		char rxBuffer[SIM800_RXBUFFER_SIZE];
-		memset(&rxBuffer, 0, sizeof(rxBuffer));
+		memset(&sim800_rxBuffer, 0, sizeof(sim800_rxBuffer));
 
 		UART_write(uart, sim800_at_httpdata, sizeof(sim800_at_httpdata));
 		Task_sleep(600);
 		UART_write(uart, tx_buffer, tx_size);
-		UART_read(uart, rxBuffer, sizeof(rxBuffer));
-		serial_printf(cli_stdout, "%s", rxBuffer);
+		UART_read(uart, sim800_rxBuffer, sizeof(sim800_rxBuffer));
+		serial_printf(cli_stdout, "%s", sim800_rxBuffer);
 
 
 		Task_sleep(11000);
@@ -215,7 +215,7 @@ void sim800_buffermessage_http(char * tx_buffer, int tx_size){
 
 		Task_sleep(300);
 		UART_write(uart, sim800_at_httpterm, strlen(sim800_at_httpterm));
-		UART_read(uart, rxBuffer, sizeof(rxBuffer));
+		UART_read(uart, sim800_rxBuffer, sizeof(sim800_rxBuffer));
 
 	}
 }
@@ -229,4 +229,46 @@ void sim800_send_http(char * tx_buffer, int tx_size, SIM800_MIME mime_type){
 		sim800_buffermessage_http(tx_buffer, tx_size);
 		sim800_locked = 0;
 	}
+}
+
+int sim800_check_rx_sms(char** tx_buffer)
+{
+	int msg_length = 0;
+	UART_read(uart, sim800_rxBuffer, sizeof(sim800_rxBuffer)); //clear all messages.
+	memset(&sim800_rxBuffer, 0, sizeof(sim800_rxBuffer));
+
+	UART_write(uart, sim800_at_cmgr1, sizeof(sim800_at_cmgr1));
+	Task_sleep(600);
+	UART_read(uart, sim800_rxBuffer, sizeof(sim800_rxBuffer));
+
+	if(!strncmp("\r\n+CMGR:", sim800_rxBuffer, 8)) // sms arrived
+	{
+		char* start_message_ptr = strchr(&sim800_rxBuffer[7], '\n'); //location where message starts
+		*tx_buffer = start_message_ptr;
+
+		if(*tx_buffer)
+			*tx_buffer += 1;
+		else  //returned null
+			return 0;
+
+		char* end_message = strchr(*tx_buffer, '\n'); //location where message ends
+		if(end_message == NULL)
+			return 0;
+
+		msg_length = end_message - *tx_buffer;
+
+		char answer_buffer[sizeof(sim800_rxBuffer)];
+
+		strcpy(answer_buffer,  "Executed: ");
+
+		strcat(answer_buffer, *tx_buffer);
+
+		sim800_send_sms(answer_buffer,sizeof(answer_buffer));
+
+	}
+
+	//delete message (in all cases):
+	UART_write(uart, sim800_at_cmgr1, sizeof(sim800_at_cmgr1));
+
+	return msg_length;
 }

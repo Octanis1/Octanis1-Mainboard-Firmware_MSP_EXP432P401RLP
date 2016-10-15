@@ -533,7 +533,7 @@ void rockblock_task(){
 #endif
 
 #ifdef GSM_ENABLED
-	int iter = 10;
+	int iter = 5;
 
 	is_initialized = sim800_begin();
 #endif
@@ -573,6 +573,16 @@ void rockblock_task(){
 
 		if(is_initialized)
 		{
+
+			char* rx_sms_buffer;
+			if(sim800_check_rx_sms(&rx_sms_buffer))
+			{
+				serial_printf(cli_stdout, "sms received \n");
+			}
+
+
+
+
 			char txdata[COMM_STRING_SIZE] = "";
 			uint16_t stringlength = comm_get_statusstring(txdata);
 
@@ -589,13 +599,13 @@ void rockblock_task(){
 			}
 			/** end hex string **/
 
-			sim800_send_http(hex_string, strlen(hex_string), MIME_TEXT_PLAIN);
+			sim800_send_http(hex_string, strlen(hex_string), MIME_TEXT_PLAIN); //takes ca. 40 seconds!
 
 
 			if(iter > 9)
 			{
 				iter = 0;
-				sim800_send_sms(txdata, stringlength);
+				sim800_send_sms(txdata, stringlength); //ca 10 sec
 			}
 			iter++;
 		}
@@ -607,6 +617,8 @@ void rockblock_task(){
 		}
 
 		Task_sleep(10000);
+
+
 
 
 #else
