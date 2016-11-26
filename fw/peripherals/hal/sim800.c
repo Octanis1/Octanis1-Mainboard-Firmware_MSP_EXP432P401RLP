@@ -7,10 +7,13 @@
 #include "../../../Board.h"
 
 #include "sim800.h"
+#include "../rockblock_gsm.h"
 
 #define SIM800_BAUD_RATE 9600
-#define SIM800_READ_TIMEOUT 5000
+#define SIM800_READ_TIMEOUT 1000
 #define SIM800_RXBUFFER_SIZE 100
+#define SIM800_TRASHBUFFER_SIZE 32 //required at least 25...
+
 
 static const char sim800_at[] = "AT\r\n";
 static const char sim800_at_restart[] = "AT+CFUN=1,1\r\n";
@@ -45,6 +48,7 @@ static const char sim800_ctrl_z[] = "\x1A";
 static const char sim800_testsms[] = "\xD test \xD";
 
 //sms rx
+static const char sim800_at_cmgl[] = "AT+CMGL=\"ALL\"\r\n"; //list all SMS in memory
 static const char sim800_at_cmgr1[] = "AT+CMGR=1\r\n"; //read first sms
 static const char sim800_at_cmgd1[] = "AT+CMGD=1\r\n"; //delete first sms
 
@@ -55,6 +59,7 @@ static int sim800_initialised = 0;
 static int sim800_locked = 0;
 
 static char sim800_rxBuffer[SIM800_RXBUFFER_SIZE];
+static char sim800_trashBuffer[SIM800_TRASHBUFFER_SIZE];
 
 
 void sim800_send_sms(char * tx_buffer, int tx_size){
@@ -62,19 +67,31 @@ void sim800_send_sms(char * tx_buffer, int tx_size){
 	 if(sim800_initialised  && !sim800_locked){
 		sim800_locked = 1;
 
-		UART_write(uart, sim800_at_smgf, sizeof(sim800_at_smgf));
-		Task_sleep(500);
-
 		UART_write(uart, sim800_at_smgs, strlen(sim800_at_smgs));
-		Task_sleep(1000);
+		UART_read(uart, sim800_trashBuffer, sizeof(sim800_trashBuffer)); //read '\r\n>'
 
 		UART_write(uart, tx_buffer, tx_size);
-		Task_sleep(5000);
 
-		memset(&sim800_rxBuffer, 0, sizeof(sim800_rxBuffer));
+		memset(&sim800_trashBuffer, 0, sizeof(sim800_trashBuffer));
 		UART_write(uart, sim800_ctrl_z, sizeof(sim800_ctrl_z));
-		UART_read(uart, sim800_rxBuffer, sizeof(sim800_rxBuffer));
-		serial_printf(cli_stdout, "sms:%s", sim800_rxBuffer);
+
+		while(strncmp("\r\n+CMGS", sim800_trashBuffer, 7)) //wait for confirmation...
+		{
+			UART_read(uart, sim800_trashBuffer, sizeof(sim800_trashBuffer));
+			static int waitcount = 0;
+			waitcount++;
+			if(waitcount>20)
+			{
+				//something went wrong.. (sms may have been received simultaneously.
+				Task_sleep(10000);
+				UART_read(uart, sim800_trashBuffer, sizeof(sim800_trashBuffer));
+				break;
+			}
+		}
+
+		serial_printf(cli_stdout, "sms:%s", sim800_trashBuffer);
+
+		Task_sleep(100);
 
 		sim800_locked = 0;
 	 }else{
@@ -145,6 +162,9 @@ int sim800_begin(){
 
 		if(!strcmp("\r\nOK\r\n", sim800_rxBuffer)){
 			sim800_initialised = 1;
+
+			UART_write(uart, sim800_at_smgf, sizeof(sim800_at_smgf)); // put into text mode.
+			Task_sleep(500);
 			return 1; //modem can now communicate with us
 		}else{
 			return 0;
@@ -231,44 +251,59 @@ void sim800_send_http(char * tx_buffer, int tx_size, SIM800_MIME mime_type){
 	}
 }
 
-int sim800_check_rx_sms(char** tx_buffer)
+int sim800_check_rx_sms(char** rx_buffer)
 {
 	int msg_length = 0;
-	UART_read(uart, sim800_rxBuffer, sizeof(sim800_rxBuffer)); //clear all messages.
+	//clear rx buffer
+	while(UART_read(uart, sim800_trashBuffer, sizeof(sim800_trashBuffer))==sizeof(sim800_trashBuffer));
 	memset(&sim800_rxBuffer, 0, sizeof(sim800_rxBuffer));
 
-	UART_write(uart, sim800_at_cmgr1, sizeof(sim800_at_cmgr1));
-	Task_sleep(600);
+	//list messages in buffer:
+	UART_write(uart, sim800_at_cmgl, sizeof(sim800_at_cmgl));
 	UART_read(uart, sim800_rxBuffer, sizeof(sim800_rxBuffer));
-
-	if(!strncmp("\r\n+CMGR:", sim800_rxBuffer, 8)) // sms arrived
+	if(!strncmp("\r\n+CMGL:", sim800_rxBuffer, 8)) // list contains message!
 	{
-		char* start_message_ptr = strchr(&sim800_rxBuffer[7], '\n'); //location where message starts
-		*tx_buffer = start_message_ptr;
+		char message_index[3] = {0,0,0};
+		message_index[0] = sim800_rxBuffer[9];
+		if(sim800_rxBuffer[10]!=',')
+			message_index[1] = sim800_rxBuffer[10];
 
-		if(*tx_buffer)
-			*tx_buffer += 1;
+		char* start_message_ptr = strchr(&sim800_rxBuffer[7], '\n'); //location where message starts
+		*rx_buffer = start_message_ptr;
+
+		if(*rx_buffer)
+			*rx_buffer += 1;
 		else  //returned null
 			return 0;
 
-		char* end_message = strchr(*tx_buffer, '\n'); //location where message ends
+		char* end_message = strchr(*rx_buffer, '\n'); //location where message ends
 		if(end_message == NULL)
 			return 0;
 
-		msg_length = end_message - *tx_buffer;
+		msg_length = end_message - *rx_buffer - 1; //-1 because contains \r
 
 		char answer_buffer[sizeof(sim800_rxBuffer)];
 
-		strcpy(answer_buffer,  "Executed: ");
+		if(gsm_execute_command(rx_buffer, msg_length, answer_buffer))
+		{
+			sim800_send_sms(answer_buffer,sizeof(answer_buffer));
+		}
 
-		strcat(answer_buffer, *tx_buffer);
+		//clear rx buffer
 
-		sim800_send_sms(answer_buffer,sizeof(answer_buffer));
+		while(UART_read(uart, sim800_trashBuffer, sizeof(sim800_trashBuffer))==sizeof(sim800_trashBuffer));
 
+		serial_printf(cli_stdout, "Deleting sms:%s", *rx_buffer);
+
+
+		char sim800_at_cmgdN[12] = "AT+CMGD="; //delete N-th sms
+		strcat(sim800_at_cmgdN, message_index);
+		strcat(sim800_at_cmgdN,"\r\n");
+
+		//delete message (in all cases):
+		UART_write(uart, sim800_at_cmgdN, sizeof(sim800_at_cmgdN));
+		UART_read(uart, sim800_rxBuffer, sizeof(sim800_rxBuffer));
 	}
-
-	//delete message (in all cases):
-	UART_write(uart, sim800_at_cmgr1, sizeof(sim800_at_cmgr1));
 
 	return msg_length;
 }

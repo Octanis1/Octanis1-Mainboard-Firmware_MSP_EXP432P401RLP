@@ -38,5 +38,8 @@ struct rockblock_msg {
 	struct rockblock_msg *next;
 };
 
+////////////// GSM functions /////////////////
+
+int gsm_execute_command(char** rx_buffer, int msg_length, char* answer_buffer);
 
 #endif

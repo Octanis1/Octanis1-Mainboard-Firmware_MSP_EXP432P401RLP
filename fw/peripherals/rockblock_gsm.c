@@ -46,6 +46,10 @@
 static UART_Handle uart;
 static UART_Params uartParams;
 
+
+////////////////////////// Rockblock Functions /////////////////////////
+
+
 /* Iridium 9602 Modem AT commands */
 //responses from the modem are "encapsulated" in "\r\n"
 static const char rockblock_at[] = "AT\r";
@@ -63,7 +67,6 @@ static uint8_t rockblock_rx_buffer[ROCKBLOCK_MESSAGE_SIZE];
 int rockblock_rx_buffer_offset = 0;
 static uint8_t rockblock_tx_buffer[ROCKBLOCK_MESSAGE_SIZE];
 int rockblock_tx_buffer_offset = 0;
-
 
 int rockblock_internal_decode_SBD_binary();
 int rockblock_internal_MSSTM_workaround();
@@ -519,6 +522,71 @@ int rockblock_get_tx_buffer_fill(){
 	return rockblock_tx_buffer_offset;
 }
 
+
+///////////////////// GSM functions /////////////////////////////
+
+int gsm_execute_command(char** rx_buffer, int msg_length, char* answer_buffer)
+{
+	if(!strncmp("disconnect", *rx_buffer, 10))
+	{
+		strcpy(answer_buffer,  "Received command: ");
+		strncat(answer_buffer, *rx_buffer, msg_length);
+		strcat(answer_buffer, ". Cutting now the parachute wire! 3..2..1...BOUM!");
+
+		return 1;
+	}
+	else if(!strncmp("status", *rx_buffer, 6))
+	{
+		strcpy(answer_buffer,  "Received command: ");
+		strncat(answer_buffer, *rx_buffer,msg_length);
+		strcat(answer_buffer, ". I'm doing fine, thanks!");
+
+		return 1;
+	}
+	else
+		return 0;
+}
+
+
+void gsm_send_statusstring()
+{
+	static int iter = 5;
+
+	char txdata[COMM_STRING_SIZE] = "";
+	uint16_t stringlength = comm_get_statusstring(txdata);
+
+	/** Prepare hex string for http **/
+	char hex_string_byte[2];
+	char hex_string[2*stringlength];
+	memset(&hex_string, 0, sizeof(hex_string));
+
+	int i;
+	for(i=0; i<stringlength; i++){
+		memset(&hex_string_byte, 0, sizeof(hex_string_byte));
+		tfp_sprintf(hex_string_byte, "%02x", txdata[i]);
+		strcat(hex_string, hex_string_byte);
+	}
+	/** end hex string **/
+
+	sim800_send_http(hex_string, strlen(hex_string), MIME_TEXT_PLAIN); //takes ca. 40 seconds!
+
+	if(iter > 9)
+	{
+		iter = 0;
+		sim800_send_sms(txdata, stringlength); //ca 10 sec
+	}
+	iter++;
+}
+
+
+
+
+
+
+
+
+
+
 void rockblock_task(){
 	int is_initialized = 0;
 
@@ -533,8 +601,6 @@ void rockblock_task(){
 #endif
 
 #ifdef GSM_ENABLED
-	int iter = 5;
-
 	is_initialized = sim800_begin();
 #endif
 
@@ -570,7 +636,6 @@ void rockblock_task(){
 #else
 #ifdef GSM_ENABLED
 
-
 		if(is_initialized)
 		{
 
@@ -580,34 +645,6 @@ void rockblock_task(){
 				serial_printf(cli_stdout, "sms received \n");
 			}
 
-
-
-
-			char txdata[COMM_STRING_SIZE] = "";
-			uint16_t stringlength = comm_get_statusstring(txdata);
-
-			/** Prepare hex string for http **/
-			char hex_string_byte[2];
-			char hex_string[2*stringlength];
-			memset(&hex_string, 0, sizeof(hex_string));
-
-			int i;
-			for(i=0; i<stringlength; i++){
-				memset(&hex_string_byte, 0, sizeof(hex_string_byte));
-				tfp_sprintf(hex_string_byte, "%02x", txdata[i]);
-				strcat(hex_string, hex_string_byte);
-			}
-			/** end hex string **/
-
-			sim800_send_http(hex_string, strlen(hex_string), MIME_TEXT_PLAIN); //takes ca. 40 seconds!
-
-
-			if(iter > 9)
-			{
-				iter = 0;
-				sim800_send_sms(txdata, stringlength); //ca 10 sec
-			}
-			iter++;
 		}
 		else
 		{
