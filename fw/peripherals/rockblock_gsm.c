@@ -525,13 +525,28 @@ int rockblock_get_tx_buffer_fill(){
 
 ///////////////////// GSM functions /////////////////////////////
 
-int gsm_execute_command(char** rx_buffer, int msg_length, char* answer_buffer)
+#include "../core/eps.h"
+
+
+int gsm_execute_command(char** rx_buffer, int msg_length)
 {
+	char answer_buffer[100];
+
 	if(!strncmp("disconnect", *rx_buffer, 10))
 	{
+		int burn_time = (*rx_buffer)[10] - '0';
 		strcpy(answer_buffer,  "Received command: ");
 		strncat(answer_buffer, *rx_buffer, msg_length);
 		strcat(answer_buffer, ". Cutting now the parachute wire! 3..2..1...BOUM!");
+
+		sim800_send_sms(answer_buffer,sizeof(answer_buffer));
+
+		if(burn_time<=0 || burn_time>9) //bound value
+			burn_time = 1;
+
+		eps_switch_module(HEAT_1_ON);
+		Task_sleep(100*burn_time*burn_time);
+		eps_switch_module(HEAT_1_OFF);
 
 		return 1;
 	}
@@ -579,7 +594,14 @@ void gsm_send_statusstring()
 }
 
 
-
+int gsm_reboot()
+{
+	eps_switch_module(M11V_OFF);
+	Task_sleep(5000);
+	eps_switch_module(M11V_ON);
+	Task_sleep(10000); // try to reconnect
+	return sim800_begin();
+}
 
 
 
@@ -599,12 +621,6 @@ void rockblock_task(){
 	// init here:
 	is_initialized = 1; //TODO: replace '1' by init function which shall return 1 if init successful
 #endif
-
-#ifdef GSM_ENABLED
-	is_initialized = sim800_begin();
-#endif
-
-
 
 	while(1){
 
@@ -645,17 +661,15 @@ void rockblock_task(){
 				serial_printf(cli_stdout, "sms received \n");
 			}
 
+//			gsm_send_statusstring();
+
 		}
 		else
 		{
-			Task_sleep(60000); // try to reconnect
-
-			is_initialized = sim800_begin();
+			is_initialized = gsm_reboot();
 		}
 
 		Task_sleep(10000);
-
-
 
 
 #else

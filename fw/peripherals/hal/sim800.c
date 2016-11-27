@@ -282,12 +282,7 @@ int sim800_check_rx_sms(char** rx_buffer)
 
 		msg_length = end_message - *rx_buffer - 1; //-1 because contains \r
 
-		char answer_buffer[sizeof(sim800_rxBuffer)];
-
-		if(gsm_execute_command(rx_buffer, msg_length, answer_buffer))
-		{
-			sim800_send_sms(answer_buffer,sizeof(answer_buffer));
-		}
+		gsm_execute_command(rx_buffer, msg_length);
 
 		//clear rx buffer
 

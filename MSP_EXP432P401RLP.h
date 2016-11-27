@@ -62,7 +62,7 @@
 //#define MAVLINK_ON_LORA_ENABLED 1 //for verbose lora outputs
 //#define UARTCAM_ENABLED 1
 #define GSM_ENABLED 1
-#define USE_ONBOARD_BNO055 1 //in contrast to just decoding incoming mavlink attitude messages.
+//#define USE_ONBOARD_BNO055 1 //in contrast to just decoding incoming mavlink attitude messages.
 //#define USE_GPS_HEADING 1
 //#define USE_ULTRASONIC 1
 
