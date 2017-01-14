@@ -154,7 +154,7 @@ int rn2483_begin(){
 
 	Task_sleep(500);
 	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer)); //clean the reset message
-	memset(&rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
+	memset(rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
 
 #ifndef CONFIG_MODE
 	//the reset message does not contain a newline character. all other command responses do.
@@ -175,7 +175,7 @@ int rn2483_begin(){
 	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
 
 	serial_printf(cli_stdout, "rn2483 deveui: %s.\r\n", rn2483_rxBuffer);
-	memset(&rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
+	memset(rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
 
 	UART_write(rn2483_uart, rn_join_otaa, sizeof(rn_join_otaa));
 
@@ -216,7 +216,7 @@ int rn2483_config()
 	Task_sleep(500);
 	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer)); //clean the reset message
 	UART_read(rn2483_uart, rn2483_rxBuffer, sizeof(rn2483_rxBuffer));
-	memset(&rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
+	memset(rn2483_rxBuffer, 0, sizeof(rn2483_rxBuffer));
 
 	Task_sleep(500);
 	UART_write(rn2483_uart, rn_set_devaddr, sizeof(rn_set_devaddr));
@@ -338,7 +338,7 @@ int rn2483_send_receive(char * tx_buffer, int tx_size)
 												// this is a pretty bad hack and we should look where the character comes from .
 
 	char txBuffer[tx_size+18]; //18 for the aditionnal lora commands
-	memset(&txBuffer, 0, sizeof(txBuffer)); //important! always clean buffer before tx
+	memset(txBuffer, 0, sizeof(txBuffer)); //important! always clean buffer before tx
 
 	if(!rn2483_initialised) return 0;
 

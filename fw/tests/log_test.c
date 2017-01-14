@@ -259,7 +259,7 @@ TEST test_multiple_entry_and_readback(void)
 void setup_cb(void *p)
 {
     (void)p;
-    memset(&flash_array, 0xff, sizeof(flash_array));
+    memset(flash_array, 0xff, sizeof(flash_array));
     memset(&test_logger, 0, sizeof(test_logger));
     test_logger.flash_write_pos = 0;
     test_logger.backup_pos = 0;

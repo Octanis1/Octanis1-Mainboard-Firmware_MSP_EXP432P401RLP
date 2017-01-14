@@ -34,7 +34,7 @@ int hm10_callback;
 //returns 1 if modem responds with OK
 int hm10_begin(){
 
-	memset(&hm10_rxBuffer, 0, sizeof(hm10_rxBuffer));
+	memset(hm10_rxBuffer, 0, sizeof(hm10_rxBuffer));
 
 	UART_Params_init(&uartParams);
 	uartParams.writeDataMode = UART_DATA_BINARY;
@@ -61,30 +61,30 @@ int hm10_begin(){
 		UART_write(uart, hm10_at_wakestring, strlen(hm10_at_wakestring));
 		UART_read(uart, hm10_rxBuffer, sizeof(hm10_rxBuffer));
 		serial_printf(cli_stdout, "%s\n", hm10_rxBuffer);
-		memset(&hm10_rxBuffer, 0, sizeof(hm10_rxBuffer));
+		memset(hm10_rxBuffer, 0, sizeof(hm10_rxBuffer));
 
 		UART_write(uart, hm10_at_pwrm1, strlen(hm10_at_pwrm1));
 		UART_read(uart, hm10_rxBuffer, sizeof(hm10_rxBuffer));
 		serial_printf(cli_stdout, "%s\n", hm10_rxBuffer);
-		memset(&hm10_rxBuffer, 0, sizeof(hm10_rxBuffer));
+		memset(hm10_rxBuffer, 0, sizeof(hm10_rxBuffer));
 		Task_sleep(1000);
 
 		UART_write(uart, hm10_at_clear, strlen(hm10_at_clear));
 		UART_read(uart, hm10_rxBuffer, sizeof(hm10_rxBuffer));
 		serial_printf(cli_stdout, "%s\n", hm10_rxBuffer);
-		memset(&hm10_rxBuffer, 0, sizeof(hm10_rxBuffer));
+		memset(hm10_rxBuffer, 0, sizeof(hm10_rxBuffer));
 		Task_sleep(500);
 
 		UART_write(uart, hm10_at_imme1, strlen(hm10_at_imme1));
 		UART_read(uart, hm10_rxBuffer, sizeof(hm10_rxBuffer));
 		serial_printf(cli_stdout, "%s\n", hm10_rxBuffer);
-		memset(&hm10_rxBuffer, 0, sizeof(hm10_rxBuffer));
+		memset(hm10_rxBuffer, 0, sizeof(hm10_rxBuffer));
 		Task_sleep(1000);
 
 		UART_write(uart, hm10_at_name, strlen(hm10_at_name));
 		UART_read(uart, hm10_rxBuffer, sizeof(hm10_rxBuffer));
 		serial_printf(cli_stdout, "%s\n", hm10_rxBuffer);
-		memset(&hm10_rxBuffer, 0, sizeof(hm10_rxBuffer));
+		memset(hm10_rxBuffer, 0, sizeof(hm10_rxBuffer));
 		Task_sleep(1000);
 
 		UART_write(uart, hm10_at, strlen(hm10_at));

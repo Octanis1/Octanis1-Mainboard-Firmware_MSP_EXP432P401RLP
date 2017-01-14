@@ -17,11 +17,11 @@ void lora_send(uint8_t* txdata, uint16_t stringlength)
 	/** Prepare hex string for LoRa **/
 	char hex_string_byte[2];
 	char hex_string[LORA_FRAME_SIZE];
-	memset(&hex_string, 0, sizeof(hex_string));
+	memset(hex_string, 0, sizeof(hex_string));
 
 	int i;
 	for(i=0; i<stringlength; i++){
-		memset(&hex_string_byte, 0, sizeof(hex_string_byte));
+		memset(hex_string_byte, 0, sizeof(hex_string_byte));
 		tfp_sprintf(hex_string_byte, "%02x", txdata[i]);
 		strcat(hex_string, hex_string_byte);
 	}

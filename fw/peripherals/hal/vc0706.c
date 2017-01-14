@@ -52,7 +52,7 @@ int vc0706_begin(){
 
 	if(vc0706_open()){
 		UART_read(uart, rxBuffer, sizeof(rxBuffer));
-		memset(&rxBuffer, 0, sizeof(rxBuffer));
+		memset(rxBuffer, 0, sizeof(rxBuffer));
 
 		serial_printf(cli_stdout, "vc0706 cam on",0);
 
@@ -74,31 +74,31 @@ int vc0706_begin(){
 		//wake camera
 		UART_write(uart, vc0706_wake, sizeof(vc0706_wake));
 		UART_read(uart, rxBuffer, sizeof(rxBuffer));
-		memset(&rxBuffer, 0, sizeof(rxBuffer));
+		memset(rxBuffer, 0, sizeof(rxBuffer));
 		Task_sleep(500);
 
 		//reset camera
 		UART_write(uart, vc0706_reset, sizeof(vc0706_reset));
 		UART_read(uart, rxBuffer, sizeof(rxBuffer));
-		memset(&rxBuffer, 0, sizeof(rxBuffer));
+		memset(rxBuffer, 0, sizeof(rxBuffer));
 		Task_sleep(500);
 
 		//set compression
 		UART_write(uart, vc0706_compression_36, sizeof(vc0706_compression_36));
 		UART_read(uart, rxBuffer, sizeof(rxBuffer));
-		memset(&rxBuffer, 0, sizeof(rxBuffer));
+		memset(rxBuffer, 0, sizeof(rxBuffer));
 		Task_sleep(500);
 
 		//set resolution
 		UART_write(uart, vc0706_setres160x120, sizeof(vc0706_setres160x120));
 		UART_read(uart, rxBuffer, sizeof(rxBuffer));
-		memset(&rxBuffer, 0, sizeof(rxBuffer));
+		memset(rxBuffer, 0, sizeof(rxBuffer));
 		Task_sleep(1000);
 
 		//take pic
 		UART_write(uart, vc0706_takepic, sizeof(vc0706_takepic));
 		UART_read(uart, rxBuffer, sizeof(rxBuffer));
-		memset(&rxBuffer, 0, sizeof(rxBuffer));
+		memset(rxBuffer, 0, sizeof(rxBuffer));
 		Task_sleep(500);
 
 		//get size

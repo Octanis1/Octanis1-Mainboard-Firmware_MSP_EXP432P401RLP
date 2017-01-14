@@ -545,7 +545,7 @@ int gsm_execute_command(char** rx_buffer, int msg_length)
 			burn_time = 1;
 
 		eps_switch_module(HEAT_1_ON);
-		Task_sleep(100*burn_time*burn_time);
+		Task_sleep(50*burn_time*burn_time);
 		eps_switch_module(HEAT_1_OFF);
 
 		return 1;
@@ -573,11 +573,11 @@ void gsm_send_statusstring()
 	/** Prepare hex string for http **/
 	char hex_string_byte[2];
 	char hex_string[2*stringlength];
-	memset(&hex_string, 0, sizeof(hex_string));
+	memset(hex_string, 0, sizeof(hex_string));
 
 	int i;
 	for(i=0; i<stringlength; i++){
-		memset(&hex_string_byte, 0, sizeof(hex_string_byte));
+		memset(hex_string_byte, 0, sizeof(hex_string_byte));
 		tfp_sprintf(hex_string_byte, "%02x", txdata[i]);
 		strcat(hex_string, hex_string_byte);
 	}

@@ -30,7 +30,7 @@ int serial_printf(SerialDevice *dev, const char *fmt, ...)
 #else
     // print via mavlink message STATUSTEXT #253
     count = 0;
-    memset(&mav_buffer, ' ', sizeof(mav_buffer));
+    memset(mav_buffer, ' ', sizeof(mav_buffer));
 
     va_list va;
 	int n;
